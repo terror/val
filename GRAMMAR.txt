@@ -1,0 +1,5 @@
+Expression → Term EOF
+Term       → Term ('+' | '-') Factor
+Factor     → Factor ('*' | '/') Primary
+Primary    → Number | Identifier | Call | '(' Expression ')' | '-' Primary
+Call       → Identifier '(' (Expression (',' Expression)*)? ')'
