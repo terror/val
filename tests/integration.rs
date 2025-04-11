@@ -1,3 +1,4 @@
+#[allow(unused)]
 use {
   executable_path::executable_path,
   indoc::indoc,
@@ -17,6 +18,7 @@ struct Test<'a> {
   tempdir: TempDir,
 }
 
+#[allow(unused)]
 impl<'a> Test<'a> {
   fn new() -> Result<Self> {
     Ok(Self {
