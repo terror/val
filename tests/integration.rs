@@ -67,7 +67,7 @@ impl<'a> Test<'a> {
   fn run_and_return_tempdir(self) -> Result<TempDir> {
     let mut command = Command::new(executable_path(env!("CARGO_PKG_NAME")));
 
-    let program_path = self.tempdir.path().join("program.lave");
+    let program_path = self.tempdir.path().join("program.val");
 
     let mut file = File::create(&program_path)?;
     write!(file, "{}", self.program.unindent())?;
