@@ -1,28 +1,24 @@
 use {
+  ariadne::{Color, Label, Report, ReportKind, Source},
   chumsky::prelude::*,
   clap::Parser as Clap,
   std::{
-    fmt::{self, Display, Formatter},
+    fmt::{Display, Formatter},
     fs,
     io::{self, BufRead, Write},
     path::PathBuf,
   },
 };
 
-#[derive(Debug)]
+type Span = SimpleSpan<usize>;
+type Spanned<T> = (T, Span);
+
+#[derive(Debug, Clone)]
 enum UnaryOp {
   Neg,
 }
 
-impl Display for UnaryOp {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    match self {
-      UnaryOp::Neg => write!(f, "-"),
-    }
-  }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum BinaryOp {
   Add,
   Div,
@@ -31,61 +27,88 @@ enum BinaryOp {
   Sub,
 }
 
-impl Display for BinaryOp {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+#[derive(Debug)]
+enum Ast<'a> {
+  BinaryOp(BinaryOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
+  Call(&'a str, Vec<Spanned<Self>>),
+  Error,
+  Identifier(&'a str),
+  Number(f64),
+  UnaryOp(UnaryOp, Box<Spanned<Self>>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+enum Value<'src> {
+  Null,
+  Bool(bool),
+  Num(f64),
+  Str(&'src str),
+  List(Vec<Self>),
+  Func(&'src str),
+}
+
+impl Display for Value<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      BinaryOp::Add => write!(f, "+"),
-      BinaryOp::Div => write!(f, "/"),
-      BinaryOp::Mod => write!(f, "%"),
-      BinaryOp::Mul => write!(f, "*"),
-      BinaryOp::Sub => write!(f, "-"),
+      Value::Null => write!(f, "null"),
+      Value::Bool(b) => write!(f, "{}", b),
+      Value::Num(n) => write!(f, "{}", n),
+      Value::Str(s) => write!(f, "{}", s),
+      Value::List(l) => write!(f, "{:?}", l),
+      Value::Func(s) => write!(f, "<function: {}>", s),
     }
   }
 }
 
 #[derive(Debug)]
-enum Ast<'a> {
-  BinaryOp(BinaryOp, Box<Ast<'a>>, Box<Ast<'a>>),
-  Call(&'a str, Vec<Ast<'a>>),
-  Identifier(&'a str),
-  Number(f64),
-  UnaryOp(UnaryOp, Box<Ast<'a>>),
+struct Error {
+  span: Span,
+  message: String,
 }
 
-impl Display for Ast<'_> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Ast::BinaryOp(op, lhs, rhs) => write!(f, "({} {} {})", op, lhs, rhs),
-      Ast::Call(name, args) => write!(
-        f,
-        "{}({})",
-        name,
-        args
-          .iter()
-          .map(|a| a.to_string())
-          .collect::<Vec<_>>()
-          .join(", ")
-      ),
-      Ast::Identifier(name) => write!(f, "{}", name),
-      Ast::Number(n) => write!(f, "{}", n),
-      Ast::UnaryOp(op, rhs) => write!(f, "({} {})", op, rhs),
+impl Error {
+  fn new(span: Span, message: impl Into<String>) -> Self {
+    Self {
+      span,
+      message: message.into(),
     }
   }
 }
 
-fn parser<'a>() -> impl Parser<'a, &'a str, Ast<'a>> {
+impl Value<'_> {
+  fn num(self, span: Span) -> Result<f64, Error> {
+    if let Value::Num(x) = self {
+      Ok(x)
+    } else {
+      Err(Error {
+        span,
+        message: format!("'{}' is not a number", self),
+      })
+    }
+  }
+}
+
+fn parser<'a>()
+-> impl Parser<'a, &'a str, Spanned<Ast<'a>>, extra::Err<Rich<'a, char>>> {
   let ident = text::ident().padded();
 
-  let expr = recursive(|expr| {
-    let number = text::int(10).map(|s: &str| Ast::Number(s.parse().unwrap()));
+  let expr = recursive(|_| {
+    let number = text::int(10)
+      .map(|s: &str| Ast::Number(s.parse().unwrap()))
+      .map_with(|ast, e| (ast, e.span()));
 
-    let atom = number.or(ident.map(Ast::Identifier));
+    let atom = number.or(
+      ident
+        .map(Ast::Identifier)
+        .map_with(|ast, e| (ast, e.span())),
+    );
 
     let op = |c| just(c).padded();
 
-    let unary = op('-')
-      .repeated()
-      .foldr(atom, |_, rhs| Ast::UnaryOp(UnaryOp::Neg, Box::new(rhs)));
+    let unary = op('-').repeated().foldr(atom, |_, rhs| {
+      let span = rhs.1;
+      (Ast::UnaryOp(UnaryOp::Neg, Box::new(rhs)), span)
+    });
 
     unary
   });
@@ -93,20 +116,98 @@ fn parser<'a>() -> impl Parser<'a, &'a str, Ast<'a>> {
   expr
 }
 
-fn eval<'a>(ast: &'a Ast<'a>) -> Result<f64, String> {
-  match ast {
-    Ast::Number(n) => Ok(*n),
-    Ast::UnaryOp(operator, rhs) => match operator {
-      UnaryOp::Neg => Ok(-eval(rhs)?),
-    },
-    Ast::BinaryOp(operator, lhs, rhs) => match operator {
-      BinaryOp::Add => Ok(eval(lhs)? + eval(rhs)?),
-      BinaryOp::Div => Ok(eval(lhs)? / eval(rhs)?),
-      BinaryOp::Mul => Ok(eval(lhs)? * eval(rhs)?),
-      BinaryOp::Sub => Ok(eval(lhs)? - eval(rhs)?),
-      _ => todo!(),
-    },
-    _ => todo!(),
+fn eval<'a>(ast: &Spanned<Ast<'a>>) -> Result<Value<'a>, Error> {
+  let (node, span) = ast;
+
+  match node {
+    Ast::Number(n) => Ok(Value::Num(*n)),
+    Ast::UnaryOp(UnaryOp::Neg, rhs) => Ok(Value::Num(-eval(rhs)?.num(rhs.1)?)),
+    Ast::BinaryOp(op, lhs, rhs) => {
+      let lhs_val = eval(lhs)?;
+      let rhs_val = eval(rhs)?;
+
+      let lhs_num = lhs_val.num(lhs.1)?;
+      let rhs_num = rhs_val.num(rhs.1)?;
+
+      match op {
+        BinaryOp::Add => Ok(Value::Num(lhs_num + rhs_num)),
+        BinaryOp::Sub => Ok(Value::Num(lhs_num - rhs_num)),
+        BinaryOp::Mul => Ok(Value::Num(lhs_num * rhs_num)),
+        BinaryOp::Div => {
+          if rhs_num == 0.0 {
+            return Err(Error::new(rhs.1, "Division by zero"));
+          }
+
+          Ok(Value::Num(lhs_num / rhs_num))
+        }
+        BinaryOp::Mod => {
+          if rhs_num == 0.0 {
+            return Err(Error::new(rhs.1, "Modulo by zero"));
+          }
+          Ok(Value::Num(lhs_num % rhs_num))
+        }
+      }
+    }
+    Ast::Identifier(name) => {
+      Err(Error::new(*span, format!("Undefined variable '{}'", name)))
+    }
+    Ast::Call(func_name, _) => Err(Error::new(
+      *span,
+      format!("Function '{}' is not implemented", func_name),
+    )),
+    Ast::Error => Err(Error::new(*span, "Syntax error")),
+  }
+}
+
+fn report_error(source_id: &str, source_content: &str, error: &Error) {
+  let span_range = error.span.into_range();
+
+  let mut report =
+    Report::build(ReportKind::Error, (source_id, span_range.clone()))
+      .with_message(&error.message);
+
+  report = report.with_label(
+    Label::new((source_id, span_range))
+      .with_message(&error.message)
+      .with_color(Color::Red),
+  );
+
+  report
+    .finish()
+    .print((source_id, Source::from(source_content)))
+    .expect("Failed to print error report");
+}
+
+fn report_parse_errors<'a>(
+  source_id: &str,
+  source_content: &str,
+  errors: &[Rich<'a, char>],
+) {
+  for error in errors {
+    let span_range = error.span().into_range();
+
+    let mut report =
+      Report::build(ReportKind::Error, (error.to_string(), span_range.clone()))
+        .with_message(error.to_string());
+
+    report = report.with_label(
+      Label::new((source_id.to_owned(), span_range))
+        .with_message(error.reason().to_string())
+        .with_color(Color::Red),
+    );
+
+    for (label_text, span) in error.contexts() {
+      report = report.with_label(
+        Label::new((source_id.to_owned(), span.into_range()))
+          .with_message(format!("while parsing this {}", label_text))
+          .with_color(Color::Yellow),
+      );
+    }
+
+    report
+      .finish()
+      .print((source_id.to_owned(), Source::from(source_content)))
+      .expect("Failed to print error report");
   }
 }
 
@@ -120,19 +221,27 @@ fn main() {
   let arguments = Arguments::parse();
 
   if let Some(filename) = arguments.filename {
-    let content = fs::read_to_string(filename).unwrap();
+    match fs::read_to_string(&filename) {
+      Ok(content) => {
+        let filename_str = filename.to_string_lossy().to_string();
 
-    let ast = parser().parse(content.trim());
+        let result = parser().parse(content.trim());
 
-    let ast = match ast.into_result() {
-      Ok(ast) => ast,
+        match result.into_output_errors() {
+          (Some(ast), errors) if errors.is_empty() => match eval(&ast) {
+            Ok(value) => println!("{value}"),
+            Err(error) => report_error(&filename_str, &content, &error),
+          },
+          (_, errors) => {
+            report_parse_errors(&filename_str, &content, &errors);
+          }
+        }
+      }
       Err(error) => {
-        println!("error: {:?}", error);
+        eprintln!("error: {error}");
         std::process::exit(1);
       }
-    };
-
-    println!("{}", eval(&ast).unwrap())
+    }
   } else {
     loop {
       let mut buffer = String::new();
@@ -145,22 +254,21 @@ fn main() {
         break;
       }
 
-      {
-        let parser = parser();
+      let input = buffer.trim();
 
-        let input = buffer.trim();
+      if input.is_empty() {
+        continue;
+      }
 
-        if input.is_empty() {
-          continue;
-        }
+      let result = parser().parse(input);
 
-        match parser.parse(input).into_result() {
-          Ok(ast) => {
-            println!("{:?}", ast);
-          }
-          Err(error) => {
-            println!("error: {:?}", error);
-          }
+      match result.into_output_errors() {
+        (Some(ast), errors) if errors.is_empty() => match eval(&ast) {
+          Ok(value) => println!("{}", value),
+          Err(error) => report_error("<input>", input, &error),
+        },
+        (_, errors) => {
+          report_parse_errors("<input>", input, &errors);
         }
       }
     }
