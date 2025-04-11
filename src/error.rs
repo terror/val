@@ -35,10 +35,10 @@ impl Error {
   }
 }
 
-pub(crate) fn report_parse_errors<'a>(
+pub(crate) fn report_parse_errors(
   source_id: &str,
   source_content: &str,
-  errors: &[Rich<'a, char>],
+  errors: &[Rich<'_, char>],
 ) -> Result {
   for error in errors {
     let span_range = error.span().into_range();
