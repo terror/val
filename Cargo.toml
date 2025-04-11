@@ -1,7 +1,15 @@
 [package]
 name = "val"
-version = "0.1.0"
+version = "0.0.0"
+authors = ["Liam <liam@scalzulli.com>"]
+categories = ["science", "parser-implementations", "command-line-interface"]
+description = "A language server for just"
 edition = "2024"
+homepage = "https://github.com/terror/val"
+keywords = ["productivity", "compilers"]
+license = "CC0-1.0"
+repository = "https://github.com/terror/val"
+resolver = "2"
 
 [dependencies]
 anyhow = "1.0.97"
