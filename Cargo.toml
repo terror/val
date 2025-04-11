@@ -5,3 +5,11 @@ edition = "2024"
 
 [dependencies]
 chumsky = "0.10.0"
+clap = { version = "4.5.35", features = ["derive"] }
+
+[dev-dependencies]
+executable-path = "1.0.0"
+indoc = "2.0.6"
+pretty_assertions = "1.4.1"
+tempfile = "3.19.1"
+unindent = "0.2.4"

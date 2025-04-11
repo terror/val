@@ -1,6 +1,12 @@
 use {
   chumsky::prelude::*,
-  std::fmt::{self, Display, Formatter},
+  clap::Parser as Clap,
+  std::{
+    fmt::{self, Display, Formatter},
+    fs,
+    io::{self, BufRead, Write},
+    path::PathBuf,
+  },
 };
 
 #[derive(Debug)]
@@ -68,7 +74,21 @@ impl Display for Ast<'_> {
 }
 
 fn parser<'a>() -> impl Parser<'a, &'a str, Ast<'a>> {
-  let expr = recursive(|expr| expr);
+  let ident = text::ident().padded();
+
+  let expr = recursive(|expr| {
+    let number = text::int(10).map(|s: &str| Ast::Number(s.parse().unwrap()));
+
+    let atom = number.or(ident.map(Ast::Identifier));
+
+    let op = |c| just(c).padded();
+
+    let unary = op('-')
+      .repeated()
+      .foldr(atom, |_, rhs| Ast::UnaryOp(UnaryOp::Neg, Box::new(rhs)));
+
+    unary
+  });
 
   expr
 }
@@ -90,6 +110,59 @@ fn eval<'a>(ast: &'a Ast<'a>) -> Result<f64, String> {
   }
 }
 
+#[derive(Clap)]
+#[clap(author, version)]
+struct Arguments {
+  filename: Option<PathBuf>,
+}
+
 fn main() {
-  println!("Hello, world!");
+  let arguments = Arguments::parse();
+
+  if let Some(filename) = arguments.filename {
+    let content = fs::read_to_string(filename).unwrap();
+
+    let ast = parser().parse(content.trim());
+
+    let ast = match ast.into_result() {
+      Ok(ast) => ast,
+      Err(error) => {
+        println!("error: {:?}", error);
+        std::process::exit(1);
+      }
+    };
+
+    println!("{}", eval(&ast).unwrap())
+  } else {
+    loop {
+      let mut buffer = String::new();
+
+      print!("> ");
+
+      io::stdout().flush().unwrap();
+
+      if io::stdin().lock().read_line(&mut buffer).unwrap() == 0 {
+        break;
+      }
+
+      {
+        let parser = parser();
+
+        let input = buffer.trim();
+
+        if input.is_empty() {
+          continue;
+        }
+
+        match parser.parse(input).into_result() {
+          Ok(ast) => {
+            println!("{:?}", ast);
+          }
+          Err(error) => {
+            println!("error: {:?}", error);
+          }
+        }
+      }
+    }
+  }
 }
