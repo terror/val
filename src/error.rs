@@ -17,9 +17,11 @@ impl Error {
   pub(crate) fn report(&self, source_id: &str, source_content: &str) -> Result {
     let span_range = self.span.into_range();
 
-    let mut report =
-      Report::build(ReportKind::Error, (source_id, span_range.clone()))
-        .with_message(&self.message);
+    let mut report = Report::build(
+      ReportKind::Custom("error", Color::Red),
+      (source_id, span_range.clone()),
+    )
+    .with_message(&self.message);
 
     report = report.with_label(
       Label::new((source_id, span_range))
@@ -43,9 +45,11 @@ pub(crate) fn report_parse_errors(
   for error in errors {
     let span_range = error.span().into_range();
 
-    let mut report =
-      Report::build(ReportKind::Error, (error.to_string(), span_range.clone()))
-        .with_message(error.to_string());
+    let mut report = Report::build(
+      ReportKind::Custom("error", Color::Red),
+      (error.to_string(), span_range.clone()),
+    )
+    .with_message(error.to_string());
 
     report = report.with_label(
       Label::new((source_id.to_owned(), span_range))
