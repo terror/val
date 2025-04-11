@@ -13,7 +13,6 @@ pub(crate) fn parser<'a>()
       .then(
         expr
           .clone()
-          .delimited_by(just('('), just(')'))
           .separated_by(just(','))
           .allow_trailing()
           .collect::<Vec<_>>()
@@ -26,7 +25,11 @@ pub(crate) fn parser<'a>()
       .map(Ast::Identifier)
       .map_with(|ast, e| (ast, e.span()));
 
-    let atom = number.or(call).or(identifier);
+    let atom = number
+      .or(expr.delimited_by(just('('), just(')')))
+      .or(call)
+      .or(identifier)
+      .padded();
 
     let op = |c| just(c).padded();
 

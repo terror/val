@@ -27,9 +27,15 @@ impl Arguments {
           println!("{value}");
           Ok(())
         }
-        Err(error) => error.report(&filename, &content),
+        Err(error) => {
+          error.report(&filename, &content)?;
+          process::exit(1);
+        }
       },
-      (_, errors) => report_parse_errors(&filename, &content, &errors),
+      (_, errors) => {
+        report_parse_errors(&filename, &content, &errors)?;
+        process::exit(1);
+      }
     }
   }
 

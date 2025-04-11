@@ -29,7 +29,7 @@ impl Error {
 
     report
       .finish()
-      .print((source_id, Source::from(source_content)))?;
+      .eprint((source_id, Source::from(source_content)))?;
 
     Ok(())
   }
@@ -63,7 +63,7 @@ pub(crate) fn report_parse_errors<'a>(
 
     report
       .finish()
-      .print((source_id.to_owned(), Source::from(source_content)))?;
+      .eprint((source_id.to_owned(), Source::from(source_content)))?;
   }
 
   Ok(())

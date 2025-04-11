@@ -1,30 +1,35 @@
-#[allow(unused)]
 use {
+  Match::*,
   executable_path::executable_path,
-  indoc::indoc,
   pretty_assertions::assert_eq,
   std::{fs::File, io::Write, process::Command, str},
   tempfile::TempDir,
   unindent::Unindent,
 };
 
+#[derive(Clone, Debug)]
+enum Match<'a> {
+  Contains(&'a str),
+  Empty,
+  Exact(&'a str),
+}
+
 type Result<T = (), E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
 
 struct Test<'a> {
   expected_status: i32,
-  expected_stderr: String,
-  expected_stdout: String,
+  expected_stderr: Match<'a>,
+  expected_stdout: Match<'a>,
   program: &'a str,
   tempdir: TempDir,
 }
 
-#[allow(unused)]
 impl<'a> Test<'a> {
   fn new() -> Result<Self> {
     Ok(Self {
       expected_status: 0,
-      expected_stderr: String::new(),
-      expected_stdout: String::new(),
+      expected_stderr: Match::Empty,
+      expected_stdout: Match::Empty,
       program: "",
       tempdir: TempDir::new()?,
     })
@@ -37,16 +42,16 @@ impl<'a> Test<'a> {
     }
   }
 
-  fn expected_stderr(self, expected_stderr: &str) -> Self {
+  fn expected_stderr(self, expected_stderr: Match<'a>) -> Self {
     Self {
-      expected_stderr: expected_stderr.unindent(),
+      expected_stderr,
       ..self
     }
   }
 
-  fn expected_stdout(self, expected_stdout: &str) -> Self {
+  fn expected_stdout(self, expected_stdout: Match<'a>) -> Self {
     Self {
-      expected_stdout: expected_stdout.unindent(),
+      expected_stdout,
       ..self
     }
   }
@@ -79,15 +84,53 @@ impl<'a> Test<'a> {
 
     let stderr = str::from_utf8(&output.stderr)?;
 
-    assert_eq!(stderr, self.expected_stderr, "Stderr mismatch.");
-
-    if self.expected_stderr.is_empty() && !stderr.is_empty() {
-      panic!("Expected empty stderr, but received: {}", stderr);
-    } else {
-      assert_eq!(stderr, self.expected_stderr);
+    match &self.expected_stderr {
+      Match::Empty => {
+        if !stderr.is_empty() {
+          panic!("Expected empty stderr, but received: {}", stderr);
+        }
+      }
+      Match::Contains(pattern) => {
+        assert!(
+          stderr.contains(pattern),
+          "Expected stderr to contain: '{}', but got: '{}'",
+          pattern,
+          stderr
+        );
+      }
+      Match::Exact(expected) => {
+        assert_eq!(
+          stderr, *expected,
+          "Expected exact stderr: '{}', but got: '{}'",
+          expected, stderr
+        );
+      }
     }
 
-    assert_eq!(str::from_utf8(&output.stdout)?, self.expected_stdout);
+    let stdout = str::from_utf8(&output.stdout)?;
+
+    match &self.expected_stdout {
+      Match::Empty => {
+        if !stdout.is_empty() {
+          panic!("Expected empty stdout, but received: {}", stdout);
+        }
+      }
+      Match::Contains(pattern) => {
+        assert!(
+          stdout.contains(pattern),
+          "Expected stdout to contain: '{}', but got: '{}'",
+          pattern,
+          stdout
+        );
+      }
+      Match::Exact(expected) => {
+        assert_eq!(
+          stdout, *expected,
+          "Expected exact stdout: '{}', but got: '{}'",
+          expected, stdout
+        );
+      }
+    }
 
     assert_eq!(output.status.code(), Some(self.expected_status));
 
@@ -100,7 +143,7 @@ fn integer_literal() -> Result {
   Test::new()?
     .program("25")
     .expected_status(0)
-    .expected_stdout("25\n")
+    .expected_stdout(Exact("25\n"))
     .run()
 }
 
@@ -109,18 +152,42 @@ fn negate_integer_literal() -> Result {
   Test::new()?
     .program("-25")
     .expected_status(0)
-    .expected_stdout("-25\n")
+    .expected_stdout(Exact("-25\n"))
     .run()?;
 
   Test::new()?
     .program("--25")
     .expected_status(0)
-    .expected_stdout("25\n")
+    .expected_stdout(Exact("25\n"))
     .run()?;
 
   Test::new()?
     .program("- - - -25")
     .expected_status(0)
-    .expected_stdout("25\n")
+    .expected_stdout(Exact("25\n"))
+    .run()
+}
+
+#[test]
+fn call_builtin_function() -> Result {
+  Test::new()?
+    .program("sin(1)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.8414709848078965\n"))
+    .run()?;
+
+  Test::new()?
+    .program("cos(1)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.5403023058681398\n"))
+    .run()
+}
+
+#[test]
+fn undefined_variable() -> Result {
+  Test::new()?
+    .program("foo")
+    .expected_status(1)
+    .expected_stderr(Contains("Undefined variable 'foo'\n"))
     .run()
 }
