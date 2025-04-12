@@ -3,7 +3,7 @@ use {
     arguments::Arguments,
     ast::{Ast, BinaryOp, UnaryOp},
     error::Error,
-    eval::eval,
+    evaluator::eval,
     parser::parse,
     value::Value,
   },
@@ -25,7 +25,7 @@ mod arguments;
 mod ast;
 mod environment;
 mod error;
-mod eval;
+mod evaluator;
 mod parser;
 mod value;
 
