@@ -1,9 +1,9 @@
 [package]
 name = "val"
-version = "0.0.0"
+version = "0.1.0"
 authors = ["Liam <liam@scalzulli.com>"]
 categories = ["science", "parser-implementations", "command-line-interface"]
-description = "A language server for just"
+description = "An arbitrary precision calculator language"
 edition = "2024"
 homepage = "https://github.com/terror/val"
 keywords = ["productivity", "compilers"]
