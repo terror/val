@@ -43,6 +43,56 @@ impl<'src> Environment<'src> {
       }
     });
 
+    env.add_builtin_function("arc", |args, span| {
+      if args.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!("Function 'arc' expects 1 argument, got {}", args.len()),
+        ));
+      }
+
+      match &args[0] {
+        Value::Num(n) => Ok(Value::Num(n.atan())),
+        _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
+      }
+    });
+
+    env.add_builtin_function("log", |args, span| {
+      if args.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!("Function 'log' expects 1 argument, got {}", args.len()),
+        ));
+      }
+
+      match &args[0] {
+        Value::Num(n) => {
+          if *n <= 0.0 {
+            return Err(Error::new(
+              span,
+              "Cannot take logarithm of zero or negative number",
+            ));
+          }
+          Ok(Value::Num(n.ln()))
+        }
+        _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
+      }
+    });
+
+    env.add_builtin_function("e", |args, span| {
+      if args.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!("Function 'e' expects 1 argument, got {}", args.len()),
+        ));
+      }
+
+      match &args[0] {
+        Value::Num(n) => Ok(Value::Num(n.exp())),
+        _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
+      }
+    });
+
     env.add_variable("e", Value::Num(std::f64::consts::E));
     env.add_variable("pi", Value::Num(std::f64::consts::PI));
 

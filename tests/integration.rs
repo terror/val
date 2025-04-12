@@ -139,7 +139,7 @@ impl<'a> Test<'a> {
 }
 
 #[test]
-fn integer_literal() -> Result {
+fn integer_literalog() -> Result {
   Test::new()?
     .program("25")
     .expected_status(0)
@@ -148,7 +148,7 @@ fn integer_literal() -> Result {
 }
 
 #[test]
-fn negate_integer_literal() -> Result {
+fn negate_integer_literalog() -> Result {
   Test::new()?
     .program("-25")
     .expected_status(0)
@@ -381,5 +381,105 @@ fn power() -> Result {
     .program("2 ^ 0")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
+    .run()
+}
+
+#[test]
+fn arctangent() -> Result {
+  Test::new()?
+    .program("arc(1)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.7853981633974483\n"))
+    .run()?;
+
+  Test::new()?
+    .program("arc(0)")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()?;
+
+  Test::new()?
+    .program("arc(-1)")
+    .expected_status(0)
+    .expected_stdout(Exact("-0.7853981633974483\n"))
+    .run()?;
+
+  Test::new()?
+    .program("arc()")
+    .expected_status(1)
+    .expected_stderr(Contains("Function 'arc' expects 1 argument, got 0"))
+    .run()
+}
+
+#[test]
+fn natural_logarithm() -> Result {
+  Test::new()?
+    .program("log(1)")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()?;
+
+  Test::new()?
+    .program("log(e)")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("log(10)")
+    .expected_status(0)
+    .expected_stdout(Exact("2.302585092994046\n"))
+    .run()?;
+
+  Test::new()?
+    .program("log()")
+    .expected_status(1)
+    .expected_stderr(Contains("Function 'log' expects 1 argument, got 0"))
+    .run()?;
+
+  Test::new()?
+    .program("log(0)")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "Cannot take logarithm of zero or negative number",
+    ))
+    .run()?;
+
+  Test::new()?
+    .program("log(-1)")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "Cannot take logarithm of zero or negative number",
+    ))
+    .run()
+}
+
+#[test]
+fn builtin_variables_and_functions_can_coexist() -> Result {
+  Test::new()?
+    .program("e * e(20)")
+    .expected_status(0)
+    .expected_stdout(Exact("1318815734.4832146\n"))
+    .run()
+}
+
+#[test]
+fn functions_with_constants() -> Result {
+  Test::new()?
+    .program("arc(pi / 4)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.6657737500283538\n"))
+    .run()?;
+
+  Test::new()?
+    .program("log(e * 2)")
+    .expected_status(0)
+    .expected_stdout(Exact("1.6931471805599452\n"))
+    .run()?;
+
+  Test::new()?
+    .program("e(pi)")
+    .expected_status(0)
+    .expected_stdout(Exact("23.140692632779267\n"))
     .run()
 }
