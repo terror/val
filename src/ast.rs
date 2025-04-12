@@ -1,13 +1,13 @@
 use super::*;
 
 #[derive(Debug, Clone)]
-pub(crate) enum UnaryOp {
+pub enum UnaryOp {
   Neg,
 }
 
 #[derive(Debug, Clone)]
 #[allow(unused)]
-pub(crate) enum BinaryOp {
+pub enum BinaryOp {
   Add,
   Div,
   Mod,
@@ -18,7 +18,7 @@ pub(crate) enum BinaryOp {
 
 #[derive(Debug)]
 #[allow(unused)]
-pub(crate) enum Ast<'a> {
+pub enum Ast<'a> {
   BinaryOp(BinaryOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
   Call(&'a str, Vec<Spanned<Self>>),
   Identifier(&'a str),

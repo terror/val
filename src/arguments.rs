@@ -2,12 +2,12 @@ use super::*;
 
 #[derive(Clap)]
 #[clap(author, version)]
-pub(crate) struct Arguments {
-  pub(crate) filename: Option<PathBuf>,
+pub struct Arguments {
+  filename: Option<PathBuf>,
 }
 
 impl Arguments {
-  pub(crate) fn run(self) -> Result {
+  pub fn run(self) -> Result {
     match self.filename {
       Some(filename) => Self::eval(filename),
       None => Self::read(),

@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) fn eval<'a>(
+pub fn eval<'a>(
   ast: &Spanned<Ast<'a>>,
   env: &Environment<'a>,
 ) -> Result<Value<'a>, Error> {

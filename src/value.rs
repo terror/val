@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Clone, Debug, PartialEq)]
 #[allow(unused)]
-pub(crate) enum Value<'src> {
+pub enum Value<'src> {
   Null,
   Bool(bool),
   Num(f64),
@@ -25,7 +25,7 @@ impl Display for Value<'_> {
 }
 
 impl Value<'_> {
-  pub(crate) fn num(self, span: Span) -> Result<f64, Error> {
+  pub fn num(self, span: Span) -> Result<f64, Error> {
     if let Value::Num(x) = self {
       Ok(x)
     } else {

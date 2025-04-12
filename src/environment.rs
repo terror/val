@@ -1,15 +1,15 @@
 use super::*;
 
-pub(crate) type BuiltinFunction<'src> =
+pub type BuiltinFunction<'src> =
   fn(Vec<Value<'src>>, Span) -> Result<Value<'src>, Error>;
 
-pub(crate) struct Environment<'src> {
+pub struct Environment<'src> {
   functions: HashMap<&'src str, BuiltinFunction<'src>>,
   variables: HashMap<&'src str, Value<'src>>,
 }
 
 impl<'src> Environment<'src> {
-  pub(crate) fn new() -> Self {
+  pub fn new() -> Self {
     let mut env = Self {
       functions: HashMap::new(),
       variables: HashMap::new(),
@@ -99,7 +99,7 @@ impl<'src> Environment<'src> {
     env
   }
 
-  pub(crate) fn add_builtin_function(
+  pub fn add_builtin_function(
     &mut self,
     name: &'src str,
     func: BuiltinFunction<'src>,
@@ -107,22 +107,19 @@ impl<'src> Environment<'src> {
     self.functions.insert(name, func);
   }
 
-  pub(crate) fn add_variable(&mut self, name: &'src str, value: Value<'src>) {
+  pub fn add_variable(&mut self, name: &'src str, value: Value<'src>) {
     self.variables.insert(name, value);
   }
 
-  pub(crate) fn get_variable(&self, name: &str) -> Option<&Value<'src>> {
+  pub fn get_variable(&self, name: &str) -> Option<&Value<'src>> {
     self.variables.get(name)
   }
 
-  pub(crate) fn get_function(
-    &self,
-    name: &str,
-  ) -> Option<&BuiltinFunction<'src>> {
+  pub fn get_function(&self, name: &str) -> Option<&BuiltinFunction<'src>> {
     self.functions.get(name)
   }
 
-  pub(crate) fn call_function(
+  pub fn call_function(
     &self,
     name: &str,
     args: Vec<Value<'src>>,

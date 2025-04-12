@@ -47,6 +47,7 @@ install-dev-deps:
   rustup install nightly
   rustup update nightly
   cargo install cargo-watch
+  cargo install wasm-bindgen-cli
 
 [group: 'release']
 publish:

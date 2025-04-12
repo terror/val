@@ -67,7 +67,7 @@ fn parser<'a>()
   })
 }
 
-pub(crate) fn parse(input: &str) -> Result<Spanned<Ast<'_>>, Vec<Error>> {
+pub fn parse(input: &str) -> Result<Spanned<Ast<'_>>, Vec<Error>> {
   let result = parser().parse(input);
 
   match result.into_output_errors() {
