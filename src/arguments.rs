@@ -19,8 +19,10 @@ impl Arguments {
 
     let filename = filename.to_string_lossy().to_string();
 
+    let environment = Environment::new();
+
     match parse(content.trim()) {
-      Ok(ast) => match eval(&ast) {
+      Ok(ast) => match eval(&ast, &environment) {
         Ok(value) => {
           println!("{value}");
           Ok(())
@@ -58,8 +60,10 @@ impl Arguments {
         continue;
       }
 
+      let environment = Environment::new();
+
       match parse(input) {
-        Ok(ast) => match eval(&ast) {
+        Ok(ast) => match eval(&ast, &environment) {
           Ok(value) => println!("{}", value),
           Err(error) => error.report("<input>", input)?,
         },

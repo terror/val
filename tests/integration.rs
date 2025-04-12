@@ -290,13 +290,13 @@ fn modulo() -> Result {
   Test::new()?
     .program("7 % 4")
     .expected_status(0)
-    .expected_stdout(Exact("1.75\n"))
+    .expected_stdout(Exact("3\n"))
     .run()?;
 
   Test::new()?
     .program("10 % 3")
     .expected_status(0)
-    .expected_stdout(Exact("3.3333333333333335\n"))
+    .expected_stdout(Exact("1\n"))
     .run()
 }
 
@@ -347,7 +347,7 @@ fn combined_operations() -> Result {
   Test::new()?
     .program("10 % 3 + 4 * 2 - 1")
     .expected_status(0)
-    .expected_stdout(Exact("10.333333333333334\n"))
+    .expected_stdout(Exact("8\n"))
     .run()?;
 
   Test::new()?

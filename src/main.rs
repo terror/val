@@ -7,11 +7,13 @@ use {
     parser::parse,
     value::Value,
   },
+  environment::Environment,
   ariadne::{Color, Label, Report, ReportKind, Source},
   chumsky::prelude::*,
   clap::Parser as Clap,
   std::{
     fmt::{Display, Formatter},
+    collections::HashMap,
     fs,
     io::{self, BufRead, Write},
     path::PathBuf,
@@ -21,6 +23,7 @@ use {
 
 mod arguments;
 mod ast;
+mod environment;
 mod error;
 mod eval;
 mod parser;
