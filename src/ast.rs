@@ -20,7 +20,6 @@ pub(crate) enum BinaryOp {
 pub(crate) enum Ast<'a> {
   BinaryOp(BinaryOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
   Call(&'a str, Vec<Spanned<Self>>),
-  Error,
   Identifier(&'a str),
   Number(f64),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),

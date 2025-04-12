@@ -1,6 +1,6 @@
 use super::*;
 
-pub(crate) fn parser<'a>()
+fn parser<'a>()
 -> impl Parser<'a, &'a str, Spanned<Ast<'a>>, extra::Err<Rich<'a, char>>> {
   let identifier = text::ident().padded();
 
@@ -40,4 +40,25 @@ pub(crate) fn parser<'a>()
 
     unary
   })
+}
+
+pub(crate) fn parse<'a>(
+  input: &'a str,
+) -> Result<Spanned<Ast<'a>>, Vec<Error>> {
+  let result = parser().parse(input);
+
+  match result.into_output_errors() {
+    (Some(ast), errors) if errors.is_empty() => Ok(ast),
+    (_, errors) => Err(
+      errors
+        .into_iter()
+        .map(|error| {
+          Error::new(
+            error.span().to_owned(),
+            format!("error: {}", error.to_string()),
+          )
+        })
+        .collect(),
+    ),
+  }
 }

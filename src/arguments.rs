@@ -9,20 +9,18 @@ pub(crate) struct Arguments {
 impl Arguments {
   pub(crate) fn run(self) -> Result {
     match self.filename {
-      Some(filename) => Self::eval_file(filename),
-      None => Self::start_repl(),
+      Some(filename) => Self::eval(filename),
+      None => Self::read(),
     }
   }
 
-  fn eval_file(filename: PathBuf) -> Result {
+  fn eval(filename: PathBuf) -> Result {
     let content = fs::read_to_string(&filename)?;
 
     let filename = filename.to_string_lossy().to_string();
 
-    let result = parser().parse(content.trim());
-
-    match result.into_output_errors() {
-      (Some(ast), errors) if errors.is_empty() => match eval(&ast) {
+    match parse(content.trim()) {
+      Ok(ast) => match eval(&ast) {
         Ok(value) => {
           println!("{value}");
           Ok(())
@@ -32,14 +30,17 @@ impl Arguments {
           process::exit(1);
         }
       },
-      (_, errors) => {
-        report_parse_errors(&filename, &content, &errors)?;
+      Err(errors) => {
+        for error in errors {
+          error.report(&filename, &content)?;
+        }
+
         process::exit(1);
       }
     }
   }
 
-  fn start_repl() -> Result {
+  fn read() -> Result {
     loop {
       let mut buffer = String::new();
 
@@ -57,15 +58,15 @@ impl Arguments {
         continue;
       }
 
-      let result = parser().parse(input);
-
-      match result.into_output_errors() {
-        (Some(ast), errors) if errors.is_empty() => match eval(&ast) {
+      match parse(input) {
+        Ok(ast) => match eval(&ast) {
           Ok(value) => println!("{}", value),
           Err(error) => error.report("<input>", input)?,
         },
-        (_, errors) => {
-          report_parse_errors("<input>", input, &errors)?;
+        Err(errors) => {
+          for error in errors {
+            error.report("<input>", input)?;
+          }
         }
       }
     }

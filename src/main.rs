@@ -2,9 +2,9 @@ use {
   crate::{
     arguments::Arguments,
     ast::{Ast, BinaryOp, UnaryOp},
-    error::{Error, report_parse_errors},
+    error::Error,
     eval::eval,
-    parser::parser,
+    parser::parse,
     value::Value,
   },
   ariadne::{Color, Label, Report, ReportKind, Source},
