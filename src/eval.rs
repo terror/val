@@ -1,12 +1,15 @@
 use super::*;
 
-pub(crate) fn eval<'a>(ast: &Spanned<Ast<'a>>, env: &Environment<'a>) -> Result<Value<'a>, Error> {
+pub(crate) fn eval<'a>(
+  ast: &Spanned<Ast<'a>>,
+  env: &Environment<'a>,
+) -> Result<Value<'a>, Error> {
   let (node, span) = ast;
 
   match node {
-    Ast::BinaryOp(BinaryOp::Add, lhs, rhs) => {
-      Ok(Value::Num(eval(lhs, env)?.num(lhs.1)? + eval(rhs, env)?.num(rhs.1)?))
-    }
+    Ast::BinaryOp(BinaryOp::Add, lhs, rhs) => Ok(Value::Num(
+      eval(lhs, env)?.num(lhs.1)? + eval(rhs, env)?.num(rhs.1)?,
+    )),
     Ast::BinaryOp(BinaryOp::Div, lhs, rhs) => {
       let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
 
@@ -29,12 +32,12 @@ pub(crate) fn eval<'a>(ast: &Spanned<Ast<'a>>, env: &Environment<'a>) -> Result<
 
       Ok(Value::Num(lhs_num % rhs_num))
     }
-    Ast::BinaryOp(BinaryOp::Mul, lhs, rhs) => {
-      Ok(Value::Num(eval(lhs, env)?.num(lhs.1)? * eval(rhs, env)?.num(rhs.1)?))
-    }
-    Ast::BinaryOp(BinaryOp::Sub, lhs, rhs) => {
-      Ok(Value::Num(eval(lhs, env)?.num(lhs.1)? - eval(rhs, env)?.num(rhs.1)?))
-    }
+    Ast::BinaryOp(BinaryOp::Mul, lhs, rhs) => Ok(Value::Num(
+      eval(lhs, env)?.num(lhs.1)? * eval(rhs, env)?.num(rhs.1)?,
+    )),
+    Ast::BinaryOp(BinaryOp::Sub, lhs, rhs) => Ok(Value::Num(
+      eval(lhs, env)?.num(lhs.1)? - eval(rhs, env)?.num(rhs.1)?,
+    )),
     Ast::Call(name, arguments) => {
       let mut evaluated_arguments = Vec::with_capacity(arguments.len());
 
@@ -43,14 +46,14 @@ pub(crate) fn eval<'a>(ast: &Spanned<Ast<'a>>, env: &Environment<'a>) -> Result<
       }
 
       env.call_function(name, evaluated_arguments, *span)
-    },
-    Ast::Identifier(name) => {
-      match env.get_variable(name) {
-        Some(value) => Ok(value.clone()),
-        None => Err(Error::new(*span, format!("Undefined variable '{}'", name))),
-      }
     }
+    Ast::Identifier(name) => match env.get_variable(name) {
+      Some(value) => Ok(value.clone()),
+      None => Err(Error::new(*span, format!("Undefined variable '{}'", name))),
+    },
     Ast::Number(n) => Ok(Value::Num(*n)),
-    Ast::UnaryOp(UnaryOp::Neg, rhs) => Ok(Value::Num(-eval(rhs, env)?.num(rhs.1)?)),
+    Ast::UnaryOp(UnaryOp::Neg, rhs) => {
+      Ok(Value::Num(-eval(rhs, env)?.num(rhs.1)?))
+    }
   }
 }
