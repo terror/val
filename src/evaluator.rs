@@ -35,6 +35,13 @@ pub(crate) fn eval<'a>(
     Ast::BinaryOp(BinaryOp::Mul, lhs, rhs) => Ok(Value::Num(
       eval(lhs, env)?.num(lhs.1)? * eval(rhs, env)?.num(rhs.1)?,
     )),
+    Ast::BinaryOp(BinaryOp::Pow, lhs, rhs) => {
+      let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
+
+      let (lhs_num, rhs_num) = (lhs_val.num(lhs.1)?, rhs_val.num(rhs.1)?);
+
+      Ok(Value::Num(lhs_num.powf(rhs_num)))
+    }
     Ast::BinaryOp(BinaryOp::Sub, lhs, rhs) => Ok(Value::Num(
       eval(lhs, env)?.num(lhs.1)? - eval(rhs, env)?.num(rhs.1)?,
     )),

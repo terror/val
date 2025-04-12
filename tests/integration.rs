@@ -356,3 +356,30 @@ fn combined_operations() -> Result {
     .expected_stdout(Exact("-5\n"))
     .run()
 }
+
+#[test]
+fn power() -> Result {
+  Test::new()?
+    .program("2 ^ 3")
+    .expected_status(0)
+    .expected_stdout(Exact("8\n"))
+    .run()?;
+
+  Test::new()?
+    .program("10 ^ 2")
+    .expected_status(0)
+    .expected_stdout(Exact("100\n"))
+    .run()?;
+
+  Test::new()?
+    .program("2 ^ -1")
+    .expected_status(0)
+    .expected_stdout(Exact("0.5\n"))
+    .run()?;
+
+  Test::new()?
+    .program("2 ^ 0")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()
+}

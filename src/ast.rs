@@ -12,6 +12,7 @@ pub(crate) enum BinaryOp {
   Div,
   Mod,
   Mul,
+  Pow,
   Sub,
 }
 

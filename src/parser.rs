@@ -40,9 +40,10 @@ fn parser<'a>()
 
     let product = unary.clone().foldl(
       choice((
+        op('%').to(BinaryOp::Mod),
         op('*').to(BinaryOp::Mul),
         op('/').to(BinaryOp::Div),
-        op('%').to(BinaryOp::Mod),
+        op('^').to(BinaryOp::Pow),
       ))
       .then(unary.clone())
       .repeated(),
