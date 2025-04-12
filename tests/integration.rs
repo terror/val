@@ -191,3 +191,168 @@ fn undefined_variable() -> Result {
     .expected_stderr(Contains("Undefined variable 'foo'\n"))
     .run()
 }
+
+#[test]
+fn addition() -> Result {
+  Test::new()?
+    .program("2 + 3")
+    .expected_status(0)
+    .expected_stdout(Exact("5\n"))
+    .run()?;
+
+  Test::new()?
+    .program("2 + 3 + 4")
+    .expected_status(0)
+    .expected_stdout(Exact("9\n"))
+    .run()?;
+
+  Test::new()?
+    .program("-5 + 10")
+    .expected_status(0)
+    .expected_stdout(Exact("5\n"))
+    .run()
+}
+
+#[test]
+fn subtraction() -> Result {
+  Test::new()?
+    .program("5 - 3")
+    .expected_status(0)
+    .expected_stdout(Exact("2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("10 - 5 - 2")
+    .expected_status(0)
+    .expected_stdout(Exact("3\n"))
+    .run()?;
+
+  Test::new()?
+    .program("5 - 10")
+    .expected_status(0)
+    .expected_stdout(Exact("-5\n"))
+    .run()
+}
+
+#[test]
+fn multiplication() -> Result {
+  Test::new()?
+    .program("2 * 3")
+    .expected_status(0)
+    .expected_stdout(Exact("6\n"))
+    .run()?;
+
+  Test::new()?
+    .program("2 * 3 * 4")
+    .expected_status(0)
+    .expected_stdout(Exact("24\n"))
+    .run()?;
+
+  Test::new()?
+    .program("-5 * 10")
+    .expected_status(0)
+    .expected_stdout(Exact("-50\n"))
+    .run()
+}
+
+#[test]
+fn division() -> Result {
+  Test::new()?
+    .program("6 / 3")
+    .expected_status(0)
+    .expected_stdout(Exact("2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("10 / 2 / 5")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("10 / 4")
+    .expected_status(0)
+    .expected_stdout(Exact("2.5\n"))
+    .run()
+}
+
+#[test]
+fn division_by_zero() -> Result {
+  Test::new()?
+    .program("5 / 0")
+    .expected_status(1)
+    .expected_stderr(Contains("Division by zero"))
+    .run()
+}
+
+#[test]
+fn modulo() -> Result {
+  Test::new()?
+    .program("7 % 4")
+    .expected_status(0)
+    .expected_stdout(Exact("1.75\n"))
+    .run()?;
+
+  Test::new()?
+    .program("10 % 3")
+    .expected_status(0)
+    .expected_stdout(Exact("3.3333333333333335\n"))
+    .run()
+}
+
+#[test]
+fn modulo_by_zero() -> Result {
+  Test::new()?
+    .program("5 % 0")
+    .expected_status(1)
+    .expected_stderr(Contains("Modulo by zero"))
+    .run()
+}
+
+#[test]
+fn operator_precedence() -> Result {
+  Test::new()?
+    .program("2 + 3 * 4")
+    .expected_status(0)
+    .expected_stdout(Exact("14\n"))
+    .run()?;
+
+  Test::new()?
+    .program("(2 + 3) * 4")
+    .expected_status(0)
+    .expected_stdout(Exact("20\n"))
+    .run()?;
+
+  Test::new()?
+    .program("2 * 3 + 4 * 5")
+    .expected_status(0)
+    .expected_stdout(Exact("26\n"))
+    .run()?;
+
+  Test::new()?
+    .program("10 - 6 / 2")
+    .expected_status(0)
+    .expected_stdout(Exact("7\n"))
+    .run()
+}
+
+#[test]
+fn combined_operations() -> Result {
+  Test::new()?
+    .program("2 + 3 * 4 - 5 / 2")
+    .expected_status(0)
+    .expected_stdout(Exact("11.5\n"))
+    .run()?;
+
+  Test::new()?
+    .program("10 % 3 + 4 * 2 - 1")
+    .expected_status(0)
+    .expected_stdout(Exact("10.333333333333334\n"))
+    .run()?;
+
+  Test::new()?
+    .program("-5 * (2 + 3) / 5")
+    .expected_status(0)
+    .expected_stdout(Exact("-5\n"))
+    .run()
+}

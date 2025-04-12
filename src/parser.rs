@@ -38,7 +38,31 @@ fn parser<'a>()
       (Ast::UnaryOp(UnaryOp::Neg, Box::new(rhs)), span)
     });
 
-    unary
+    let product = unary.clone().foldl(
+      choice((
+        op('*').to(BinaryOp::Mul),
+        op('/').to(BinaryOp::Div),
+        op('%').to(BinaryOp::Mod),
+      ))
+      .then(unary.clone())
+      .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Ast::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
+      },
+    );
+
+    let sum = product.clone().foldl(
+      choice((op('+').to(BinaryOp::Add), op('-').to(BinaryOp::Sub)))
+        .then(product)
+        .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Ast::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
+      },
+    );
+
+    sum
   })
 }
 

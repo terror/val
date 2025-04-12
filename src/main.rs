@@ -26,10 +26,9 @@ mod eval;
 mod parser;
 mod value;
 
+type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 type Span = SimpleSpan<usize>;
 type Spanned<T> = (T, Span);
-
-type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
 fn main() {
   if let Err(error) = Arguments::parse().run() {
