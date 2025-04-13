@@ -47,6 +47,8 @@ fn parser<'a>()
         op('%').to(BinaryOp::Mod),
         op('*').to(BinaryOp::Mul),
         op('/').to(BinaryOp::Div),
+        op('<').to(BinaryOp::Lt),
+        op('>').to(BinaryOp::Gt),
         op('^').to(BinaryOp::Pow),
       ))
       .then(unary.clone())

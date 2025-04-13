@@ -549,3 +549,33 @@ fn square_root() -> Result {
     .expected_stderr(Contains("Cannot take square root of negative number"))
     .run()
 }
+
+#[test]
+fn less_than() -> Result {
+  Test::new()?
+    .program("1 < 2")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("1 < -1")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()
+}
+
+#[test]
+fn greater_than() -> Result {
+  Test::new()?
+    .program("1 > 2")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("1 > -1")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()
+}

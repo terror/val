@@ -14,12 +14,12 @@ pub enum Value<'src> {
 impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      Value::Boolean(b) => write!(f, "{}", b),
-      Value::Function(s) => write!(f, "<function: {}>", s),
+      Value::Boolean(b) => write!(f, "{b}"),
+      Value::Function(s) => write!(f, "<function: {s}>"),
       Value::List(l) => write!(f, "{:?}", l),
       Value::Null => write!(f, "null"),
-      Value::Number(n) => write!(f, "{}", n),
-      Value::String(s) => write!(f, "{}", s),
+      Value::Number(n) => write!(f, "{n}"),
+      Value::String(s) => write!(f, "{s}"),
     }
   }
 }

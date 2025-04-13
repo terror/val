@@ -18,6 +18,8 @@ impl Display for UnaryOp {
 pub enum BinaryOp {
   Add,
   Div,
+  Gt,
+  Lt,
   Mod,
   Mul,
   Pow,
@@ -29,6 +31,8 @@ impl Display for BinaryOp {
     match self {
       BinaryOp::Add => write!(f, "+"),
       BinaryOp::Div => write!(f, "/"),
+      BinaryOp::Gt => write!(f, ">"),
+      BinaryOp::Lt => write!(f, "<"),
       BinaryOp::Mod => write!(f, "%"),
       BinaryOp::Mul => write!(f, "*"),
       BinaryOp::Pow => write!(f, "^"),

@@ -21,6 +21,12 @@ pub fn eval<'a>(
 
       Ok(Value::Number(lhs_num / rhs_num))
     }
+    Ast::BinaryOp(BinaryOp::Gt, lhs, rhs) => Ok(Value::Boolean(
+      eval(lhs, env)?.number(lhs.1)? > eval(rhs, env)?.number(rhs.1)?,
+    )),
+    Ast::BinaryOp(BinaryOp::Lt, lhs, rhs) => Ok(Value::Boolean(
+      eval(lhs, env)?.number(lhs.1)? < eval(rhs, env)?.number(rhs.1)?,
+    )),
     Ast::BinaryOp(BinaryOp::Mod, lhs, rhs) => {
       let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
 
