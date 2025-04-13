@@ -447,31 +447,31 @@ fn arctangent() -> Result {
 #[test]
 fn natural_logarithm() -> Result {
   Test::new()?
-    .program("log(1)")
+    .program("ln(1)")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("log(e)")
+    .program("ln(e)")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
-    .program("log(10)")
+    .program("ln(10)")
     .expected_status(0)
     .expected_stdout(Exact("2.302585092994046\n"))
     .run()?;
 
   Test::new()?
-    .program("log()")
+    .program("ln()")
     .expected_status(1)
     .expected_stderr(Contains("Function 'log' expects 1 argument, got 0"))
     .run()?;
 
   Test::new()?
-    .program("log(0)")
+    .program("ln(0)")
     .expected_status(1)
     .expected_stderr(Contains(
       "Cannot take logarithm of zero or negative number",
@@ -479,7 +479,7 @@ fn natural_logarithm() -> Result {
     .run()?;
 
   Test::new()?
-    .program("log(-1)")
+    .program("ln(-1)")
     .expected_status(1)
     .expected_stderr(Contains(
       "Cannot take logarithm of zero or negative number",
@@ -505,7 +505,7 @@ fn functions_with_constants() -> Result {
     .run()?;
 
   Test::new()?
-    .program("log(e * 2)")
+    .program("ln(e * 2)")
     .expected_status(0)
     .expected_stdout(Exact("1.6931471805599452\n"))
     .run()?;

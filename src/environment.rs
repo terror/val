@@ -55,7 +55,7 @@ impl<'src> Environment<'src> {
       }
     });
 
-    env.add_builtin_function("log", |args, span| {
+    env.add_builtin_function("ln", |args, span| {
       if args.len() != 1 {
         return Err(Error::new(
           span,
