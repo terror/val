@@ -11,6 +11,9 @@ license = "CC0-1.0"
 repository = "https://github.com/terror/val"
 resolver = "2"
 
+[workspace]
+members = [".", "crates/*"]
+
 [dependencies]
 anyhow = "1.0.97"
 ariadne = "0.5.1"

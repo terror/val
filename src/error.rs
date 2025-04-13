@@ -14,25 +14,21 @@ impl Error {
     }
   }
 
-  pub fn report(&self, source_id: &str, source_content: &str) -> Result {
+  pub fn report<'a>(&self, id: &'a str) -> Report<'a, (&'a str, Range<usize>)> {
     let span_range = self.span.into_range();
 
     let mut report = Report::build(
       ReportKind::Custom("error", Color::Red),
-      (source_id, span_range.clone()),
+      (id, span_range.clone()),
     )
     .with_message(&self.message);
 
     report = report.with_label(
-      Label::new((source_id, span_range))
+      Label::new((id, span_range))
         .with_message(&self.message)
         .with_color(Color::Red),
     );
 
-    report
-      .finish()
-      .eprint((source_id, Source::from(source_content)))?;
-
-    Ok(())
+    report.finish()
   }
 }

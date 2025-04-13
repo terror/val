@@ -9,9 +9,15 @@ alias t := test
 
 all: build test clippy fmt-check
 
-[group: 'misc']
+[group: 'dev']
 build:
   cargo build
+
+[group: 'web']
+build-wasm:
+  wasm-pack build crates/val-wasm --target web \
+    --out-name val \
+    --out-dir ../../www/packages/wasm
 
 [group: 'check']
 check:
@@ -34,6 +40,10 @@ fmt:
 fmt-check:
   cargo +nightly fmt --all -- --check
 
+[group: 'format']
+fmt-web:
+  cd www && prettier --write .
+
 [group: 'check']
 forbid:
   ./bin/forbid
@@ -48,6 +58,7 @@ install-dev-deps:
   rustup update nightly
   cargo install cargo-watch
   cargo install wasm-bindgen-cli
+  curl -fsSL https://bun.sh/install | bash
 
 [group: 'release']
 publish:
@@ -66,6 +77,10 @@ publish:
 [group: 'dev']
 run *args:
   cargo run {{ args }}
+
+[group: 'web']
+serve-web: build-wasm
+  cd www && bun run dev
 
 [group: 'test']
 test:

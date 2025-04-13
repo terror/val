@@ -28,13 +28,17 @@ impl Arguments {
           Ok(())
         }
         Err(error) => {
-          error.report(&filename, &content)?;
+          error
+            .report(&filename)
+            .eprint((filename.as_str(), Source::from(content)))?;
           process::exit(1);
         }
       },
       Err(errors) => {
         for error in errors {
-          error.report(&filename, &content)?;
+          error
+            .report(&filename)
+            .eprint((filename.as_str(), Source::from(&content)))?;
         }
 
         process::exit(1);
@@ -65,11 +69,15 @@ impl Arguments {
       match parse(input) {
         Ok(ast) => match eval(&ast, &environment) {
           Ok(value) => println!("{}", value),
-          Err(error) => error.report("<input>", input)?,
+          Err(error) => error
+            .report("<input>")
+            .eprint(("<input>", Source::from(input)))?,
         },
         Err(errors) => {
           for error in errors {
-            error.report("<input>", input)?;
+            error
+              .report("<input>")
+              .eprint(("<input>", Source::from(input)))?;
           }
         }
       }

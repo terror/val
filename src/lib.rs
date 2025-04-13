@@ -8,6 +8,7 @@ pub(crate) use {
     fmt::{Display, Formatter},
     fs,
     io::{self, BufRead, Write},
+    ops::Range,
     path::PathBuf,
     process,
   },
