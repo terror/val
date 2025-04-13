@@ -45,7 +45,7 @@ pub fn eval<'a>(
     Ast::BinaryOp(BinaryOp::Sub, lhs, rhs) => Ok(Value::Num(
       eval(lhs, env)?.num(lhs.1)? - eval(rhs, env)?.num(rhs.1)?,
     )),
-    Ast::Call(name, arguments) => {
+    Ast::FunctionCall(name, arguments) => {
       let mut evaluated_arguments = Vec::with_capacity(arguments.len());
 
       for argument in arguments {

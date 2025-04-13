@@ -2,75 +2,50 @@ import { AstNode } from '@/lib/types';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
 
-interface AttributesProps {
-  attributes: Map<string, string>;
-  depth: number;
-}
-
-const Attributes: React.FC<AttributesProps> = ({ attributes, depth }) => {
-  return !attributes || Array.from(attributes.entries()).length === 0 ? null : (
-    <>
-      {Array.from(attributes.entries()).map(([key, value]) => (
-        <div
-          key={key}
-          className='hover:bg-accent/50 flex items-center rounded-sm'
-          style={{ paddingLeft: `${depth * 16}px` }}
-        >
-          <div className='flex w-6 items-center justify-center' />
-          <div className='text-muted-foreground flex-1 px-1 py-1 font-mono text-sm'>
-            {key}: {value}
-          </div>
-        </div>
-      ))}
-    </>
-  );
-};
-
 interface TreeNodeProps {
   node: AstNode;
   depth?: number;
-  onHover: (node: AstNode) => void;
-  clearHighlight: () => void;
 }
 
-const TreeNode: React.FC<TreeNodeProps> = ({
-  node,
-  depth = 0,
-  onHover,
-  clearHighlight,
-}) => {
+const TreeNode: React.FC<TreeNodeProps> = ({ node, depth = 0 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
 
   const hasChildren = node.children && node.children.length > 0;
 
-  const attributes = node.attributes as any;
+  const style = {
+    backgroundColor: isHovered ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+    borderRadius: '2px',
+    paddingLeft: `${depth * 16}px`,
+  };
 
   return (
-    <div className='cursor-pointer select-none'>
+    <div>
       <div
-        className='hover:bg-accent/50 flex items-center rounded-sm'
+        className='flex cursor-pointer items-center py-1 font-mono text-sm whitespace-nowrap transition-colors hover:bg-blue-50'
         onClick={() => setIsExpanded(!isExpanded)}
-        onMouseLeave={clearHighlight}
-        onMouseOver={() => onHover(node)}
-        style={{ paddingLeft: `${depth * 16}px` }}
+        onMouseLeave={() => setIsHovered(false)}
+        onMouseOver={() => setIsHovered(true)}
+        style={style}
       >
-        <div
-          className={`flex cursor-pointer items-center gap-x-1 px-1 py-1 ${depth === 0 ? 'font-semibold' : ''}`}
-        >
-          {isExpanded ? (
-            <ChevronDown className='h-4 w-4' />
+        <span className='mr-1 flex w-4 justify-center'>
+          {hasChildren ? (
+            isExpanded ? (
+              <ChevronDown size={14} />
+            ) : (
+              <ChevronRight size={14} />
+            )
           ) : (
-            <ChevronRight className='h-4 w-4' />
+            <span className='w-4'></span>
           )}
-          <span className='font-mono text-neutral-800 dark:text-neutral-200'>
-            {node.kind}
-          </span>
-        </div>
-      </div>
+        </span>
 
-      {isExpanded && attributes && Array.from(attributes.entries()).length && (
-        <Attributes attributes={attributes} depth={depth} />
-      )}
+        <span>{node.kind}</span>
+
+        <span className='ml-2 text-xs text-gray-500'>
+          [{node.range.start}: {node.range.end}]
+        </span>
+      </div>
 
       {isExpanded && hasChildren && (
         <div className='ml-2'>
@@ -79,8 +54,6 @@ const TreeNode: React.FC<TreeNodeProps> = ({
               key={`${child.kind}-${index}`}
               node={child}
               depth={depth + 1}
-              onHover={onHover}
-              clearHighlight={clearHighlight}
             />
           ))}
         </div>
@@ -91,21 +64,11 @@ const TreeNode: React.FC<TreeNodeProps> = ({
 
 interface TreeViewerProps {
   ast: AstNode | null;
-  onNodeHover: (node: AstNode) => void;
-  clearHighlight: () => void;
 }
 
-export const TreeViewer: React.FC<TreeViewerProps> = ({
-  ast,
-  onNodeHover,
-  clearHighlight,
-}) => {
+export const TreeViewer: React.FC<TreeViewerProps> = ({ ast }) => {
   return ast ? (
-    <TreeNode
-      node={ast}
-      onHover={onNodeHover}
-      clearHighlight={clearHighlight}
-    />
+    <TreeNode node={ast} />
   ) : (
     <div className='text-muted-foreground p-4'>No AST available</div>
   );

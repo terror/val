@@ -14,7 +14,7 @@ build:
   cargo build --all --all-targets
 
 [group: 'web']
-build-wasm:
+build-wasm: typeshare
   wasm-pack build crates/val-wasm --target web \
     --out-name val \
     --out-dir ../../www/packages/val-wasm

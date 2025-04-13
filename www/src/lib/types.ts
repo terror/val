@@ -11,7 +11,6 @@ export interface AstNode {
   kind: string;
   range: Range;
   children: AstNode[];
-  attributes: Record<string, string>;
 }
 
 export interface Error {

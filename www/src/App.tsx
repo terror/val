@@ -18,13 +18,7 @@ function App() {
 
   if (!wasmLoaded) return null;
 
-  return (
-    <TreeViewer
-      ast={parse('1 + 1')}
-      onNodeHover={() => {}}
-      clearHighlight={() => {}}
-    />
-  );
+  return <TreeViewer ast={parse('1 + 1')} />;
 }
 
 export default App;
