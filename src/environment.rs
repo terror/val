@@ -113,6 +113,20 @@ impl<'src> Environment<'src> {
       }
     });
 
+    env.add_builtin_function("len", |args, span| {
+      if args.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!("Function 'len' expects 1 argument, got {}", args.len()),
+        ));
+      }
+
+      match &args[0] {
+        Value::String(s) => Ok(Value::Number(s.len() as f64)),
+        _ => Err(Error::new(span, format!("'{}' is not a string", args[0]))),
+      }
+    });
+
     env.add_variable("e", Value::Number(std::f64::consts::E));
     env.add_variable("pi", Value::Number(std::f64::consts::PI));
 

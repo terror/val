@@ -615,3 +615,12 @@ fn string_literals() -> Result {
     .expected_stdout(Exact("Hello, world!\n"))
     .run()
 }
+
+#[test]
+fn len() -> Result {
+  Test::new()?
+    .program("len(\"Hello, world!\")")
+    .expected_status(0)
+    .expected_stdout(Exact("13\n"))
+    .run()
+}
