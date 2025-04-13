@@ -24,7 +24,7 @@ struct Range {
   end: u32,
 }
 
-impl From<val::Span> for Range {
+impl From<Span> for Range {
   fn from(span: val::Span) -> Self {
     let range = span.into_range();
 
@@ -35,7 +35,7 @@ impl From<val::Span> for Range {
   }
 }
 
-impl From<&val::Span> for Range {
+impl From<&Span> for Range {
   fn from(span: &val::Span) -> Self {
     let range = span.into_range();
 
@@ -54,50 +54,54 @@ struct AstNode {
   children: Vec<AstNode>,
 }
 
-fn convert_ast(ast: &Ast, span: &Span) -> AstNode {
-  let range = Range::from(span);
+impl From<(&Ast<'_>, &Span)> for AstNode {
+  fn from(value: (&Ast<'_>, &Span)) -> Self {
+    let (ast, span) = value;
 
-  let mut children = Vec::new();
+    let range = Range::from(span);
 
-  match ast {
-    Ast::Number(_) => AstNode {
-      kind: ast.kind(),
-      range,
-      children,
-    },
-    Ast::Identifier(_) => AstNode {
-      kind: ast.kind(),
-      range,
-      children,
-    },
-    Ast::UnaryOp(_, rhs) => {
-      children.push(convert_ast(&rhs.0, &rhs.1));
+    let mut children = Vec::new();
 
-      AstNode {
+    match ast {
+      Ast::Number(_) => Self {
         kind: ast.kind(),
         range,
         children,
-      }
-    }
-    Ast::BinaryOp(_, lhs, rhs) => {
-      children.push(convert_ast(&lhs.0, &lhs.1));
-      children.push(convert_ast(&rhs.0, &rhs.1));
-
-      AstNode {
+      },
+      Ast::Identifier(_) => Self {
         kind: ast.kind(),
         range,
         children,
-      }
-    }
-    Ast::FunctionCall(_, args) => {
-      for (ast, span) in args {
-        children.push(convert_ast(ast, span));
-      }
+      },
+      Ast::UnaryOp(_, rhs) => {
+        children.push(Self::from((&rhs.0, &rhs.1)));
 
-      AstNode {
-        kind: ast.kind(),
-        range,
-        children,
+        Self {
+          kind: ast.kind(),
+          range,
+          children,
+        }
+      }
+      Ast::BinaryOp(_, lhs, rhs) => {
+        children.push(Self::from((&lhs.0, &lhs.1)));
+        children.push(Self::from((&rhs.0, &rhs.1)));
+
+        Self {
+          kind: ast.kind(),
+          range,
+          children,
+        }
+      }
+      Ast::FunctionCall(_, args) => {
+        for (ast, span) in args {
+          children.push(Self::from((ast, span)));
+        }
+
+        Self {
+          kind: ast.kind(),
+          range,
+          children,
+        }
       }
     }
   }
@@ -107,7 +111,7 @@ fn convert_ast(ast: &Ast, span: &Span) -> AstNode {
 pub fn parse(input: &str) -> Result<JsValue, JsValue> {
   match val::parse(input) {
     Ok((ast, span)) => {
-      match serde_wasm_bindgen::to_value(&convert_ast(&ast, &span)) {
+      match serde_wasm_bindgen::to_value(&AstNode::from((&ast, &span))) {
         Ok(value) => Ok(value),
         Err(error) => Err(JsValue::from_str(&error.to_string())),
       }
@@ -122,7 +126,7 @@ pub fn parse(input: &str) -> Result<JsValue, JsValue> {
         .collect::<Vec<Error>>();
 
       match serde_wasm_bindgen::to_value(&errors) {
-        Ok(js_value) => Err(js_value),
+        Ok(value) => Err(value),
         Err(error) => Err(JsValue::from_str(&error.to_string())),
       }
     }
