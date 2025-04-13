@@ -9,5 +9,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
+serde = { version = "1.0.219", features = ["derive"] }
+serde-wasm-bindgen = "0.6.5"
+typeshare = "1.0.4"
 val = { path = "../.." }
 wasm-bindgen = "0.2.100"

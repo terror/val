@@ -22,8 +22,9 @@ pub use crate::{
   value::Value,
 };
 
+pub type Span = SimpleSpan<usize>;
+
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
-type Span = SimpleSpan<usize>;
 type Spanned<T> = (T, Span);
 
 #[doc(hidden)]

@@ -1,6 +1,7 @@
+import { TreeViewer } from '@/components/tree-viewer';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import init, { add } from 'val-wasm';
+import init, { parse } from 'val-wasm';
 
 function App() {
   const [wasmLoaded, setWasmLoaded] = useState(false);
@@ -17,7 +18,13 @@ function App() {
 
   if (!wasmLoaded) return null;
 
-  return <h1 className='text-3xl font-bold underline'>{add(1, 2)}</h1>;
+  return (
+    <TreeViewer
+      ast={parse('1 + 1')}
+      onNodeHover={() => {}}
+      clearHighlight={() => {}}
+    />
+  );
 }
 
 export default App;
