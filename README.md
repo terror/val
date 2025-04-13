@@ -10,6 +10,22 @@ on top of [**chumsky**](https://github.com/zesterer/chumsky) and
 
 <img width="1667" alt="Screenshot 2025-04-12 at 4 37 56 PM" src="https://github.com/user-attachments/assets/eba025ba-f68b-43e1-a148-2c1d6fa16ae0" />
 
+## Installation
+
+`val` should run on any system, including Linux, MacOS, and the BSDs.
+
+The easiest way to install it is by using [cargo](https://doc.rust-lang.org/cargo/index.html),
+the Rust package manager:
+
+```bash
+cargo install val
+```
+
+### Pre-built binaries
+
+Pre-built binaries for Linux, MacOS, and Windows can be found on [the releases
+page](https://github.com/terror/val/releases).
+
 ## Prior Art
 
 [**bc(1)**](https://linux.die.net/man/1/bc) - An arbitrary precision calculator
