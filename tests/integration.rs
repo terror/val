@@ -139,7 +139,7 @@ impl<'a> Test<'a> {
 }
 
 #[test]
-fn integer_literalog() -> Result {
+fn integer_literals() -> Result {
   Test::new()?
     .program("25")
     .expected_status(0)
@@ -148,7 +148,40 @@ fn integer_literalog() -> Result {
 }
 
 #[test]
-fn negate_integer_literalog() -> Result {
+fn float_literals() -> Result {
+  Test::new()?
+    .program("3.14")
+    .expected_status(0)
+    .expected_stdout(Exact("3.14\n"))
+    .run()?;
+
+  Test::new()?
+    .program("0.5")
+    .expected_status(0)
+    .expected_stdout(Exact("0.5\n"))
+    .run()?;
+
+  Test::new()?
+    .program("-2.718")
+    .expected_status(0)
+    .expected_stdout(Exact("-2.718\n"))
+    .run()?;
+
+  Test::new()?
+    .program("1.0 + 2.5")
+    .expected_status(0)
+    .expected_stdout(Exact("3.5\n"))
+    .run()?;
+
+  Test::new()?
+    .program("3.5 * 2.0")
+    .expected_status(0)
+    .expected_stdout(Exact("7\n"))
+    .run()
+}
+
+#[test]
+fn negate_integer_literal() -> Result {
   Test::new()?
     .program("-25")
     .expected_status(0)

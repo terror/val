@@ -6,7 +6,11 @@ fn parser<'a>()
 
   recursive(|expr| {
     let number = text::int(10)
-      .map(|s: &str| Ast::Number(s.parse().unwrap()))
+      .then(just('.').then(text::digits(10)).or_not())
+      .to_slice()
+      .from_str()
+      .unwrapped()
+      .map(Ast::Number)
       .map_with(|ast, e| (ast, e.span()));
 
     let call = identifier
