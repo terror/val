@@ -3,6 +3,7 @@ use super::*;
 pub type BuiltinFunction<'src> =
   fn(Vec<Value<'src>>, Span) -> Result<Value<'src>, Error>;
 
+#[derive(Default)]
 pub struct Environment<'src> {
   functions: HashMap<&'src str, BuiltinFunction<'src>>,
   variables: HashMap<&'src str, Value<'src>>,
@@ -10,10 +11,7 @@ pub struct Environment<'src> {
 
 impl<'src> Environment<'src> {
   pub fn new() -> Self {
-    let mut env = Self {
-      functions: HashMap::new(),
-      variables: HashMap::new(),
-    };
+    let mut env = Self::default();
 
     env.add_builtin_function("sin", |args, span| {
       if args.len() != 1 {
