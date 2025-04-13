@@ -17,7 +17,7 @@ build:
 build-wasm:
   wasm-pack build crates/val-wasm --target web \
     --out-name val \
-    --out-dir ../../www/packages/wasm
+    --out-dir ../../www/packages/val-wasm
 
 [group: 'check']
 check:
