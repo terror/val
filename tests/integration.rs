@@ -624,3 +624,18 @@ fn len() -> Result {
     .expected_stdout(Exact("13\n"))
     .run()
 }
+
+#[test]
+fn quit() -> Result {
+  Test::new()?.program("quit()").expected_status(0).run()?;
+
+  Test::new()?.program("quit(1)").expected_status(1).run()?;
+
+  Test::new()?
+    .program("quit(1, 2)")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "Function `quit` expects 0 or 1 arguments, got 2",
+    ))
+    .run()
+}

@@ -127,6 +127,24 @@ impl<'src> Environment<'src> {
       Ok(Value::Null)
     });
 
+    env.add_builtin_function("quit", |arguments, span| {
+      if arguments.is_empty() {
+        process::exit(0);
+      }
+
+      if arguments.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!(
+            "Function `quit` expects 0 or 1 arguments, got {}",
+            arguments.len()
+          ),
+        ));
+      }
+
+      process::exit(arguments[0].number(span)? as i32);
+    });
+
     env.add_variable("e", Value::Number(std::f64::consts::E));
     env.add_variable("pi", Value::Number(std::f64::consts::PI));
 
