@@ -5,6 +5,14 @@ pub enum UnaryOp {
   Neg,
 }
 
+impl Display for UnaryOp {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    match self {
+      UnaryOp::Neg => write!(f, "-"),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
 #[allow(unused)]
 pub enum BinaryOp {
@@ -14,6 +22,19 @@ pub enum BinaryOp {
   Mul,
   Pow,
   Sub,
+}
+
+impl Display for BinaryOp {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    match self {
+      BinaryOp::Add => write!(f, "+"),
+      BinaryOp::Div => write!(f, "/"),
+      BinaryOp::Mod => write!(f, "%"),
+      BinaryOp::Mul => write!(f, "*"),
+      BinaryOp::Pow => write!(f, "^"),
+      BinaryOp::Sub => write!(f, "-"),
+    }
+  }
 }
 
 #[derive(Debug)]

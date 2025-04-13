@@ -2,7 +2,7 @@ use {
   serde::Serialize,
   std::collections::HashMap,
   typeshare::typeshare,
-  val::{Ast, BinaryOp, Span, UnaryOp},
+  val::{Ast, Span},
   wasm_bindgen::prelude::*,
 };
 
@@ -84,11 +84,8 @@ fn convert_ast(ast: &Ast, span: &Span) -> AstNode {
       }
     }
     Ast::UnaryOp(op, rhs) => {
-      let op_str = match op {
-        UnaryOp::Neg => "neg",
-      };
+      attributes.insert("operator".to_string(), op.to_string());
 
-      attributes.insert("operator".to_string(), op_str.into());
       children.push(convert_ast(&rhs.0, &rhs.1));
 
       AstNode {
@@ -99,16 +96,8 @@ fn convert_ast(ast: &Ast, span: &Span) -> AstNode {
       }
     }
     Ast::BinaryOp(op, lhs, rhs) => {
-      let op_str = match op {
-        BinaryOp::Add => "add",
-        BinaryOp::Div => "div",
-        BinaryOp::Mod => "mod",
-        BinaryOp::Mul => "mul",
-        BinaryOp::Pow => "pow",
-        BinaryOp::Sub => "sub",
-      };
+      attributes.insert("operator".to_string(), op.to_string());
 
-      attributes.insert("operator".to_string(), op_str.into());
       children.push(convert_ast(&lhs.0, &lhs.1));
       children.push(convert_ast(&rhs.0, &rhs.1));
 
