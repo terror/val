@@ -13,7 +13,11 @@ fn parser<'a>()
       .map(Ast::Number)
       .map_with(|ast, e| (ast, e.span()));
 
-    let call = identifier
+    let boolean = choice((just("true").to(true), just("false").to(false)))
+      .map(Ast::Boolean)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let function_call = identifier
       .then(
         expr
           .clone()
@@ -30,8 +34,9 @@ fn parser<'a>()
       .map_with(|ast, e| (ast, e.span()));
 
     let atom = number
+      .or(boolean)
       .or(expr.delimited_by(just('('), just(')')))
-      .or(call)
+      .or(function_call)
       .or(identifier)
       .padded();
 

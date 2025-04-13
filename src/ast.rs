@@ -47,6 +47,7 @@ impl Display for BinaryOp {
 #[allow(unused)]
 pub enum Ast<'a> {
   BinaryOp(BinaryOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
+  Boolean(bool),
   FunctionCall(&'a str, Vec<Spanned<Self>>),
   Identifier(&'a str),
   Number(f64),
@@ -57,6 +58,7 @@ impl Ast<'_> {
   pub fn kind(&self) -> String {
     String::from(match self {
       Ast::BinaryOp(_, _, _) => "binary_op",
+      Ast::Boolean(_) => "boolean",
       Ast::FunctionCall(_, _) => "function_call",
       Ast::Identifier(_) => "identifier",
       Ast::Number(_) => "number",

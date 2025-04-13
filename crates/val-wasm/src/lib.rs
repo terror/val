@@ -63,25 +63,6 @@ impl From<(&Ast<'_>, &Span)> for AstNode {
     let mut children = Vec::new();
 
     match ast {
-      Ast::Number(_) => Self {
-        kind: ast.kind(),
-        range,
-        children,
-      },
-      Ast::Identifier(_) => Self {
-        kind: ast.kind(),
-        range,
-        children,
-      },
-      Ast::UnaryOp(_, rhs) => {
-        children.push(Self::from((&rhs.0, &rhs.1)));
-
-        Self {
-          kind: ast.kind(),
-          range,
-          children,
-        }
-      }
       Ast::BinaryOp(_, lhs, rhs) => {
         children.push(Self::from((&lhs.0, &lhs.1)));
         children.push(Self::from((&rhs.0, &rhs.1)));
@@ -92,10 +73,34 @@ impl From<(&Ast<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Ast::Boolean(_) => Self {
+        kind: ast.kind(),
+        range,
+        children,
+      },
       Ast::FunctionCall(_, args) => {
         for (ast, span) in args {
           children.push(Self::from((ast, span)));
         }
+
+        Self {
+          kind: ast.kind(),
+          range,
+          children,
+        }
+      }
+      Ast::Identifier(_) => Self {
+        kind: ast.kind(),
+        range,
+        children,
+      },
+      Ast::Number(_) => Self {
+        kind: ast.kind(),
+        range,
+        children,
+      },
+      Ast::UnaryOp(_, rhs) => {
+        children.push(Self::from((&rhs.0, &rhs.1)));
 
         Self {
           kind: ast.kind(),

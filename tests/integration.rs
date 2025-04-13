@@ -592,5 +592,17 @@ fn not() -> Result {
     .program("!(1 > -1)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("!true")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("!false")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
     .run()
 }
