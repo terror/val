@@ -24,9 +24,9 @@ impl Display for Value<'_> {
 }
 
 impl Value<'_> {
-  pub fn boolean(self, span: Span) -> Result<bool, Error> {
+  pub fn boolean(&self, span: Span) -> Result<bool, Error> {
     if let Value::Boolean(x) = self {
-      Ok(x)
+      Ok(*x)
     } else {
       Err(Error {
         span,
@@ -35,13 +35,24 @@ impl Value<'_> {
     }
   }
 
-  pub fn number(self, span: Span) -> Result<f64, Error> {
+  pub fn number(&self, span: Span) -> Result<f64, Error> {
     if let Value::Number(x) = self {
-      Ok(x)
+      Ok(*x)
     } else {
       Err(Error {
         span,
         message: format!("'{}' is not a number", self),
+      })
+    }
+  }
+
+  pub fn string(&self, span: Span) -> Result<&str, Error> {
+    if let Value::String(x) = self {
+      Ok(*x)
+    } else {
+      Err(Error {
+        span,
+        message: format!("'{}' is not a string", self),
       })
     }
   }

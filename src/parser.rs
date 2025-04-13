@@ -32,7 +32,7 @@ fn parser<'a>()
           .collect::<Vec<_>>()
           .delimited_by(just('('), just(')')),
       )
-      .map(|(f, args)| Ast::FunctionCall(f, args))
+      .map(|(name, arguments)| Ast::FunctionCall(name, arguments))
       .map_with(|ast, e| (ast, e.span()));
 
     let identifier = identifier

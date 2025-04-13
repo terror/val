@@ -63,7 +63,7 @@ pub fn eval<'a>(
     }
     Ast::Identifier(name) => match env.get_variable(name) {
       Some(value) => Ok(value.clone()),
-      None => Err(Error::new(*span, format!("Undefined variable '{}'", name))),
+      None => Err(Error::new(*span, format!("Undefined variable `{}`", name))),
     },
     Ast::Number(n) => Ok(Value::Number(*n)),
     Ast::String(s) => Ok(Value::String(s)),

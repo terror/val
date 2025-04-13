@@ -221,7 +221,7 @@ fn undefined_variable() -> Result {
   Test::new()?
     .program("print(foo)")
     .expected_status(1)
-    .expected_stderr(Contains("Undefined variable 'foo'\n"))
+    .expected_stderr(Contains("Undefined variable `foo`\n"))
     .run()
 }
 
@@ -440,7 +440,7 @@ fn arctangent() -> Result {
   Test::new()?
     .program("print(arc())")
     .expected_status(1)
-    .expected_stderr(Contains("Function 'arc' expects 1 argument, got 0"))
+    .expected_stderr(Contains("Function `arc` expects 1 argument, got 0"))
     .run()
 }
 
@@ -540,7 +540,7 @@ fn square_root() -> Result {
   Test::new()?
     .program("print(sqrt())")
     .expected_status(1)
-    .expected_stderr(Contains("Function 'sqrt' expects 1 argument, got 0"))
+    .expected_stderr(Contains("Function `sqrt` expects 1 argument, got 0"))
     .run()?;
 
   Test::new()?

@@ -78,8 +78,8 @@ impl From<(&Ast<'_>, &Span)> for AstNode {
         range,
         children,
       },
-      Ast::FunctionCall(_, args) => {
-        for (ast, span) in args {
+      Ast::FunctionCall(_, arguments) => {
+        for (ast, span) in arguments {
           children.push(Self::from((ast, span)));
         }
 
