@@ -516,3 +516,36 @@ fn functions_with_constants() -> Result {
     .expected_stdout(Exact("23.140692632779267\n"))
     .run()
 }
+
+#[test]
+fn square_root() -> Result {
+  Test::new()?
+    .program("sqrt(4)")
+    .expected_status(0)
+    .expected_stdout(Exact("2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("sqrt(2)")
+    .expected_status(0)
+    .expected_stdout(Exact("1.4142135623730951\n"))
+    .run()?;
+
+  Test::new()?
+    .program("sqrt(0)")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()?;
+
+  Test::new()?
+    .program("sqrt()")
+    .expected_status(1)
+    .expected_stderr(Contains("Function 'sqrt' expects 1 argument, got 0"))
+    .run()?;
+
+  Test::new()?
+    .program("sqrt(-1)")
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot take square root of negative number"))
+    .run()
+}

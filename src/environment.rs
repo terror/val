@@ -91,6 +91,28 @@ impl<'src> Environment<'src> {
       }
     });
 
+    env.add_builtin_function("sqrt", |args, span| {
+      if args.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!("Function 'sqrt' expects 1 argument, got {}", args.len()),
+        ));
+      }
+
+      match &args[0] {
+        Value::Num(n) => {
+          if *n < 0.0 {
+            return Err(Error::new(
+              span,
+              "Cannot take square root of negative number",
+            ));
+          }
+          Ok(Value::Num(n.sqrt()))
+        }
+        _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
+      }
+    });
+
     env.add_variable("e", Value::Num(std::f64::consts::E));
     env.add_variable("pi", Value::Num(std::f64::consts::PI));
 
