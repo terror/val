@@ -66,6 +66,7 @@ pub fn eval<'a>(
       None => Err(Error::new(*span, format!("Undefined variable '{}'", name))),
     },
     Ast::Number(n) => Ok(Value::Number(*n)),
+    Ast::String(s) => Ok(Value::String(s)),
     Ast::UnaryOp(UnaryOp::Neg, rhs) => {
       Ok(Value::Number(-eval(rhs, env)?.number(rhs.1)?))
     }

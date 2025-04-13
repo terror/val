@@ -51,6 +51,7 @@ pub enum Ast<'a> {
   FunctionCall(&'a str, Vec<Spanned<Self>>),
   Identifier(&'a str),
   Number(f64),
+  String(&'a str),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
 }
 
@@ -62,6 +63,7 @@ impl Ast<'_> {
       Ast::FunctionCall(_, _) => "function_call",
       Ast::Identifier(_) => "identifier",
       Ast::Number(_) => "number",
+      Ast::String(_) => "string",
       Ast::UnaryOp(_, _) => "unary_op",
     })
   }

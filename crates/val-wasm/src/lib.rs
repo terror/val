@@ -99,6 +99,11 @@ impl From<(&Ast<'_>, &Span)> for AstNode {
         range,
         children,
       },
+      Ast::String(_) => Self {
+        kind: ast.kind(),
+        range,
+        children,
+      },
       Ast::UnaryOp(_, rhs) => {
         children.push(Self::from((&rhs.0, &rhs.1)));
 

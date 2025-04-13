@@ -606,3 +606,12 @@ fn not() -> Result {
     .expected_stdout(Exact("true\n"))
     .run()
 }
+
+#[test]
+fn string_literals() -> Result {
+  Test::new()?
+    .program("\"Hello, world!\"")
+    .expected_status(0)
+    .expected_stdout(Exact("Hello, world!\n"))
+    .run()
+}

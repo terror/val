@@ -17,6 +17,12 @@ fn parser<'a>()
       .map(Ast::Boolean)
       .map_with(|ast, e| (ast, e.span()));
 
+    let string = just('"')
+      .ignore_then(none_of('"').repeated().to_slice())
+      .then_ignore(just('"'))
+      .map(Ast::String)
+      .map_with(|ast, e| (ast, e.span()));
+
     let function_call = identifier
       .then(
         expr
@@ -35,6 +41,7 @@ fn parser<'a>()
 
     let atom = number
       .or(boolean)
+      .or(string)
       .or(expr.delimited_by(just('('), just(')')))
       .or(function_call)
       .or(identifier)

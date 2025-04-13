@@ -1,7 +1,6 @@
 use super::*;
 
 #[derive(Clone, Debug, PartialEq)]
-#[allow(unused)]
 pub enum Value<'src> {
   Boolean(bool),
   Function(&'src str),
