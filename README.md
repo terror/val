@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/terror/val/actions/workflows/ci.yaml/badge.svg)](https://github.com/terror/val/actions/workflows/ci.yaml)
 [![crates.io](https://shields.io/crates/v/val.svg)](https://crates.io/crates/val)
+[![docs.rs](https://img.shields.io/docsrs/val)](https://docs.rs/val)
 [![dependency status](https://deps.rs/repo/github/terror/val/status.svg)](https://deps.rs/repo/github/terror/val)
 
 **val** (e**val**) is a simple arbitrary precision calculator language built
