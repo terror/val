@@ -579,3 +579,18 @@ fn greater_than() -> Result {
     .expected_stdout(Exact("true\n"))
     .run()
 }
+
+#[test]
+fn not() -> Result {
+  Test::new()?
+    .program("!(1 > 2)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("!(1 > -1)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()
+}

@@ -68,5 +68,8 @@ pub fn eval<'a>(
     Ast::UnaryOp(UnaryOp::Neg, rhs) => {
       Ok(Value::Number(-eval(rhs, env)?.number(rhs.1)?))
     }
+    Ast::UnaryOp(UnaryOp::Not, rhs) => {
+      Ok(Value::Boolean(!eval(rhs, env)?.boolean(rhs.1)?))
+    }
   }
 }

@@ -3,12 +3,14 @@ use super::*;
 #[derive(Debug, Clone)]
 pub enum UnaryOp {
   Neg,
+  Not,
 }
 
 impl Display for UnaryOp {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      UnaryOp::Neg => write!(f, "-"),
+      UnaryOp::Neg => write!(f, "!"),
+      UnaryOp::Not => write!(f, "-"),
     }
   }
 }

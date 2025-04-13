@@ -25,6 +25,17 @@ impl Display for Value<'_> {
 }
 
 impl Value<'_> {
+  pub fn boolean(self, span: Span) -> Result<bool, Error> {
+    if let Value::Boolean(x) = self {
+      Ok(x)
+    } else {
+      Err(Error {
+        span,
+        message: format!("'{}' is not a boolean", self),
+      })
+    }
+  }
+
   pub fn number(self, span: Span) -> Result<f64, Error> {
     if let Value::Number(x) = self {
       Ok(x)

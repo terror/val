@@ -37,10 +37,16 @@ fn parser<'a>()
 
     let op = |c| just(c).padded();
 
-    let unary = op('-').repeated().foldr(atom, |_, rhs| {
-      let span = rhs.1;
-      (Ast::UnaryOp(UnaryOp::Neg, Box::new(rhs)), span)
-    });
+    let unary = choice((
+      op('-').repeated().foldr(atom.clone(), |_, rhs| {
+        let span = rhs.1;
+        (Ast::UnaryOp(UnaryOp::Neg, Box::new(rhs)), span)
+      }),
+      op('!').repeated().foldr(atom, |_, rhs| {
+        let span = rhs.1;
+        (Ast::UnaryOp(UnaryOp::Not, Box::new(rhs)), span)
+      }),
+    ));
 
     let product = unary.clone().foldl(
       choice((
