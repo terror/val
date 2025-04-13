@@ -42,16 +42,12 @@ fn parser<'a>()
 
     let op = |c| just(c).padded();
 
-    let unary = choice((
-      op('-').repeated().foldr(atom.clone(), |_, rhs| {
+    let unary = choice((op('-').to(UnaryOp::Neg), op('!').to(UnaryOp::Not)))
+      .repeated()
+      .foldr(atom, |op, rhs| {
         let span = rhs.1;
-        (Ast::UnaryOp(UnaryOp::Neg, Box::new(rhs)), span)
-      }),
-      op('!').repeated().foldr(atom, |_, rhs| {
-        let span = rhs.1;
-        (Ast::UnaryOp(UnaryOp::Not, Box::new(rhs)), span)
-      }),
-    ));
+        (Ast::UnaryOp(op, Box::new(rhs)), span)
+      });
 
     let product = unary.clone().foldl(
       choice((
