@@ -22,7 +22,7 @@ impl<'src> Environment<'src> {
       }
 
       match &args[0] {
-        Value::Num(n) => Ok(Value::Num(n.sin())),
+        Value::Number(n) => Ok(Value::Number(n.sin())),
         _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
       }
     });
@@ -36,7 +36,7 @@ impl<'src> Environment<'src> {
       }
 
       match &args[0] {
-        Value::Num(n) => Ok(Value::Num(n.cos())),
+        Value::Number(n) => Ok(Value::Number(n.cos())),
         _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
       }
     });
@@ -50,7 +50,7 @@ impl<'src> Environment<'src> {
       }
 
       match &args[0] {
-        Value::Num(n) => Ok(Value::Num(n.atan())),
+        Value::Number(n) => Ok(Value::Number(n.atan())),
         _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
       }
     });
@@ -64,14 +64,14 @@ impl<'src> Environment<'src> {
       }
 
       match &args[0] {
-        Value::Num(n) => {
+        Value::Number(n) => {
           if *n <= 0.0 {
             return Err(Error::new(
               span,
               "Cannot take logarithm of zero or negative number",
             ));
           }
-          Ok(Value::Num(n.ln()))
+          Ok(Value::Number(n.ln()))
         }
         _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
       }
@@ -86,7 +86,7 @@ impl<'src> Environment<'src> {
       }
 
       match &args[0] {
-        Value::Num(n) => Ok(Value::Num(n.exp())),
+        Value::Number(n) => Ok(Value::Number(n.exp())),
         _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
       }
     });
@@ -100,21 +100,21 @@ impl<'src> Environment<'src> {
       }
 
       match &args[0] {
-        Value::Num(n) => {
+        Value::Number(n) => {
           if *n < 0.0 {
             return Err(Error::new(
               span,
               "Cannot take square root of negative number",
             ));
           }
-          Ok(Value::Num(n.sqrt()))
+          Ok(Value::Number(n.sqrt()))
         }
         _ => Err(Error::new(span, format!("'{}' is not a number", args[0]))),
       }
     });
 
-    env.add_variable("e", Value::Num(std::f64::consts::E));
-    env.add_variable("pi", Value::Num(std::f64::consts::PI));
+    env.add_variable("e", Value::Number(std::f64::consts::E));
+    env.add_variable("pi", Value::Number(std::f64::consts::PI));
 
     env
   }

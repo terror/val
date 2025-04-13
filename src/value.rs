@@ -3,30 +3,30 @@ use super::*;
 #[derive(Clone, Debug, PartialEq)]
 #[allow(unused)]
 pub enum Value<'src> {
-  Null,
-  Bool(bool),
-  Num(f64),
-  Str(&'src str),
+  Boolean(bool),
+  Function(&'src str),
   List(Vec<Self>),
-  Func(&'src str),
+  Null,
+  Number(f64),
+  String(&'src str),
 }
 
 impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      Value::Null => write!(f, "null"),
-      Value::Bool(b) => write!(f, "{}", b),
-      Value::Num(n) => write!(f, "{}", n),
-      Value::Str(s) => write!(f, "{}", s),
+      Value::Boolean(b) => write!(f, "{}", b),
+      Value::Function(s) => write!(f, "<function: {}>", s),
       Value::List(l) => write!(f, "{:?}", l),
-      Value::Func(s) => write!(f, "<function: {}>", s),
+      Value::Null => write!(f, "null"),
+      Value::Number(n) => write!(f, "{}", n),
+      Value::String(s) => write!(f, "{}", s),
     }
   }
 }
 
 impl Value<'_> {
-  pub fn num(self, span: Span) -> Result<f64, Error> {
-    if let Value::Num(x) = self {
+  pub fn number(self, span: Span) -> Result<f64, Error> {
+    if let Value::Number(x) = self {
       Ok(x)
     } else {
       Err(Error {
