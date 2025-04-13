@@ -1,5 +1,7 @@
 use {
-  clap::Parser, rustyline::error::ReadlineError, std::process,
+  clap::Parser,
+  rustyline::error::ReadlineError,
+  std::{backtrace::BacktraceStatus, process},
   val::arguments::Arguments,
 };
 
@@ -12,6 +14,22 @@ fn main() {
     }
 
     eprintln!("error: {error}");
+
+    for (i, error) in error.chain().skip(1).enumerate() {
+      if i == 0 {
+        eprintln!();
+        eprintln!("because:");
+      }
+
+      eprintln!("- {error}");
+    }
+
+    let backtrace = error.backtrace();
+
+    if backtrace.status() == BacktraceStatus::Captured {
+      eprintln!("backtrace:");
+      eprintln!("{backtrace}");
+    }
 
     process::exit(1);
   }
