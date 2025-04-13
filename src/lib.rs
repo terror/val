@@ -3,11 +3,11 @@ pub(crate) use {
   chumsky::prelude::*,
   clap::Parser as Clap,
   environment::Environment,
+  rustyline::DefaultEditor,
   std::{
     collections::HashMap,
     fmt::{Display, Formatter},
     fs,
-    io::{self, BufRead, Write},
     ops::Range,
     path::PathBuf,
     process,

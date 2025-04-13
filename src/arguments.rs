@@ -47,42 +47,34 @@ impl Arguments {
   }
 
   fn read() -> Result {
+    let history = dirs::home_dir().unwrap_or_default().join(".val_history");
+
+    let mut editor = DefaultEditor::new()?;
+    editor.load_history(&history).ok();
+
     loop {
-      let mut buffer = String::new();
+      let line = editor.readline("> ")?;
 
-      print!("> ");
-
-      io::stdout().flush()?;
-
-      if io::stdin().lock().read_line(&mut buffer)? == 0 {
-        break;
-      }
-
-      let input = buffer.trim();
-
-      if input.is_empty() {
-        continue;
-      }
+      editor.add_history_entry(line.as_str())?;
+      editor.save_history(&history)?;
 
       let environment = Environment::new();
 
-      match parse(input) {
+      match parse(&line) {
         Ok(ast) => match eval(&ast, &environment) {
           Ok(value) => println!("{}", value),
           Err(error) => error
             .report("<input>")
-            .eprint(("<input>", Source::from(input)))?,
+            .eprint(("<input>", Source::from(&line)))?,
         },
         Err(errors) => {
           for error in errors {
             error
               .report("<input>")
-              .eprint(("<input>", Source::from(input)))?;
+              .eprint(("<input>", Source::from(&line)))?;
           }
         }
       }
     }
-
-    Ok(())
   }
 }
