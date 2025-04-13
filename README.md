@@ -28,5 +28,5 @@ page](https://github.com/terror/val/releases).
 
 ## Prior Art
 
-[**bc(1)**](https://linux.die.net/man/1/bc) - An arbitrary precision calculator
+[bc(1)](https://linux.die.net/man/1/bc) - An arbitrary precision calculator
 language
