@@ -23,10 +23,7 @@ impl Arguments {
 
     match parse(content.trim()) {
       Ok(ast) => match eval(&ast, &environment) {
-        Ok(value) => {
-          println!("{value}");
-          Ok(())
-        }
+        Ok(_) => Ok(()),
         Err(error) => {
           error
             .report(&filename)

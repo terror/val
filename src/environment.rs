@@ -127,6 +127,19 @@ impl<'src> Environment<'src> {
       }
     });
 
+    env.add_builtin_function("print", |args, span| {
+      if args.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!("Function 'print' expects 1 argument, got {}", args.len()),
+        ));
+      }
+
+      println!("{}", args[0]);
+
+      Ok(Value::Null)
+    });
+
     env.add_variable("e", Value::Number(std::f64::consts::E));
     env.add_variable("pi", Value::Number(std::f64::consts::PI));
 
