@@ -94,6 +94,11 @@ impl From<(&Ast<'_>, &Span)> for AstNode {
         range,
         children,
       },
+      Ast::List(_) => Self {
+        kind: ast.kind(),
+        range,
+        children,
+      },
       Ast::Number(_) => Self {
         kind: ast.kind(),
         range,

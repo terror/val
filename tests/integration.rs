@@ -612,13 +612,13 @@ fn string_literals() -> Result {
   Test::new()?
     .program("print(\"Hello, world!\")")
     .expected_status(0)
-    .expected_stdout(Exact("Hello, world!\n"))
+    .expected_stdout(Exact("'Hello, world!'\n"))
     .run()?;
 
   Test::new()?
     .program("print('Hello, world!')")
     .expected_status(0)
-    .expected_stdout(Exact("Hello, world!\n"))
+    .expected_stdout(Exact("'Hello, world!'\n"))
     .run()
 }
 
@@ -836,5 +836,20 @@ fn mixed_type_comparisons() -> Result {
     .program("print(0 != \"0\")")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn list_literals() -> Result {
+  Test::new()?
+    .program("print([1, 2, 1 + 2])")
+    .expected_status(0)
+    .expected_stdout(Exact("[1, 2, 3]\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print([print('foo'), 'foo', 1 + 2])")
+    .expected_status(0)
+    .expected_stdout(Exact("'foo'\n[null, 'foo', 3]\n"))
     .run()
 }

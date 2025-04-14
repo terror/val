@@ -13,12 +13,20 @@ pub enum Value<'src> {
 impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      Value::Boolean(b) => write!(f, "{b}"),
-      Value::Function(s) => write!(f, "<function: {s}>"),
-      Value::List(l) => write!(f, "{:?}", l),
+      Value::Boolean(boolean) => write!(f, "{boolean}"),
+      Value::Function(name) => write!(f, "<function: {name}>"),
+      Value::List(list) => write!(
+        f,
+        "[{}]",
+        list
+          .iter()
+          .map(|item| item.to_string())
+          .collect::<Vec<_>>()
+          .join(", ")
+      ),
       Value::Null => write!(f, "null"),
-      Value::Number(n) => write!(f, "{n}"),
-      Value::String(s) => write!(f, "{s}"),
+      Value::Number(number) => write!(f, "{number}"),
+      Value::String(string) => write!(f, "\'{string}\'"),
     }
   }
 }
@@ -31,6 +39,17 @@ impl Value<'_> {
       Err(Error {
         span,
         message: format!("'{}' is not a boolean", self),
+      })
+    }
+  }
+
+  pub fn list(&self, span: Span) -> Result<&[Value], Error> {
+    if let Value::List(x) = self {
+      Ok(x)
+    } else {
+      Err(Error {
+        span,
+        message: format!("'{}' is not a list", self),
       })
     }
   }

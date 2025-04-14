@@ -47,12 +47,25 @@ fn parser<'a>()
       .map(Ast::Identifier)
       .map_with(|ast, e| (ast, e.span()));
 
+    let items = expr
+      .clone()
+      .separated_by(just(','))
+      .allow_trailing()
+      .collect::<Vec<_>>();
+
+    let list = items
+      .clone()
+      .map(Ast::List)
+      .map_with(|ast, e| (ast, e.span()))
+      .delimited_by(just('['), just(']'));
+
     let atom = number
       .or(boolean)
-      .or(string)
       .or(expr.delimited_by(just('('), just(')')))
       .or(function_call)
       .or(identifier)
+      .or(list)
+      .or(string)
       .padded();
 
     let op = |c| just(c).padded();
@@ -201,7 +214,7 @@ mod tests {
   fn invalid_operator() {
     Test::new()
       .program("2 +* 3")
-      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', '\"', ''', '(', or identifier")])
+      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', '(', identifier, '[', '\"', or '''")])
       .run();
   }
 

@@ -163,6 +163,28 @@ impl<'src> Environment<'src> {
       process::exit(arguments[0].number(span)? as i32);
     });
 
+    env.add_builtin_function("sum", |arguments, span| {
+      if arguments.is_empty() {
+        process::exit(0);
+      }
+
+      if arguments.len() != 1 {
+        return Err(Error::new(
+          span,
+          format!("Function `sum` expects 1 argument, got {}", arguments.len()),
+        ));
+      }
+
+      let list = arguments[0].list(span)?;
+
+      let numbers = list
+        .iter()
+        .map(|x| x.number(span))
+        .collect::<Result<Vec<_>, _>>()?;
+
+      Ok(Value::Number(numbers.iter().sum::<f64>()))
+    });
+
     env.add_variable("e", Value::Number(std::f64::consts::E));
     env.add_variable("pi", Value::Number(std::f64::consts::PI));
 

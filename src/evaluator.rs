@@ -63,7 +63,7 @@ pub fn eval<'a>(
     Ast::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
       eval(lhs, env)?.number(lhs.1)? - eval(rhs, env)?.number(rhs.1)?,
     )),
-    Ast::Boolean(b) => Ok(Value::Boolean(*b)),
+    Ast::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
     Ast::FunctionCall(name, arguments) => {
       let mut evaluated_arguments = Vec::with_capacity(arguments.len());
 
@@ -77,8 +77,17 @@ pub fn eval<'a>(
       Some(value) => Ok(value.clone()),
       None => Err(Error::new(*span, format!("Undefined variable `{}`", name))),
     },
-    Ast::Number(n) => Ok(Value::Number(*n)),
-    Ast::String(s) => Ok(Value::String(s)),
+    Ast::List(list) => {
+      let mut evaluated_list = Vec::with_capacity(list.len());
+
+      for item in list {
+        evaluated_list.push(eval(item, env)?);
+      }
+
+      Ok(Value::List(evaluated_list))
+    }
+    Ast::Number(number) => Ok(Value::Number(*number)),
+    Ast::String(string) => Ok(Value::String(string)),
     Ast::UnaryOp(UnaryOp::Negate, rhs) => {
       Ok(Value::Number(-eval(rhs, env)?.number(rhs.1)?))
     }
