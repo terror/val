@@ -17,11 +17,19 @@ fn parser<'a>()
       .map(Ast::Boolean)
       .map_with(|ast, e| (ast, e.span()));
 
-    let string = just('"')
+    let double_quoted_string = just('"')
       .ignore_then(none_of('"').repeated().to_slice())
       .then_ignore(just('"'))
       .map(Ast::String)
       .map_with(|ast, e| (ast, e.span()));
+
+    let single_quoted_string = just('\'')
+      .ignore_then(none_of('\'').repeated().to_slice())
+      .then_ignore(just('\''))
+      .map(Ast::String)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let string = double_quoted_string.or(single_quoted_string);
 
     let function_call = identifier
       .then(
@@ -98,5 +106,102 @@ pub fn parse(input: &str) -> Result<Spanned<Ast<'_>>, Vec<Error>> {
         .map(|error| Error::new(error.span().to_owned(), error.to_string()))
         .collect(),
     ),
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  struct Test<'a> {
+    ast: &'a str,
+    errors: Vec<Error>,
+    program: &'a str,
+  }
+
+  impl<'a> Test<'a> {
+    fn new() -> Self {
+      Self {
+        ast: "",
+        errors: Vec::new(),
+        program: "",
+      }
+    }
+
+    fn ast(self, ast: &'a str) -> Self {
+      Self { ast, ..self }
+    }
+
+    fn errors(self, errors: Vec<Error>) -> Self {
+      Self { errors, ..self }
+    }
+
+    fn program(self, program: &'a str) -> Self {
+      Self { program, ..self }
+    }
+
+    fn run(self) {
+      match parse(self.program) {
+        Ok(ast) => {
+          assert_eq!(ast.0.to_string(), self.ast, "AST mismatch");
+        }
+        Err(errors) => {
+          for (error, expected) in errors.iter().zip(self.errors.iter()) {
+            assert_eq!(error, expected, "Error mismatch");
+          }
+        }
+      }
+    }
+  }
+
+  #[test]
+  fn integer_literal() {
+    Test::new().program("25").ast("25").run()
+  }
+
+  #[test]
+  fn operator_precedence() {
+    Test::new().program("2 + 3 * 4").ast("(+ 2 (* 3 4))").run();
+    Test::new().program("2 * 3 + 4").ast("(+ (* 2 3) 4)").run();
+    Test::new().program("2 * 3 / 4").ast("(/ (* 2 3) 4)").run();
+    Test::new().program("2 ^ 3 * 4").ast("(* (^ 2 3) 4)").run();
+    Test::new().program("!2 + 3").ast("(+ !2 3)").run();
+  }
+
+  #[test]
+  fn whitespace_handling() {
+    Test::new().program("  2  +  3  ").ast("(+ 2 3)").run();
+    Test::new().program("\n5\n*\n2\n").ast("(* 5 2)").run();
+    Test::new().program("\t8\t/\t4\t").ast("(/ 8 4)").run();
+  }
+
+  #[test]
+  fn unclosed_string() {
+    Test::new()
+      .program("\"unclosed")
+      .errors(vec![Error::new(
+        SimpleSpan::from(9..9),
+        "found end of input expected something else, or '\"'",
+      )])
+      .run();
+  }
+
+  #[test]
+  fn invalid_operator() {
+    Test::new()
+      .program("2 +* 3")
+      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', '\"', ''', '(', or identifier")])
+      .run();
+  }
+
+  #[test]
+  fn missing_closing_parenthesis() {
+    Test::new()
+      .program("(2 + 3")
+      .errors(vec![Error::new(
+        SimpleSpan::from(6..6),
+        "found end of input expected any, '.', '%', '*', '/', '<', '>', '^', '+', '-', or ')'",
+      )])
+      .run();
   }
 }

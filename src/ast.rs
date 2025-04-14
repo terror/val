@@ -9,8 +9,8 @@ pub enum UnaryOp {
 impl Display for UnaryOp {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      UnaryOp::Neg => write!(f, "!"),
-      UnaryOp::Not => write!(f, "-"),
+      UnaryOp::Neg => write!(f, "-"),
+      UnaryOp::Not => write!(f, "!"),
     }
   }
 }
@@ -53,6 +53,29 @@ pub enum Ast<'a> {
   Number(f64),
   String(&'a str),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
+}
+
+impl Display for Ast<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    match self {
+      Ast::BinaryOp(op, lhs, rhs) => write!(f, "({} {} {})", op, lhs.0, rhs.0),
+      Ast::Boolean(b) => write!(f, "{}", b),
+      Ast::FunctionCall(name, arguments) => write!(
+        f,
+        "{}({})",
+        name,
+        arguments
+          .iter()
+          .map(|a| a.0.to_string())
+          .collect::<Vec<_>>()
+          .join(", ")
+      ),
+      Ast::Identifier(id) => write!(f, "{}", id),
+      Ast::Number(n) => write!(f, "{}", n),
+      Ast::String(s) => write!(f, "\"{}\"", s),
+      Ast::UnaryOp(op, expr) => write!(f, "{}{}", op, expr.0),
+    }
+  }
 }
 
 impl Ast<'_> {

@@ -613,6 +613,12 @@ fn string_literals() -> Result {
     .program("print(\"Hello, world!\")")
     .expected_status(0)
     .expected_stdout(Exact("Hello, world!\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print('Hello, world!')")
+    .expected_status(0)
+    .expected_stdout(Exact("Hello, world!\n"))
     .run()
 }
 
