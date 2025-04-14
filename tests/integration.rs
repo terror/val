@@ -632,10 +632,20 @@ fn len() -> Result {
 }
 
 #[test]
-fn quit() -> Result {
+fn exit_or_quit() -> Result {
+  Test::new()?.program("exit()").expected_status(0).run()?;
   Test::new()?.program("quit()").expected_status(0).run()?;
 
+  Test::new()?.program("exit(1)").expected_status(1).run()?;
   Test::new()?.program("quit(1)").expected_status(1).run()?;
+
+  Test::new()?
+    .program("exit(1, 2)")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "Function `exit` expects 0 or 1 arguments, got 2",
+    ))
+    .run()?;
 
   Test::new()?
     .program("quit(1, 2)")
