@@ -655,3 +655,186 @@ fn exit_or_quit() -> Result {
     ))
     .run()
 }
+
+#[test]
+fn equal_to() -> Result {
+  Test::new()?
+    .program("print(1 == 1)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(1 == 2)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(\"hello\" == \"hello\")")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(\"hello\" == \"world\")")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()
+}
+
+#[test]
+fn not_equal_to() -> Result {
+  Test::new()?
+    .program("print(1 != 1)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(1 != 2)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(\"hello\" != \"hello\")")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(\"hello\" != \"world\")")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn less_than_or_equal() -> Result {
+  Test::new()?
+    .program("print(1 <= 1)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(1 <= 2)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(2 <= 1)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()
+}
+
+#[test]
+fn greater_than_or_equal() -> Result {
+  Test::new()?
+    .program("print(1 >= 1)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(1 >= 2)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(2 >= 1)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn comparison_with_expressions() -> Result {
+  Test::new()?
+    .program("print((1 + 2) == (4 - 1))")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(2 * 3 >= 5)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(10 / 2 <= 4)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(2 ^ 3 != 9)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn boolean_comparison() -> Result {
+  Test::new()?
+    .program("print(true == true)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(true != false)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print((1 < 2) == true)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn mixed_type_comparisons() -> Result {
+  Test::new()?
+    .program("print(\"true\" == true)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(\"false\" != false)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(1 == true)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(0 == false)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(123 == \"123\")")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(0 != \"0\")")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()
+}

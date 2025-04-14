@@ -2,14 +2,14 @@ use super::*;
 
 #[derive(Debug, Clone)]
 pub enum UnaryOp {
-  Neg,
+  Negate,
   Not,
 }
 
 impl Display for UnaryOp {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
-      UnaryOp::Neg => write!(f, "-"),
+      UnaryOp::Negate => write!(f, "-"),
       UnaryOp::Not => write!(f, "!"),
     }
   }
@@ -19,26 +19,34 @@ impl Display for UnaryOp {
 #[allow(unused)]
 pub enum BinaryOp {
   Add,
-  Div,
-  Gt,
-  Lt,
-  Mod,
-  Mul,
-  Pow,
-  Sub,
+  Divide,
+  Equal,
+  GreaterThan,
+  GreaterThanEqual,
+  LessThan,
+  LessThanEqual,
+  Modulo,
+  Multiply,
+  NotEqual,
+  Power,
+  Subtract,
 }
 
 impl Display for BinaryOp {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
       BinaryOp::Add => write!(f, "+"),
-      BinaryOp::Div => write!(f, "/"),
-      BinaryOp::Gt => write!(f, ">"),
-      BinaryOp::Lt => write!(f, "<"),
-      BinaryOp::Mod => write!(f, "%"),
-      BinaryOp::Mul => write!(f, "*"),
-      BinaryOp::Pow => write!(f, "^"),
-      BinaryOp::Sub => write!(f, "-"),
+      BinaryOp::Divide => write!(f, "/"),
+      BinaryOp::Equal => write!(f, "=="),
+      BinaryOp::GreaterThanEqual => write!(f, ">="),
+      BinaryOp::GreaterThan => write!(f, ">"),
+      BinaryOp::LessThanEqual => write!(f, "<="),
+      BinaryOp::LessThan => write!(f, "<"),
+      BinaryOp::Modulo => write!(f, "%"),
+      BinaryOp::Multiply => write!(f, "*"),
+      BinaryOp::NotEqual => write!(f, "!="),
+      BinaryOp::Power => write!(f, "^"),
+      BinaryOp::Subtract => write!(f, "-"),
     }
   }
 }

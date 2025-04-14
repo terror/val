@@ -10,7 +10,7 @@ pub fn eval<'a>(
     Ast::BinaryOp(BinaryOp::Add, lhs, rhs) => Ok(Value::Number(
       eval(lhs, env)?.number(lhs.1)? + eval(rhs, env)?.number(rhs.1)?,
     )),
-    Ast::BinaryOp(BinaryOp::Div, lhs, rhs) => {
+    Ast::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
       let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
 
       let (lhs_num, rhs_num) = (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
@@ -21,13 +21,22 @@ pub fn eval<'a>(
 
       Ok(Value::Number(lhs_num / rhs_num))
     }
-    Ast::BinaryOp(BinaryOp::Gt, lhs, rhs) => Ok(Value::Boolean(
-      eval(lhs, env)?.number(lhs.1)? > eval(rhs, env)?.number(rhs.1)?,
-    )),
-    Ast::BinaryOp(BinaryOp::Lt, lhs, rhs) => Ok(Value::Boolean(
-      eval(lhs, env)?.number(lhs.1)? < eval(rhs, env)?.number(rhs.1)?,
-    )),
-    Ast::BinaryOp(BinaryOp::Mod, lhs, rhs) => {
+    Ast::BinaryOp(BinaryOp::Equal, lhs, rhs) => {
+      Ok(Value::Boolean(eval(lhs, env)? == eval(rhs, env)?))
+    }
+    Ast::BinaryOp(BinaryOp::GreaterThan, lhs, rhs) => {
+      Ok(Value::Boolean(eval(lhs, env)? > eval(rhs, env)?))
+    }
+    Ast::BinaryOp(BinaryOp::GreaterThanEqual, lhs, rhs) => {
+      Ok(Value::Boolean(eval(lhs, env)? >= eval(rhs, env)?))
+    }
+    Ast::BinaryOp(BinaryOp::LessThan, lhs, rhs) => {
+      Ok(Value::Boolean(eval(lhs, env)? < eval(rhs, env)?))
+    }
+    Ast::BinaryOp(BinaryOp::LessThanEqual, lhs, rhs) => {
+      Ok(Value::Boolean(eval(lhs, env)? <= eval(rhs, env)?))
+    }
+    Ast::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
       let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
 
       let (lhs_num, rhs_num) = (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
@@ -38,17 +47,20 @@ pub fn eval<'a>(
 
       Ok(Value::Number(lhs_num % rhs_num))
     }
-    Ast::BinaryOp(BinaryOp::Mul, lhs, rhs) => Ok(Value::Number(
+    Ast::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
       eval(lhs, env)?.number(lhs.1)? * eval(rhs, env)?.number(rhs.1)?,
     )),
-    Ast::BinaryOp(BinaryOp::Pow, lhs, rhs) => {
+    Ast::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => {
+      Ok(Value::Boolean(eval(lhs, env)? != eval(rhs, env)?))
+    }
+    Ast::BinaryOp(BinaryOp::Power, lhs, rhs) => {
       let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
 
       let (lhs_num, rhs_num) = (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
       Ok(Value::Number(lhs_num.powf(rhs_num)))
     }
-    Ast::BinaryOp(BinaryOp::Sub, lhs, rhs) => Ok(Value::Number(
+    Ast::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
       eval(lhs, env)?.number(lhs.1)? - eval(rhs, env)?.number(rhs.1)?,
     )),
     Ast::Boolean(b) => Ok(Value::Boolean(*b)),
@@ -67,7 +79,7 @@ pub fn eval<'a>(
     },
     Ast::Number(n) => Ok(Value::Number(*n)),
     Ast::String(s) => Ok(Value::String(s)),
-    Ast::UnaryOp(UnaryOp::Neg, rhs) => {
+    Ast::UnaryOp(UnaryOp::Negate, rhs) => {
       Ok(Value::Number(-eval(rhs, env)?.number(rhs.1)?))
     }
     Ast::UnaryOp(UnaryOp::Not, rhs) => {

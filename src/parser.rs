@@ -57,7 +57,7 @@ fn parser<'a>()
 
     let op = |c| just(c).padded();
 
-    let unary = choice((op('-').to(UnaryOp::Neg), op('!').to(UnaryOp::Not)))
+    let unary = choice((op('-').to(UnaryOp::Negate), op('!').to(UnaryOp::Not)))
       .repeated()
       .foldr(atom, |op, rhs| {
         let span = rhs.1;
@@ -66,12 +66,10 @@ fn parser<'a>()
 
     let product = unary.clone().foldl(
       choice((
-        op('%').to(BinaryOp::Mod),
-        op('*').to(BinaryOp::Mul),
-        op('/').to(BinaryOp::Div),
-        op('<').to(BinaryOp::Lt),
-        op('>').to(BinaryOp::Gt),
-        op('^').to(BinaryOp::Pow),
+        op('%').to(BinaryOp::Modulo),
+        op('*').to(BinaryOp::Multiply),
+        op('/').to(BinaryOp::Divide),
+        op('^').to(BinaryOp::Power),
       ))
       .then(unary.clone())
       .repeated(),
@@ -82,7 +80,7 @@ fn parser<'a>()
     );
 
     let sum = product.clone().foldl(
-      choice((op('+').to(BinaryOp::Add), op('-').to(BinaryOp::Sub)))
+      choice((op('+').to(BinaryOp::Add), op('-').to(BinaryOp::Subtract)))
         .then(product)
         .repeated(),
       |lhs, (op, rhs)| {
@@ -91,7 +89,20 @@ fn parser<'a>()
       },
     );
 
-    sum
+    let comparison = sum.clone().foldl_with(
+      just("==")
+        .to(BinaryOp::Equal)
+        .or(just("!=").to(BinaryOp::NotEqual))
+        .or(just(">=").to(BinaryOp::GreaterThanEqual))
+        .or(just("<=").to(BinaryOp::LessThanEqual))
+        .or(just("<").to(BinaryOp::LessThan))
+        .or(just(">").to(BinaryOp::GreaterThan))
+        .then(sum)
+        .repeated(),
+      |a, (op, b), e| (Ast::BinaryOp(op, Box::new(a), Box::new(b)), e.span()),
+    );
+
+    comparison
   })
 }
 
@@ -200,7 +211,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![Error::new(
         SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '%', '*', '/', '<', '>', '^', '+', '-', or ')'",
+        "found end of input expected any, '.', '%', '*', '/', '^', '+', '-', '=', '!', '>', '<', or ')'",
       )])
       .run();
   }
