@@ -9,7 +9,7 @@
 on top of [**chumsky**](https://github.com/zesterer/chumsky) and
 [**ariadne**](https://github.com/zesterer/ariadne).
 
-<img width="1667" alt="Screenshot 2025-04-12 at 4 37 56 PM" src="https://github.com/user-attachments/assets/eba025ba-f68b-43e1-a148-2c1d6fa16ae0" />
+<img width="1667" alt="Screenshot 2025-04-15 at 3 03 47 AM" src="https://github.com/user-attachments/assets/a1ee7bce-66ea-4e19-bd78-cb1e217b5330" />
 
 ## Installation
 
