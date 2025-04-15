@@ -446,6 +446,314 @@ fn arctangent() -> Result {
 }
 
 #[test]
+fn tangent() -> Result {
+  Test::new()?
+    .program("print(tan(1))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.557407724654902"))
+    .run()?;
+
+  Test::new()?
+    .program("print(tan(0))")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(tan(pi/4))")
+    .expected_status(0)
+    .expected_stdout(Contains("0.99"))
+    .run()
+}
+
+#[test]
+fn cosecant() -> Result {
+  Test::new()?
+    .program("print(csc(1))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.188"))  // ~1.1883951...
+    .run()?;
+
+  Test::new()?
+    .program("print(csc(pi/2))")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(csc(0))")
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot compute csc of multiple of π"))
+    .run()
+}
+
+#[test]
+fn secant() -> Result {
+  Test::new()?
+    .program("print(sec(0))")
+    .expected_status(0)
+    .expected_stdout(Contains("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(sec(pi/3))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.99"))  // ~2.0000...
+    .run()
+}
+
+#[test]
+fn cotangent() -> Result {
+  Test::new()?
+    .program("print(cot(1))")
+    .expected_status(0)
+    .expected_stdout(Contains("0.64"))  // ~0.6420...
+    .run()?;
+
+  Test::new()?
+    .program("print(cot(pi/4))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.0000"))
+    .run()?;
+
+  Test::new()?
+    .program("print(cot(0))")
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot compute cot of multiple of π"))
+    .run()
+}
+
+#[test]
+fn hyperbolic_functions() -> Result {
+  Test::new()?
+    .program("print(sinh(1))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.17520"))  // ~1.1752...
+    .run()?;
+
+  Test::new()?
+    .program("print(cosh(0))")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(tanh(2))")
+    .expected_status(0)
+    .expected_stdout(Contains("0.96"))  // ~0.964...
+    .run()
+}
+
+#[test]
+fn arcsine() -> Result {
+  Test::new()?
+    .program("print(asin(0))")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(asin(1))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
+    .run()?;
+
+  Test::new()?
+    .program("print(asin(0.5))")
+    .expected_status(0)
+    .expected_stdout(Contains("0.52"))  // ~0.5235...
+    .run()?;
+
+  Test::new()?
+    .program("print(asin(2))")
+    .expected_status(1)
+    .expected_stderr(Contains("asin argument must be between -1 and 1"))
+    .run()
+}
+
+#[test]
+fn arccosine() -> Result {
+  Test::new()?
+    .program("print(acos(1))")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(acos(0))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
+    .run()?;
+
+  Test::new()?
+    .program("print(acos(0.5))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.04"))  // ~1.0472...
+    .run()?;
+
+  Test::new()?
+    .program("print(acos(-2))")
+    .expected_status(1)
+    .expected_stderr(Contains("acos argument must be between -1 and 1"))
+    .run()
+}
+
+#[test]
+fn arccosecant() -> Result {
+  Test::new()?
+    .program("print(acsc(1))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
+    .run()?;
+
+  Test::new()?
+    .program("print(acsc(2))")
+    .expected_status(0)
+    .expected_stdout(Contains("0.52"))  // ~0.5235...
+    .run()?;
+
+  Test::new()?
+    .program("print(acsc(0.5))")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "acsc argument must have absolute value at least 1",
+    ))
+    .run()
+}
+
+#[test]
+fn arcsecant() -> Result {
+  Test::new()?
+    .program("print(asec(1))")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(asec(2))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.04"))  // ~1.0472...
+    .run()?;
+
+  Test::new()?
+    .program("print(asec(0.5))")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "asec argument must have absolute value at least 1",
+    ))
+    .run()
+}
+
+#[test]
+fn arccotangent() -> Result {
+  Test::new()?
+    .program("print(acot(1))")
+    .expected_status(0)
+    .expected_stdout(Contains("0.78"))  // π/4 ~= 0.7853...
+    .run()?;
+
+  Test::new()?
+    .program("print(acot(0))")
+    .expected_status(0)
+    .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
+    .run()
+}
+
+#[test]
+fn logarithms() -> Result {
+  Test::new()?
+    .program("print(log2(8))")
+    .expected_status(0)
+    .expected_stdout(Exact("3\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(log2(0))")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "Cannot take logarithm of zero or negative number",
+    ))
+    .run()?;
+
+  Test::new()?
+    .program("print(log10(100))")
+    .expected_status(0)
+    .expected_stdout(Exact("2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(log10(-5))")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "Cannot take logarithm of zero or negative number",
+    ))
+    .run()
+}
+
+#[test]
+fn ceiling_function() -> Result {
+  Test::new()?
+    .program("print(ceil(3.14))")
+    .expected_status(0)
+    .expected_stdout(Exact("4\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(ceil(-2.5))")
+    .expected_status(0)
+    .expected_stdout(Exact("-2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(ceil(5.0))")
+    .expected_status(0)
+    .expected_stdout(Exact("5\n"))
+    .run()
+}
+
+#[test]
+fn floor_function() -> Result {
+  Test::new()?
+    .program("print(floor(3.14))")
+    .expected_status(0)
+    .expected_stdout(Exact("3\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(floor(-2.5))")
+    .expected_status(0)
+    .expected_stdout(Exact("-3\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(floor(5.0))")
+    .expected_status(0)
+    .expected_stdout(Exact("5\n"))
+    .run()
+}
+
+#[test]
+fn absolute_value() -> Result {
+  Test::new()?
+    .program("print(abs(3.14))")
+    .expected_status(0)
+    .expected_stdout(Exact("3.14\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(abs(-2.5))")
+    .expected_status(0)
+    .expected_stdout(Exact("2.5\n"))
+    .run()?;
+
+  Test::new()?
+    .program("print(abs(0))")
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()
+}
+
+#[test]
 fn natural_logarithm() -> Result {
   Test::new()?
     .program("print(ln(1))")
@@ -468,7 +776,7 @@ fn natural_logarithm() -> Result {
   Test::new()?
     .program("print(ln())")
     .expected_status(1)
-    .expected_stderr(Contains("Function 'log' expects 1 argument, got 0"))
+    .expected_stderr(Contains("Function 'ln' expects 1 argument, got 0"))
     .run()?;
 
   Test::new()?

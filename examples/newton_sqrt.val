@@ -1,11 +1,3 @@
-fn abs(x) {
-  if (x < 0) {
-    -x
-  } else {
-    x
-  }
-}
-
 fn newton_sqrt(x) {
   if (x < 0) {
     print('Cannot compute square root of negative number')
