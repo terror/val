@@ -146,8 +146,8 @@ impl<'a> Evaluator<'a> {
         lhs,
         rhs,
       ) => {
-        let lhs_val = self.eval_expression(lhs)?;
-        let rhs_val = self.eval_expression(rhs)?;
+        let (lhs_val, rhs_val) =
+          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
 
         match (&lhs_val, &rhs_val) {
           (Value::Number(a), Value::Number(b)) => {
@@ -196,20 +196,11 @@ impl<'a> Evaluator<'a> {
         self.eval_expression(lhs)?.number(lhs.1)?
           * self.eval_expression(rhs)?.number(rhs.1)?,
       )),
-      Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => {
-        let eq_result = self.eval_expression(&(
-          Expression::BinaryOp(BinaryOp::Equal, lhs.clone(), rhs.clone()),
-          *span,
-        ))?;
-
-        match eq_result {
-          Value::Boolean(b) => Ok(Value::Boolean(!b)),
-          _ => Err(Error::new(
-            *span,
-            "Equality comparison didn't return a boolean",
-          )),
-        }
-      }
+      Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
+        !self
+          .eval_expression(lhs)?
+          .equals(&self.eval_expression(rhs)?),
+      )),
       Expression::BinaryOp(BinaryOp::Power, lhs, rhs) => {
         let (lhs_val, rhs_val) =
           (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
