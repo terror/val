@@ -3,7 +3,6 @@ use super::*;
 #[derive(Clone, Debug)]
 pub enum Value<'src> {
   Boolean(bool),
-  BuiltinFunction(&'src str),
   Function(
     &'src str,
     Vec<&'src str>,
@@ -20,7 +19,6 @@ impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
       Value::Boolean(boolean) => write!(f, "{boolean}"),
-      Value::BuiltinFunction(name) => write!(f, "<builtin function: {name}>"),
       Value::Function(name, _, _, _) => write!(f, "<function: {name}>"),
       Value::List(list) => write!(
         f,
@@ -42,7 +40,6 @@ impl PartialEq for Value<'_> {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Value::Boolean(a), Value::Boolean(b)) => a == b,
-      (Value::BuiltinFunction(a), Value::BuiltinFunction(b)) => a == b,
       (Value::Function(a_name, _, _, _), Value::Function(b_name, _, _, _)) => {
         a_name == b_name
       }
@@ -105,7 +102,6 @@ impl<'a> Value<'a> {
   pub fn type_name(&self) -> &'static str {
     match self {
       Value::Boolean(_) => "boolean",
-      Value::BuiltinFunction(_) => "builtin function",
       Value::Function(_, _, _, _) => "function",
       Value::List(_) => "list",
       Value::Null => "null",
