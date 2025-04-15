@@ -36,6 +36,7 @@ pub enum Statement<'a> {
   Assignment(&'a str, Spanned<Expression<'a>>),
   Block(Vec<Spanned<Statement<'a>>>),
   Expression(Spanned<Expression<'a>>),
+  While(Spanned<Expression<'a>>, Vec<Spanned<Statement<'a>>>),
 }
 
 impl Display for Statement<'_> {
@@ -58,6 +59,18 @@ impl Display for Statement<'_> {
       Statement::Expression(expression) => {
         write!(f, "expression({})", expression.0)
       }
+      Statement::While(condition, body) => {
+        write!(
+          f,
+          "while({}, block({}))",
+          condition.0,
+          body
+            .iter()
+            .map(|s| s.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
+      }
     }
   }
 }
@@ -68,6 +81,7 @@ impl Statement<'_> {
       Statement::Assignment(_, _) => "assignment",
       Statement::Block(_) => "block",
       Statement::Expression(_) => "expression",
+      Statement::While(_, _) => "while",
     })
   }
 }

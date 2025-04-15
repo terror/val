@@ -888,3 +888,25 @@ fn list_access() -> Result {
     .expected_stdout(Exact("2\n3\n"))
     .run()
 }
+
+#[test]
+fn while_loops() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      counter = 0
+      sum = 0
+
+      while (counter < 5) {
+        sum = sum + counter
+        counter = counter + 1
+      }
+
+      print(sum)
+      print(counter)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10\n5\n"))
+    .run()
+}

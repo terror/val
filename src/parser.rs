@@ -157,8 +157,23 @@ fn parser<'a>()
       .map(|(name, expr)| Statement::Assignment(name, expr))
       .map_with(|ast, e| (ast, e.span()));
 
-    let expression_statement = expression
-      .map(Statement::Expression)
+    let while_statement = just("while")
+      .padded()
+      .ignore_then(
+        expression
+          .clone()
+          .delimited_by(just('(').padded(), just(')').padded()),
+      )
+      .then(
+        statement
+          .clone()
+          .then(just(';').padded().or_not())
+          .map(|(stmt, _)| stmt)
+          .repeated()
+          .collect::<Vec<_>>()
+          .delimited_by(just('{').padded(), just('}').padded()),
+      )
+      .map(|(condition, body)| Statement::While(condition, body))
       .map_with(|ast, e| (ast, e.span()));
 
     let block_statement = statement
@@ -170,8 +185,17 @@ fn parser<'a>()
       .map(Statement::Block)
       .map_with(|ast, e| (ast, e.span()));
 
-    choice((assignment_statement, block_statement, expression_statement))
-      .padded()
+    let expression_statement = expression
+      .map(Statement::Expression)
+      .map_with(|ast, e| (ast, e.span()));
+
+    choice((
+      assignment_statement,
+      while_statement,
+      block_statement,
+      expression_statement,
+    ))
+    .padded()
   });
 
   statement

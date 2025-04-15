@@ -52,6 +52,17 @@ impl<'a> Evaluator<'a> {
         Ok(result)
       }
       Statement::Expression(expression) => self.eval_expression(expression),
+      Statement::While(condition, body) => {
+        let mut result = Value::Null;
+
+        while self.eval_expression(condition)?.boolean(condition.1)? {
+          for statement in body {
+            result = self.eval_statement(statement)?;
+          }
+        }
+
+        Ok(result)
+      }
     }
   }
 
