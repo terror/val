@@ -1,5 +1,22 @@
-Expression → Term EOF
-Term       → Term ('+' | '-') Factor
-Factor     → Factor ('*' | '/') Primary
-Primary    → Number | Identifier | Call | '(' Expression ')' | '-' Primary
-Call       → Identifier '(' (Expression (',' Expression)*)? ')'
+Program        → Statement (';' Statement)* ';'?
+Statement      → Assignment | Block | ExpressionStmt | If | While
+Assignment     → Identifier '=' Expression
+Block          → '{' Statement* '}'
+ExpressionStmt → Expression
+If             → 'if' '(' Expression ')' '{' Statement* '}' ('else' '{' Statement* '}')?
+While          → 'while' '(' Expression ')' '{' Statement* '}'
+Expression     → Comparison
+Comparison     → Sum ('==' | '!=' | '>=' | '<=' | '<' | '>') Sum | Sum
+Sum            → Sum ('+' | '-') Product | Product
+Product        → Product ('*' | '/' | '%' | '^') Unary | Unary
+Unary          → ('-' | '!') Unary | ListAccess
+ListAccess     → Atom ('[' Expression ']')* | Atom
+Atom           → Number | Boolean | String | List | FunctionCall | Identifier | '(' Expression ')'
+Number         → Digit+ ('.' Digit+)?
+Boolean        → 'true' | 'false'
+String         → '"' [^"]* '"' | "'" [^']* "'"
+List           → '[' (Expression (',' Expression)*)? ','? ']'
+FunctionCall   → Identifier '(' (Expression (',' Expression)*)? ','? ')'
+Identifier     → Letter (Letter | Digit)*
+Digit          → '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+Letter         → 'a' | 'b' | ... | 'z' | 'A' | 'B' | ... | 'Z' | '_'
