@@ -1,10 +1,41 @@
 import { TreeViewer } from '@/components/tree-viewer';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import init, { parse } from 'val-wasm';
+import init, { AstNode, ParseError, parse } from 'val-wasm';
+
+import { Editor } from './components/editor';
+import { EditorSettingsDialog } from './components/editor-settings-dialog';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from './components/ui/resizable';
+
+const EXAMPLES = {
+  Factorial: `fn factorial(n) {
+  if (n <= 1) {
+    1
+  } else {
+    n * factorial(n - 1)
+  }
+}
+
+print(factorial(5));`,
+};
 
 function App() {
   const [wasmLoaded, setWasmLoaded] = useState(false);
+  const [code, setCode] = useState(EXAMPLES.Factorial);
+  const [currentExample, setCurrentExample] = useState('Factorial');
+  const [ast, setAst] = useState<AstNode | null>(null);
+  const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
 
   useEffect(() => {
     init()
@@ -14,11 +45,81 @@ function App() {
       .catch((error) => {
         toast.error(error);
       });
-  });
+  }, []);
+
+  useEffect(() => {
+    try {
+      setAst(parse(code));
+      setParseErrors([]);
+    } catch (error) {
+      setParseErrors(error as ParseError[]);
+    }
+  }, [code]);
+
+  const handleExampleChange = (value: string) => {
+    setCurrentExample(value);
+    setCode(EXAMPLES[value as keyof typeof EXAMPLES]);
+  };
 
   if (!wasmLoaded) return null;
 
-  return <TreeViewer ast={parse('1 + 1')} />;
+  return (
+    <div className='flex h-screen flex-col p-4'>
+      <div className='mb-4 flex items-center'>
+        <a href='/' className='font-semibold'>
+          val
+        </a>
+      </div>
+      <ResizablePanelGroup
+        direction='horizontal'
+        className='min-h-0 flex-grow overflow-hidden rounded border'
+      >
+        <ResizablePanel
+          defaultSize={50}
+          minSize={30}
+          className='flex min-h-0 flex-col overflow-hidden'
+        >
+          <div className='flex h-full flex-col overflow-hidden'>
+            <div className='flex h-full min-h-0 flex-col overflow-hidden'>
+              <div className='flex items-center justify-between border-b bg-gray-50 px-2 py-1'>
+                <div className='flex items-center'>
+                  <Select
+                    value={currentExample}
+                    onValueChange={handleExampleChange}
+                  >
+                    <SelectTrigger className='h-7 w-36 bg-white text-sm'>
+                      <SelectValue placeholder='Select example' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(EXAMPLES).map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {key}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <EditorSettingsDialog />
+              </div>
+              <div className='h-full min-h-0 flex-grow overflow-hidden'>
+                <Editor errors={parseErrors} value={code} onChange={setCode} />
+              </div>
+            </div>
+          </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel
+          defaultSize={50}
+          minSize={30}
+          className='min-h-0 overflow-hidden'
+        >
+          <div className='h-full overflow-auto p-2'>
+            <TreeViewer ast={ast} />
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+    </div>
+  );
 }
 
 export default App;

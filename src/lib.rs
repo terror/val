@@ -3,7 +3,6 @@ pub(crate) use {
   chumsky::prelude::*,
   clap::Parser as Clap,
   environment::Environment,
-
   std::{
     collections::HashMap,
     fmt::{self, Display, Formatter},
@@ -15,7 +14,7 @@ pub(crate) use {
 };
 
 #[cfg(not(target_family = "wasm"))]
-pub(crate) use {dirs, rustyline::DefaultEditor};
+pub(crate) use rustyline::DefaultEditor;
 
 pub use crate::{
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},

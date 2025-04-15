@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { AstNode } from 'val-wasm';
 import React, { useState } from 'react';
+import { AstNode } from 'val-wasm';
 
 interface TreeNodeProps {
   node: AstNode;
@@ -70,6 +70,6 @@ export const TreeViewer: React.FC<TreeViewerProps> = ({ ast }) => {
   return ast ? (
     <TreeNode node={ast} />
   ) : (
-    <div className='text-muted-foreground p-4'>No AST available</div>
+    <div className='text-muted-foreground p-2'>No AST available</div>
   );
 };
