@@ -6,7 +6,7 @@ pub(crate) use {
   rustyline::DefaultEditor,
   std::{
     collections::HashMap,
-    fmt::{Display, Formatter},
+    fmt::{self, Display, Formatter},
     fs,
     ops::Range,
     path::PathBuf,
@@ -15,9 +15,9 @@ pub(crate) use {
 };
 
 pub use crate::{
-  ast::{Ast, BinaryOp, UnaryOp},
+  ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   error::Error,
-  evaluator::eval,
+  evaluator::Evaluator,
   parser::parse,
   value::Value,
 };

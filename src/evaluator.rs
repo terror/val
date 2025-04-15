@@ -1,98 +1,172 @@
 use super::*;
 
-pub fn eval<'a>(
-  ast: &Spanned<Ast<'a>>,
-  env: &Environment<'a>,
-) -> Result<Value<'a>, Error> {
-  let (node, span) = ast;
+pub struct Evaluator<'a> {
+  environment: Environment<'a>,
+}
 
-  match node {
-    Ast::BinaryOp(BinaryOp::Add, lhs, rhs) => Ok(Value::Number(
-      eval(lhs, env)?.number(lhs.1)? + eval(rhs, env)?.number(rhs.1)?,
-    )),
-    Ast::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
-      let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
+impl<'a> Evaluator<'a> {
+  pub fn new() -> Self {
+    Self {
+      environment: Environment::new(),
+    }
+  }
 
-      let (lhs_num, rhs_num) = (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
+  pub fn eval(
+    &mut self,
+    ast: &Spanned<Program<'a>>,
+  ) -> Result<Value<'a>, Error> {
+    let (node, _) = ast;
 
-      if rhs_num == 0.0 {
-        return Err(Error::new(rhs.1, "Division by zero"));
+    match node {
+      Program::Statements(statements) => {
+        let mut result = Value::Null;
+
+        for statement in statements {
+          result = self.eval_statement(statement)?;
+        }
+
+        Ok(result)
       }
+    }
+  }
 
-      Ok(Value::Number(lhs_num / rhs_num))
-    }
-    Ast::BinaryOp(BinaryOp::Equal, lhs, rhs) => {
-      Ok(Value::Boolean(eval(lhs, env)? == eval(rhs, env)?))
-    }
-    Ast::BinaryOp(BinaryOp::GreaterThan, lhs, rhs) => {
-      Ok(Value::Boolean(eval(lhs, env)? > eval(rhs, env)?))
-    }
-    Ast::BinaryOp(BinaryOp::GreaterThanEqual, lhs, rhs) => {
-      Ok(Value::Boolean(eval(lhs, env)? >= eval(rhs, env)?))
-    }
-    Ast::BinaryOp(BinaryOp::LessThan, lhs, rhs) => {
-      Ok(Value::Boolean(eval(lhs, env)? < eval(rhs, env)?))
-    }
-    Ast::BinaryOp(BinaryOp::LessThanEqual, lhs, rhs) => {
-      Ok(Value::Boolean(eval(lhs, env)? <= eval(rhs, env)?))
-    }
-    Ast::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
-      let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
+  fn eval_statement(
+    &mut self,
+    statement: &Spanned<Statement<'a>>,
+  ) -> Result<Value<'a>, Error> {
+    let (node, _) = statement;
 
-      let (lhs_num, rhs_num) = (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
-
-      if rhs_num == 0.0 {
-        return Err(Error::new(rhs.1, "Modulo by zero"));
+    match node {
+      Statement::Assignment(name, expr) => {
+        let value = self.eval_expression(expr)?;
+        self.environment.add_variable(name, value.clone());
+        Ok(value)
       }
+      Statement::Block(statements) => {
+        let mut result = Value::Null;
 
-      Ok(Value::Number(lhs_num % rhs_num))
-    }
-    Ast::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
-      eval(lhs, env)?.number(lhs.1)? * eval(rhs, env)?.number(rhs.1)?,
-    )),
-    Ast::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => {
-      Ok(Value::Boolean(eval(lhs, env)? != eval(rhs, env)?))
-    }
-    Ast::BinaryOp(BinaryOp::Power, lhs, rhs) => {
-      let (lhs_val, rhs_val) = (eval(lhs, env)?, eval(rhs, env)?);
+        for statement in statements {
+          result = self.eval_statement(statement)?;
+        }
 
-      let (lhs_num, rhs_num) = (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
-
-      Ok(Value::Number(lhs_num.powf(rhs_num)))
-    }
-    Ast::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
-      eval(lhs, env)?.number(lhs.1)? - eval(rhs, env)?.number(rhs.1)?,
-    )),
-    Ast::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
-    Ast::FunctionCall(name, arguments) => {
-      let mut evaluated_arguments = Vec::with_capacity(arguments.len());
-
-      for argument in arguments {
-        evaluated_arguments.push(eval(argument, env)?);
+        Ok(result)
       }
-
-      env.call_function(name, evaluated_arguments, *span)
+      Statement::Expression(expression) => self.eval_expression(expression),
     }
-    Ast::Identifier(name) => match env.get_variable(name) {
-      Some(value) => Ok(value.clone()),
-      None => Err(Error::new(*span, format!("Undefined variable `{}`", name))),
-    },
-    Ast::List(list) => {
-      let mut evaluated_list = Vec::with_capacity(list.len());
+  }
 
-      for item in list {
-        evaluated_list.push(eval(item, env)?);
+  fn eval_expression(
+    &mut self,
+    ast: &Spanned<Expression<'a>>,
+  ) -> Result<Value<'a>, Error> {
+    let (node, span) = ast;
+
+    match node {
+      Expression::BinaryOp(BinaryOp::Add, lhs, rhs) => Ok(Value::Number(
+        self.eval_expression(lhs)?.number(lhs.1)?
+          + self.eval_expression(rhs)?.number(rhs.1)?,
+      )),
+      Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
+        let (lhs_val, rhs_val) =
+          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+
+        let (lhs_num, rhs_num) =
+          (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
+
+        if rhs_num == 0.0 {
+          return Err(Error::new(rhs.1, "Division by zero"));
+        }
+
+        Ok(Value::Number(lhs_num / rhs_num))
       }
+      Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
+        self.eval_expression(lhs)? == self.eval_expression(rhs)?,
+      )),
+      Expression::BinaryOp(BinaryOp::GreaterThan, lhs, rhs) => Ok(
+        Value::Boolean(self.eval_expression(lhs)? > self.eval_expression(rhs)?),
+      ),
+      Expression::BinaryOp(BinaryOp::GreaterThanEqual, lhs, rhs) => {
+        Ok(Value::Boolean(
+          self.eval_expression(lhs)? >= self.eval_expression(rhs)?,
+        ))
+      }
+      Expression::BinaryOp(BinaryOp::LessThan, lhs, rhs) => Ok(Value::Boolean(
+        self.eval_expression(lhs)? < self.eval_expression(rhs)?,
+      )),
+      Expression::BinaryOp(BinaryOp::LessThanEqual, lhs, rhs) => {
+        Ok(Value::Boolean(
+          self.eval_expression(lhs)? <= self.eval_expression(rhs)?,
+        ))
+      }
+      Expression::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
+        let (lhs_val, rhs_val) =
+          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
 
-      Ok(Value::List(evaluated_list))
-    }
-    Ast::Number(number) => Ok(Value::Number(*number)),
-    Ast::String(string) => Ok(Value::String(string)),
-    Ast::UnaryOp(UnaryOp::Negate, rhs) => {
-      Ok(Value::Number(-eval(rhs, env)?.number(rhs.1)?))
-    }
-    Ast::UnaryOp(UnaryOp::Not, rhs) => {
-      Ok(Value::Boolean(!eval(rhs, env)?.boolean(rhs.1)?))
+        let (lhs_num, rhs_num) =
+          (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
+
+        if rhs_num == 0.0 {
+          return Err(Error::new(rhs.1, "Modulo by zero"));
+        }
+
+        Ok(Value::Number(lhs_num % rhs_num))
+      }
+      Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
+        self.eval_expression(lhs)?.number(lhs.1)?
+          * self.eval_expression(rhs)?.number(rhs.1)?,
+      )),
+      Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
+        self.eval_expression(lhs)? != self.eval_expression(rhs)?,
+      )),
+      Expression::BinaryOp(BinaryOp::Power, lhs, rhs) => {
+        let (lhs_val, rhs_val) =
+          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+
+        let (lhs_num, rhs_num) =
+          (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
+
+        Ok(Value::Number(lhs_num.powf(rhs_num)))
+      }
+      Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
+        self.eval_expression(lhs)?.number(lhs.1)?
+          - self.eval_expression(rhs)?.number(rhs.1)?,
+      )),
+      Expression::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
+      Expression::FunctionCall(name, arguments) => {
+        let mut evaluated_arguments = Vec::with_capacity(arguments.len());
+
+        for argument in arguments {
+          evaluated_arguments.push(self.eval_expression(argument)?);
+        }
+
+        self
+          .environment
+          .call_function(name, evaluated_arguments, *span)
+      }
+      Expression::Identifier(name) => match self.environment.get_variable(name)
+      {
+        Some(value) => Ok(value.clone()),
+        None => {
+          Err(Error::new(*span, format!("Undefined variable `{}`", name)))
+        }
+      },
+      Expression::List(list) => {
+        let mut evaluated_list = Vec::with_capacity(list.len());
+
+        for item in list {
+          evaluated_list.push(self.eval_expression(item)?);
+        }
+
+        Ok(Value::List(evaluated_list))
+      }
+      Expression::Number(number) => Ok(Value::Number(*number)),
+      Expression::String(string) => Ok(Value::String(string)),
+      Expression::UnaryOp(UnaryOp::Negate, rhs) => {
+        Ok(Value::Number(-self.eval_expression(rhs)?.number(rhs.1)?))
+      }
+      Expression::UnaryOp(UnaryOp::Not, rhs) => {
+        Ok(Value::Boolean(!self.eval_expression(rhs)?.boolean(rhs.1)?))
+      }
     }
   }
 }

@@ -1,6 +1,7 @@
 use {
   Match::*,
   executable_path::executable_path,
+  indoc::indoc,
   pretty_assertions::assert_eq,
   std::{fs::File, io::Write, process::Command, str},
   tempfile::TempDir,
@@ -851,5 +852,22 @@ fn list_literals() -> Result {
     .program("print([print('foo'), 'foo', 1 + 2])")
     .expected_status(0)
     .expected_stdout(Exact("'foo'\n[null, 'foo', 3]\n"))
+    .run()
+}
+
+#[test]
+fn assignment() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = 1
+      print(a)
+
+      a = [1, 2, 3]
+      print(a)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n[1, 2, 3]\n"))
     .run()
 }

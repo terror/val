@@ -1,125 +1,6 @@
 use super::*;
 
-fn parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Ast<'a>>, extra::Err<Rich<'a, char>>> {
-  let identifier = text::ident().padded();
-
-  recursive(|expr| {
-    let number = text::int(10)
-      .then(just('.').then(text::digits(10)).or_not())
-      .to_slice()
-      .from_str()
-      .unwrapped()
-      .map(Ast::Number)
-      .map_with(|ast, e| (ast, e.span()));
-
-    let boolean = choice((just("true").to(true), just("false").to(false)))
-      .map(Ast::Boolean)
-      .map_with(|ast, e| (ast, e.span()));
-
-    let double_quoted_string = just('"')
-      .ignore_then(none_of('"').repeated().to_slice())
-      .then_ignore(just('"'))
-      .map(Ast::String)
-      .map_with(|ast, e| (ast, e.span()));
-
-    let single_quoted_string = just('\'')
-      .ignore_then(none_of('\'').repeated().to_slice())
-      .then_ignore(just('\''))
-      .map(Ast::String)
-      .map_with(|ast, e| (ast, e.span()));
-
-    let string = double_quoted_string.or(single_quoted_string);
-
-    let function_call = identifier
-      .then(
-        expr
-          .clone()
-          .separated_by(just(','))
-          .allow_trailing()
-          .collect::<Vec<_>>()
-          .delimited_by(just('('), just(')')),
-      )
-      .map(|(name, arguments)| Ast::FunctionCall(name, arguments))
-      .map_with(|ast, e| (ast, e.span()));
-
-    let identifier = identifier
-      .map(Ast::Identifier)
-      .map_with(|ast, e| (ast, e.span()));
-
-    let items = expr
-      .clone()
-      .separated_by(just(','))
-      .allow_trailing()
-      .collect::<Vec<_>>();
-
-    let list = items
-      .clone()
-      .map(Ast::List)
-      .map_with(|ast, e| (ast, e.span()))
-      .delimited_by(just('['), just(']'));
-
-    let atom = number
-      .or(boolean)
-      .or(expr.delimited_by(just('('), just(')')))
-      .or(function_call)
-      .or(identifier)
-      .or(list)
-      .or(string)
-      .padded();
-
-    let op = |c| just(c).padded();
-
-    let unary = choice((op('-').to(UnaryOp::Negate), op('!').to(UnaryOp::Not)))
-      .repeated()
-      .foldr(atom, |op, rhs| {
-        let span = rhs.1;
-        (Ast::UnaryOp(op, Box::new(rhs)), span)
-      });
-
-    let product = unary.clone().foldl(
-      choice((
-        op('%').to(BinaryOp::Modulo),
-        op('*').to(BinaryOp::Multiply),
-        op('/').to(BinaryOp::Divide),
-        op('^').to(BinaryOp::Power),
-      ))
-      .then(unary.clone())
-      .repeated(),
-      |lhs, (op, rhs)| {
-        let span = (lhs.1.start..rhs.1.end).into();
-        (Ast::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
-      },
-    );
-
-    let sum = product.clone().foldl(
-      choice((op('+').to(BinaryOp::Add), op('-').to(BinaryOp::Subtract)))
-        .then(product)
-        .repeated(),
-      |lhs, (op, rhs)| {
-        let span = (lhs.1.start..rhs.1.end).into();
-        (Ast::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
-      },
-    );
-
-    let comparison = sum.clone().foldl_with(
-      just("==")
-        .to(BinaryOp::Equal)
-        .or(just("!=").to(BinaryOp::NotEqual))
-        .or(just(">=").to(BinaryOp::GreaterThanEqual))
-        .or(just("<=").to(BinaryOp::LessThanEqual))
-        .or(just("<").to(BinaryOp::LessThan))
-        .or(just(">").to(BinaryOp::GreaterThan))
-        .then(sum)
-        .repeated(),
-      |a, (op, b), e| (Ast::BinaryOp(op, Box::new(a), Box::new(b)), e.span()),
-    );
-
-    comparison
-  })
-}
-
-pub fn parse(input: &str) -> Result<Spanned<Ast<'_>>, Vec<Error>> {
+pub fn parse(input: &str) -> Result<Spanned<Program<'_>>, Vec<Error>> {
   let result = parser().parse(input);
 
   match result.into_output_errors() {
@@ -133,9 +14,164 @@ pub fn parse(input: &str) -> Result<Spanned<Ast<'_>>, Vec<Error>> {
   }
 }
 
+fn parser<'a>()
+-> impl Parser<'a, &'a str, Spanned<Program<'a>>, extra::Err<Rich<'a, char>>> + Clone
+{
+  let identifier = text::ident().padded();
+
+  let expression = recursive(|expression| {
+    let number = text::int(10)
+      .then(just('.').then(text::digits(10)).or_not())
+      .to_slice()
+      .from_str()
+      .unwrapped()
+      .map(Expression::Number)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let boolean = choice((just("true").to(true), just("false").to(false)))
+      .map(Expression::Boolean)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let double_quoted_string = just('"')
+      .ignore_then(none_of('"').repeated().to_slice())
+      .then_ignore(just('"'))
+      .map(Expression::String)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let single_quoted_string = just('\'')
+      .ignore_then(none_of('\'').repeated().to_slice())
+      .then_ignore(just('\''))
+      .map(Expression::String)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let string = double_quoted_string.or(single_quoted_string);
+
+    let function_call = identifier
+      .then(
+        expression
+          .clone()
+          .separated_by(just(','))
+          .allow_trailing()
+          .collect::<Vec<_>>()
+          .delimited_by(just('('), just(')')),
+      )
+      .map(|(name, arguments)| Expression::FunctionCall(name, arguments))
+      .map_with(|ast, e| (ast, e.span()));
+
+    let identifier = identifier
+      .map(Expression::Identifier)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let items = expression
+      .clone()
+      .separated_by(just(','))
+      .allow_trailing()
+      .collect::<Vec<_>>();
+
+    let list = items
+      .clone()
+      .map(Expression::List)
+      .map_with(|ast, e| (ast, e.span()))
+      .delimited_by(just('['), just(']'));
+
+    let atom = number
+      .or(boolean)
+      .or(expression.delimited_by(just('('), just(')')))
+      .or(function_call)
+      .or(identifier)
+      .or(list)
+      .or(string)
+      .padded();
+
+    let op = |c| just(c).padded();
+
+    let unary = choice((op('-').to(UnaryOp::Negate), op('!').to(UnaryOp::Not)))
+      .repeated()
+      .foldr(atom, |op, rhs| {
+        let span = rhs.1;
+        (Expression::UnaryOp(op, Box::new(rhs)), span)
+      });
+
+    let product = unary.clone().foldl(
+      choice((
+        op('%').to(BinaryOp::Modulo),
+        op('*').to(BinaryOp::Multiply),
+        op('/').to(BinaryOp::Divide),
+        op('^').to(BinaryOp::Power),
+      ))
+      .then(unary.clone())
+      .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
+      },
+    );
+
+    let sum = product.clone().foldl(
+      choice((op('+').to(BinaryOp::Add), op('-').to(BinaryOp::Subtract)))
+        .then(product)
+        .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
+      },
+    );
+
+    let comparison = sum.clone().foldl_with(
+      just("==")
+        .to(BinaryOp::Equal)
+        .or(just("!=").to(BinaryOp::NotEqual))
+        .or(just(">=").to(BinaryOp::GreaterThanEqual))
+        .or(just("<=").to(BinaryOp::LessThanEqual))
+        .or(just("<").to(BinaryOp::LessThan))
+        .or(just(">").to(BinaryOp::GreaterThan))
+        .then(sum)
+        .repeated(),
+      |a, (op, b), e| {
+        (Expression::BinaryOp(op, Box::new(a), Box::new(b)), e.span())
+      },
+    );
+
+    comparison
+  });
+
+  let statement = recursive(|statement| {
+    let assignment_statement = text::ident()
+      .padded()
+      .then_ignore(just('=').padded())
+      .then(expression.clone())
+      .map(|(name, expr)| Statement::Assignment(name, expr))
+      .map_with(|ast, e| (ast, e.span()));
+
+    let expression_statement = expression
+      .map(Statement::Expression)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let block_statement = statement
+      .then(just(';').padded().or_not())
+      .map(|(stmt, _)| stmt)
+      .repeated()
+      .collect::<Vec<_>>()
+      .delimited_by(just('{').padded(), just('}').padded())
+      .map(Statement::Block)
+      .map_with(|ast, e| (ast, e.span()));
+
+    choice((assignment_statement, block_statement, expression_statement))
+      .padded()
+  });
+
+  statement
+    .then(just(';').padded().or_not())
+    .map(|(stmt, _)| stmt)
+    .repeated()
+    .collect::<Vec<_>>()
+    .map(Program::Statements)
+    .map_with(|ast, e| (ast, e.span()))
+}
+
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use {super::*, pretty_assertions::assert_eq};
 
   struct Test<'a> {
     ast: &'a str,
@@ -170,6 +206,8 @@ mod tests {
           assert_eq!(ast.0.to_string(), self.ast, "AST mismatch");
         }
         Err(errors) => {
+          assert_eq!(errors.len(), self.errors.len(), "Error count mismatch");
+
           for (error, expected) in errors.iter().zip(self.errors.iter()) {
             assert_eq!(error, expected, "Error mismatch");
           }
@@ -180,23 +218,64 @@ mod tests {
 
   #[test]
   fn integer_literal() {
-    Test::new().program("25").ast("25").run()
+    Test::new()
+      .program("25")
+      .ast("statements(expression(number(25)))")
+      .run()
   }
 
   #[test]
   fn operator_precedence() {
-    Test::new().program("2 + 3 * 4").ast("(+ 2 (* 3 4))").run();
-    Test::new().program("2 * 3 + 4").ast("(+ (* 2 3) 4)").run();
-    Test::new().program("2 * 3 / 4").ast("(/ (* 2 3) 4)").run();
-    Test::new().program("2 ^ 3 * 4").ast("(* (^ 2 3) 4)").run();
-    Test::new().program("!2 + 3").ast("(+ !2 3)").run();
+    Test::new()
+      .program("2 + 3 * 4")
+      .ast("statements(expression(binary_op(+, number(2), binary_op(*, number(3), number(4)))))")
+      .run();
+
+    Test::new()
+      .program("2 * 3 + 4")
+      .ast("statements(expression(binary_op(+, binary_op(*, number(2), number(3)), number(4))))")
+      .run();
+
+    Test::new()
+      .program("2 * 3 / 4")
+      .ast("statements(expression(binary_op(/, binary_op(*, number(2), number(3)), number(4))))")
+      .run();
+
+    Test::new()
+      .program("2 ^ 3 * 4")
+      .ast("statements(expression(binary_op(*, binary_op(^, number(2), number(3)), number(4))))")
+      .run();
+
+    Test::new()
+      .program("!2 + 3")
+      .ast("statements(expression(binary_op(+, unary_op(!, number(2)), number(3))))")
+      .run();
+  }
+
+  #[test]
+  fn assignment() {
+    Test::new()
+      .program("x = 5")
+      .ast("statements(assignment(x, number(5)))")
+      .run();
   }
 
   #[test]
   fn whitespace_handling() {
-    Test::new().program("  2  +  3  ").ast("(+ 2 3)").run();
-    Test::new().program("\n5\n*\n2\n").ast("(* 5 2)").run();
-    Test::new().program("\t8\t/\t4\t").ast("(/ 8 4)").run();
+    Test::new()
+      .program("  2  +  3  ")
+      .ast("statements(expression(binary_op(+, number(2), number(3))))")
+      .run();
+
+    Test::new()
+      .program("\n5\n*\n2\n")
+      .ast("statements(expression(binary_op(*, number(5), number(2))))")
+      .run();
+
+    Test::new()
+      .program("\t8\t/\t4\t")
+      .ast("statements(expression(binary_op(/, number(8), number(4))))")
+      .run();
   }
 
   #[test]
@@ -227,5 +306,26 @@ mod tests {
         "found end of input expected any, '.', '%', '*', '/', '^', '+', '-', '=', '!', '>', '<', or ')'",
       )])
       .run();
+  }
+
+  #[test]
+  fn multiple_top_level_statements() {
+    Test::new().program("1 + 2; 3 * 4").ast("statements(expression(binary_op(+, number(1), number(2))), expression(binary_op(*, number(3), number(4))))").run();
+  }
+
+  #[test]
+  fn multiple_statements_in_block() {
+    Test::new()
+      .program("1 + 2; { 3 * 4; 5 - 6 }; 7")
+      .ast("statements(expression(binary_op(+, number(1), number(2))), block(expression(binary_op(*, number(3), number(4))), expression(binary_op(-, number(5), number(6)))), expression(number(7)))")
+      .run();
+  }
+
+  #[test]
+  fn newline_separated_statements() {
+    Test::new()
+    .program("1 + 2\n3 * 4")
+    .ast("statements(expression(binary_op(+, number(1), number(2))), expression(binary_op(*, number(3), number(4))))")
+    .run();
   }
 }

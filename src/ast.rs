@@ -1,13 +1,85 @@
 use super::*;
 
 #[derive(Debug, Clone)]
+pub enum Program<'a> {
+  Statements(Vec<Spanned<Statement<'a>>>),
+}
+
+impl Display for Program<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      Program::Statements(statements) => {
+        write!(
+          f,
+          "statements({})",
+          statements
+            .iter()
+            .map(|s| s.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
+      }
+    }
+  }
+}
+
+impl Program<'_> {
+  pub fn kind(&self) -> String {
+    String::from(match self {
+      Program::Statements(_) => "statements",
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum Statement<'a> {
+  Assignment(&'a str, Spanned<Expression<'a>>),
+  Block(Vec<Spanned<Statement<'a>>>),
+  Expression(Spanned<Expression<'a>>),
+}
+
+impl Display for Statement<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      Statement::Assignment(name, expression) => {
+        write!(f, "assignment({}, {})", name, expression.0)
+      }
+      Statement::Block(statements) => {
+        write!(
+          f,
+          "block({})",
+          statements
+            .iter()
+            .map(|s| s.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
+      }
+      Statement::Expression(expression) => {
+        write!(f, "expression({})", expression.0)
+      }
+    }
+  }
+}
+
+impl Statement<'_> {
+  pub fn kind(&self) -> String {
+    String::from(match self {
+      Statement::Assignment(_, _) => "assignment",
+      Statement::Block(_) => "block",
+      Statement::Expression(_) => "expression",
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
 pub enum UnaryOp {
   Negate,
   Not,
 }
 
 impl Display for UnaryOp {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       UnaryOp::Negate => write!(f, "-"),
       UnaryOp::Not => write!(f, "!"),
@@ -16,7 +88,6 @@ impl Display for UnaryOp {
 }
 
 #[derive(Debug, Clone)]
-#[allow(unused)]
 pub enum BinaryOp {
   Add,
   Divide,
@@ -33,7 +104,7 @@ pub enum BinaryOp {
 }
 
 impl Display for BinaryOp {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       BinaryOp::Add => write!(f, "+"),
       BinaryOp::Divide => write!(f, "/"),
@@ -51,9 +122,8 @@ impl Display for BinaryOp {
   }
 }
 
-#[derive(Debug)]
-#[allow(unused)]
-pub enum Ast<'a> {
+#[derive(Debug, Clone)]
+pub enum Expression<'a> {
   BinaryOp(BinaryOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
   Boolean(bool),
   FunctionCall(&'a str, Vec<Spanned<Self>>),
@@ -64,49 +134,59 @@ pub enum Ast<'a> {
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
 }
 
-impl Display for Ast<'_> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl Display for Expression<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Ast::BinaryOp(op, lhs, rhs) => write!(f, "({} {} {})", op, lhs.0, rhs.0),
-      Ast::Boolean(boolean) => write!(f, "{}", boolean),
-      Ast::FunctionCall(name, arguments) => write!(
-        f,
-        "{}({})",
-        name,
-        arguments
-          .iter()
-          .map(|a| a.0.to_string())
-          .collect::<Vec<_>>()
-          .join(", ")
-      ),
-      Ast::Identifier(identifier) => write!(f, "{}", identifier),
-      Ast::List(list) => write!(
-        f,
-        "[{}]",
-        list
-          .iter()
-          .map(|a| a.0.to_string())
-          .collect::<Vec<_>>()
-          .join(", ")
-      ),
-      Ast::Number(number) => write!(f, "{}", number),
-      Ast::String(string) => write!(f, "\"{}\"", string),
-      Ast::UnaryOp(op, expr) => write!(f, "{}{}", op, expr.0),
+      Expression::BinaryOp(op, lhs, rhs) => {
+        write!(f, "binary_op({}, {}, {})", op, lhs.0, rhs.0)
+      }
+      Expression::Boolean(boolean) => write!(f, "boolean({})", boolean),
+      Expression::FunctionCall(name, arguments) => {
+        write!(
+          f,
+          "function_call({},{})",
+          name,
+          arguments
+            .iter()
+            .map(|a| a.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
+      }
+      Expression::Identifier(identifier) => {
+        write!(f, "identifier({})", identifier)
+      }
+      Expression::List(list) => {
+        write!(
+          f,
+          "list({})",
+          list
+            .iter()
+            .map(|item| item.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
+      }
+      Expression::Number(number) => write!(f, "number({})", number),
+      Expression::String(string) => write!(f, "string(\"{}\")", string),
+      Expression::UnaryOp(op, expr) => {
+        write!(f, "unary_op({}, {})", op, expr.0)
+      }
     }
   }
 }
 
-impl Ast<'_> {
+impl Expression<'_> {
   pub fn kind(&self) -> String {
     String::from(match self {
-      Ast::BinaryOp(_, _, _) => "binary_op",
-      Ast::Boolean(_) => "boolean",
-      Ast::FunctionCall(_, _) => "function_call",
-      Ast::Identifier(_) => "identifier",
-      Ast::List(_) => "list",
-      Ast::Number(_) => "number",
-      Ast::String(_) => "string",
-      Ast::UnaryOp(_, _) => "unary_op",
+      Expression::BinaryOp(_, _, _) => "binary_op",
+      Expression::Boolean(_) => "boolean",
+      Expression::FunctionCall(_, _) => "function_call",
+      Expression::Identifier(_) => "identifier",
+      Expression::List(_) => "list",
+      Expression::Number(_) => "number",
+      Expression::String(_) => "string",
+      Expression::UnaryOp(_, _) => "unary_op",
     })
   }
 }

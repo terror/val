@@ -19,15 +19,16 @@ impl Arguments {
 
     let filename = filename.to_string_lossy().to_string();
 
-    let environment = Environment::new();
+    let mut evaluator = Evaluator::new();
 
-    match parse(content.trim()) {
-      Ok(ast) => match eval(&ast, &environment) {
+    match parse(&content) {
+      Ok(ast) => match evaluator.eval(&ast) {
         Ok(_) => Ok(()),
         Err(error) => {
           error
             .report(&filename)
             .eprint((filename.as_str(), Source::from(content)))?;
+
           process::exit(1);
         }
       },
@@ -55,10 +56,10 @@ impl Arguments {
       editor.add_history_entry(line.as_str())?;
       editor.save_history(&history)?;
 
-      let environment = Environment::new();
+      let mut evaluator = Evaluator::new();
 
       match parse(&line) {
-        Ok(ast) => match eval(&ast, &environment) {
+        Ok(ast) => match evaluator.eval(&ast) {
           Ok(value) => println!("{}", value),
           Err(error) => error
             .report("<input>")
