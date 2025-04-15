@@ -890,6 +890,20 @@ fn list_access() -> Result {
 }
 
 #[test]
+fn list_access_out_of_bounds() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = [1, 2, 3]
+      print(a[20])
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Index 20 out of bounds for list of length 3"))
+    .run()
+}
+
+#[test]
 fn while_loops() -> Result {
   Test::new()?
     .program(indoc! {

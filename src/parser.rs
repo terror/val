@@ -90,6 +90,7 @@ fn parser<'a>()
         .repeated(),
       |list, index| {
         let span = (list.1.start..index.1.end).into();
+
         (
           Expression::ListAccess(Box::new(list), Box::new(index)),
           span,
