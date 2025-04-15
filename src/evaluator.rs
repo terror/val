@@ -67,10 +67,10 @@ impl<'a> Evaluator<'a> {
           }
 
           Ok(result)
-        } else if let Some(else_stmts) = else_branch {
+        } else if let Some(else_statements) = else_branch {
           let mut result = Value::Null;
 
-          for statement in else_stmts {
+          for statement in else_statements {
             result = self.eval_statement(statement)?;
           }
 
@@ -200,9 +200,7 @@ impl<'a> Evaluator<'a> {
       Expression::ListAccess(list, index) => {
         let list_value = self.eval_expression(list)?;
 
-        let index_value = self.eval_expression(index)?;
-
-        let list_items = match &list_value {
+        let list = match &list_value {
           Value::List(items) => items.clone(),
           _ => {
             return Err(Error::new(
@@ -212,20 +210,20 @@ impl<'a> Evaluator<'a> {
           }
         };
 
-        let idx = index_value.number(index.1)? as usize;
+        let index = self.eval_expression(index)?.number(index.1)? as usize;
 
-        if idx >= list_items.len() {
+        if index >= list.len() {
           return Err(Error::new(
             *span,
             format!(
               "Index {} out of bounds for list of length {}",
-              idx,
-              list_items.len()
+              index,
+              list.len()
             ),
           ));
         }
 
-        Ok(list_items[idx].clone())
+        Ok(list[index].clone())
       }
       Expression::Number(number) => Ok(Value::Number(*number)),
       Expression::String(string) => Ok(Value::String(string)),
