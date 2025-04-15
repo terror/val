@@ -1191,3 +1191,268 @@ fn if_with_list_access() -> Result {
     .expected_stdout(Exact("20\n"))
     .run()
 }
+
+#[test]
+fn simple_function_definition_and_call() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn add(a, b) {
+        a + b
+      }
+
+      print(add(3, 4))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("7\n"))
+    .run()
+}
+
+#[test]
+fn function_with_return_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn get_message() {
+        'Hello, world!'
+      }
+
+      print(get_message())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'Hello, world!'\n"))
+    .run()
+}
+
+#[test]
+fn function_with_multiple_statements() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn calculate(x) {
+        doubled = x * 2;
+        doubled + 10
+      }
+
+      print(calculate(5))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("20\n"))
+    .run()
+}
+
+#[test]
+fn function_wrong_argument_count() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn add(a, b) {
+        a + b
+      }
+
+      print(add(1))
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Function `add` expects 2 arguments, got 1"))
+    .run()
+}
+
+#[test]
+fn recursive_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn factorial(n) {
+        result = 1;
+        i = n;
+
+        while (i > 0) {
+          result = result * i;
+          i = i - 1;
+        }
+
+        result
+      }
+
+      print(factorial(5))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("120\n"))
+    .run()
+}
+
+#[test]
+fn recursive_function_direct_style() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn factorial(n) {
+        if (n <= 1) {
+          1
+        } else {
+          n * factorial(n - 1)
+        }
+      }
+
+      print(factorial(5))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("120\n"))
+    .run()
+}
+
+#[test]
+fn function_call_as_argument() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn double(x) {
+        x * 2
+      }
+
+      fn triple(x) {
+        x * 3
+      }
+
+      print(double(triple(2)))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("12\n"))
+    .run()
+}
+
+#[test]
+fn function_with_local_variables() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      global = 10;
+
+      fn test_scope() {
+        local = 5
+        global + local
+      }
+
+      print(test_scope())
+      print(global)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("15\n10\n"))
+    .run()
+}
+
+#[test]
+#[ignore]
+fn function_modifying_outer_scope() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      counter = 0;
+
+      fn increment() {
+        counter = counter + 1;
+        counter
+      }
+
+      print(increment())
+      print(increment())
+      print(counter)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n2\n2\n"))
+    .run()
+}
+
+#[test]
+fn function_with_no_arguments() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn get_pi() {
+        3.14159
+      }
+
+      print(get_pi())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("3.14159\n"))
+    .run()
+}
+
+#[test]
+fn nested_function_calls() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn add(a, b) {
+        a + b
+      }
+
+      fn multiply(a, b) {
+        a * b
+      }
+
+      print(add(multiply(2, 3), multiply(4, 5)))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("26\n"))
+    .run()
+}
+
+#[test]
+fn function_calling_builtin() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn square_root_of_sin(x) {
+        sqrt(sin(x))
+      }
+
+      print(square_root_of_sin(0.5))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Contains("0."))
+    .run()
+}
+
+#[test]
+fn fibonacci_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn fibonacci(n) {
+        if (n <= 0) {
+          0
+        } else {
+          if (n == 1) {
+            1
+          } else {
+            fibonacci(n - 1) + fibonacci(n - 2)
+          }
+        }
+      }
+
+      print(fibonacci(0))
+      print(fibonacci(1))
+      print(fibonacci(2))
+      print(fibonacci(3))
+      print(fibonacci(4))
+      print(fibonacci(5))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("0\n1\n1\n2\n3\n5\n"))
+    .run()
+}

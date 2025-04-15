@@ -41,6 +41,29 @@ fn statement_parser<'a>()
       .map(|(name, expr)| Statement::Assignment(name, expr))
       .map_with(|ast, e| (ast, e.span()));
 
+    let function_statement = just("fn")
+      .padded()
+      .ignore_then(text::ident().padded())
+      .then(
+        text::ident()
+          .padded()
+          .separated_by(just(','))
+          .allow_trailing()
+          .collect::<Vec<_>>()
+          .delimited_by(just('(').padded(), just(')').padded()),
+      )
+      .then(
+        statement
+          .clone()
+          .then(just(';').padded().or_not())
+          .map(|(stmt, _)| stmt)
+          .repeated()
+          .collect::<Vec<_>>()
+          .delimited_by(just('{').padded(), just('}').padded()),
+      )
+      .map(|((name, params), body)| Statement::Function(name, params, body))
+      .map_with(|ast, e| (ast, e.span()));
+
     let block_statement = statement
       .clone()
       .then(just(';').padded().or_not())
@@ -111,6 +134,7 @@ fn statement_parser<'a>()
 
     choice((
       assignment_statement,
+      function_statement,
       block_statement,
       if_statement,
       while_statement,

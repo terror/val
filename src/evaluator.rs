@@ -17,6 +17,10 @@ impl<'a> Evaluator<'a> {
     }
   }
 
+  pub fn with_environment(environment: Environment<'a>) -> Self {
+    Self { environment }
+  }
+
   pub fn eval(
     &mut self,
     ast: &Spanned<Program<'a>>,
@@ -36,7 +40,7 @@ impl<'a> Evaluator<'a> {
     }
   }
 
-  fn eval_statement(
+  pub fn eval_statement(
     &mut self,
     statement: &Spanned<Statement<'a>>,
   ) -> Result<Value<'a>, Error> {
@@ -58,6 +62,18 @@ impl<'a> Evaluator<'a> {
         Ok(result)
       }
       Statement::Expression(expression) => self.eval_expression(expression),
+      Statement::Function(name, params, body) => {
+        let function = Value::Function(
+          name,
+          params.clone(),
+          body.clone(),
+          self.environment.clone(),
+        );
+
+        self.environment.add_function(name, function.clone());
+
+        Ok(function)
+      }
       Statement::If(condition, then_branch, else_branch) => {
         if self.eval_expression(condition)?.boolean(condition.1)? {
           let mut result = Value::Null;
@@ -118,23 +134,50 @@ impl<'a> Evaluator<'a> {
         Ok(Value::Number(lhs_num / rhs_num))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
-        self.eval_expression(lhs)? == self.eval_expression(rhs)?,
+        self
+          .eval_expression(lhs)?
+          .equals(&self.eval_expression(rhs)?),
       )),
-      Expression::BinaryOp(BinaryOp::GreaterThan, lhs, rhs) => Ok(
-        Value::Boolean(self.eval_expression(lhs)? > self.eval_expression(rhs)?),
-      ),
-      Expression::BinaryOp(BinaryOp::GreaterThanEqual, lhs, rhs) => {
-        Ok(Value::Boolean(
-          self.eval_expression(lhs)? >= self.eval_expression(rhs)?,
-        ))
-      }
-      Expression::BinaryOp(BinaryOp::LessThan, lhs, rhs) => Ok(Value::Boolean(
-        self.eval_expression(lhs)? < self.eval_expression(rhs)?,
-      )),
-      Expression::BinaryOp(BinaryOp::LessThanEqual, lhs, rhs) => {
-        Ok(Value::Boolean(
-          self.eval_expression(lhs)? <= self.eval_expression(rhs)?,
-        ))
+      Expression::BinaryOp(
+        op @ (BinaryOp::LessThan
+        | BinaryOp::LessThanEqual
+        | BinaryOp::GreaterThan
+        | BinaryOp::GreaterThanEqual),
+        lhs,
+        rhs,
+      ) => {
+        let lhs_val = self.eval_expression(lhs)?;
+        let rhs_val = self.eval_expression(rhs)?;
+
+        match (&lhs_val, &rhs_val) {
+          (Value::Number(a), Value::Number(b)) => {
+            Ok(Value::Boolean(match op {
+              BinaryOp::LessThan => a < b,
+              BinaryOp::LessThanEqual => a <= b,
+              BinaryOp::GreaterThan => a > b,
+              BinaryOp::GreaterThanEqual => a >= b,
+              _ => unreachable!(),
+            }))
+          }
+          (Value::String(a), Value::String(b)) => {
+            Ok(Value::Boolean(match op {
+              BinaryOp::LessThan => a < b,
+              BinaryOp::LessThanEqual => a <= b,
+              BinaryOp::GreaterThan => a > b,
+              BinaryOp::GreaterThanEqual => a >= b,
+              _ => unreachable!(),
+            }))
+          }
+          _ => Err(Error::new(
+            *span,
+            format!(
+              "Cannot compare {} and {} with '{}'",
+              lhs_val.type_name(),
+              rhs_val.type_name(),
+              op
+            ),
+          )),
+        }
       }
       Expression::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
         let (lhs_val, rhs_val) =
@@ -153,9 +196,20 @@ impl<'a> Evaluator<'a> {
         self.eval_expression(lhs)?.number(lhs.1)?
           * self.eval_expression(rhs)?.number(rhs.1)?,
       )),
-      Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
-        self.eval_expression(lhs)? != self.eval_expression(rhs)?,
-      )),
+      Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => {
+        let eq_result = self.eval_expression(&(
+          Expression::BinaryOp(BinaryOp::Equal, lhs.clone(), rhs.clone()),
+          *span,
+        ))?;
+
+        match eq_result {
+          Value::Boolean(b) => Ok(Value::Boolean(!b)),
+          _ => Err(Error::new(
+            *span,
+            "Equality comparison didn't return a boolean",
+          )),
+        }
+      }
       Expression::BinaryOp(BinaryOp::Power, lhs, rhs) => {
         let (lhs_val, rhs_val) =
           (self.eval_expression(lhs)?, self.eval_expression(rhs)?);

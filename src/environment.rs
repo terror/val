@@ -3,9 +3,11 @@ use super::*;
 pub type BuiltinFunction<'src> =
   fn(Vec<Value<'src>>, Span) -> Result<Value<'src>, Error>;
 
-#[derive(Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Environment<'src> {
   functions: HashMap<&'src str, BuiltinFunction<'src>>,
+  parent: Option<Box<Environment<'src>>>,
+  user_functions: HashMap<&'src str, Value<'src>>,
   variables: HashMap<&'src str, Value<'src>>,
 }
 
@@ -191,6 +193,15 @@ impl<'src> Environment<'src> {
     env
   }
 
+  pub fn with_parent(parent: Environment<'src>) -> Self {
+    Self {
+      functions: parent.functions.clone(),
+      user_functions: parent.user_functions.clone(),
+      variables: HashMap::new(),
+      parent: Some(Box::new(parent)),
+    }
+  }
+
   pub fn add_builtin_function(
     &mut self,
     name: &'src str,
@@ -199,16 +210,36 @@ impl<'src> Environment<'src> {
     self.functions.insert(name, function);
   }
 
+  pub fn add_function(&mut self, name: &'src str, value: Value<'src>) {
+    self.user_functions.insert(name, value);
+  }
+
   pub fn add_variable(&mut self, name: &'src str, value: Value<'src>) {
     self.variables.insert(name, value);
   }
 
   pub fn get_variable(&self, name: &str) -> Option<&Value<'src>> {
-    self.variables.get(name)
+    if let Some(val) = self.variables.get(name) {
+      Some(val)
+    } else if let Some(parent) = &self.parent {
+      parent.get_variable(name)
+    } else {
+      None
+    }
   }
 
   pub fn get_function(&self, name: &str) -> Option<&BuiltinFunction<'src>> {
     self.functions.get(name)
+  }
+
+  pub fn get_function_value(&self, name: &str) -> Option<&Value<'src>> {
+    if let Some(func) = self.user_functions.get(name) {
+      Some(func)
+    } else if let Some(parent) = &self.parent {
+      parent.get_function_value(name)
+    } else {
+      None
+    }
   }
 
   pub fn call_function(
@@ -217,12 +248,59 @@ impl<'src> Environment<'src> {
     arguments: Vec<Value<'src>>,
     span: Span,
   ) -> Result<Value<'src>, Error> {
-    match self.get_function(name) {
-      Some(func) => func(arguments, span),
-      None => Err(Error::new(
+    if let Some(func) = self.get_function(name) {
+      return func(arguments, span);
+    }
+
+    if let Some(func) = self.get_function_value(name) {
+      match func {
+        Value::Function(func_name, params, body, closure_env) => {
+          if params.len() != arguments.len() {
+            return Err(Error::new(
+              span,
+              format!(
+                "Function `{}` expects {} arguments, got {}",
+                name,
+                params.len(),
+                arguments.len()
+              ),
+            ));
+          }
+
+          let mut call_env = Environment::with_parent(closure_env.clone());
+
+          call_env.add_function(func_name, func.clone());
+
+          for (param, arg) in params.iter().zip(arguments.iter()) {
+            call_env.add_variable(param, arg.clone());
+          }
+
+          let mut evaluator = Evaluator::with_environment(call_env);
+
+          if body.is_empty() {
+            return Ok(Value::Null);
+          }
+
+          let mut result = Value::Null;
+          let last_index = body.len() - 1;
+
+          for (i, statement) in body.iter().enumerate() {
+            let value = evaluator.eval_statement(statement)?;
+
+            if i == last_index || !matches!(value, Value::Null) {
+              result = value;
+            }
+          }
+
+          Ok(result)
+        }
+        _ => Err(Error::new(span, format!("'{}' is not a function", name))),
+      }
+    } else {
+      Err(Error::new(
         span,
-        format!("Function `{}` is not implemented", name),
-      )),
+        format!("Function `{}` is not defined", name),
+      ))
     }
   }
 }

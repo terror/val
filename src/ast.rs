@@ -36,6 +36,7 @@ pub enum Statement<'a> {
   Assignment(&'a str, Spanned<Expression<'a>>),
   Block(Vec<Spanned<Statement<'a>>>),
   Expression(Spanned<Expression<'a>>),
+  Function(&'a str, Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
   If(
     Spanned<Expression<'a>>,
     Vec<Spanned<Statement<'a>>>,
@@ -63,6 +64,19 @@ impl Display for Statement<'_> {
       }
       Statement::Expression(expression) => {
         write!(f, "expression({})", expression.0)
+      }
+      Statement::Function(name, params, body) => {
+        write!(
+          f,
+          "function({}, [{}], block({}))",
+          name,
+          params.join(", "),
+          body
+            .iter()
+            .map(|s| s.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
       }
       Statement::If(condition, then_branch, else_branch) => {
         let then_str = then_branch
@@ -111,6 +125,7 @@ impl Statement<'_> {
       Statement::Assignment(_, _) => "assignment",
       Statement::Block(_) => "block",
       Statement::Expression(_) => "expression",
+      Statement::Function(_, _, _) => "function",
       Statement::If(_, _, _) => "if",
       Statement::While(_, _) => "while",
     })

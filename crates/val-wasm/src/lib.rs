@@ -168,6 +168,17 @@ impl AstNode {
           children,
         }
       }
+      Statement::Function(_, _, body) => {
+        for (statement, span) in body {
+          children.push(Self::from_statement(statement, span));
+        }
+
+        Self {
+          kind: statement.kind(),
+          range,
+          children,
+        }
+      }
       Statement::If(condition, then_branch, else_branch) => {
         children.push(Self::from_expression(&condition.0, &condition.1));
 
