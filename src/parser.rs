@@ -14,6 +14,112 @@ pub fn parse(input: &str) -> Result<Spanned<Program<'_>>, Vec<Error>> {
   }
 }
 
+fn program_parser<'a>()
+-> impl Parser<'a, &'a str, Spanned<Program<'a>>, extra::Err<Rich<'a, char>>> + Clone
+{
+  let statement = statement_parser();
+
+  statement
+    .then(just(';').padded().or_not())
+    .map(|(stmt, _)| stmt)
+    .repeated()
+    .collect::<Vec<_>>()
+    .map(Program::Statements)
+    .map_with(|ast, e| (ast, e.span()))
+}
+
+fn statement_parser<'a>()
+-> impl Parser<'a, &'a str, Spanned<Statement<'a>>, extra::Err<Rich<'a, char>>>
++ Clone {
+  let expression = expression_parser();
+
+  recursive(|statement| {
+    let assignment_statement = text::ident()
+      .padded()
+      .then_ignore(just('=').padded())
+      .then(expression.clone())
+      .map(|(name, expr)| Statement::Assignment(name, expr))
+      .map_with(|ast, e| (ast, e.span()));
+
+    let block_statement = statement
+      .clone()
+      .then(just(';').padded().or_not())
+      .map(|(stmt, _)| stmt)
+      .repeated()
+      .collect::<Vec<_>>()
+      .delimited_by(just('{').padded(), just('}').padded())
+      .map(Statement::Block)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let if_statement = just("if")
+      .padded()
+      .ignore_then(
+        expression
+          .clone()
+          .delimited_by(just('(').padded(), just(')').padded()),
+      )
+      .then(
+        statement
+          .clone()
+          .then(just(';').padded().or_not())
+          .map(|(stmt, _)| stmt)
+          .repeated()
+          .collect::<Vec<_>>()
+          .delimited_by(just('{').padded(), just('}').padded()),
+      )
+      .then(
+        just("else")
+          .padded()
+          .ignore_then(
+            statement
+              .clone()
+              .then(just(';').padded().or_not())
+              .map(|(stmt, _)| stmt)
+              .repeated()
+              .collect::<Vec<_>>()
+              .delimited_by(just('{').padded(), just('}').padded()),
+          )
+          .or_not(),
+      )
+      .map(|((condition, then_branch), else_branch)| {
+        Statement::If(condition, then_branch, else_branch)
+      })
+      .map_with(|ast, e| (ast, e.span()));
+
+    let while_statement = just("while")
+      .padded()
+      .ignore_then(
+        expression
+          .clone()
+          .delimited_by(just('(').padded(), just(')').padded()),
+      )
+      .then(
+        statement
+          .clone()
+          .then(just(';').padded().or_not())
+          .map(|(stmt, _)| stmt)
+          .repeated()
+          .collect::<Vec<_>>()
+          .delimited_by(just('{').padded(), just('}').padded()),
+      )
+      .map(|(condition, body)| Statement::While(condition, body))
+      .map_with(|ast, e| (ast, e.span()));
+
+    let expression_statement = expression
+      .map(Statement::Expression)
+      .map_with(|ast, e| (ast, e.span()));
+
+    choice((
+      assignment_statement,
+      block_statement,
+      if_statement,
+      while_statement,
+      expression_statement,
+    ))
+    .padded()
+  })
+}
+
 fn expression_parser<'a>()
 -> impl Parser<'a, &'a str, Spanned<Expression<'a>>, extra::Err<Rich<'a, char>>>
 + Clone {
@@ -149,112 +255,6 @@ fn expression_parser<'a>()
 
     comparison
   })
-}
-
-fn statement_parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Statement<'a>>, extra::Err<Rich<'a, char>>>
-+ Clone {
-  let expression = expression_parser();
-
-  recursive(|statement| {
-    let assignment_statement = text::ident()
-      .padded()
-      .then_ignore(just('=').padded())
-      .then(expression.clone())
-      .map(|(name, expr)| Statement::Assignment(name, expr))
-      .map_with(|ast, e| (ast, e.span()));
-
-    let block_statement = statement
-      .clone()
-      .then(just(';').padded().or_not())
-      .map(|(stmt, _)| stmt)
-      .repeated()
-      .collect::<Vec<_>>()
-      .delimited_by(just('{').padded(), just('}').padded())
-      .map(Statement::Block)
-      .map_with(|ast, e| (ast, e.span()));
-
-    let if_statement = just("if")
-      .padded()
-      .ignore_then(
-        expression
-          .clone()
-          .delimited_by(just('(').padded(), just(')').padded()),
-      )
-      .then(
-        statement
-          .clone()
-          .then(just(';').padded().or_not())
-          .map(|(stmt, _)| stmt)
-          .repeated()
-          .collect::<Vec<_>>()
-          .delimited_by(just('{').padded(), just('}').padded()),
-      )
-      .then(
-        just("else")
-          .padded()
-          .ignore_then(
-            statement
-              .clone()
-              .then(just(';').padded().or_not())
-              .map(|(stmt, _)| stmt)
-              .repeated()
-              .collect::<Vec<_>>()
-              .delimited_by(just('{').padded(), just('}').padded()),
-          )
-          .or_not(),
-      )
-      .map(|((condition, then_branch), else_branch)| {
-        Statement::If(condition, then_branch, else_branch)
-      })
-      .map_with(|ast, e| (ast, e.span()));
-
-    let while_statement = just("while")
-      .padded()
-      .ignore_then(
-        expression
-          .clone()
-          .delimited_by(just('(').padded(), just(')').padded()),
-      )
-      .then(
-        statement
-          .clone()
-          .then(just(';').padded().or_not())
-          .map(|(stmt, _)| stmt)
-          .repeated()
-          .collect::<Vec<_>>()
-          .delimited_by(just('{').padded(), just('}').padded()),
-      )
-      .map(|(condition, body)| Statement::While(condition, body))
-      .map_with(|ast, e| (ast, e.span()));
-
-    let expression_statement = expression
-      .map(Statement::Expression)
-      .map_with(|ast, e| (ast, e.span()));
-
-    choice((
-      assignment_statement,
-      block_statement,
-      if_statement,
-      while_statement,
-      expression_statement,
-    ))
-    .padded()
-  })
-}
-
-fn program_parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Program<'a>>, extra::Err<Rich<'a, char>>> + Clone
-{
-  let statement = statement_parser();
-
-  statement
-    .then(just(';').padded().or_not())
-    .map(|(stmt, _)| stmt)
-    .repeated()
-    .collect::<Vec<_>>()
-    .map(Program::Statements)
-    .map_with(|ast, e| (ast, e.span()))
 }
 
 #[cfg(test)]
