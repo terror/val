@@ -10,7 +10,10 @@ impl Arguments {
   pub fn run(self) -> Result {
     match self.filename {
       Some(filename) => Self::eval(filename),
+      #[cfg(not(target_family = "wasm"))]
       None => Self::read(),
+      #[cfg(target_family = "wasm")]
+      None => Err(anyhow::anyhow!("Interactive mode not supported in WASM")),
     }
   }
 
@@ -44,10 +47,12 @@ impl Arguments {
     }
   }
 
+  #[cfg(not(target_family = "wasm"))]
   fn read() -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
     let mut editor = DefaultEditor::new()?;
+
     editor.load_history(&history).ok();
 
     loop {

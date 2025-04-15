@@ -1,5 +1,5 @@
-import { AstNode } from '@/lib/types';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { AstNode } from 'val-wasm';
 import React, { useState } from 'react';
 
 interface TreeNodeProps {

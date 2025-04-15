@@ -19,6 +19,8 @@ anyhow = "1.0.97"
 ariadne = "0.5.1"
 chumsky = "0.10.0"
 clap = { version = "4.5.35", features = ["derive"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
 dirs = "6.0.0"
 rustyline = "15.0.0"
 

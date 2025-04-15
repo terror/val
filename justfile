@@ -14,7 +14,7 @@ build:
   cargo build --all --all-targets
 
 [group: 'web']
-build-wasm: typeshare
+build-wasm:
   wasm-pack build crates/val-wasm --target web \
     --out-name val \
     --out-dir ../../www/packages/val-wasm
@@ -92,9 +92,6 @@ test-release-workflow:
   -git push origin :test-release
   git tag test-release
   git push origin test-release
-
-typeshare:
-  typeshare crates/val-wasm --lang typescript --output-file www/src/lib/types.ts
 
 [group: 'release']
 update-changelog:
