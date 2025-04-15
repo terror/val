@@ -60,7 +60,13 @@ impl Arguments {
 
       match parse(&line) {
         Ok(ast) => match evaluator.eval(&ast) {
-          Ok(value) => println!("{}", value),
+          Ok(value) => {
+            if let Value::Null = value {
+              continue;
+            }
+
+            println!("{}", value);
+          }
           Err(error) => error
             .report("<input>")
             .eprint(("<input>", Source::from(&line)))?,

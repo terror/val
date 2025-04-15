@@ -4,6 +4,12 @@ pub struct Evaluator<'a> {
   environment: Environment<'a>,
 }
 
+impl Default for Evaluator<'_> {
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 impl<'a> Evaluator<'a> {
   pub fn new() -> Self {
     Self {

@@ -910,3 +910,27 @@ fn while_loops() -> Result {
     .expected_stdout(Exact("10\n5\n"))
     .run()
 }
+
+#[test]
+fn nested_while_loops() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = 0
+
+      while (a < 5) {
+        b = 0
+
+        while (b < 1) {
+          print(a + b)
+          b = b + 1
+        }
+
+        a = a + 1
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("0\n1\n2\n3\n4\n"))
+    .run()
+}

@@ -366,4 +366,20 @@ mod tests {
     .ast("statements(expression(binary_op(+, number(1), number(2))), expression(binary_op(*, number(3), number(4))))")
     .run();
   }
+
+  #[test]
+  fn while_loop() {
+    Test::new()
+    .program("while (x < 10) { x = x + 1; }")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(assignment(x, binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn nested_while_loops() {
+    Test::new()
+    .program("while (x < 10) { while (y < 5) { y = y + 1; }; x = x + 1; }")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(while(binary_op(<, identifier(y), number(5)), block(assignment(y, binary_op(+, identifier(y), number(1))))), assignment(x, binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
 }
