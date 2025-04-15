@@ -134,9 +134,7 @@ impl<'a> Evaluator<'a> {
         Ok(Value::Number(lhs_num / rhs_num))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
-        self
-          .eval_expression(lhs)?
-          .equals(&self.eval_expression(rhs)?),
+        self.eval_expression(lhs)? == self.eval_expression(rhs)?,
       )),
       Expression::BinaryOp(
         op @ (BinaryOp::LessThan
@@ -197,9 +195,7 @@ impl<'a> Evaluator<'a> {
           * self.eval_expression(rhs)?.number(rhs.1)?,
       )),
       Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
-        !self
-          .eval_expression(lhs)?
-          .equals(&self.eval_expression(rhs)?),
+        self.eval_expression(lhs)? != self.eval_expression(rhs)?,
       )),
       Expression::BinaryOp(BinaryOp::Power, lhs, rhs) => {
         let (lhs_val, rhs_val) =

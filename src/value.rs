@@ -38,45 +38,26 @@ impl Display for Value<'_> {
   }
 }
 
-impl<'a> Value<'a> {
-  pub fn type_name(&self) -> &'static str {
-    match self {
-      Value::Boolean(_) => "boolean",
-      Value::BuiltinFunction(_) => "builtin function",
-      Value::Function(_, _, _, _) => "function",
-      Value::List(_) => "list",
-      Value::Null => "null",
-      Value::Number(_) => "number",
-      Value::String(_) => "string",
-    }
-  }
-
-  pub fn equals(&self, other: &Self) -> bool {
+impl<'a> PartialEq for Value<'a> {
+  fn eq(&self, other: &Self) -> bool {
     match (self, other) {
-      (Value::Number(a), Value::Number(b)) => a == b,
-      (Value::String(a), Value::String(b)) => a == b,
       (Value::Boolean(a), Value::Boolean(b)) => a == b,
-      (Value::Null, Value::Null) => true,
-      (Value::List(a), Value::List(b)) => {
-        if a.len() != b.len() {
-          return false;
-        }
-
-        a.iter()
-          .zip(b.iter())
-          .all(|(a_item, b_item)| a_item.equals(b_item))
-      }
-      // Function equality could be defined by name, but generally functions
-      // are not considered equal even if they have the same name
+      (Value::BuiltinFunction(a), Value::BuiltinFunction(b)) => a == b,
       (Value::Function(a_name, _, _, _), Value::Function(b_name, _, _, _)) => {
         a_name == b_name
       }
-      (Value::BuiltinFunction(a), Value::BuiltinFunction(b)) => a == b,
-      // Different types are never equal
+      (Value::List(a), Value::List(b)) => {
+        a.len() == b.len() && a.iter().zip(b.iter()).all(|(a, b)| a == b)
+      }
+      (Value::Null, Value::Null) => true,
+      (Value::Number(a), Value::Number(b)) => a == b,
+      (Value::String(a), Value::String(b)) => a == b,
       _ => false,
     }
   }
+}
 
+impl<'a> Value<'a> {
   pub fn boolean(&self, span: Span) -> Result<bool, Error> {
     if let Value::Boolean(x) = self {
       Ok(*x)
@@ -118,6 +99,18 @@ impl<'a> Value<'a> {
         span,
         message: format!("'{}' is not a string", self),
       })
+    }
+  }
+
+  pub fn type_name(&self) -> &'static str {
+    match self {
+      Value::Boolean(_) => "boolean",
+      Value::BuiltinFunction(_) => "builtin function",
+      Value::Function(_, _, _, _) => "function",
+      Value::List(_) => "list",
+      Value::Null => "null",
+      Value::Number(_) => "number",
+      Value::String(_) => "string",
     }
   }
 }
