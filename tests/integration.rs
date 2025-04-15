@@ -1764,3 +1764,26 @@ fn fibonacci_function() -> Result {
     .expected_stdout(Exact("0\n1\n1\n2\n3\n5\n"))
     .run()
 }
+
+#[test]
+fn can_override_builtin_functions() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      print(abs(-5))
+
+      fn abs(x) {
+        if (x < 0) {
+          x
+        } else {
+          -x
+        }
+      }
+
+      print(abs(-5))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("5\n-5\n"))
+    .run()
+}

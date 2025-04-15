@@ -70,7 +70,9 @@ impl<'a> Evaluator<'a> {
           self.environment.clone(),
         );
 
-        self.environment.add_function(name, function.clone());
+        self
+          .environment
+          .add_function(name, Function::UserDefined(function.clone()));
 
         Ok(function)
       }

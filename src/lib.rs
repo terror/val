@@ -20,6 +20,7 @@ pub use crate::{
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   error::Error,
   evaluator::Evaluator,
+  function::{BuiltinFunction, Function},
   parser::parse,
   value::Value,
 };
@@ -36,5 +37,6 @@ mod ast;
 mod environment;
 mod error;
 mod evaluator;
+mod function;
 mod parser;
 mod value;

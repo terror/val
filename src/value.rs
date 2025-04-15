@@ -38,7 +38,7 @@ impl Display for Value<'_> {
   }
 }
 
-impl<'a> PartialEq for Value<'a> {
+impl PartialEq for Value<'_> {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Value::Boolean(a), Value::Boolean(b)) => a == b,
