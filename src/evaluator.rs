@@ -58,6 +58,27 @@ impl<'a> Evaluator<'a> {
         Ok(result)
       }
       Statement::Expression(expression) => self.eval_expression(expression),
+      Statement::If(condition, then_branch, else_branch) => {
+        if self.eval_expression(condition)?.boolean(condition.1)? {
+          let mut result = Value::Null;
+
+          for statement in then_branch {
+            result = self.eval_statement(statement)?;
+          }
+
+          Ok(result)
+        } else if let Some(else_stmts) = else_branch {
+          let mut result = Value::Null;
+
+          for statement in else_stmts {
+            result = self.eval_statement(statement)?;
+          }
+
+          Ok(result)
+        } else {
+          Ok(Value::Null)
+        }
+      }
       Statement::While(condition, body) => {
         let mut result = Value::Null;
 

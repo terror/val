@@ -36,6 +36,11 @@ pub enum Statement<'a> {
   Assignment(&'a str, Spanned<Expression<'a>>),
   Block(Vec<Spanned<Statement<'a>>>),
   Expression(Spanned<Expression<'a>>),
+  If(
+    Spanned<Expression<'a>>,
+    Vec<Spanned<Statement<'a>>>,
+    Option<Vec<Spanned<Statement<'a>>>>,
+  ),
   While(Spanned<Expression<'a>>, Vec<Spanned<Statement<'a>>>),
 }
 
@@ -59,6 +64,31 @@ impl Display for Statement<'_> {
       Statement::Expression(expression) => {
         write!(f, "expression({})", expression.0)
       }
+      Statement::If(condition, then_branch, else_branch) => {
+        let then_str = then_branch
+          .iter()
+          .map(|s| s.0.to_string())
+          .collect::<Vec<_>>()
+          .join(", ");
+
+        match else_branch {
+          Some(else_stmts) => {
+            let else_str = else_stmts
+              .iter()
+              .map(|s| s.0.to_string())
+              .collect::<Vec<_>>()
+              .join(", ");
+            write!(
+              f,
+              "if({}, block({}), block({}))",
+              condition.0, then_str, else_str
+            )
+          }
+          None => {
+            write!(f, "if({}, block({}))", condition.0, then_str)
+          }
+        }
+      }
       Statement::While(condition, body) => {
         write!(
           f,
@@ -81,6 +111,7 @@ impl Statement<'_> {
       Statement::Assignment(_, _) => "assignment",
       Statement::Block(_) => "block",
       Statement::Expression(_) => "expression",
+      Statement::If(_, _, _) => "if",
       Statement::While(_, _) => "while",
     })
   }

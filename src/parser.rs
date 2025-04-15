@@ -91,10 +91,10 @@ fn parser<'a>()
       |list, index| {
         let span = (list.1.start..index.1.end).into();
 
-        (
-          Expression::ListAccess(Box::new(list), Box::new(index)),
-          span,
-        )
+        let expression =
+          Expression::ListAccess(Box::new(list), Box::new(index));
+
+        (expression, span)
       },
     );
 
@@ -177,6 +177,41 @@ fn parser<'a>()
       .map(|(condition, body)| Statement::While(condition, body))
       .map_with(|ast, e| (ast, e.span()));
 
+    let if_statement = just("if")
+      .padded()
+      .ignore_then(
+        expression
+          .clone()
+          .delimited_by(just('(').padded(), just(')').padded()),
+      )
+      .then(
+        statement
+          .clone()
+          .then(just(';').padded().or_not())
+          .map(|(stmt, _)| stmt)
+          .repeated()
+          .collect::<Vec<_>>()
+          .delimited_by(just('{').padded(), just('}').padded()),
+      )
+      .then(
+        just("else")
+          .padded()
+          .ignore_then(
+            statement
+              .clone()
+              .then(just(';').padded().or_not())
+              .map(|(stmt, _)| stmt)
+              .repeated()
+              .collect::<Vec<_>>()
+              .delimited_by(just('{').padded(), just('}').padded()),
+          )
+          .or_not(),
+      )
+      .map(|((condition, then_branch), else_branch)| {
+        Statement::If(condition, then_branch, else_branch)
+      })
+      .map_with(|ast, e| (ast, e.span()));
+
     let block_statement = statement
       .then(just(';').padded().or_not())
       .map(|(stmt, _)| stmt)
@@ -193,6 +228,7 @@ fn parser<'a>()
     choice((
       assignment_statement,
       while_statement,
+      if_statement,
       block_statement,
       expression_statement,
     ))
@@ -381,6 +417,30 @@ mod tests {
     Test::new()
     .program("while (x < 10) { while (y < 5) { y = y + 1; }; x = x + 1; }")
     .ast("statements(while(binary_op(<, identifier(x), number(10)), block(while(binary_op(<, identifier(y), number(5)), block(assignment(y, binary_op(+, identifier(y), number(1))))), assignment(x, binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn if_statement() {
+    Test::new()
+    .program("if (x > 5) { y = 10; }")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(y, number(10)))))")
+    .run();
+  }
+
+  #[test]
+  fn if_else_statement() {
+    Test::new()
+    .program("if (x > 5) { y = 10; } else { y = 5; }")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(y, number(10))), block(assignment(y, number(5)))))")
+    .run();
+  }
+
+  #[test]
+  fn nested_if_statements() {
+    Test::new()
+    .program("if (x > 5) { if (y > 2) { z = 1; } else { z = 2; } } else { z = 3; }")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(if(binary_op(>, identifier(y), number(2)), block(assignment(z, number(1))), block(assignment(z, number(2))))), block(assignment(z, number(3)))))")
     .run();
   }
 }

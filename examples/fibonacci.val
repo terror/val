@@ -1,0 +1,24 @@
+a = 0
+b = 1
+
+count = 1
+n = 10
+
+print(a)
+
+if (n == 1) {
+  quit()
+}
+
+count = count + 1
+print(b)
+
+while (count < n) {
+  next = a + b;
+
+  a = b;
+  b = next;
+
+  count = count + 1
+  print(b)
+}

@@ -948,3 +948,246 @@ fn nested_while_loops() -> Result {
     .expected_stdout(Exact("0\n1\n2\n3\n4\n"))
     .run()
 }
+
+#[test]
+fn if_statement_true_condition() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 10
+      if (x > 5) {
+        print('greater')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'greater'\n"))
+    .run()
+}
+
+#[test]
+fn if_statement_false_condition() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 3
+      if (x > 5) {
+        print('greater')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Empty)
+    .run()
+}
+
+#[test]
+fn if_else_statement_true_condition() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 10
+      if (x > 5) {
+        print('greater')
+      } else {
+        print('not greater')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'greater'\n"))
+    .run()
+}
+
+#[test]
+fn if_else_statement_false_condition() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 3
+      if (x > 5) {
+        print('greater')
+      } else {
+        print('not greater')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'not greater'\n"))
+    .run()
+}
+
+#[test]
+fn if_statement_with_expression() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 3
+      y = 7
+      if (x + y > 8) {
+        print('sum is greater than 8')
+      } else {
+        print('sum is not greater than 8')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'sum is greater than 8'\n"))
+    .run()
+}
+
+#[test]
+fn nested_if_statements() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 10
+      y = 5
+
+      if (x > 5) {
+        if (y > 3) {
+          print('both conditions met')
+        } else {
+          print('only x condition met')
+        }
+      } else {
+        print('x condition not met')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'both conditions met'\n"))
+    .run()
+}
+
+#[test]
+fn if_statement_with_variable_assignment() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 10
+
+      if (x > 5) {
+        result = 'greater'
+      } else {
+        result = 'not greater'
+      }
+
+      print(result)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'greater'\n"))
+    .run()
+}
+
+#[test]
+fn if_statement_with_function_call() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      value = 16
+
+      if (sqrt(value) == 4) {
+        print('square root is 4')
+      } else {
+        print('square root is not 4')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'square root is 4'\n"))
+    .run()
+}
+
+#[test]
+fn if_statement_with_boolean_expressions() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = 5
+      b = 10
+
+      if (a < 10 && b > 5) {
+        print('condition met')
+      } else {
+        print('condition not met')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stderr(Contains("found '&' expected"))
+    .expected_status(1)
+    .run()
+}
+
+#[test]
+fn if_statement_chain() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      score = 85
+
+      if (score >= 90) {
+        print('A')
+      } else {
+        if (score >= 80) {
+          print('B')
+        } else {
+          if (score >= 70) {
+            print('C')
+          } else {
+            if (score >= 60) {
+              print('D')
+            } else {
+              print('F')
+            }
+          }
+        }
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("'B'\n"))
+    .run()
+}
+
+#[test]
+fn if_with_while_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      x = 0
+
+      if (true) {
+        while (x < 3) {
+          print(x)
+          x = x + 1
+        }
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("0\n1\n2\n"))
+    .run()
+}
+
+#[test]
+fn if_with_list_access() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      numbers = [10, 20, 30]
+      index = 1
+
+      if (index < numbers[0]) {
+        print(numbers[index])
+      } else {
+        print('index too large')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("20\n"))
+    .run()
+}
