@@ -159,6 +159,36 @@ impl<'a> Evaluator<'a> {
 
         Ok(Value::List(evaluated_list))
       }
+      Expression::ListAccess(list, index) => {
+        let list_value = self.eval_expression(list)?;
+
+        let index_value = self.eval_expression(index)?;
+
+        let list_items = match &list_value {
+          Value::List(items) => items.clone(),
+          _ => {
+            return Err(Error::new(
+              list.1,
+              format!("'{}' is not a list", list_value),
+            ));
+          }
+        };
+
+        let idx = index_value.number(index.1)? as usize;
+
+        if idx >= list_items.len() {
+          return Err(Error::new(
+            *span,
+            format!(
+              "Index {} out of bounds for list of length {}",
+              idx,
+              list_items.len()
+            ),
+          ));
+        }
+
+        Ok(list_items[idx].clone())
+      }
       Expression::Number(number) => Ok(Value::Number(*number)),
       Expression::String(string) => Ok(Value::String(string)),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => {

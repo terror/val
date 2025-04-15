@@ -101,6 +101,16 @@ impl AstNode {
           children,
         }
       }
+      Expression::ListAccess(list, index) => {
+        children.push(Self::from_expression(&list.0, &list.1));
+        children.push(Self::from_expression(&index.0, &index.1));
+
+        Self {
+          kind: expr.kind(),
+          range,
+          children,
+        }
+      }
       Expression::Number(_) => Self {
         kind: expr.kind(),
         range,

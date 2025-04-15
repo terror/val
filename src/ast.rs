@@ -129,6 +129,7 @@ pub enum Expression<'a> {
   FunctionCall(&'a str, Vec<Spanned<Self>>),
   Identifier(&'a str),
   List(Vec<Spanned<Self>>),
+  ListAccess(Box<Spanned<Self>>, Box<Spanned<Self>>),
   Number(f64),
   String(&'a str),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
@@ -167,6 +168,9 @@ impl Display for Expression<'_> {
             .join(", ")
         )
       }
+      Expression::ListAccess(list, index) => {
+        write!(f, "list_access({}, {})", list.0, index.0)
+      }
       Expression::Number(number) => write!(f, "number({})", number),
       Expression::String(string) => write!(f, "string(\"{}\")", string),
       Expression::UnaryOp(op, expr) => {
@@ -184,6 +188,7 @@ impl Expression<'_> {
       Expression::FunctionCall(_, _) => "function_call",
       Expression::Identifier(_) => "identifier",
       Expression::List(_) => "list",
+      Expression::ListAccess(_, _) => "list_access",
       Expression::Number(_) => "number",
       Expression::String(_) => "string",
       Expression::UnaryOp(_, _) => "unary_op",

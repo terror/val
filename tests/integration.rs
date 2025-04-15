@@ -871,3 +871,20 @@ fn assignment() -> Result {
     .expected_stdout(Exact("1\n[1, 2, 3]\n"))
     .run()
 }
+
+#[test]
+fn list_access() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = [1, 2, 3]
+      print(a[1])
+
+      a = [1, 2, 3]
+      print(a[1 + 1])
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("2\n3\n"))
+    .run()
+}

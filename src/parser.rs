@@ -76,18 +76,32 @@ fn parser<'a>()
 
     let atom = number
       .or(boolean)
-      .or(expression.delimited_by(just('('), just(')')))
+      .or(expression.clone().delimited_by(just('('), just(')')))
       .or(function_call)
       .or(identifier)
       .or(list)
       .or(string)
       .padded();
 
+    let list_access = atom.clone().foldl(
+      expression
+        .clone()
+        .delimited_by(just('['), just(']'))
+        .repeated(),
+      |list, index| {
+        let span = (list.1.start..index.1.end).into();
+        (
+          Expression::ListAccess(Box::new(list), Box::new(index)),
+          span,
+        )
+      },
+    );
+
     let op = |c| just(c).padded();
 
     let unary = choice((op('-').to(UnaryOp::Negate), op('!').to(UnaryOp::Not)))
       .repeated()
-      .foldr(atom, |op, rhs| {
+      .foldr(list_access, |op, rhs| {
         let span = rhs.1;
         (Expression::UnaryOp(op, Box::new(rhs)), span)
       });
@@ -303,7 +317,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![Error::new(
         SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '%', '*', '/', '^', '+', '-', '=', '!', '>', '<', or ')'",
+        "found end of input expected any, '.', '[', '%', '*', '/', '^', '+', '-', '=', '!', '>', '<', or ')'",
       )])
       .run();
   }
