@@ -31,6 +31,7 @@ pub(crate) use {
 };
 
 pub use crate::{
+  analyzer::Analyzer,
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   error::Error,
   eval_result::EvalResult,
@@ -51,6 +52,7 @@ pub mod arguments;
 #[cfg(not(target_family = "wasm"))]
 mod highlighter;
 
+mod analyzer;
 mod ast;
 mod environment;
 mod error;
