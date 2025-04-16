@@ -262,22 +262,9 @@ impl<'src> TreeHighlighter<'src> {
         self.collect_expression_spans(lhs, spans);
         self.collect_expression_spans(rhs, spans);
 
-        let op_str = match op {
-          BinaryOp::Add => "+",
-          BinaryOp::Divide => "/",
-          BinaryOp::Equal => "==",
-          BinaryOp::GreaterThan => ">",
-          BinaryOp::GreaterThanEqual => ">=",
-          BinaryOp::LessThan => "<",
-          BinaryOp::LessThanEqual => "<=",
-          BinaryOp::Modulo => "%",
-          BinaryOp::Multiply => "*",
-          BinaryOp::NotEqual => "!=",
-          BinaryOp::Power => "^",
-          BinaryOp::Subtract => "-",
-        };
+        let op_str = op.to_string();
 
-        if let Some(op_pos) = self.find_operator(op_str, lhs, rhs) {
+        if let Some(op_pos) = self.find_operator(&op_str, lhs, rhs) {
           spans.push((op_pos, op_pos + op_str.len(), COLOR_OPERATOR));
         }
       }
@@ -397,12 +384,9 @@ impl<'src> TreeHighlighter<'src> {
         }
       }
       Expression::UnaryOp(op, expr) => {
-        let op_str = match op {
-          UnaryOp::Negate => "-",
-          UnaryOp::Not => "!",
-        };
+        let op_str = op.to_string();
 
-        if let Some(op_pos) = self.content[start..expr.1.start].find(op_str) {
+        if let Some(op_pos) = self.content[start..expr.1.start].find(&op_str) {
           spans.push((
             start + op_pos,
             start + op_pos + op_str.len(),
