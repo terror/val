@@ -32,7 +32,13 @@ impl<'a> Evaluator<'a> {
         let mut result = Value::Null;
 
         for statement in statements {
-          result = self.eval_statement(statement)?;
+          let eval_result = self.eval_statement(statement)?;
+
+          result = eval_result.unwrap();
+
+          if eval_result.is_return() {
+            break;
+          }
         }
 
         Ok(result)
@@ -43,25 +49,33 @@ impl<'a> Evaluator<'a> {
   pub fn eval_statement(
     &mut self,
     statement: &Spanned<Statement<'a>>,
-  ) -> Result<Value<'a>, Error> {
+  ) -> Result<EvalResult<'a>, Error> {
     let (node, _) = statement;
 
     match node {
       Statement::Assignment(name, expr) => {
         let value = self.eval_expression(expr)?;
         self.environment.add_variable(name, value.clone());
-        Ok(value)
+        Ok(EvalResult::Value(value))
       }
       Statement::Block(statements) => {
         let mut result = Value::Null;
 
         for statement in statements {
-          result = self.eval_statement(statement)?;
+          let eval_result = self.eval_statement(statement)?;
+
+          result = eval_result.unwrap();
+
+          if eval_result.is_return() {
+            return Ok(EvalResult::Return(result));
+          }
         }
 
-        Ok(result)
+        Ok(EvalResult::Value(result))
       }
-      Statement::Expression(expression) => self.eval_expression(expression),
+      Statement::Expression(expression) => {
+        Ok(EvalResult::Value(self.eval_expression(expression)?))
+      }
       Statement::Function(name, params, body) => {
         let function = Value::Function(
           name,
@@ -74,39 +88,61 @@ impl<'a> Evaluator<'a> {
           .environment
           .add_function(name, Function::UserDefined(function.clone()));
 
-        Ok(function)
+        Ok(EvalResult::Value(function))
       }
       Statement::If(condition, then_branch, else_branch) => {
         if self.eval_expression(condition)?.boolean(condition.1)? {
           let mut result = Value::Null;
 
           for statement in then_branch {
-            result = self.eval_statement(statement)?;
+            let eval_result = self.eval_statement(statement)?;
+
+            result = eval_result.unwrap();
+
+            if eval_result.is_return() {
+              return Ok(EvalResult::Return(result));
+            }
           }
 
-          Ok(result)
+          Ok(EvalResult::Value(result))
         } else if let Some(else_statements) = else_branch {
           let mut result = Value::Null;
 
           for statement in else_statements {
-            result = self.eval_statement(statement)?;
+            let eval_result = self.eval_statement(statement)?;
+
+            result = eval_result.unwrap();
+
+            if eval_result.is_return() {
+              return Ok(EvalResult::Return(result));
+            }
           }
 
-          Ok(result)
+          Ok(EvalResult::Value(result))
         } else {
-          Ok(Value::Null)
+          Ok(EvalResult::Value(Value::Null))
         }
       }
+      Statement::Return(expr) => Ok(EvalResult::Return(match expr {
+        Some(expr) => self.eval_expression(expr)?,
+        None => Value::Null,
+      })),
       Statement::While(condition, body) => {
         let mut result = Value::Null;
 
         while self.eval_expression(condition)?.boolean(condition.1)? {
           for statement in body {
-            result = self.eval_statement(statement)?;
+            let eval_result = self.eval_statement(statement)?;
+
+            result = eval_result.unwrap();
+
+            if eval_result.is_return() {
+              return Ok(EvalResult::Return(result));
+            }
           }
         }
 
-        Ok(result)
+        Ok(EvalResult::Value(result))
       }
     }
   }

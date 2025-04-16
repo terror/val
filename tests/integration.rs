@@ -1506,7 +1506,7 @@ fn simple_function_definition_and_call() -> Result {
     .program(indoc! {
       "
       fn add(a, b) {
-        a + b
+        return a + b
       }
 
       print(add(3, 4))
@@ -1523,7 +1523,7 @@ fn function_with_return_value() -> Result {
     .program(indoc! {
       "
       fn get_message() {
-        'Hello, world!'
+        return 'Hello, world!'
       }
 
       print(get_message())
@@ -1541,7 +1541,7 @@ fn function_with_multiple_statements() -> Result {
       "
       fn calculate(x) {
         doubled = x * 2;
-        doubled + 10
+        return doubled + 10
       }
 
       print(calculate(5))
@@ -1558,7 +1558,7 @@ fn function_wrong_argument_count() -> Result {
     .program(indoc! {
       "
       fn add(a, b) {
-        a + b
+        return a + b
       }
 
       print(add(1))
@@ -1583,7 +1583,7 @@ fn recursive_function() -> Result {
           i = i - 1;
         }
 
-        result
+        return result
       }
 
       print(factorial(5))
@@ -1601,9 +1601,9 @@ fn recursive_function_direct_style() -> Result {
       "
       fn factorial(n) {
         if (n <= 1) {
-          1
+          return 1
         } else {
-          n * factorial(n - 1)
+          return n * factorial(n - 1)
         }
       }
 
@@ -1621,11 +1621,11 @@ fn function_call_as_argument() -> Result {
     .program(indoc! {
       "
       fn double(x) {
-        x * 2
+        return x * 2
       }
 
       fn triple(x) {
-        x * 3
+        return x * 3
       }
 
       print(double(triple(2)))
@@ -1645,7 +1645,7 @@ fn function_with_local_variables() -> Result {
 
       fn test_scope() {
         local = 5
-        global + local
+        return global + local
       }
 
       print(test_scope())
@@ -1667,7 +1667,7 @@ fn function_modifying_outer_scope() -> Result {
 
       fn increment() {
         counter = counter + 1;
-        counter
+        return counter
       }
 
       print(increment())
@@ -1686,7 +1686,7 @@ fn function_with_no_arguments() -> Result {
     .program(indoc! {
       "
       fn get_pi() {
-        3.14159
+        return 3.14159
       }
 
       print(get_pi())
@@ -1703,11 +1703,11 @@ fn nested_function_calls() -> Result {
     .program(indoc! {
       "
       fn add(a, b) {
-        a + b
+        return a + b
       }
 
       fn multiply(a, b) {
-        a * b
+        return a * b
       }
 
       print(add(multiply(2, 3), multiply(4, 5)))
@@ -1724,7 +1724,7 @@ fn function_calling_builtin() -> Result {
     .program(indoc! {
       "
       fn square_root_of_sin(x) {
-        sqrt(sin(x))
+        return sqrt(sin(x))
       }
 
       print(square_root_of_sin(0.5))
@@ -1742,12 +1742,12 @@ fn fibonacci_function() -> Result {
       "
       fn fibonacci(n) {
         if (n <= 0) {
-          0
+          return 0
         } else {
           if (n == 1) {
-            1
+            return 1
           } else {
-            fibonacci(n - 1) + fibonacci(n - 2)
+            return fibonacci(n - 1) + fibonacci(n - 2)
           }
         }
       }
@@ -1774,9 +1774,9 @@ fn can_override_builtin_functions() -> Result {
 
       fn abs(x) {
         if (x < 0) {
-          x
+          return x
         } else {
-          -x
+          return -x
         }
       }
 
@@ -1785,5 +1785,19 @@ fn can_override_builtin_functions() -> Result {
     })
     .expected_status(0)
     .expected_stdout(Exact("5\n-5\n"))
+    .run()
+}
+
+#[test]
+fn list_access_with_comparison() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = [1, 2, 3]
+      print(a[0] == 1)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
     .run()
 }

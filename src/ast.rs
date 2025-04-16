@@ -42,6 +42,7 @@ pub enum Statement<'a> {
     Vec<Spanned<Statement<'a>>>,
     Option<Vec<Spanned<Statement<'a>>>>,
   ),
+  Return(Option<Spanned<Expression<'a>>>),
   While(Spanned<Expression<'a>>, Vec<Spanned<Statement<'a>>>),
 }
 
@@ -103,6 +104,10 @@ impl Display for Statement<'_> {
           }
         }
       }
+      Statement::Return(expr) => match expr {
+        Some(expression) => write!(f, "return({})", expression.0),
+        None => write!(f, "return()"),
+      },
       Statement::While(condition, body) => {
         write!(
           f,
@@ -127,6 +132,7 @@ impl Statement<'_> {
       Statement::Expression(_) => "expression",
       Statement::Function(_, _, _) => "function",
       Statement::If(_, _, _) => "if",
+      Statement::Return(_) => "return",
       Statement::While(_, _) => "while",
     })
   }

@@ -128,6 +128,12 @@ fn statement_parser<'a>()
       .map(|(condition, body)| Statement::While(condition, body))
       .map_with(|ast, e| (ast, e.span()));
 
+    let return_statement = just("return")
+      .padded()
+      .ignore_then(expression.clone().or_not())
+      .map(Statement::Return)
+      .map_with(|ast, e| (ast, e.span()));
+
     let expression_statement = expression
       .map(Statement::Expression)
       .map_with(|ast, e| (ast, e.span()));
@@ -138,6 +144,7 @@ fn statement_parser<'a>()
       block_statement,
       if_statement,
       while_statement,
+      return_statement,
       expression_statement,
     ))
     .padded()
@@ -208,15 +215,15 @@ fn expression_parser<'a>()
       .or(boolean)
       .or(expression.clone().delimited_by(just('('), just(')')))
       .or(function_call)
-      .or(identifier)
       .or(list)
+      .or(identifier)
       .or(string)
       .padded();
 
     let list_access = atom.clone().foldl(
       expression
         .clone()
-        .delimited_by(just('['), just(']'))
+        .delimited_by(just('[').padded(), just(']').padded())
         .repeated(),
       |list, index| {
         let span = (list.1.start..index.1.end).into();
@@ -262,18 +269,20 @@ fn expression_parser<'a>()
       },
     );
 
-    let comparison = sum.clone().foldl_with(
-      just("==")
-        .to(BinaryOp::Equal)
-        .or(just("!=").to(BinaryOp::NotEqual))
-        .or(just(">=").to(BinaryOp::GreaterThanEqual))
-        .or(just("<=").to(BinaryOp::LessThanEqual))
-        .or(just("<").to(BinaryOp::LessThan))
-        .or(just(">").to(BinaryOp::GreaterThan))
-        .then(sum)
-        .repeated(),
-      |a, (op, b), e| {
-        (Expression::BinaryOp(op, Box::new(a), Box::new(b)), e.span())
+    let comparison = sum.clone().foldl(
+      choice((
+        just("==").padded().to(BinaryOp::Equal),
+        just("!=").padded().to(BinaryOp::NotEqual),
+        just(">=").padded().to(BinaryOp::GreaterThanEqual),
+        just("<=").padded().to(BinaryOp::LessThanEqual),
+        just(">").padded().to(BinaryOp::GreaterThan),
+        just("<").padded().to(BinaryOp::LessThan),
+      ))
+      .then(sum)
+      .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
       },
     );
 
@@ -391,36 +400,6 @@ mod tests {
   }
 
   #[test]
-  fn unclosed_string() {
-    Test::new()
-      .program("\"unclosed")
-      .errors(vec![Error::new(
-        SimpleSpan::from(9..9),
-        "found end of input expected something else, or '\"'",
-      )])
-      .run();
-  }
-
-  #[test]
-  fn invalid_operator() {
-    Test::new()
-      .program("2 +* 3")
-      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', '(', identifier, '[', '\"', or '''")])
-      .run();
-  }
-
-  #[test]
-  fn missing_closing_parenthesis() {
-    Test::new()
-      .program("(2 + 3")
-      .errors(vec![Error::new(
-        SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '[', '%', '*', '/', '^', '+', '-', '=', '!', '>', '<', or ')'",
-      )])
-      .run();
-  }
-
-  #[test]
   fn multiple_top_level_statements() {
     Test::new().program("1 + 2; 3 * 4").ast("statements(expression(binary_op(+, number(1), number(2))), expression(binary_op(*, number(3), number(4))))").run();
   }
@@ -479,5 +458,88 @@ mod tests {
     .program("if (x > 5) { if (y > 2) { z = 1; } else { z = 2; } } else { z = 3; }")
     .ast("statements(if(binary_op(>, identifier(x), number(5)), block(if(binary_op(>, identifier(y), number(2)), block(assignment(z, number(1))), block(assignment(z, number(2))))), block(assignment(z, number(3)))))")
     .run();
+  }
+
+  #[test]
+  fn return_statement() {
+    Test::new()
+      .program("return 5")
+      .ast("statements(return(number(5)))")
+      .run();
+
+    Test::new()
+      .program("return")
+      .ast("statements(return())")
+      .run();
+  }
+
+  #[test]
+  fn function_with_return() {
+    Test::new()
+    .program("fn add(a, b) { return a + b; }")
+    .ast("statements(function(add, [a, b], block(return(binary_op(+, identifier(a), identifier(b))))))")
+    .run();
+  }
+
+  #[test]
+  fn list_access() {
+    Test::new()
+      .program("a = [1, 2, 3]; a[0]")
+      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(list_access(identifier(a), number(0))))")
+      .run();
+  }
+
+  #[test]
+  fn list_access_with_comparison() {
+    Test::new()
+      .program("a = [1, 2, 3]; a[0] == 1")
+      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(binary_op(==, list_access(identifier(a), number(0)), number(1))))")
+      .run();
+  }
+
+  #[test]
+  fn nested_list_access() {
+    Test::new()
+      .program("a = [[1, 2], [3, 4]]; a[0][1]")
+      .ast("statements(assignment(a, list(list(number(1), number(2)), list(number(3), number(4)))), expression(list_access(list_access(identifier(a), number(0)), number(1))))")
+      .run();
+  }
+
+  #[test]
+  fn list_access_with_expressions() {
+    Test::new()
+      .program("a = [1, 2, 3]; a[1 + 1]")
+      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(list_access(identifier(a), binary_op(+, number(1), number(1)))))")
+      .run();
+  }
+
+  #[test]
+  fn unclosed_string() {
+    Test::new()
+      .program("\"unclosed")
+      .errors(vec![Error::new(
+        SimpleSpan::from(9..9),
+        "found end of input expected something else, or '\"'",
+      )])
+      .run();
+  }
+
+  #[test]
+  fn invalid_operator() {
+    Test::new()
+      .program("2 +* 3")
+      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', '(', identifier, '[', '\"', or '''")])
+      .run();
+  }
+
+  #[test]
+  fn missing_closing_parenthesis() {
+    Test::new()
+      .program("(2 + 3")
+      .errors(vec![Error::new(
+        SimpleSpan::from(6..6),
+        "found end of input expected any, '.', '[', '%', '*', '/', '^', '+', '-', '=', '!', '>', '<', or ')'",
+      )])
+      .run();
   }
 }

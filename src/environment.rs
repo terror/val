@@ -654,19 +654,15 @@ impl<'src> Environment<'src> {
             return Ok(Value::Null);
           }
 
-          let mut result = Value::Null;
+          for statement in body.iter() {
+            let result = evaluator.eval_statement(statement)?;
 
-          let last_index = body.len() - 1;
-
-          for (i, statement) in body.iter().enumerate() {
-            let value = evaluator.eval_statement(statement)?;
-
-            if i == last_index || !matches!(value, Value::Null) {
-              result = value;
+            if result.is_return() {
+              return Ok(result.unwrap());
             }
           }
 
-          Ok(result)
+          Ok(Value::Null)
         }
         _ => Err(Error::new(span, format!("`{}` is not a function", name))),
       }

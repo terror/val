@@ -19,6 +19,7 @@ pub(crate) use rustyline::DefaultEditor;
 pub use crate::{
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   error::Error,
+  eval_result::EvalResult,
   evaluator::Evaluator,
   function::{BuiltinFunction, Function},
   parser::parse,
@@ -36,6 +37,7 @@ pub mod arguments;
 mod ast;
 mod environment;
 mod error;
+mod eval_result;
 mod evaluator;
 mod function;
 mod parser;

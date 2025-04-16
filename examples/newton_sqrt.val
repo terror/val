@@ -1,11 +1,11 @@
 fn newton_sqrt(x) {
   if (x < 0) {
     print('Cannot compute square root of negative number')
-    0
+    return 0
   }
 
   if (x == 0) {
-    0
+    return 0
   }
 
   guess = x / 2
@@ -15,7 +15,7 @@ fn newton_sqrt(x) {
     guess = (guess + x / guess) / 2
   }
 
-  guess
+  return guess
 }
 
 print('Square root of 16 is approximately:')
