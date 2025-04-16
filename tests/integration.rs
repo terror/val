@@ -1424,8 +1424,7 @@ fn if_statement_with_boolean_expressions() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stderr(Contains("found '&' expected"))
-    .expected_status(1)
+    .expected_stdout(Exact("condition met\n"))
     .run()
 }
 
@@ -1808,5 +1807,59 @@ fn print_without_newline() -> Result {
     .program("print(1 + 1)")
     .expected_status(0)
     .expected_stdout(Exact("2"))
+    .run()
+}
+
+#[test]
+fn logical_and_operator() -> Result {
+  Test::new()?
+    .program("println(true && true)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(true && false)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(false && true)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(false && false)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
+    .run()
+}
+
+#[test]
+fn logical_or_operator() -> Result {
+  Test::new()?
+    .program("println(true || true)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(true || false)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(false || true)")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(false || false)")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
     .run()
 }

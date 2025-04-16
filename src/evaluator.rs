@@ -215,6 +215,18 @@ impl<'a> Evaluator<'a> {
           )),
         }
       }
+      Expression::BinaryOp(BinaryOp::LogicalAnd, lhs, rhs) => {
+        Ok(Value::Boolean(
+          self.eval_expression(lhs)?.boolean(lhs.1)?
+            && self.eval_expression(rhs)?.boolean(rhs.1)?,
+        ))
+      }
+      Expression::BinaryOp(BinaryOp::LogicalOr, lhs, rhs) => {
+        Ok(Value::Boolean(
+          self.eval_expression(lhs)?.boolean(lhs.1)?
+            || self.eval_expression(rhs)?.boolean(rhs.1)?,
+        ))
+      }
       Expression::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
         let (lhs_val, rhs_val) =
           (self.eval_expression(lhs)?, self.eval_expression(rhs)?);

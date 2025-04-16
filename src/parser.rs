@@ -34,6 +34,14 @@ fn statement_parser<'a>()
   let expression = expression_parser();
 
   recursive(|statement| {
+    let statement_block = statement
+      .clone()
+      .then(just(';').padded().or_not())
+      .map(|(statement, _)| statement)
+      .repeated()
+      .collect::<Vec<_>>()
+      .delimited_by(just('{').padded(), just('}').padded());
+
     let assignment_statement = text::ident()
       .padded()
       .then_ignore(just('=').padded())
@@ -52,56 +60,27 @@ fn statement_parser<'a>()
           .collect::<Vec<_>>()
           .delimited_by(just('(').padded(), just(')').padded()),
       )
-      .then(
-        statement
-          .clone()
-          .then(just(';').padded().or_not())
-          .map(|(stmt, _)| stmt)
-          .repeated()
-          .collect::<Vec<_>>()
-          .delimited_by(just('{').padded(), just('}').padded()),
-      )
+      .then(statement_block.clone())
       .map(|((name, params), body)| Statement::Function(name, params, body))
       .map_with(|ast, e| (ast, e.span()));
 
-    let block_statement = statement
+    let block_statement = statement_block
       .clone()
-      .then(just(';').padded().or_not())
-      .map(|(stmt, _)| stmt)
-      .repeated()
-      .collect::<Vec<_>>()
-      .delimited_by(just('{').padded(), just('}').padded())
       .map(Statement::Block)
       .map_with(|ast, e| (ast, e.span()));
 
+    let condition_parser = expression
+      .clone()
+      .delimited_by(just('(').padded(), just(')').padded());
+
     let if_statement = just("if")
       .padded()
-      .ignore_then(
-        expression
-          .clone()
-          .delimited_by(just('(').padded(), just(')').padded()),
-      )
-      .then(
-        statement
-          .clone()
-          .then(just(';').padded().or_not())
-          .map(|(stmt, _)| stmt)
-          .repeated()
-          .collect::<Vec<_>>()
-          .delimited_by(just('{').padded(), just('}').padded()),
-      )
+      .ignore_then(condition_parser.clone())
+      .then(statement_block.clone())
       .then(
         just("else")
           .padded()
-          .ignore_then(
-            statement
-              .clone()
-              .then(just(';').padded().or_not())
-              .map(|(stmt, _)| stmt)
-              .repeated()
-              .collect::<Vec<_>>()
-              .delimited_by(just('{').padded(), just('}').padded()),
-          )
+          .ignore_then(statement_block.clone())
           .or_not(),
       )
       .map(|((condition, then_branch), else_branch)| {
@@ -111,20 +90,8 @@ fn statement_parser<'a>()
 
     let while_statement = just("while")
       .padded()
-      .ignore_then(
-        expression
-          .clone()
-          .delimited_by(just('(').padded(), just(')').padded()),
-      )
-      .then(
-        statement
-          .clone()
-          .then(just(';').padded().or_not())
-          .map(|(stmt, _)| stmt)
-          .repeated()
-          .collect::<Vec<_>>()
-          .delimited_by(just('{').padded(), just('}').padded()),
-      )
+      .ignore_then(condition_parser)
+      .then(statement_block)
       .map(|(condition, body)| Statement::While(condition, body))
       .map_with(|ast, e| (ast, e.span()));
 
@@ -148,6 +115,7 @@ fn statement_parser<'a>()
       expression_statement,
     ))
     .padded()
+    .boxed()
   })
 }
 
@@ -269,16 +237,15 @@ fn expression_parser<'a>()
       },
     );
 
-    let comparison = sum.clone().foldl(
+    let relational = sum.clone().foldl(
       choice((
-        just("==").padded().to(BinaryOp::Equal),
-        just("!=").padded().to(BinaryOp::NotEqual),
         just(">=").padded().to(BinaryOp::GreaterThanEqual),
         just("<=").padded().to(BinaryOp::LessThanEqual),
         just(">").padded().to(BinaryOp::GreaterThan),
         just("<").padded().to(BinaryOp::LessThan),
       ))
-      .then(sum)
+      .boxed()
+      .then(sum.clone().boxed())
       .repeated(),
       |lhs, (op, rhs)| {
         let span = (lhs.1.start..rhs.1.end).into();
@@ -286,7 +253,47 @@ fn expression_parser<'a>()
       },
     );
 
-    comparison
+    let equality = relational.clone().foldl(
+      choice((
+        just("==").padded().to(BinaryOp::Equal),
+        just("!=").padded().to(BinaryOp::NotEqual),
+      ))
+      .boxed()
+      .then(relational.clone().boxed())
+      .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
+      },
+    );
+
+    let logical_and = equality.clone().foldl(
+      just("&&")
+        .padded()
+        .to(BinaryOp::LogicalAnd)
+        .boxed()
+        .then(equality.clone().boxed())
+        .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
+      },
+    );
+
+    let logical_or = logical_and.clone().foldl(
+      just("||")
+        .padded()
+        .to(BinaryOp::LogicalOr)
+        .boxed()
+        .then(logical_and.clone().boxed())
+        .repeated(),
+      |lhs, (op, rhs)| {
+        let span = (lhs.1.start..rhs.1.end).into();
+        (Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
+      },
+    );
+
+    logical_or
   })
 }
 
@@ -538,7 +545,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![Error::new(
         SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '[', '%', '*', '/', '^', '+', '-', '=', '!', '>', '<', or ')'",
+        "found end of input expected any, '.', '[', '%', '*', '/', '^', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
       )])
       .run();
   }
