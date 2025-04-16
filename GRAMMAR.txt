@@ -1,17 +1,25 @@
 Program        → Statement (';' Statement)* ';'?
-Statement      → Assignment | Block | ExpressionStmt | If | While
+
+Statement      → Assignment | Block | ExpressionStmt | Function | If | Return | While
 Assignment     → Identifier '=' Expression
 Block          → '{' Statement* '}'
 ExpressionStmt → Expression
+Function       → 'fn' Identifier '(' (Identifier (',' Identifier)*)? ','? ')' '{' Statement* '}'
 If             → 'if' '(' Expression ')' '{' Statement* '}' ('else' '{' Statement* '}')?
+Return         → 'return' Expression?
 While          → 'while' '(' Expression ')' '{' Statement* '}'
-Expression     → Comparison
-Comparison     → Sum ('==' | '!=' | '>=' | '<=' | '<' | '>') Sum | Sum
+
+Expression     → LogicalOr
+LogicalOr      → LogicalOr '||' LogicalAnd | LogicalAnd
+LogicalAnd     → LogicalAnd '&&' Equality | Equality
+Equality       → Equality ('==' | '!=') Relational | Relational
+Relational     → Relational ('>=' | '<=' | '>' | '<') Sum | Sum
 Sum            → Sum ('+' | '-') Product | Product
 Product        → Product ('*' | '/' | '%' | '^') Unary | Unary
 Unary          → ('-' | '!') Unary | ListAccess
 ListAccess     → Atom ('[' Expression ']')* | Atom
 Atom           → Number | Boolean | String | List | FunctionCall | Identifier | '(' Expression ')'
+
 Number         → Digit+ ('.' Digit+)?
 Boolean        → 'true' | 'false'
 String         → '"' [^"]* '"' | "'" [^']* "'"
