@@ -14,7 +14,21 @@ pub(crate) use {
 };
 
 #[cfg(not(target_family = "wasm"))]
-pub(crate) use rustyline::DefaultEditor;
+pub(crate) use {
+  crate::highlighter::Highlighter,
+  regex::Regex,
+  rustyline::{
+    Context, Editor, Helper,
+    completion::{Completer, FilenameCompleter, Pair},
+    config::{Builder, ColorMode, CompletionType, EditMode},
+    error::ReadlineError,
+    highlight::{CmdKind, Highlighter as RustylineHighlighter},
+    hint::{Hinter, HistoryHinter},
+    history::DefaultHistory,
+    validate::Validator,
+  },
+  std::borrow::Cow::{self, Owned},
+};
 
 pub use crate::{
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
@@ -33,6 +47,9 @@ type Spanned<T> = (T, Span);
 
 #[doc(hidden)]
 pub mod arguments;
+
+#[cfg(not(target_family = "wasm"))]
+mod highlighter;
 
 mod ast;
 mod environment;

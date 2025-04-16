@@ -921,13 +921,13 @@ fn string_literals() -> Result {
   Test::new()?
     .program("print(\"Hello, world!\")")
     .expected_status(0)
-    .expected_stdout(Exact("'Hello, world!'\n"))
+    .expected_stdout(Exact("Hello, world!\n"))
     .run()?;
 
   Test::new()?
     .program("print('Hello, world!')")
     .expected_status(0)
-    .expected_stdout(Exact("'Hello, world!'\n"))
+    .expected_stdout(Exact("Hello, world!\n"))
     .run()
 }
 
@@ -1159,7 +1159,7 @@ fn list_literals() -> Result {
   Test::new()?
     .program("print([print('foo'), 'foo', 1 + 2])")
     .expected_status(0)
-    .expected_stdout(Exact("'foo'\n[null, 'foo', 3]\n"))
+    .expected_stdout(Exact("foo\n[null, 'foo', 3]\n"))
     .run()
 }
 
@@ -1269,7 +1269,7 @@ fn if_statement_true_condition() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'greater'\n"))
+    .expected_stdout(Exact("greater\n"))
     .run()
 }
 
@@ -1303,7 +1303,7 @@ fn if_else_statement_true_condition() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'greater'\n"))
+    .expected_stdout(Exact("greater\n"))
     .run()
 }
 
@@ -1321,7 +1321,7 @@ fn if_else_statement_false_condition() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'not greater'\n"))
+    .expected_stdout(Exact("not greater\n"))
     .run()
 }
 
@@ -1340,7 +1340,7 @@ fn if_statement_with_expression() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'sum is greater than 8'\n"))
+    .expected_stdout(Exact("sum is greater than 8\n"))
     .run()
 }
 
@@ -1364,7 +1364,7 @@ fn nested_if_statements() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'both conditions met'\n"))
+    .expected_stdout(Exact("both conditions met\n"))
     .run()
 }
 
@@ -1385,7 +1385,7 @@ fn if_statement_with_variable_assignment() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'greater'\n"))
+    .expected_stdout(Exact("greater\n"))
     .run()
 }
 
@@ -1404,7 +1404,7 @@ fn if_statement_with_function_call() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'square root is 4'\n"))
+    .expected_stdout(Exact("square root is 4\n"))
     .run()
 }
 
@@ -1456,7 +1456,7 @@ fn if_statement_chain() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'B'\n"))
+    .expected_stdout(Exact("B\n"))
     .run()
 }
 
@@ -1530,7 +1530,7 @@ fn function_with_return_value() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("'Hello, world!'\n"))
+    .expected_stdout(Exact("Hello, world!\n"))
     .run()
 }
 

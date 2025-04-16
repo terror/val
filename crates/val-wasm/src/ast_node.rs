@@ -100,6 +100,17 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Statement::Return(expression) => {
+        if let Some(expression) = expression {
+          children.push(Self::from((&expression.0, &expression.1)));
+        }
+
+        Self {
+          kind: statement.kind(),
+          range,
+          children,
+        }
+      }
       Statement::While(condition, body) => {
         children.push(Self::from((&condition.0, &condition.1)));
 

@@ -25,13 +25,16 @@ impl Display for Value<'_> {
         "[{}]",
         list
           .iter()
-          .map(|item| item.to_string())
+          .map(|item| match item {
+            Value::String(string) => format!("\'{string}\'"),
+            _ => item.to_string(),
+          })
           .collect::<Vec<_>>()
           .join(", ")
       ),
       Value::Null => write!(f, "null"),
       Value::Number(number) => write!(f, "{number}"),
-      Value::String(string) => write!(f, "\'{string}\'"),
+      Value::String(string) => write!(f, "{string}"),
     }
   }
 }

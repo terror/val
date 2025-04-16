@@ -51,7 +51,18 @@ impl Arguments {
   fn read() -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
-    let mut editor = DefaultEditor::new()?;
+    let config = Builder::new()
+      .color_mode(ColorMode::Enabled)
+      .edit_mode(EditMode::Emacs)
+      .history_ignore_space(true)
+      .completion_type(CompletionType::Circular)
+      .max_history_size(1000)?
+      .build();
+
+    let mut editor =
+      Editor::<Highlighter, DefaultHistory>::with_config(config)?;
+
+    editor.set_helper(Some(Highlighter::new()));
 
     editor.load_history(&history).ok();
 
