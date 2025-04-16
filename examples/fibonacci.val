@@ -1,24 +1,35 @@
-a = 0
-b = 1
+fn fibonacci(n) {
+  if (n <= 0) {
+    println("Please enter a positive number")
+    return
+  }
 
-count = 1
-n = 10
+  a = 0
+  b = 1
 
-println(a)
+  println("Fibonacci Sequence (first " + n + " numbers):")
 
-if (n == 1) {
-  quit()
+  if (n >= 1) {
+    println(a)
+  }
+
+  if (n >= 2) {
+    println(b)
+  }
+
+  count = 2
+
+  while (count < n) {
+    next = a + b
+    a = b
+    b = next
+    count = count + 1
+    println(b)
+  }
 }
 
-count = count + 1
-println(b)
+println("How many Fibonacci numbers would you like to see? ")
 
-while (count < n) {
-  next = a + b;
+num = int(input())
 
-  a = b;
-  b = next;
-
-  count = count + 1
-  println(b)
-}
+fibonacci(num)

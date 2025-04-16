@@ -154,10 +154,26 @@ impl<'a> Evaluator<'a> {
     let (node, span) = ast;
 
     match node {
-      Expression::BinaryOp(BinaryOp::Add, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?
-          + self.eval_expression(rhs)?.number(rhs.1)?,
-      )),
+      Expression::BinaryOp(BinaryOp::Add, lhs, rhs) => {
+        let (lhs_val, rhs_val) =
+          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+
+        match (&lhs_val, &rhs_val) {
+          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a + b)),
+          (Value::String(a), Value::String(b)) => Ok(Value::String(Box::leak(
+            format!("{}{}", a, b).into_boxed_str(),
+          ))),
+          (Value::String(a), _) => Ok(Value::String(Box::leak(
+            format!("{}{}", a, rhs_val).into_boxed_str(),
+          ))),
+          (_, Value::String(b)) => Ok(Value::String(Box::leak(
+            format!("{}{}", lhs_val, b).into_boxed_str(),
+          ))),
+          _ => Ok(Value::Number(
+            lhs_val.number(lhs.1)? + rhs_val.number(rhs.1)?,
+          )),
+        }
+      }
       Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
         let (lhs_val, rhs_val) =
           (self.eval_expression(lhs)?, self.eval_expression(rhs)?);

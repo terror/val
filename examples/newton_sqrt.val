@@ -18,8 +18,5 @@ fn newton_sqrt(x) {
   return guess
 }
 
-print('Square root of 16 is approximately ')
-println(newton_sqrt(16))
-
-print('Square root of 2 is approximately ')
-println(newton_sqrt(2))
+println('Square root of 16 is approximately ' + newton_sqrt(16))
+println('Square root of 2 is approximately ' + newton_sqrt(2))

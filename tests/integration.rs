@@ -1863,3 +1863,89 @@ fn logical_or_operator() -> Result {
     .expected_stdout(Exact("false\n"))
     .run()
 }
+
+#[test]
+fn type_conversions_int() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(int(5.7))
+      println(int('42'))
+      println(int(true))
+      println(int(false))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("5\n42\n1\n0\n"))
+    .run()
+}
+
+#[test]
+fn type_conversions_float() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(float(5))
+      println(float('3.14'))
+      println(float(true))
+      println(float(false))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("5\n3.14\n1\n0\n"))
+    .run()
+}
+
+#[test]
+fn type_conversions_list() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(list('abc'))
+      println(list(123))
+      println(list(true))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("['a', 'b', 'c']\n[123]\n[true]\n"))
+    .run()
+}
+
+#[test]
+fn string_split() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(split('a,b,c', ','))
+      println(split('hello world', ' '))
+      println(split('abc', ''))
+      println(split('no-delimiter-here', 'x'))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("['a', 'b', 'c']\n['hello', 'world']\n['a', 'b', 'c']\n['no-delimiter-here']\n"))
+    .run()
+}
+
+#[test]
+fn split_and_convert() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      csv_line = '10,20,30'
+      parts = split(csv_line, ',')
+
+      sum = 0
+      i = 0
+      while (i < 3) {
+        sum = sum + int(parts[i])
+        i = i + 1
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("60\n"))
+    .run()
+}

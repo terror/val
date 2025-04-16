@@ -609,6 +609,191 @@ impl<'src> Environment<'src> {
       }),
     );
 
+    env.add_function(
+      "input",
+      Function::Builtin(|arguments, span| {
+        use std::io::{self, BufRead};
+
+        if !arguments.is_empty() {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `input` expects 0 arguments, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
+        let stdin = io::stdin();
+
+        let mut input = String::new();
+
+        match stdin.lock().read_line(&mut input) {
+          Ok(_) => {
+            if input.ends_with('\n') {
+              input.pop();
+
+              if input.ends_with('\r') {
+                input.pop();
+              }
+            }
+
+            Ok(Value::String(Box::leak(input.into_boxed_str())))
+          }
+          Err(e) => {
+            Err(Error::new(span, format!("Failed to read input: {}", e)))
+          }
+        }
+      }),
+    );
+
+    env.add_function(
+      "int",
+      Function::Builtin(|arguments, span| {
+        if arguments.len() != 1 {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `int` expects 1 argument, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
+        let value = &arguments[0];
+        match value {
+          Value::Number(n) => Ok(Value::Number(n.floor())),
+          Value::String(s) => match s.trim().parse::<f64>() {
+            Ok(n) => Ok(Value::Number(n.floor())),
+            Err(_) => {
+              Err(Error::new(span, format!("Cannot convert '{}' to int", s)))
+            }
+          },
+          Value::Boolean(b) => Ok(Value::Number(if *b { 1.0 } else { 0.0 })),
+          _ => Err(Error::new(
+            span,
+            format!("Cannot convert {} to int", value.type_name()),
+          )),
+        }
+      }),
+    );
+
+    env.add_function(
+      "float",
+      Function::Builtin(|arguments, span| {
+        if arguments.len() != 1 {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `float` expects 1 argument, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
+        let value = &arguments[0];
+        match value {
+          Value::Number(n) => Ok(Value::Number(*n)),
+          Value::String(s) => match s.trim().parse::<f64>() {
+            Ok(n) => Ok(Value::Number(n)),
+            Err(_) => {
+              Err(Error::new(span, format!("Cannot convert '{}' to float", s)))
+            }
+          },
+          Value::Boolean(b) => Ok(Value::Number(if *b { 1.0 } else { 0.0 })),
+          _ => Err(Error::new(
+            span,
+            format!("Cannot convert {} to float", value.type_name()),
+          )),
+        }
+      }),
+    );
+
+    env.add_function(
+      "bool",
+      Function::Builtin(|arguments, span| {
+        if arguments.len() != 1 {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `bool` expects 1 argument, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
+        let value = &arguments[0];
+
+        match value {
+          Value::Boolean(b) => Ok(Value::Boolean(*b)),
+          Value::Number(n) => Ok(Value::Boolean(*n != 0.0)),
+          Value::String(s) => Ok(Value::Boolean(!s.is_empty())),
+          Value::List(items) => Ok(Value::Boolean(!items.is_empty())),
+          Value::Null => Ok(Value::Boolean(false)),
+          _ => Err(Error::new(
+            span,
+            format!("Cannot convert {} to bool", value.type_name()),
+          )),
+        }
+      }),
+    );
+
+    env.add_function(
+      "list",
+      Function::Builtin(|arguments, span| {
+        if arguments.len() != 1 {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `list` expects 1 argument, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
+        let value = &arguments[0];
+
+        match value {
+          Value::List(items) => Ok(Value::List(items.clone())),
+          Value::String(s) => Ok(Value::List(
+            s.chars()
+              .map(|c| Value::String(Box::leak(c.to_string().into_boxed_str())))
+              .collect(),
+          )),
+          _ => Ok(Value::List(vec![value.clone()])),
+        }
+      }),
+    );
+
+    env.add_function(
+      "split",
+      Function::Builtin(|arguments, span| {
+        if arguments.len() != 2 {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `split` expects 2 arguments, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
+        let string = arguments[0].string(span)?;
+
+        let delimiter = arguments[1].string(span)?;
+
+        Ok(Value::List(
+          string
+            .split(delimiter)
+            .filter(|part| !part.is_empty())
+            .map(|part| {
+              Value::String(Box::leak(part.to_string().into_boxed_str()))
+            })
+            .collect(),
+        ))
+      }),
+    );
+
     env.add_variable("e", Value::Number(std::f64::consts::E));
     env.add_variable("pi", Value::Number(std::f64::consts::PI));
 
