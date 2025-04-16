@@ -1,6 +1,6 @@
 fn newton_sqrt(x) {
   if (x < 0) {
-    print('Cannot compute square root of negative number')
+    println('Cannot compute square root of negative number')
     return 0
   }
 
@@ -18,7 +18,8 @@ fn newton_sqrt(x) {
   return guess
 }
 
-print('Square root of 16 is approximately:')
-print(newton_sqrt(16))
-print('Square root of 2 is approximately:')
-print(newton_sqrt(2))
+print('Square root of 16 is approximately ')
+println(newton_sqrt(16))
+
+print('Square root of 2 is approximately ')
+println(newton_sqrt(2))

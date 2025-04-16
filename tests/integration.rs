@@ -142,7 +142,7 @@ impl<'a> Test<'a> {
 #[test]
 fn integer_literals() -> Result {
   Test::new()?
-    .program("print(25)")
+    .program("println(25)")
     .expected_status(0)
     .expected_stdout(Exact("25\n"))
     .run()
@@ -151,31 +151,31 @@ fn integer_literals() -> Result {
 #[test]
 fn float_literals() -> Result {
   Test::new()?
-    .program("print(3.14)")
+    .program("println(3.14)")
     .expected_status(0)
     .expected_stdout(Exact("3.14\n"))
     .run()?;
 
   Test::new()?
-    .program("print(0.5)")
+    .program("println(0.5)")
     .expected_status(0)
     .expected_stdout(Exact("0.5\n"))
     .run()?;
 
   Test::new()?
-    .program("print(-2.718)")
+    .program("println(-2.718)")
     .expected_status(0)
     .expected_stdout(Exact("-2.718\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1.0 + 2.5)")
+    .program("println(1.0 + 2.5)")
     .expected_status(0)
     .expected_stdout(Exact("3.5\n"))
     .run()?;
 
   Test::new()?
-    .program("print(3.5 * 2.0)")
+    .program("println(3.5 * 2.0)")
     .expected_status(0)
     .expected_stdout(Exact("7\n"))
     .run()
@@ -184,19 +184,19 @@ fn float_literals() -> Result {
 #[test]
 fn negate_integer_literal() -> Result {
   Test::new()?
-    .program("print(-25)")
+    .program("println(-25)")
     .expected_status(0)
     .expected_stdout(Exact("-25\n"))
     .run()?;
 
   Test::new()?
-    .program("print(--25)")
+    .program("println(--25)")
     .expected_status(0)
     .expected_stdout(Exact("25\n"))
     .run()?;
 
   Test::new()?
-    .program("print(- - - -25)")
+    .program("println(- - - -25)")
     .expected_status(0)
     .expected_stdout(Exact("25\n"))
     .run()
@@ -205,13 +205,13 @@ fn negate_integer_literal() -> Result {
 #[test]
 fn call_builtin_function() -> Result {
   Test::new()?
-    .program("print(sin(1))")
+    .program("println(sin(1))")
     .expected_status(0)
     .expected_stdout(Exact("0.8414709848078965\n"))
     .run()?;
 
   Test::new()?
-    .program("print(cos(1))")
+    .program("println(cos(1))")
     .expected_status(0)
     .expected_stdout(Exact("0.5403023058681398\n"))
     .run()
@@ -220,7 +220,7 @@ fn call_builtin_function() -> Result {
 #[test]
 fn undefined_variable() -> Result {
   Test::new()?
-    .program("print(foo)")
+    .program("println(foo)")
     .expected_status(1)
     .expected_stderr(Contains("Undefined variable `foo`\n"))
     .run()
@@ -229,19 +229,19 @@ fn undefined_variable() -> Result {
 #[test]
 fn addition() -> Result {
   Test::new()?
-    .program("print(2 + 3)")
+    .program("println(2 + 3)")
     .expected_status(0)
     .expected_stdout(Exact("5\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 + 3 + 4)")
+    .program("println(2 + 3 + 4)")
     .expected_status(0)
     .expected_stdout(Exact("9\n"))
     .run()?;
 
   Test::new()?
-    .program("print(-5 + 10)")
+    .program("println(-5 + 10)")
     .expected_status(0)
     .expected_stdout(Exact("5\n"))
     .run()
@@ -250,19 +250,19 @@ fn addition() -> Result {
 #[test]
 fn subtraction() -> Result {
   Test::new()?
-    .program("print(5 - 3)")
+    .program("println(5 - 3)")
     .expected_status(0)
     .expected_stdout(Exact("2\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 - 5 - 2)")
+    .program("println(10 - 5 - 2)")
     .expected_status(0)
     .expected_stdout(Exact("3\n"))
     .run()?;
 
   Test::new()?
-    .program("print(5 - 10)")
+    .program("println(5 - 10)")
     .expected_status(0)
     .expected_stdout(Exact("-5\n"))
     .run()
@@ -271,19 +271,19 @@ fn subtraction() -> Result {
 #[test]
 fn multiplication() -> Result {
   Test::new()?
-    .program("print(2 * 3)")
+    .program("println(2 * 3)")
     .expected_status(0)
     .expected_stdout(Exact("6\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 * 3 * 4)")
+    .program("println(2 * 3 * 4)")
     .expected_status(0)
     .expected_stdout(Exact("24\n"))
     .run()?;
 
   Test::new()?
-    .program("print(-5 * 10)")
+    .program("println(-5 * 10)")
     .expected_status(0)
     .expected_stdout(Exact("-50\n"))
     .run()
@@ -292,19 +292,19 @@ fn multiplication() -> Result {
 #[test]
 fn division() -> Result {
   Test::new()?
-    .program("print(6 / 3)")
+    .program("println(6 / 3)")
     .expected_status(0)
     .expected_stdout(Exact("2\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 / 2 / 5)")
+    .program("println(10 / 2 / 5)")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 / 4)")
+    .program("println(10 / 4)")
     .expected_status(0)
     .expected_stdout(Exact("2.5\n"))
     .run()
@@ -313,7 +313,7 @@ fn division() -> Result {
 #[test]
 fn division_by_zero() -> Result {
   Test::new()?
-    .program("print(5 / 0)")
+    .program("println(5 / 0)")
     .expected_status(1)
     .expected_stderr(Contains("Division by zero"))
     .run()
@@ -322,13 +322,13 @@ fn division_by_zero() -> Result {
 #[test]
 fn modulo() -> Result {
   Test::new()?
-    .program("print(7 % 4)")
+    .program("println(7 % 4)")
     .expected_status(0)
     .expected_stdout(Exact("3\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 % 3)")
+    .program("println(10 % 3)")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
     .run()
@@ -337,7 +337,7 @@ fn modulo() -> Result {
 #[test]
 fn modulo_by_zero() -> Result {
   Test::new()?
-    .program("print(5 % 0)")
+    .program("println(5 % 0)")
     .expected_status(1)
     .expected_stderr(Contains("Modulo by zero"))
     .run()
@@ -346,25 +346,25 @@ fn modulo_by_zero() -> Result {
 #[test]
 fn operator_precedence() -> Result {
   Test::new()?
-    .program("print(2 + 3 * 4)")
+    .program("println(2 + 3 * 4)")
     .expected_status(0)
     .expected_stdout(Exact("14\n"))
     .run()?;
 
   Test::new()?
-    .program("print((2 + 3) * 4)")
+    .program("println((2 + 3) * 4)")
     .expected_status(0)
     .expected_stdout(Exact("20\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 * 3 + 4 * 5)")
+    .program("println(2 * 3 + 4 * 5)")
     .expected_status(0)
     .expected_stdout(Exact("26\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 - 6 / 2)")
+    .program("println(10 - 6 / 2)")
     .expected_status(0)
     .expected_stdout(Exact("7\n"))
     .run()
@@ -373,19 +373,19 @@ fn operator_precedence() -> Result {
 #[test]
 fn combined_operations() -> Result {
   Test::new()?
-    .program("print(2 + 3 * 4 - 5 / 2)")
+    .program("println(2 + 3 * 4 - 5 / 2)")
     .expected_status(0)
     .expected_stdout(Exact("11.5\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 % 3 + 4 * 2 - 1)")
+    .program("println(10 % 3 + 4 * 2 - 1)")
     .expected_status(0)
     .expected_stdout(Exact("8\n"))
     .run()?;
 
   Test::new()?
-    .program("print(-5 * (2 + 3) / 5)")
+    .program("println(-5 * (2 + 3) / 5)")
     .expected_status(0)
     .expected_stdout(Exact("-5\n"))
     .run()
@@ -394,25 +394,25 @@ fn combined_operations() -> Result {
 #[test]
 fn power() -> Result {
   Test::new()?
-    .program("print(2 ^ 3)")
+    .program("println(2 ^ 3)")
     .expected_status(0)
     .expected_stdout(Exact("8\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 ^ 2)")
+    .program("println(10 ^ 2)")
     .expected_status(0)
     .expected_stdout(Exact("100\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 ^ -1)")
+    .program("println(2 ^ -1)")
     .expected_status(0)
     .expected_stdout(Exact("0.5\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 ^ 0)")
+    .program("println(2 ^ 0)")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
     .run()
@@ -421,25 +421,25 @@ fn power() -> Result {
 #[test]
 fn arctangent() -> Result {
   Test::new()?
-    .program("print(arc(1))")
+    .program("println(arc(1))")
     .expected_status(0)
     .expected_stdout(Exact("0.7853981633974483\n"))
     .run()?;
 
   Test::new()?
-    .program("print(arc(0))")
+    .program("println(arc(0))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("print(arc(-1))")
+    .program("println(arc(-1))")
     .expected_status(0)
     .expected_stdout(Exact("-0.7853981633974483\n"))
     .run()?;
 
   Test::new()?
-    .program("print(arc())")
+    .program("println(arc())")
     .expected_status(1)
     .expected_stderr(Contains("Function `arc` expects 1 argument, got 0"))
     .run()
@@ -448,19 +448,19 @@ fn arctangent() -> Result {
 #[test]
 fn tangent() -> Result {
   Test::new()?
-    .program("print(tan(1))")
+    .program("println(tan(1))")
     .expected_status(0)
     .expected_stdout(Contains("1.557407724654902"))
     .run()?;
 
   Test::new()?
-    .program("print(tan(0))")
+    .program("println(tan(0))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("print(tan(pi/4))")
+    .program("println(tan(pi/4))")
     .expected_status(0)
     .expected_stdout(Contains("0.99"))
     .run()
@@ -469,19 +469,19 @@ fn tangent() -> Result {
 #[test]
 fn cosecant() -> Result {
   Test::new()?
-    .program("print(csc(1))")
+    .program("println(csc(1))")
     .expected_status(0)
     .expected_stdout(Contains("1.188"))  // ~1.1883951...
     .run()?;
 
   Test::new()?
-    .program("print(csc(pi/2))")
+    .program("println(csc(pi/2))")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
-    .program("print(csc(0))")
+    .program("println(csc(0))")
     .expected_status(1)
     .expected_stderr(Contains("Cannot compute csc of multiple of π"))
     .run()
@@ -490,13 +490,13 @@ fn cosecant() -> Result {
 #[test]
 fn secant() -> Result {
   Test::new()?
-    .program("print(sec(0))")
+    .program("println(sec(0))")
     .expected_status(0)
     .expected_stdout(Contains("1\n"))
     .run()?;
 
   Test::new()?
-    .program("print(sec(pi/3))")
+    .program("println(sec(pi/3))")
     .expected_status(0)
     .expected_stdout(Contains("1.99"))  // ~2.0000...
     .run()
@@ -505,19 +505,19 @@ fn secant() -> Result {
 #[test]
 fn cotangent() -> Result {
   Test::new()?
-    .program("print(cot(1))")
+    .program("println(cot(1))")
     .expected_status(0)
     .expected_stdout(Contains("0.64"))  // ~0.6420...
     .run()?;
 
   Test::new()?
-    .program("print(cot(pi/4))")
+    .program("println(cot(pi/4))")
     .expected_status(0)
     .expected_stdout(Contains("1.0000"))
     .run()?;
 
   Test::new()?
-    .program("print(cot(0))")
+    .program("println(cot(0))")
     .expected_status(1)
     .expected_stderr(Contains("Cannot compute cot of multiple of π"))
     .run()
@@ -526,19 +526,19 @@ fn cotangent() -> Result {
 #[test]
 fn hyperbolic_functions() -> Result {
   Test::new()?
-    .program("print(sinh(1))")
+    .program("println(sinh(1))")
     .expected_status(0)
     .expected_stdout(Contains("1.17520"))  // ~1.1752...
     .run()?;
 
   Test::new()?
-    .program("print(cosh(0))")
+    .program("println(cosh(0))")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
-    .program("print(tanh(2))")
+    .program("println(tanh(2))")
     .expected_status(0)
     .expected_stdout(Contains("0.96"))  // ~0.964...
     .run()
@@ -547,25 +547,25 @@ fn hyperbolic_functions() -> Result {
 #[test]
 fn arcsine() -> Result {
   Test::new()?
-    .program("print(asin(0))")
+    .program("println(asin(0))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("print(asin(1))")
+    .program("println(asin(1))")
     .expected_status(0)
     .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
     .run()?;
 
   Test::new()?
-    .program("print(asin(0.5))")
+    .program("println(asin(0.5))")
     .expected_status(0)
     .expected_stdout(Contains("0.52"))  // ~0.5235...
     .run()?;
 
   Test::new()?
-    .program("print(asin(2))")
+    .program("println(asin(2))")
     .expected_status(1)
     .expected_stderr(Contains("asin argument must be between -1 and 1"))
     .run()
@@ -574,25 +574,25 @@ fn arcsine() -> Result {
 #[test]
 fn arccosine() -> Result {
   Test::new()?
-    .program("print(acos(1))")
+    .program("println(acos(1))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("print(acos(0))")
+    .program("println(acos(0))")
     .expected_status(0)
     .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
     .run()?;
 
   Test::new()?
-    .program("print(acos(0.5))")
+    .program("println(acos(0.5))")
     .expected_status(0)
     .expected_stdout(Contains("1.04"))  // ~1.0472...
     .run()?;
 
   Test::new()?
-    .program("print(acos(-2))")
+    .program("println(acos(-2))")
     .expected_status(1)
     .expected_stderr(Contains("acos argument must be between -1 and 1"))
     .run()
@@ -601,19 +601,19 @@ fn arccosine() -> Result {
 #[test]
 fn arccosecant() -> Result {
   Test::new()?
-    .program("print(acsc(1))")
+    .program("println(acsc(1))")
     .expected_status(0)
     .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
     .run()?;
 
   Test::new()?
-    .program("print(acsc(2))")
+    .program("println(acsc(2))")
     .expected_status(0)
     .expected_stdout(Contains("0.52"))  // ~0.5235...
     .run()?;
 
   Test::new()?
-    .program("print(acsc(0.5))")
+    .program("println(acsc(0.5))")
     .expected_status(1)
     .expected_stderr(Contains(
       "acsc argument must have absolute value at least 1",
@@ -624,19 +624,19 @@ fn arccosecant() -> Result {
 #[test]
 fn arcsecant() -> Result {
   Test::new()?
-    .program("print(asec(1))")
+    .program("println(asec(1))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("print(asec(2))")
+    .program("println(asec(2))")
     .expected_status(0)
     .expected_stdout(Contains("1.04"))  // ~1.0472...
     .run()?;
 
   Test::new()?
-    .program("print(asec(0.5))")
+    .program("println(asec(0.5))")
     .expected_status(1)
     .expected_stderr(Contains(
       "asec argument must have absolute value at least 1",
@@ -647,13 +647,13 @@ fn arcsecant() -> Result {
 #[test]
 fn arccotangent() -> Result {
   Test::new()?
-    .program("print(acot(1))")
+    .program("println(acot(1))")
     .expected_status(0)
     .expected_stdout(Contains("0.78"))  // π/4 ~= 0.7853...
     .run()?;
 
   Test::new()?
-    .program("print(acot(0))")
+    .program("println(acot(0))")
     .expected_status(0)
     .expected_stdout(Contains("1.57"))  // π/2 ~= 1.5708...
     .run()
@@ -662,13 +662,13 @@ fn arccotangent() -> Result {
 #[test]
 fn logarithms() -> Result {
   Test::new()?
-    .program("print(log2(8))")
+    .program("println(log2(8))")
     .expected_status(0)
     .expected_stdout(Exact("3\n"))
     .run()?;
 
   Test::new()?
-    .program("print(log2(0))")
+    .program("println(log2(0))")
     .expected_status(1)
     .expected_stderr(Contains(
       "Cannot take logarithm of zero or negative number",
@@ -676,13 +676,13 @@ fn logarithms() -> Result {
     .run()?;
 
   Test::new()?
-    .program("print(log10(100))")
+    .program("println(log10(100))")
     .expected_status(0)
     .expected_stdout(Exact("2\n"))
     .run()?;
 
   Test::new()?
-    .program("print(log10(-5))")
+    .program("println(log10(-5))")
     .expected_status(1)
     .expected_stderr(Contains(
       "Cannot take logarithm of zero or negative number",
@@ -693,19 +693,19 @@ fn logarithms() -> Result {
 #[test]
 fn ceiling_function() -> Result {
   Test::new()?
-    .program("print(ceil(3.14))")
+    .program("println(ceil(3.14))")
     .expected_status(0)
     .expected_stdout(Exact("4\n"))
     .run()?;
 
   Test::new()?
-    .program("print(ceil(-2.5))")
+    .program("println(ceil(-2.5))")
     .expected_status(0)
     .expected_stdout(Exact("-2\n"))
     .run()?;
 
   Test::new()?
-    .program("print(ceil(5.0))")
+    .program("println(ceil(5.0))")
     .expected_status(0)
     .expected_stdout(Exact("5\n"))
     .run()
@@ -714,19 +714,19 @@ fn ceiling_function() -> Result {
 #[test]
 fn floor_function() -> Result {
   Test::new()?
-    .program("print(floor(3.14))")
+    .program("println(floor(3.14))")
     .expected_status(0)
     .expected_stdout(Exact("3\n"))
     .run()?;
 
   Test::new()?
-    .program("print(floor(-2.5))")
+    .program("println(floor(-2.5))")
     .expected_status(0)
     .expected_stdout(Exact("-3\n"))
     .run()?;
 
   Test::new()?
-    .program("print(floor(5.0))")
+    .program("println(floor(5.0))")
     .expected_status(0)
     .expected_stdout(Exact("5\n"))
     .run()
@@ -735,19 +735,19 @@ fn floor_function() -> Result {
 #[test]
 fn absolute_value() -> Result {
   Test::new()?
-    .program("print(abs(3.14))")
+    .program("println(abs(3.14))")
     .expected_status(0)
     .expected_stdout(Exact("3.14\n"))
     .run()?;
 
   Test::new()?
-    .program("print(abs(-2.5))")
+    .program("println(abs(-2.5))")
     .expected_status(0)
     .expected_stdout(Exact("2.5\n"))
     .run()?;
 
   Test::new()?
-    .program("print(abs(0))")
+    .program("println(abs(0))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()
@@ -756,31 +756,31 @@ fn absolute_value() -> Result {
 #[test]
 fn natural_logarithm() -> Result {
   Test::new()?
-    .program("print(ln(1))")
+    .program("println(ln(1))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("print(ln(e))")
+    .program("println(ln(e))")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
-    .program("print(ln(10))")
+    .program("println(ln(10))")
     .expected_status(0)
     .expected_stdout(Exact("2.302585092994046\n"))
     .run()?;
 
   Test::new()?
-    .program("print(ln())")
+    .program("println(ln())")
     .expected_status(1)
     .expected_stderr(Contains("Function 'ln' expects 1 argument, got 0"))
     .run()?;
 
   Test::new()?
-    .program("print(ln(0))")
+    .program("println(ln(0))")
     .expected_status(1)
     .expected_stderr(Contains(
       "Cannot take logarithm of zero or negative number",
@@ -788,7 +788,7 @@ fn natural_logarithm() -> Result {
     .run()?;
 
   Test::new()?
-    .program("print(ln(-1))")
+    .program("println(ln(-1))")
     .expected_status(1)
     .expected_stderr(Contains(
       "Cannot take logarithm of zero or negative number",
@@ -799,7 +799,7 @@ fn natural_logarithm() -> Result {
 #[test]
 fn builtin_variables_and_functions_can_coexist() -> Result {
   Test::new()?
-    .program("print(e * e(20))")
+    .program("println(e * e(20))")
     .expected_status(0)
     .expected_stdout(Exact("1318815734.4832146\n"))
     .run()
@@ -808,19 +808,19 @@ fn builtin_variables_and_functions_can_coexist() -> Result {
 #[test]
 fn functions_with_constants() -> Result {
   Test::new()?
-    .program("print(arc(pi / 4))")
+    .program("println(arc(pi / 4))")
     .expected_status(0)
     .expected_stdout(Exact("0.6657737500283538\n"))
     .run()?;
 
   Test::new()?
-    .program("print(ln(e * 2))")
+    .program("println(ln(e * 2))")
     .expected_status(0)
     .expected_stdout(Exact("1.6931471805599452\n"))
     .run()?;
 
   Test::new()?
-    .program("print(e(pi))")
+    .program("println(e(pi))")
     .expected_status(0)
     .expected_stdout(Exact("23.140692632779267\n"))
     .run()
@@ -829,31 +829,31 @@ fn functions_with_constants() -> Result {
 #[test]
 fn square_root() -> Result {
   Test::new()?
-    .program("print(sqrt(4))")
+    .program("println(sqrt(4))")
     .expected_status(0)
     .expected_stdout(Exact("2\n"))
     .run()?;
 
   Test::new()?
-    .program("print(sqrt(2))")
+    .program("println(sqrt(2))")
     .expected_status(0)
     .expected_stdout(Exact("1.4142135623730951\n"))
     .run()?;
 
   Test::new()?
-    .program("print(sqrt(0))")
+    .program("println(sqrt(0))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
-    .program("print(sqrt())")
+    .program("println(sqrt())")
     .expected_status(1)
     .expected_stderr(Contains("Function `sqrt` expects 1 argument, got 0"))
     .run()?;
 
   Test::new()?
-    .program("print(sqrt(-1))")
+    .program("println(sqrt(-1))")
     .expected_status(1)
     .expected_stderr(Contains("Cannot take square root of negative number"))
     .run()
@@ -862,13 +862,13 @@ fn square_root() -> Result {
 #[test]
 fn less_than() -> Result {
   Test::new()?
-    .program("print(1 < 2)")
+    .program("println(1 < 2)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1 < -1)")
+    .program("println(1 < -1)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()
@@ -877,13 +877,13 @@ fn less_than() -> Result {
 #[test]
 fn greater_than() -> Result {
   Test::new()?
-    .program("print(1 > 2)")
+    .program("println(1 > 2)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1 > -1)")
+    .program("println(1 > -1)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
@@ -892,25 +892,25 @@ fn greater_than() -> Result {
 #[test]
 fn not() -> Result {
   Test::new()?
-    .program("print(!(1 > 2))")
+    .program("println(!(1 > 2))")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(!(1 > -1))")
+    .program("println(!(1 > -1))")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(!true)")
+    .program("println(!true)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(!false)")
+    .program("println(!false)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
@@ -919,13 +919,13 @@ fn not() -> Result {
 #[test]
 fn string_literals() -> Result {
   Test::new()?
-    .program("print(\"Hello, world!\")")
+    .program("println(\"Hello, world!\")")
     .expected_status(0)
     .expected_stdout(Exact("Hello, world!\n"))
     .run()?;
 
   Test::new()?
-    .program("print('Hello, world!')")
+    .program("println('Hello, world!')")
     .expected_status(0)
     .expected_stdout(Exact("Hello, world!\n"))
     .run()
@@ -934,7 +934,7 @@ fn string_literals() -> Result {
 #[test]
 fn len() -> Result {
   Test::new()?
-    .program("print(len(\"Hello, world!\"))")
+    .program("println(len(\"Hello, world!\"))")
     .expected_status(0)
     .expected_stdout(Exact("13\n"))
     .run()
@@ -968,25 +968,25 @@ fn exit_or_quit() -> Result {
 #[test]
 fn equal_to() -> Result {
   Test::new()?
-    .program("print(1 == 1)")
+    .program("println(1 == 1)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1 == 2)")
+    .program("println(1 == 2)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(\"hello\" == \"hello\")")
+    .program("println(\"hello\" == \"hello\")")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(\"hello\" == \"world\")")
+    .program("println(\"hello\" == \"world\")")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()
@@ -995,25 +995,25 @@ fn equal_to() -> Result {
 #[test]
 fn not_equal_to() -> Result {
   Test::new()?
-    .program("print(1 != 1)")
+    .program("println(1 != 1)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1 != 2)")
+    .program("println(1 != 2)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(\"hello\" != \"hello\")")
+    .program("println(\"hello\" != \"hello\")")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(\"hello\" != \"world\")")
+    .program("println(\"hello\" != \"world\")")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
@@ -1022,19 +1022,19 @@ fn not_equal_to() -> Result {
 #[test]
 fn less_than_or_equal() -> Result {
   Test::new()?
-    .program("print(1 <= 1)")
+    .program("println(1 <= 1)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1 <= 2)")
+    .program("println(1 <= 2)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 <= 1)")
+    .program("println(2 <= 1)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()
@@ -1043,19 +1043,19 @@ fn less_than_or_equal() -> Result {
 #[test]
 fn greater_than_or_equal() -> Result {
   Test::new()?
-    .program("print(1 >= 1)")
+    .program("println(1 >= 1)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1 >= 2)")
+    .program("println(1 >= 2)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 >= 1)")
+    .program("println(2 >= 1)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
@@ -1064,25 +1064,25 @@ fn greater_than_or_equal() -> Result {
 #[test]
 fn comparison_with_expressions() -> Result {
   Test::new()?
-    .program("print((1 + 2) == (4 - 1))")
+    .program("println((1 + 2) == (4 - 1))")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 * 3 >= 5)")
+    .program("println(2 * 3 >= 5)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(10 / 2 <= 4)")
+    .program("println(10 / 2 <= 4)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(2 ^ 3 != 9)")
+    .program("println(2 ^ 3 != 9)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
@@ -1091,19 +1091,19 @@ fn comparison_with_expressions() -> Result {
 #[test]
 fn boolean_comparison() -> Result {
   Test::new()?
-    .program("print(true == true)")
+    .program("println(true == true)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(true != false)")
+    .program("println(true != false)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print((1 < 2) == true)")
+    .program("println((1 < 2) == true)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
@@ -1112,37 +1112,37 @@ fn boolean_comparison() -> Result {
 #[test]
 fn mixed_type_comparisons() -> Result {
   Test::new()?
-    .program("print(\"true\" == true)")
+    .program("println(\"true\" == true)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(\"false\" != false)")
+    .program("println(\"false\" != false)")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()?;
 
   Test::new()?
-    .program("print(1 == true)")
+    .program("println(1 == true)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(0 == false)")
+    .program("println(0 == false)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(123 == \"123\")")
+    .program("println(123 == \"123\")")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
     .run()?;
 
   Test::new()?
-    .program("print(0 != \"0\")")
+    .program("println(0 != \"0\")")
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
@@ -1151,13 +1151,13 @@ fn mixed_type_comparisons() -> Result {
 #[test]
 fn list_literals() -> Result {
   Test::new()?
-    .program("print([1, 2, 1 + 2])")
+    .program("println([1, 2, 1 + 2])")
     .expected_status(0)
     .expected_stdout(Exact("[1, 2, 3]\n"))
     .run()?;
 
   Test::new()?
-    .program("print([print('foo'), 'foo', 1 + 2])")
+    .program("println([println('foo'), 'foo', 1 + 2])")
     .expected_status(0)
     .expected_stdout(Exact("foo\n[null, 'foo', 3]\n"))
     .run()
@@ -1169,10 +1169,10 @@ fn assignment() -> Result {
     .program(indoc! {
       "
       a = 1
-      print(a)
+      println(a)
 
       a = [1, 2, 3]
-      print(a)
+      println(a)
       "
     })
     .expected_status(0)
@@ -1186,10 +1186,10 @@ fn list_access() -> Result {
     .program(indoc! {
       "
       a = [1, 2, 3]
-      print(a[1])
+      println(a[1])
 
       a = [1, 2, 3]
-      print(a[1 + 1])
+      println(a[1 + 1])
       "
     })
     .expected_status(0)
@@ -1203,7 +1203,7 @@ fn list_access_out_of_bounds() -> Result {
     .program(indoc! {
       "
       a = [1, 2, 3]
-      print(a[20])
+      println(a[20])
       "
     })
     .expected_status(1)
@@ -1224,8 +1224,8 @@ fn while_loops() -> Result {
         counter = counter + 1
       }
 
-      print(sum)
-      print(counter)
+      println(sum)
+      println(counter)
       "
     })
     .expected_status(0)
@@ -1244,7 +1244,7 @@ fn nested_while_loops() -> Result {
         b = 0
 
         while (b < 1) {
-          print(a + b)
+          println(a + b)
           b = b + 1
         }
 
@@ -1264,7 +1264,7 @@ fn if_statement_true_condition() -> Result {
       "
       x = 10
       if (x > 5) {
-        print('greater')
+        println('greater')
       }
       "
     })
@@ -1280,7 +1280,7 @@ fn if_statement_false_condition() -> Result {
       "
       x = 3
       if (x > 5) {
-        print('greater')
+        println('greater')
       }
       "
     })
@@ -1296,9 +1296,9 @@ fn if_else_statement_true_condition() -> Result {
       "
       x = 10
       if (x > 5) {
-        print('greater')
+        println('greater')
       } else {
-        print('not greater')
+        println('not greater')
       }
       "
     })
@@ -1314,9 +1314,9 @@ fn if_else_statement_false_condition() -> Result {
       "
       x = 3
       if (x > 5) {
-        print('greater')
+        println('greater')
       } else {
-        print('not greater')
+        println('not greater')
       }
       "
     })
@@ -1333,9 +1333,9 @@ fn if_statement_with_expression() -> Result {
       x = 3
       y = 7
       if (x + y > 8) {
-        print('sum is greater than 8')
+        println('sum is greater than 8')
       } else {
-        print('sum is not greater than 8')
+        println('sum is not greater than 8')
       }
       "
     })
@@ -1354,12 +1354,12 @@ fn nested_if_statements() -> Result {
 
       if (x > 5) {
         if (y > 3) {
-          print('both conditions met')
+          println('both conditions met')
         } else {
-          print('only x condition met')
+          println('only x condition met')
         }
       } else {
-        print('x condition not met')
+        println('x condition not met')
       }
       "
     })
@@ -1381,7 +1381,7 @@ fn if_statement_with_variable_assignment() -> Result {
         result = 'not greater'
       }
 
-      print(result)
+      println(result)
       "
     })
     .expected_status(0)
@@ -1397,9 +1397,9 @@ fn if_statement_with_function_call() -> Result {
       value = 16
 
       if (sqrt(value) == 4) {
-        print('square root is 4')
+        println('square root is 4')
       } else {
-        print('square root is not 4')
+        println('square root is not 4')
       }
       "
     })
@@ -1417,9 +1417,9 @@ fn if_statement_with_boolean_expressions() -> Result {
       b = 10
 
       if (a < 10 && b > 5) {
-        print('condition met')
+        println('condition met')
       } else {
-        print('condition not met')
+        println('condition not met')
       }
       "
     })
@@ -1437,18 +1437,18 @@ fn if_statement_chain() -> Result {
       score = 85
 
       if (score >= 90) {
-        print('A')
+        println('A')
       } else {
         if (score >= 80) {
-          print('B')
+          println('B')
         } else {
           if (score >= 70) {
-            print('C')
+            println('C')
           } else {
             if (score >= 60) {
-              print('D')
+              println('D')
             } else {
-              print('F')
+              println('F')
             }
           }
         }
@@ -1469,7 +1469,7 @@ fn if_with_while_loop() -> Result {
 
       if (true) {
         while (x < 3) {
-          print(x)
+          println(x)
           x = x + 1
         }
       }
@@ -1489,9 +1489,9 @@ fn if_with_list_access() -> Result {
       index = 1
 
       if (index < numbers[0]) {
-        print(numbers[index])
+        println(numbers[index])
       } else {
-        print('index too large')
+        println('index too large')
       }
       "
     })
@@ -1509,7 +1509,7 @@ fn simple_function_definition_and_call() -> Result {
         return a + b
       }
 
-      print(add(3, 4))
+      println(add(3, 4))
       "
     })
     .expected_status(0)
@@ -1526,7 +1526,7 @@ fn function_with_return_value() -> Result {
         return 'Hello, world!'
       }
 
-      print(get_message())
+      println(get_message())
       "
     })
     .expected_status(0)
@@ -1544,7 +1544,7 @@ fn function_with_multiple_statements() -> Result {
         return doubled + 10
       }
 
-      print(calculate(5))
+      println(calculate(5))
       "
     })
     .expected_status(0)
@@ -1561,7 +1561,7 @@ fn function_wrong_argument_count() -> Result {
         return a + b
       }
 
-      print(add(1))
+      println(add(1))
       "
     })
     .expected_status(1)
@@ -1586,7 +1586,7 @@ fn recursive_function() -> Result {
         return result
       }
 
-      print(factorial(5))
+      println(factorial(5))
       "
     })
     .expected_status(0)
@@ -1607,7 +1607,7 @@ fn recursive_function_direct_style() -> Result {
         }
       }
 
-      print(factorial(5))
+      println(factorial(5))
       "
     })
     .expected_status(0)
@@ -1628,7 +1628,7 @@ fn function_call_as_argument() -> Result {
         return x * 3
       }
 
-      print(double(triple(2)))
+      println(double(triple(2)))
       "
     })
     .expected_status(0)
@@ -1648,8 +1648,8 @@ fn function_with_local_variables() -> Result {
         return global + local
       }
 
-      print(test_scope())
-      print(global)
+      println(test_scope())
+      println(global)
       "
     })
     .expected_status(0)
@@ -1670,9 +1670,9 @@ fn function_modifying_outer_scope() -> Result {
         return counter
       }
 
-      print(increment())
-      print(increment())
-      print(counter)
+      println(increment())
+      println(increment())
+      println(counter)
       "
     })
     .expected_status(0)
@@ -1689,7 +1689,7 @@ fn function_with_no_arguments() -> Result {
         return 3.14159
       }
 
-      print(get_pi())
+      println(get_pi())
       "
     })
     .expected_status(0)
@@ -1710,7 +1710,7 @@ fn nested_function_calls() -> Result {
         return a * b
       }
 
-      print(add(multiply(2, 3), multiply(4, 5)))
+      println(add(multiply(2, 3), multiply(4, 5)))
       "
     })
     .expected_status(0)
@@ -1727,7 +1727,7 @@ fn function_calling_builtin() -> Result {
         return sqrt(sin(x))
       }
 
-      print(square_root_of_sin(0.5))
+      println(square_root_of_sin(0.5))
       "
     })
     .expected_status(0)
@@ -1752,12 +1752,12 @@ fn fibonacci_function() -> Result {
         }
       }
 
-      print(fibonacci(0))
-      print(fibonacci(1))
-      print(fibonacci(2))
-      print(fibonacci(3))
-      print(fibonacci(4))
-      print(fibonacci(5))
+      println(fibonacci(0))
+      println(fibonacci(1))
+      println(fibonacci(2))
+      println(fibonacci(3))
+      println(fibonacci(4))
+      println(fibonacci(5))
       "
     })
     .expected_status(0)
@@ -1770,7 +1770,7 @@ fn can_override_builtin_functions() -> Result {
   Test::new()?
     .program(indoc! {
       "
-      print(abs(-5))
+      println(abs(-5))
 
       fn abs(x) {
         if (x < 0) {
@@ -1780,7 +1780,7 @@ fn can_override_builtin_functions() -> Result {
         }
       }
 
-      print(abs(-5))
+      println(abs(-5))
       "
     })
     .expected_status(0)
@@ -1794,10 +1794,19 @@ fn list_access_with_comparison() -> Result {
     .program(indoc! {
       "
       a = [1, 2, 3]
-      print(a[0] == 1)
+      println(a[0] == 1)
       "
     })
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn print_without_newline() -> Result {
+  Test::new()?
+    .program("print(1 + 1)")
+    .expected_status(0)
+    .expected_stdout(Exact("2"))
     .run()
 }

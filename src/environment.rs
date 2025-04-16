@@ -522,6 +522,25 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        print!("{}", arguments[0]);
+
+        Ok(Value::Null)
+      }),
+    );
+
+    env.add_function(
+      "println",
+      Function::Builtin(|arguments, span| {
+        if arguments.len() != 1 {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `print` expects 1 argument, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
         println!("{}", arguments[0]);
 
         Ok(Value::Null)

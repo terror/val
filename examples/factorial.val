@@ -6,4 +6,4 @@ fn factorial(n) {
   }
 }
 
-print(factorial(5));
+println(factorial(5));
