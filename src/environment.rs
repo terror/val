@@ -511,18 +511,14 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "print",
-      Function::Builtin(|arguments, span| {
-        if arguments.len() != 1 {
-          return Err(Error::new(
-            span,
-            format!(
-              "Function `print` expects 1 argument, got {}",
-              arguments.len()
-            ),
-          ));
+      Function::Builtin(|arguments, _| {
+        let mut output_strings = Vec::with_capacity(arguments.len());
+
+        for argument in arguments {
+          output_strings.push(format!("{}", argument));
         }
 
-        print!("{}", arguments[0]);
+        print!("{}", output_strings.join(" "));
 
         Ok(Value::Null)
       }),
@@ -530,18 +526,14 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "println",
-      Function::Builtin(|arguments, span| {
-        if arguments.len() != 1 {
-          return Err(Error::new(
-            span,
-            format!(
-              "Function `print` expects 1 argument, got {}",
-              arguments.len()
-            ),
-          ));
+      Function::Builtin(|arguments, _| {
+        let mut output_strings = Vec::with_capacity(arguments.len());
+
+        for argument in arguments {
+          output_strings.push(format!("{}", argument));
         }
 
-        println!("{}", arguments[0]);
+        println!("{}", output_strings.join(" "));
 
         Ok(Value::Null)
       }),
