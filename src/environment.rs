@@ -612,16 +612,21 @@ impl<'src> Environment<'src> {
     env.add_function(
       "input",
       Function::Builtin(|arguments, span| {
-        use std::io::{self, BufRead};
+        use std::io::{self, BufRead, Write};
 
-        if !arguments.is_empty() {
+        if arguments.len() > 1 {
           return Err(Error::new(
             span,
             format!(
-              "Function `input` expects 0 arguments, got {}",
+              "Function `input` expects 0 or 1 argument, got {}",
               arguments.len()
             ),
           ));
+        }
+
+        if arguments.len() == 1 {
+          print!("{}", arguments[0].string(span)?);
+          io::stdout().flush().unwrap();
         }
 
         let stdin = io::stdin();
@@ -661,6 +666,7 @@ impl<'src> Environment<'src> {
         }
 
         let value = &arguments[0];
+
         match value {
           Value::Number(n) => Ok(Value::Number(n.floor())),
           Value::String(s) => match s.trim().parse::<f64>() {
@@ -692,6 +698,7 @@ impl<'src> Environment<'src> {
         }
 
         let value = &arguments[0];
+
         match value {
           Value::Number(n) => Ok(Value::Number(*n)),
           Value::String(s) => match s.trim().parse::<f64>() {

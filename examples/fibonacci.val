@@ -28,8 +28,6 @@ fn fibonacci(n) {
   }
 }
 
-println("How many Fibonacci numbers would you like to see? ")
-
-num = int(input())
+num = int(input("How many Fibonacci numbers would you like to see? "))
 
 fibonacci(num)
