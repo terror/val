@@ -48,9 +48,9 @@ impl std::str::FromStr for RoundingMode {
   }
 }
 
-impl Into<astro_float::RoundingMode> for RoundingMode {
-  fn into(self) -> astro_float::RoundingMode {
-    match self {
+impl From<RoundingMode> for astro_float::RoundingMode {
+  fn from(mode: RoundingMode) -> Self {
+    match mode {
       RoundingMode::None => astro_float::RoundingMode::None,
       RoundingMode::Up => astro_float::RoundingMode::Up,
       RoundingMode::Down => astro_float::RoundingMode::Down,
