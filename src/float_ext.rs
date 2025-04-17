@@ -72,7 +72,7 @@ impl FloatExt for BigFloat {
         format!("{}{}.{}", sign, left, right)
       };
 
-      if let Some(_) = result.find('.') {
+      if result.find('.').is_some() {
         result
           .trim_end_matches('0')
           .trim_end_matches('.')
@@ -110,10 +110,10 @@ impl FloatExt for BigFloat {
     let mut ret = 0u64;
 
     if exponent >= 0b11111111111 {
-      return Some(match sign {
+      Some(match sign {
         Sign::Pos => f64::INFINITY,
         Sign::Neg => f64::NEG_INFINITY,
-      });
+      })
     } else if exponent <= 0 {
       let shift = -exponent;
 

@@ -300,7 +300,7 @@ impl<'a> Evaluator<'a> {
 
         match (&lhs_val, &rhs_val) {
           (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a.add(
-            &b,
+            b,
             self.environment.config.precision,
             self.environment.config.rounding_mode,
           ))),
