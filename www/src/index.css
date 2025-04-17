@@ -119,6 +119,12 @@
   }
 }
 
+.cm-highlighted-node {
+  background-color: rgba(59, 130, 246, 0.15);
+  outline: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 2px;
+}
+
 ::-webkit-scrollbar {
   width: 3px;
   height: 3px;

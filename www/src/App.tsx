@@ -19,7 +19,7 @@ import {
 } from './components/ui/resizable';
 
 const EXAMPLES = {
-  Factorial: `fn factorial(n) {
+  factorial: `fn factorial(n) {
   if (n <= 1) {
     1
   } else {
@@ -32,15 +32,18 @@ print(factorial(5));`,
 
 function App() {
   const [wasmLoaded, setWasmLoaded] = useState(false);
-  const [code, setCode] = useState(EXAMPLES.Factorial);
-  const [currentExample, setCurrentExample] = useState('Factorial');
+
   const [ast, setAst] = useState<AstNode | null>(null);
-  const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
+  const [code, setCode] = useState(EXAMPLES.factorial);
+  const [errors, setErrors] = useState<ParseError[]>([]);
+
+  const [currentExample, setCurrentExample] = useState('factorial');
 
   useEffect(() => {
     init()
       .then(() => {
         setWasmLoaded(true);
+        setAst(parse(code));
       })
       .catch((error) => {
         toast.error(error);
@@ -48,11 +51,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!wasmLoaded) return;
+
     try {
       setAst(parse(code));
-      setParseErrors([]);
     } catch (error) {
-      setParseErrors(error as ParseError[]);
+      setErrors(error as ParseError[]);
     }
   }, [code]);
 
@@ -102,7 +106,7 @@ function App() {
                 <EditorSettingsDialog />
               </div>
               <div className='h-full min-h-0 flex-grow overflow-hidden'>
-                <Editor errors={parseErrors} value={code} onChange={setCode} />
+                <Editor errors={errors} value={code} onChange={setCode} />
               </div>
             </div>
           </div>
