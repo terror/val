@@ -41,12 +41,14 @@ arguments/options we support:
 Usage: val [OPTIONS] [FILENAME]
 
 Arguments:
-  [FILENAME]
+  [FILENAME]  
 
 Options:
-  -e, --expression <EXPRESSION>
-  -h, --help                     Print help
-  -V, --version                  Print version
+  -e, --expression <EXPRESSION>        
+  -p, --precision <PRECISION>          [default: 1024]
+  -r, --rounding-mode <ROUNDING_MODE>  [default: to-even]
+  -h, --help                           Print help
+  -V, --version                        Print version
 ```
 
 Running **val** on its own will spawn a repl (read–eval–print loop) environment,

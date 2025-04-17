@@ -33,13 +33,7 @@ impl Display for Value<'_> {
           .join(", ")
       ),
       Value::Null => write!(f, "null"),
-      Value::Number(number) => write!(
-        f,
-        "{}",
-        number
-          .format(Radix::Dec, RoundingMode::None, &mut Consts::new().unwrap())
-          .unwrap()
-      ),
+      Value::Number(number) => write!(f, "{number}",),
       Value::String(string) => write!(f, "{string}"),
     }
   }

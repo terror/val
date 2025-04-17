@@ -1,6 +1,6 @@
 pub(crate) use {
   ariadne::{Color, Label, Report, ReportKind, Source},
-  astro_float::{BigFloat, Consts, Radix, RoundingMode},
+  astro_float::{BigFloat, Consts},
   chumsky::prelude::*,
   clap::Parser as Clap,
   environment::Environment,
@@ -32,6 +32,7 @@ pub(crate) use {
 };
 
 pub use crate::{
+  arguments::Arguments,
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   config::Config,
   error::Error,
@@ -39,6 +40,7 @@ pub use crate::{
   evaluator::Evaluator,
   function::{BuiltinFunction, Function},
   parser::parse,
+  rounding_mode::RoundingMode,
   value::Value,
 };
 
@@ -61,4 +63,5 @@ mod eval_result;
 mod evaluator;
 mod function;
 mod parser;
+mod rounding_mode;
 mod value;

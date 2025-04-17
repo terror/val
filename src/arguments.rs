@@ -1,17 +1,24 @@
 use super::*;
 
-#[derive(Clap, Debug)]
+#[derive(Clap, Clone, Debug)]
 #[clap(author, version)]
 pub struct Arguments {
   #[clap(conflicts_with = "expression")]
   filename: Option<PathBuf>,
   #[clap(short, long, conflicts_with = "filename")]
   expression: Option<String>,
+  #[clap(short, long, default_value = "1024")]
+  precision: usize,
+  #[clap(short, long, value_parser = clap::value_parser!(RoundingMode), default_value = "to-even")]
+  rounding_mode: RoundingMode,
 }
 
 impl Arguments {
   pub fn run(self) -> Result {
-    let config = Config::default();
+    let config = Config {
+      precision: self.precision,
+      rounding_mode: self.rounding_mode.into(),
+    };
 
     match (self.filename, self.expression) {
       (Some(filename), _) => Self::eval(config, filename),
