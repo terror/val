@@ -161,7 +161,9 @@ complex operations:
 
 #### Number
 
-Numeric values are represented as arbitrary floating point numbers:
+Numeric values are represented as arbitrary floating point numbers (using
+[astro_float(https://docs.rs/astro-float/latest/astro_float/index.html)] under
+the hood):
 
 ```rust
 > pi
