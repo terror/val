@@ -2568,3 +2568,35 @@ fn list_concatenation() -> Result {
     .expected_stdout(Exact("[1, 2, 3, 4, 5, 6]\n[1, 2, 3]\n[4, 5, 6]\n[]\n[1, 2, 3, 'a', 'b', 'c', true, false]\n[[1, 2], [3, 4], [5, 6]]\n[0, 1, 2, 3]\n[1, 2, 3, 4]\n"))
     .run()
 }
+
+#[test]
+fn higher_order_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn map(l, f) {
+        i = 0
+
+        r = []
+
+        while (i < len(l)) {
+          r = r + [f(l[i])]
+          i = i + 1
+        }
+
+        return r
+      }
+
+      fn double(x) {
+        return x * 2
+      }
+
+      l = [1, 2, 3]
+
+      println(map(l, double))
+    "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[2, 4, 6]\n"))
+    .run()
+}

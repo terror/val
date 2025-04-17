@@ -887,7 +887,14 @@ impl<'src> Environment<'src> {
           call_environment.add_function(name, function.clone());
 
           for (parameter, argument) in parameters.iter().zip(arguments.iter()) {
-            call_environment.add_variable(parameter, argument.clone());
+            if matches!(argument, Value::Function(_, _, _, _)) {
+              call_environment.add_function(
+                parameter,
+                Function::UserDefined(argument.clone()),
+              )
+            } else {
+              call_environment.add_variable(parameter, argument.clone())
+            }
           }
 
           let mut evaluator = Evaluator::with_environment(call_environment);
@@ -917,11 +924,18 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub fn get_variable(&self, name: &str) -> Option<&Value<'src>> {
-    if let Some(val) = self.variables.get(name) {
+  pub fn resolve_symbol(&self, symbol: &str) -> Option<&Value<'src>> {
+    if let Some(val) = self.variables.get(symbol) {
       Some(val)
+    } else if let Some(function) = self.functions.get(symbol) {
+      match function {
+        Function::UserDefined(value) => Some(value),
+        _ => None, // We should support this at some point
+      }
+    } else if let Some(value) = self.variables.get(symbol) {
+      Some(value)
     } else if let Some(parent) = &self.parent {
-      parent.get_variable(name)
+      parent.resolve_symbol(symbol)
     } else {
       None
     }

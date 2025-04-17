@@ -1,0 +1,68 @@
+fn map(l, f) {
+  i = 0
+
+  r = []
+
+  while (i < len(l)) {
+    r = r + [f(l[i])]
+    i = i + 1
+  }
+
+  return r
+}
+
+fn double(x) {
+  return x * 2
+}
+
+fn even(x) {
+  return x % 2 == 0
+}
+
+fn filter(l, f) {
+  i = 0
+
+  r = []
+
+  while (i < len(l)) {
+    if (f(l[i])) {
+      r = r + [l[i]]
+    }
+
+    i = i + 1
+  }
+
+  return r
+}
+
+fn reduce(l, f, initial) {
+  i = 0
+
+  result = initial
+
+  while (i < len(l)) {
+    result = f(result, l[i])
+    i = i + 1
+  }
+
+  return result
+}
+
+fn sum(a, b) {
+  return a + b
+}
+
+fn max(a, b) {
+  if (a > b) {
+    return a
+  } else {
+    return b
+  }
+}
+
+l = [1, 2, 3, 4, 5]
+
+println(map(l, double))
+println(filter(l, even))
+println(reduce(l, sum, 0))
+println(reduce(l, max, l[0]))

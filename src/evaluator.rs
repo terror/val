@@ -82,7 +82,7 @@ impl<'a> Evaluator<'a> {
               }
             };
 
-            let mut list = match self.environment.get_variable(list_name) {
+            let mut list = match self.environment.resolve_symbol(list_name) {
               Some(Value::List(items)) => items.clone(),
               Some(other) => {
                 return Err(Error::new(
@@ -418,13 +418,14 @@ impl<'a> Evaluator<'a> {
           .environment
           .call_function(name, evaluated_arguments, *span)
       }
-      Expression::Identifier(name) => match self.environment.get_variable(name)
-      {
-        Some(value) => Ok(value.clone()),
-        None => {
-          Err(Error::new(*span, format!("Undefined variable `{}`", name)))
+      Expression::Identifier(name) => {
+        match self.environment.resolve_symbol(name) {
+          Some(value) => Ok(value.clone()),
+          None => {
+            Err(Error::new(*span, format!("Undefined variable `{}`", name)))
+          }
         }
-      },
+      }
       Expression::List(list) => {
         let mut evaluated_list = Vec::with_capacity(list.len());
 
