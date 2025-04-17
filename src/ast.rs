@@ -35,6 +35,8 @@ impl Program<'_> {
 pub enum Statement<'a> {
   Assignment(Spanned<Expression<'a>>, Spanned<Expression<'a>>),
   Block(Vec<Spanned<Statement<'a>>>),
+  Break,
+  Continue,
   Expression(Spanned<Expression<'a>>),
   Function(&'a str, Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
   If(
@@ -63,6 +65,8 @@ impl Display for Statement<'_> {
             .join(", ")
         )
       }
+      Statement::Break => write!(f, "break"),
+      Statement::Continue => write!(f, "continue"),
       Statement::Expression(expression) => {
         write!(f, "expression({})", expression.0)
       }
@@ -129,6 +133,8 @@ impl Statement<'_> {
     String::from(match self {
       Statement::Assignment(_, _) => "assignment",
       Statement::Block(_) => "block",
+      Statement::Break => "break",
+      Statement::Continue => "continue",
       Statement::Expression(_) => "expression",
       Statement::Function(_, _, _) => "function",
       Statement::If(_, _, _) => "if",

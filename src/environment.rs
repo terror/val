@@ -505,7 +505,18 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].string(span)?.len() as f64))
+        let value = &arguments[0];
+
+        match value {
+          Value::String(s) => Ok(Value::Number(s.len() as f64)),
+          Value::List(items) => Ok(Value::Number(items.len() as f64)),
+          _ => {
+            return Err(Error::new(
+              span,
+              format!("Cannot get length of {}", value.type_name()),
+            ));
+          }
+        }
       }),
     );
 

@@ -102,6 +102,12 @@ impl<'src> TreeHighlighter<'src> {
 
         self.collect_expression_spans(rhs, spans);
       }
+      Statement::Break => {
+        if let Some(break_pos) = self.content[start..end].find("break") {
+          spans.push((start + break_pos, start + break_pos + 5, COLOR_KEYWORD));
+        }
+      }
+
       Statement::Block(statements) => {
         if let Some(open_brace) = self.content[start..end].find('{') {
           spans.push((
@@ -121,6 +127,15 @@ impl<'src> TreeHighlighter<'src> {
 
         for statement in statements {
           self.collect_statement_spans(statement, spans);
+        }
+      }
+      Statement::Continue => {
+        if let Some(continue_pos) = self.content[start..end].find("continue") {
+          spans.push((
+            start + continue_pos,
+            start + continue_pos + 8,
+            COLOR_KEYWORD,
+          ));
         }
       }
       Statement::Expression(expression) => {

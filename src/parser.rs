@@ -119,6 +119,16 @@ fn statement_parser<'a>()
       .map(Statement::Return)
       .map_with(|ast, e| (ast, e.span()));
 
+    let break_statement = just("break")
+      .padded()
+      .map(|_| Statement::Break)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let continue_statement = just("continue")
+      .padded()
+      .map(|_| Statement::Continue)
+      .map_with(|ast, e| (ast, e.span()));
+
     let expression_statement = expression
       .map(Statement::Expression)
       .map_with(|ast, e| (ast, e.span()));
@@ -130,6 +140,8 @@ fn statement_parser<'a>()
       if_statement,
       while_statement,
       return_statement,
+      break_statement,
+      continue_statement,
       expression_statement,
     ))
     .padded()
@@ -536,6 +548,35 @@ mod tests {
       .program("a = [1, 2, 3]; a[1 + 1]")
       .ast("statements(assignment(identifier(a), list(number(1), number(2), number(3))), expression(list_access(identifier(a), binary_op(+, number(1), number(1)))))")
       .run();
+  }
+
+  #[test]
+  fn break_statement() {
+    Test::new().program("break").ast("statements(break)").run();
+  }
+
+  #[test]
+  fn continue_statement() {
+    Test::new()
+      .program("continue")
+      .ast("statements(continue)")
+      .run();
+  }
+
+  #[test]
+  fn while_with_break() {
+    Test::new()
+    .program("while (x < 10) { if (x == 5) { break; }; x = x + 1; }")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(if(binary_op(==, identifier(x), number(5)), block(break)), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn while_with_continue() {
+    Test::new()
+    .program("while (x < 10) { if (x % 2 == 0) { continue; }; println(x); x = x + 1; }")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(println,identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
   }
 
   #[test]

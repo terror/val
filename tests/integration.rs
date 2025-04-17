@@ -2012,3 +2012,436 @@ fn element_assignment_on_non_list_errors() -> Result {
     .expected_stderr(Contains("'value' is not a list"))
     .run()
 }
+
+#[test]
+fn simple_break() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        if (i >= 5) {
+          break
+        }
+        sum = sum + i
+        i = i + 1
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10\n5\n"))
+    .run()
+}
+
+#[test]
+fn simple_continue() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i % 2 == 0) {
+          continue
+        }
+        sum = sum + i
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("25\n10\n"))
+    .run()
+}
+
+#[test]
+fn nested_loops_with_break() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 5) {
+        j = 0
+        while (j < 5) {
+          if (j == 3) {
+            break
+          }
+          sum = sum + 1
+          j = j + 1
+        }
+        i = i + 1
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("15\n"))
+    .run()
+}
+
+#[test]
+fn nested_loops_with_continue() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 3) {
+        j = 0
+        while (j < 3) {
+          j = j + 1
+          if (j == 2) {
+            continue
+          }
+          sum = sum + j
+        }
+        i = i + 1
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("12\n"))
+    .run()
+}
+
+#[test]
+fn break_within_if_else() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        if (i < 5) {
+          sum = sum + i
+        } else {
+          break
+        }
+        i = i + 1
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10\n5\n"))
+    .run()
+}
+
+#[test]
+fn continue_within_if_else() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i <= 5) {
+          sum = sum + i
+        } else {
+          continue
+        }
+        println(i)
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n2\n3\n4\n5\n15\n"))
+    .run()
+}
+
+#[test]
+fn break_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      break
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'break' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn continue_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      continue
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'continue' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn break_in_if_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      if (true) {
+        break
+      }
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'break' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn continue_in_if_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      if (true) {
+        continue
+      }
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'continue' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn break_in_function_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn test() {
+        break
+      }
+
+      test()
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'break' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn continue_in_nested_if() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      i = 0
+      sum = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i > 5) {
+          if (i % 2 == 0) {
+            continue
+          }
+        }
+        sum = sum + i
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("31\n10\n"))
+    .run()
+}
+
+#[test]
+fn multiple_breaks() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      i = 0
+      j = 0
+
+      while (i < 10) {
+        j = 0
+        while (j < 10) {
+          if (j == 5) {
+            break
+          }
+          j = j + 1
+        }
+
+        if (i == 3) {
+          break
+        }
+
+        i = i + 1
+      }
+
+      println(i)
+      println(j)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("3\n5\n"))
+    .run()
+}
+
+#[test]
+fn continue_with_expression() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i * 2 > 10 && i < 8) {
+          continue
+        }
+        sum = sum + i
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("42\n"))
+    .run()
+}
+
+#[test]
+fn break_with_return_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn find_index(value) {
+        i = 0
+        while (i < 10) {
+          if (i == value) {
+            return i
+          }
+          if (i > value) {
+            break
+          }
+          i = i + 1
+        }
+        return -1
+      }
+
+      println(find_index(5))
+      println(find_index(15))
+      println(find_index(7))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("5\n-1\n7\n"))
+    .run()
+}
+
+#[test]
+fn break_inside_if_inside_while() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn contains(list, value) {
+        i = 0
+        result = false
+
+        while (i < len(list)) {
+          if (list[i] == value) {
+            result = true
+            break
+          }
+          i = i + 1
+        }
+
+        return result
+      }
+
+      nums = [1, 3, 5, 7, 9]
+      println(contains(nums, 5))
+      println(contains(nums, 6))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("true\nfalse\n"))
+    .run()
+}
+
+#[test]
+fn finding_first_even_number() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn find_first_even(list) {
+        i = 0
+        result = -1
+
+        while (i < len(list)) {
+          if (list[i] % 2 == 0) {
+            result = list[i]
+            break
+          }
+          i = i + 1
+        }
+
+        return result
+      }
+
+      println(find_first_even([1, 3, 6, 8, 9]))
+      println(find_first_even([1, 3, 5, 7, 9]))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("6\n-1\n"))
+    .run()
+}
+
+#[test]
+fn sum_of_odd_numbers() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn sum_odds(list) {
+        i = 0
+        sum = 0
+
+        while (i < len(list)) {
+          if (list[i] % 2 == 0) {
+            i = i + 1
+            continue
+          }
+          sum = sum + list[i]
+          i = i + 1
+        }
+
+        return sum
+      }
+
+      println(sum_odds([1, 2, 3, 4, 5]))
+      println(sum_odds([2, 4, 6, 8, 10]))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("9\n0\n"))
+    .run()
+}

@@ -3,6 +3,7 @@ use super::*;
 pub struct Evaluator<'a> {
   pub environment: Environment<'a>,
   pub inside_function: bool,
+  pub inside_loop: bool,
 }
 
 impl Default for Evaluator<'_> {
@@ -16,6 +17,7 @@ impl<'a> Evaluator<'a> {
     Self {
       environment: Environment::new(),
       inside_function: false,
+      inside_loop: false,
     }
   }
 
@@ -23,6 +25,7 @@ impl<'a> Evaluator<'a> {
     Self {
       environment,
       inside_function: false,
+      inside_loop: false,
     }
   }
 
@@ -41,7 +44,10 @@ impl<'a> Evaluator<'a> {
 
           result = eval_result.unwrap();
 
-          if eval_result.is_return() {
+          if eval_result.is_return()
+            || eval_result.is_break()
+            || eval_result.is_continue()
+          {
             break;
           }
         }
@@ -125,6 +131,7 @@ impl<'a> Evaluator<'a> {
 
         Ok(EvalResult::Value(value))
       }
+
       Statement::Block(statements) => {
         let mut result = Value::Null;
 
@@ -133,16 +140,41 @@ impl<'a> Evaluator<'a> {
 
           result = eval_result.unwrap();
 
-          if eval_result.is_return() {
-            return Ok(EvalResult::Return(result));
+          if eval_result.is_return()
+            || eval_result.is_break()
+            || eval_result.is_continue()
+          {
+            return Ok(eval_result);
           }
         }
 
         Ok(EvalResult::Value(result))
       }
+      Statement::Break => {
+        if !self.inside_loop {
+          return Err(Error::new(
+            *span,
+            "Cannot use 'break' outside of a loop",
+          ));
+        }
+        Ok(EvalResult::Break)
+      }
+
+      Statement::Continue => {
+        if !self.inside_loop {
+          return Err(Error::new(
+            *span,
+            "Cannot use 'continue' outside of a loop",
+          ));
+        }
+
+        Ok(EvalResult::Continue)
+      }
+
       Statement::Expression(expression) => {
         Ok(EvalResult::Value(self.eval_expression(expression)?))
       }
+
       Statement::Function(name, params, body) => {
         let function = Value::Function(
           name,
@@ -157,6 +189,7 @@ impl<'a> Evaluator<'a> {
 
         Ok(EvalResult::Value(function))
       }
+
       Statement::If(condition, then_branch, else_branch) => {
         if self.eval_expression(condition)?.boolean(condition.1)? {
           let mut result = Value::Null;
@@ -166,8 +199,11 @@ impl<'a> Evaluator<'a> {
 
             result = eval_result.unwrap();
 
-            if eval_result.is_return() {
-              return Ok(EvalResult::Return(result));
+            if eval_result.is_return()
+              || eval_result.is_break()
+              || eval_result.is_continue()
+            {
+              return Ok(eval_result);
             }
           }
 
@@ -180,8 +216,11 @@ impl<'a> Evaluator<'a> {
 
             result = eval_result.unwrap();
 
-            if eval_result.is_return() {
-              return Ok(EvalResult::Return(result));
+            if eval_result.is_return()
+              || eval_result.is_break()
+              || eval_result.is_continue()
+            {
+              return Ok(eval_result);
             }
           }
 
@@ -190,6 +229,7 @@ impl<'a> Evaluator<'a> {
           Ok(EvalResult::Value(Value::Null))
         }
       }
+
       Statement::Return(expr) => {
         if !self.inside_function {
           return Err(Error::new(*span, "Cannot return outside of a function"));
@@ -200,8 +240,13 @@ impl<'a> Evaluator<'a> {
           None => Value::Null,
         }))
       }
+
       Statement::While(condition, body) => {
         let mut result = Value::Null;
+
+        let old_inside_loop = self.inside_loop;
+
+        self.inside_loop = true;
 
         while self.eval_expression(condition)?.boolean(condition.1)? {
           for statement in body {
@@ -210,11 +255,18 @@ impl<'a> Evaluator<'a> {
             result = eval_result.unwrap();
 
             if eval_result.is_return() {
+              self.inside_loop = old_inside_loop;
               return Ok(EvalResult::Return(result));
+            } else if eval_result.is_break() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Value(result));
+            } else if eval_result.is_continue() {
+              break;
             }
           }
         }
 
+        self.inside_loop = old_inside_loop;
         Ok(EvalResult::Value(result))
       }
     }

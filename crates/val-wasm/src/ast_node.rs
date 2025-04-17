@@ -61,6 +61,16 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Statement::Break => Self {
+        kind: statement.kind(),
+        range,
+        children,
+      },
+      Statement::Continue => Self {
+        kind: statement.kind(),
+        range,
+        children,
+      },
       Statement::Expression(expression) => {
         children.push(Self::from((&expression.0, &expression.1)));
 
