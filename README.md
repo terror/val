@@ -28,6 +28,73 @@ cargo install val
 Pre-built binaries for Linux, MacOS, and Windows can be found on [the releases
 page](https://github.com/terror/val/releases).
 
+## Usage
+
+The primary way to use **val** is via the provided command-line interface. There
+is currently ongoing work on a Rust library and web playground, which will
+provide a few extra ways to interact with the runtime.
+
+Below is the output of `val --help`, which describes some of the
+arguments/options we support:
+
+```present cargo run -- --help
+Usage: val [OPTIONS] [FILENAME]
+
+Arguments:
+  [FILENAME]
+
+Options:
+  -e, --expression <EXPRESSION>
+  -h, --help                     Print help
+  -V, --version                  Print version
+```
+
+Running **val** on its own will spawn a repl (read–eval–print loop) environment,
+where you can evaluate arbitrary **val** code and see its output immediately. We
+use [rustyline](https://github.com/kkawakam/rustyline) for its implementation,
+and we support a few quality of life features:
+
+- Syntax highlighting (see image above)
+- Persistent command history
+- Emacs-style editing support by default
+- Filename completions
+- Hints (virtual text pulled from history)
+
+The **val** language supports not only expressions, but quite a few
+[statements](https://github.com/terror/val/blob/ea0c163934ee3f4afe118384b1281d296f116539/src/ast.rs#L35) as well.
+You may want to save **val** programs and execute them later, so
+the command-line interface provides a way to evaluate entire files.
+
+For instance, lets say you have the following **val** program at
+`factorial.val`:
+
+```rust
+fn factorial(n) {
+  if (n <= 1) {
+    return 1
+  } else {
+    return n * factorial(n - 1)
+  }
+}
+
+println(factorial(5));
+```
+
+You can execute this program by running `val factorial.val`, which will write to
+standard output `120`.
+
+Lastly, you may want to evaluate a val expression and use it within another
+program. The tool supports executing arbitrary expressions inline using the
+`--expression` or `-e` option:
+
+```bash
+val -e 'sin(2) * e ^ pi * cos(sum([1, 2, 3]))'
+16.481455793912883
+```
+
+**n.b.** The `--expression` option and `filename` argument are mutually
+exclusive.
+
 ## Prior Art
 
 [bc(1)](https://linux.die.net/man/1/bc) - An arbitrary precision calculator

@@ -74,6 +74,10 @@ publish:
   cd ../..
   rm -rf tmp/release
 
+[group: 'misc']
+readme:
+  present --in-place README.md
+
 [group: 'dev']
 run *args:
   cargo run {{ args }}
