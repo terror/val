@@ -92,16 +92,17 @@ impl Display for Statement<'_> {
           .join(", ");
 
         match else_branch {
-          Some(else_stmts) => {
-            let else_str = else_stmts
-              .iter()
-              .map(|s| s.0.to_string())
-              .collect::<Vec<_>>()
-              .join(", ");
+          Some(else_statements) => {
             write!(
               f,
               "if({}, block({}), block({}))",
-              condition.0, then_str, else_str
+              condition.0,
+              then_str,
+              else_statements
+                .iter()
+                .map(|s| s.0.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
             )
           }
           None => {

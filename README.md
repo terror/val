@@ -83,7 +83,7 @@ println(factorial(5));
 You can execute this program by running `val factorial.val`, which will write to
 standard output `120`.
 
-Lastly, you may want to evaluate a val expression and use it within another
+Lastly, you may want to evaluate a **val** expression and use it within another
 program. The tool supports executing arbitrary expressions inline using the
 `--expression` or `-e` option:
 
@@ -103,7 +103,25 @@ program.
 
 ### Statements
 
-**val** supports a few statement constructs
+**val** supports a few statement constructs such as `if`, `while`, `loop`, `fn`,
+`return`, etc. Check out the [grammar](https://github.com/terror/val/blob/master/GRAMMAR.txt)
+for all of the various statement types.
+
+Here's an example showcasing most of them in action:
+
+```rust
+fn fib(n) {
+  if (n <= 1) { return n }
+  return fib(n - 1) + fib(n - 2)
+}
+
+i = 0
+
+while (i < 10) {
+  println('fib(' + i + ') = ' + fib(i))
+  i = i + 1
+}
+```
 
 ## Prior Art
 
