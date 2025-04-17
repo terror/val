@@ -65,7 +65,7 @@ impl<'a> Evaluator<'a> {
 
     match node {
       Statement::Assignment(lhs, rhs) => {
-        let value = self.eval_expression(&rhs)?;
+        let value = self.eval_expression(rhs)?;
 
         match &lhs.0 {
           Expression::Identifier(name) => {
@@ -294,6 +294,11 @@ impl<'a> Evaluator<'a> {
           (_, Value::String(b)) => Ok(Value::String(Box::leak(
             format!("{}{}", lhs_val, b).into_boxed_str(),
           ))),
+          (Value::List(a), Value::List(b)) => {
+            let mut result = a.clone();
+            result.extend(b.clone());
+            Ok(Value::List(result))
+          }
           _ => Ok(Value::Number(
             lhs_val.number(lhs.1)? + rhs_val.number(rhs.1)?,
           )),

@@ -1,28 +1,24 @@
 fn reverse_string(str) {
-  chars = list(str)
-
   n = len(str)
+
+  chars = list(str)
   result = list(str)
 
   i = 0
+
   while (i < n) {
     result[i] = chars[n - i - 1]
     i = i + 1
   }
 
-  joined = ""
-  i = 0
-  while (i < n) {
-    joined = joined + result[i]
-    i = i + 1
-  }
-
-  return joined
+  return join(result, "")
 }
 
 fn is_palindrome(str) {
-  chars = list(str)
   n = len(str)
+
+  chars = list(str)
+
   i = 0
   j = n - 1
 
@@ -44,6 +40,7 @@ fn count_words(text) {
   }
 
   words = split(text, ' ')
+
   return len(list(words))
 }
 
@@ -55,16 +52,18 @@ fn common_prefix(str1, str2) {
   len2 = len(str2)
 
   max_check = len1
+
   if (len2 < len1) {
     max_check = len2
   }
 
-  prefix = ""
+  prefix_chars = []
+
   i = 0
 
   while (i < max_check) {
     if (chars1[i] == chars2[i]) {
-      prefix = prefix + chars1[i]
+      prefix_chars = prefix_chars + [chars1[i]]
     } else {
       break
     }
@@ -72,7 +71,7 @@ fn common_prefix(str1, str2) {
     i = i + 1
   }
 
-  return prefix
+  return join(prefix_chars, "")
 }
 
 println("Testing string functions:")

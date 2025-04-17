@@ -510,12 +510,10 @@ impl<'src> Environment<'src> {
         match value {
           Value::String(s) => Ok(Value::Number(s.len() as f64)),
           Value::List(items) => Ok(Value::Number(items.len() as f64)),
-          _ => {
-            return Err(Error::new(
-              span,
-              format!("Cannot get length of {}", value.type_name()),
-            ));
-          }
+          _ => Err(Error::new(
+            span,
+            format!("Cannot get length of {}", value.type_name()),
+          )),
         }
       }),
     );
@@ -809,6 +807,36 @@ impl<'src> Environment<'src> {
             })
             .collect(),
         ))
+      }),
+    );
+
+    env.add_function(
+      "join",
+      Function::Builtin(|arguments, span| {
+        if arguments.len() != 2 {
+          return Err(Error::new(
+            span,
+            format!(
+              "Function `join` expects 2 arguments, got {}",
+              arguments.len()
+            ),
+          ));
+        }
+
+        let list = arguments[0].list(span)?;
+
+        let delimiter = arguments[1].string(span)?;
+
+        let joined_string = list
+          .iter()
+          .map(|value| match value {
+            Value::String(s) => s.to_string(),
+            _ => value.to_string(),
+          })
+          .collect::<Vec<_>>()
+          .join(delimiter);
+
+        Ok(Value::String(Box::leak(joined_string.into_boxed_str())))
       }),
     );
 

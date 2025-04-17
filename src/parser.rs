@@ -47,7 +47,7 @@ fn statement_parser<'a>()
       (Expression::Identifier(name), span)
     });
 
-    let indexed_ident = simple_ident.clone().foldl(
+    let indexed_ident = simple_ident.foldl(
       expression
         .clone()
         .delimited_by(just('[').padded(), just(']').padded())

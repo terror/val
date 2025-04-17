@@ -2445,3 +2445,126 @@ fn sum_of_odd_numbers() -> Result {
     .expected_stdout(Exact("9\n0\n"))
     .run()
 }
+
+#[test]
+fn string_join() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(join(['a', 'b', 'c'], ','))
+      println(join(['hello', 'world'], ' '))
+      println(join([1, 2, 3], '-'))
+      println(join([], '|'))
+      println(join(['single'], ''))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("a,b,c\nhello world\n1-2-3\n\nsingle\n"))
+    .run()
+}
+
+#[test]
+fn join_and_split() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      values = [10, 20, 30]
+      joined = join(values, ',')
+      println(joined)
+
+      parts = split(joined, ',')
+      sum = 0
+      i = 0
+      while (i < len(parts)) {
+        sum = sum + int(parts[i])
+        i = i + 1
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10,20,30\n60\n"))
+    .run()
+}
+
+#[test]
+fn join_with_different_types() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      mixed = ['text', 123, true, 4.56]
+      println(join(mixed, ', '))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("text, 123, true, 4.56\n"))
+    .run()
+}
+
+#[test]
+fn join_with_wrong_argument_count() -> Result {
+  Test::new()?
+    .program("println(join([1, 2, 3]))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `join` expects 2 arguments, got 1"))
+    .run()?;
+
+  Test::new()?
+    .program("println(join([1, 2, 3], ',', 'extra'))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `join` expects 2 arguments, got 3"))
+    .run()
+}
+
+#[test]
+fn join_with_wrong_types() -> Result {
+  Test::new()?
+    .program("println(join('not a list', ','))")
+    .expected_status(1)
+    .expected_stderr(Contains("'not a list' is not a list"))
+    .run()?;
+
+  Test::new()?
+    .program("println(join([1, 2, 3], 42))")
+    .expected_status(1)
+    .expected_stderr(Contains("'42' is not a string"))
+    .run()
+}
+
+#[test]
+fn list_concatenation() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = [1, 2, 3]
+      b = [4, 5, 6]
+      println(a + b)
+
+      empty = []
+      println(empty + a)
+      println(b + empty)
+      println(empty + empty)
+
+      numbers = [1, 2, 3]
+      strings = ['a', 'b', 'c']
+      booleans = [true, false]
+      mixed = numbers + strings + booleans
+      println(mixed)
+
+      nested1 = [[1, 2], [3, 4]]
+      nested2 = [[5, 6]]
+      println(nested1 + nested2)
+
+      result = [0]
+      result = result + [1]
+      result = result + [2, 3]
+      println(result)
+
+      println([1] + [2] + [3] + [4])
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[1, 2, 3, 4, 5, 6]\n[1, 2, 3]\n[4, 5, 6]\n[]\n[1, 2, 3, 'a', 'b', 'c', true, false]\n[[1, 2], [3, 4], [5, 6]]\n[0, 1, 2, 3]\n[1, 2, 3, 4]\n"))
+    .run()
+}
