@@ -572,7 +572,7 @@ impl<'src> Environment<'src> {
 
         let number = payload.arguments[0].number(payload.span)?;
 
-        if number < BigFloat::from(0.0) {
+        if number.is_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take square root of negative number",
@@ -718,7 +718,20 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        process::exit(0);
+        let code = match payload.arguments[0]
+          .number(payload.span)?
+          .to_f64(payload.config.rounding_mode)
+        {
+          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+          _ => {
+            return Err(Error::new(
+              payload.span,
+              "Argument to `exit` must be a non-negative finite number",
+            ));
+          }
+        };
+
+        process::exit(code as i32);
       }),
     );
 
@@ -739,7 +752,20 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        process::exit(0);
+        let code = match payload.arguments[0]
+          .number(payload.span)?
+          .to_f64(payload.config.rounding_mode)
+        {
+          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+          _ => {
+            return Err(Error::new(
+              payload.span,
+              "Argument to `quit` must be a non-negative finite number",
+            ));
+          }
+        };
+
+        process::exit(code as i32);
       }),
     );
 

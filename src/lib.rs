@@ -1,6 +1,6 @@
 pub(crate) use {
   ariadne::{Color, Label, Report, ReportKind, Source},
-  astro_float::{BigFloat, Consts, Sign},
+  astro_float::{BigFloat, Consts, Radix, Sign},
   chumsky::prelude::*,
   clap::Parser as Clap,
   environment::Environment,

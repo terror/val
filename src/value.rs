@@ -33,7 +33,7 @@ impl Display for Value<'_> {
           .join(", ")
       ),
       Value::Null => write!(f, "null"),
-      Value::Number(number) => write!(f, "{number}",),
+      Value::Number(number) => write!(f, "{}", number.display()),
       Value::String(string) => write!(f, "{string}"),
     }
   }
