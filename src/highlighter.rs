@@ -93,18 +93,14 @@ impl<'src> TreeHighlighter<'src> {
     let (start, end) = (span.start, span.end);
 
     match node {
-      Statement::Assignment(name, expr) => {
-        let name_span = self.find_identifier_span(start, name);
-
-        if let Some((name_start, name_end)) = name_span {
-          spans.push((name_start, name_end, COLOR_IDENTIFIER));
-        }
+      Statement::Assignment(lhs, rhs) => {
+        self.collect_expression_spans(lhs, spans);
 
         if let Some(eq_pos) = self.content[start..end].find('=') {
           spans.push((start + eq_pos, start + eq_pos + 1, COLOR_OPERATOR));
         }
 
-        self.collect_expression_spans(expr, spans);
+        self.collect_expression_spans(rhs, spans);
       }
       Statement::Block(statements) => {
         if let Some(open_brace) = self.content[start..end].find('{') {

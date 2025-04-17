@@ -58,9 +58,71 @@ impl<'a> Evaluator<'a> {
     let (node, span) = statement;
 
     match node {
-      Statement::Assignment(name, expr) => {
-        let value = self.eval_expression(expr)?;
-        self.environment.add_variable(name, value.clone());
+      Statement::Assignment(lhs, rhs) => {
+        let value = self.eval_expression(&rhs)?;
+
+        match &lhs.0 {
+          Expression::Identifier(name) => {
+            self.environment.add_variable(name, value.clone());
+          }
+          Expression::ListAccess(base_box, index_box) => {
+            let (list_name, list_span) = match &base_box.0 {
+              Expression::Identifier(name) => (*name, base_box.1),
+              _ => {
+                return Err(Error::new(
+                  base_box.1,
+                  "left‑hand side must be a variable or list element",
+                ));
+              }
+            };
+
+            let mut list = match self.environment.get_variable(list_name) {
+              Some(Value::List(items)) => items.clone(),
+              Some(other) => {
+                return Err(Error::new(
+                  list_span,
+                  format!(
+                    "'{}' is not a list (found {})",
+                    list_name,
+                    other.type_name()
+                  ),
+                ));
+              }
+              None => {
+                return Err(Error::new(
+                  list_span,
+                  format!("Undefined variable `{}`", list_name),
+                ));
+              }
+            };
+
+            let index =
+              self.eval_expression(index_box)?.number(index_box.1)? as usize;
+
+            if index >= list.len() {
+              return Err(Error::new(
+                lhs.1,
+                format!(
+                  "Index {} out of bounds for list of length {}",
+                  index,
+                  list.len()
+                ),
+              ));
+            }
+
+            list[index] = value.clone();
+
+            self.environment.add_variable(list_name, Value::List(list));
+          }
+
+          _ => {
+            return Err(Error::new(
+              lhs.1,
+              "left‑hand side must be a variable or list element",
+            ));
+          }
+        }
+
         Ok(EvalResult::Value(value))
       }
       Statement::Block(statements) => {

@@ -42,11 +42,29 @@ fn statement_parser<'a>()
       .collect::<Vec<_>>()
       .delimited_by(just('{').padded(), just('}').padded());
 
-    let assignment_statement = text::ident()
-      .padded()
+    let simple_ident = text::ident().padded().map_with(|name, e| {
+      let span = e.span();
+      (Expression::Identifier(name), span)
+    });
+
+    let indexed_ident = simple_ident.clone().foldl(
+      expression
+        .clone()
+        .delimited_by(just('[').padded(), just(']').padded())
+        .repeated(),
+      |base, index| {
+        let span = (base.1.start..index.1.end).into();
+        (
+          Expression::ListAccess(Box::new(base), Box::new(index)),
+          span,
+        )
+      },
+    );
+
+    let assignment_statement = indexed_ident
       .then_ignore(just('=').padded())
       .then(expression.clone())
-      .map(|(name, expr)| Statement::Assignment(name, expr))
+      .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs))
       .map_with(|ast, e| (ast, e.span()));
 
     let function_statement = just("fn")
@@ -384,7 +402,7 @@ mod tests {
   fn assignment() {
     Test::new()
       .program("x = 5")
-      .ast("statements(assignment(x, number(5)))")
+      .ast("statements(assignment(identifier(x), number(5)))")
       .run();
   }
 
@@ -431,7 +449,7 @@ mod tests {
   fn while_loop() {
     Test::new()
     .program("while (x < 10) { x = x + 1; }")
-    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(assignment(x, binary_op(+, identifier(x), number(1))))))")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
   }
 
@@ -439,7 +457,7 @@ mod tests {
   fn nested_while_loops() {
     Test::new()
     .program("while (x < 10) { while (y < 5) { y = y + 1; }; x = x + 1; }")
-    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(while(binary_op(<, identifier(y), number(5)), block(assignment(y, binary_op(+, identifier(y), number(1))))), assignment(x, binary_op(+, identifier(x), number(1))))))")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(while(binary_op(<, identifier(y), number(5)), block(assignment(identifier(y), binary_op(+, identifier(y), number(1))))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
   }
 
@@ -447,7 +465,7 @@ mod tests {
   fn if_statement() {
     Test::new()
     .program("if (x > 5) { y = 10; }")
-    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(y, number(10)))))")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(identifier(y), number(10)))))")
     .run();
   }
 
@@ -455,7 +473,7 @@ mod tests {
   fn if_else_statement() {
     Test::new()
     .program("if (x > 5) { y = 10; } else { y = 5; }")
-    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(y, number(10))), block(assignment(y, number(5)))))")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(identifier(y), number(10))), block(assignment(identifier(y), number(5)))))")
     .run();
   }
 
@@ -463,7 +481,7 @@ mod tests {
   fn nested_if_statements() {
     Test::new()
     .program("if (x > 5) { if (y > 2) { z = 1; } else { z = 2; } } else { z = 3; }")
-    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(if(binary_op(>, identifier(y), number(2)), block(assignment(z, number(1))), block(assignment(z, number(2))))), block(assignment(z, number(3)))))")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(if(binary_op(>, identifier(y), number(2)), block(assignment(identifier(z), number(1))), block(assignment(identifier(z), number(2))))), block(assignment(identifier(z), number(3)))))")
     .run();
   }
 
@@ -492,7 +510,7 @@ mod tests {
   fn list_access() {
     Test::new()
       .program("a = [1, 2, 3]; a[0]")
-      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(list_access(identifier(a), number(0))))")
+      .ast("statements(assignment(identifier(a), list(number(1), number(2), number(3))), expression(list_access(identifier(a), number(0))))")
       .run();
   }
 
@@ -500,7 +518,7 @@ mod tests {
   fn list_access_with_comparison() {
     Test::new()
       .program("a = [1, 2, 3]; a[0] == 1")
-      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(binary_op(==, list_access(identifier(a), number(0)), number(1))))")
+      .ast("statements(assignment(identifier(a), list(number(1), number(2), number(3))), expression(binary_op(==, list_access(identifier(a), number(0)), number(1))))")
       .run();
   }
 
@@ -508,7 +526,7 @@ mod tests {
   fn nested_list_access() {
     Test::new()
       .program("a = [[1, 2], [3, 4]]; a[0][1]")
-      .ast("statements(assignment(a, list(list(number(1), number(2)), list(number(3), number(4)))), expression(list_access(list_access(identifier(a), number(0)), number(1))))")
+      .ast("statements(assignment(identifier(a), list(list(number(1), number(2)), list(number(3), number(4)))), expression(list_access(list_access(identifier(a), number(0)), number(1))))")
       .run();
   }
 
@@ -516,7 +534,7 @@ mod tests {
   fn list_access_with_expressions() {
     Test::new()
       .program("a = [1, 2, 3]; a[1 + 1]")
-      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(list_access(identifier(a), binary_op(+, number(1), number(1)))))")
+      .ast("statements(assignment(identifier(a), list(number(1), number(2), number(3))), expression(list_access(identifier(a), binary_op(+, number(1), number(1)))))")
       .run();
   }
 

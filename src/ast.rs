@@ -33,7 +33,7 @@ impl Program<'_> {
 
 #[derive(Debug, Clone)]
 pub enum Statement<'a> {
-  Assignment(&'a str, Spanned<Expression<'a>>),
+  Assignment(Spanned<Expression<'a>>, Spanned<Expression<'a>>),
   Block(Vec<Spanned<Statement<'a>>>),
   Expression(Spanned<Expression<'a>>),
   Function(&'a str, Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
@@ -49,8 +49,8 @@ pub enum Statement<'a> {
 impl Display for Statement<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Statement::Assignment(name, expression) => {
-        write!(f, "assignment({}, {})", name, expression.0)
+      Statement::Assignment(lhs, rhs) => {
+        write!(f, "assignment({}, {})", lhs.0, rhs.0)
       }
       Statement::Block(statements) => {
         write!(

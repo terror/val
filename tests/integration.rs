@@ -1968,3 +1968,47 @@ fn cannot_return_outside_of_function() -> Result {
     .expected_stderr(Contains("Cannot return outside of a function\n"))
     .run()
 }
+
+#[test]
+fn list_element_assignment_updates_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      nums = [1, 2, 3]
+      nums[0] = 10
+      println(nums)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[10, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn list_element_assignment_then_read() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      letters = ['a', 'b', 'c']
+      letters[1] = 'x'
+      println(letters[1])
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("x\n"))
+    .run()
+}
+
+#[test]
+fn element_assignment_on_non_list_errors() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      value = 42
+      value[0] = 1
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("'value' is not a list"))
+    .run()
+}
