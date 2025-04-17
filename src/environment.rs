@@ -852,6 +852,7 @@ impl<'src> Environment<'src> {
           }
 
           let mut evaluator = Evaluator::with_environment(call_environment);
+          evaluator.inside_function = true;
 
           if body.is_empty() {
             return Ok(Value::Null);

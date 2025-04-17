@@ -1,7 +1,8 @@
 use super::*;
 
 pub struct Evaluator<'a> {
-  environment: Environment<'a>,
+  pub environment: Environment<'a>,
+  pub inside_function: bool,
 }
 
 impl Default for Evaluator<'_> {
@@ -14,11 +15,15 @@ impl<'a> Evaluator<'a> {
   pub fn new() -> Self {
     Self {
       environment: Environment::new(),
+      inside_function: false,
     }
   }
 
   pub fn with_environment(environment: Environment<'a>) -> Self {
-    Self { environment }
+    Self {
+      environment,
+      inside_function: false,
+    }
   }
 
   pub fn eval(
@@ -50,7 +55,7 @@ impl<'a> Evaluator<'a> {
     &mut self,
     statement: &Spanned<Statement<'a>>,
   ) -> Result<EvalResult<'a>, Error> {
-    let (node, _) = statement;
+    let (node, span) = statement;
 
     match node {
       Statement::Assignment(name, expr) => {
@@ -123,10 +128,16 @@ impl<'a> Evaluator<'a> {
           Ok(EvalResult::Value(Value::Null))
         }
       }
-      Statement::Return(expr) => Ok(EvalResult::Return(match expr {
-        Some(expr) => self.eval_expression(expr)?,
-        None => Value::Null,
-      })),
+      Statement::Return(expr) => {
+        if !self.inside_function {
+          return Err(Error::new(*span, "Cannot return outside of a function"));
+        }
+
+        Ok(EvalResult::Return(match expr {
+          Some(expr) => self.eval_expression(expr)?,
+          None => Value::Null,
+        }))
+      }
       Statement::While(condition, body) => {
         let mut result = Value::Null;
 

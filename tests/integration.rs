@@ -1569,7 +1569,7 @@ fn function_wrong_argument_count() -> Result {
 }
 
 #[test]
-fn recursive_function() -> Result {
+fn iterative_factorial() -> Result {
   Test::new()?
     .program(indoc! {
       "
@@ -1594,7 +1594,7 @@ fn recursive_function() -> Result {
 }
 
 #[test]
-fn recursive_function_direct_style() -> Result {
+fn direct_recursive_function() -> Result {
   Test::new()?
     .program(indoc! {
       "
@@ -1947,5 +1947,24 @@ fn split_and_convert() -> Result {
     })
     .expected_status(0)
     .expected_stdout(Exact("60\n"))
+    .run()
+}
+
+#[test]
+fn cannot_return_outside_of_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = 0
+
+      if (a == 0) {
+        return 1
+      }
+
+      print(a)
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot return outside of a function\n"))
     .run()
 }
