@@ -6,16 +6,10 @@ pub struct Evaluator<'a> {
   pub inside_loop: bool,
 }
 
-impl Default for Evaluator<'_> {
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
 impl<'a> Evaluator<'a> {
-  pub fn new() -> Self {
+  pub fn new(config: Config) -> Self {
     Self {
-      environment: Environment::new(),
+      environment: Environment::new(config),
       inside_function: false,
       inside_loop: false,
     }
@@ -102,23 +96,25 @@ impl<'a> Evaluator<'a> {
               }
             };
 
-            let index =
-              self.eval_expression(index_box)?.number(index_box.1)? as usize;
+            todo!()
 
-            if index >= list.len() {
-              return Err(Error::new(
-                lhs.1,
-                format!(
-                  "Index {} out of bounds for list of length {}",
-                  index,
-                  list.len()
-                ),
-              ));
-            }
+            // let index =
+            //   self.eval_expression(index_box)?.number(index_box.1)? as usize;
 
-            list[index] = value.clone();
+            // if index >= list.len() {
+            //   return Err(Error::new(
+            //     lhs.1,
+            //     format!(
+            //       "Index {} out of bounds for list of length {}",
+            //       index,
+            //       list.len()
+            //     ),
+            //   ));
+            // }
 
-            self.environment.add_variable(list_name, Value::List(list));
+            // list[index] = value.clone();
+
+            // self.environment.add_variable(list_name, Value::List(list));
           }
 
           _ => {
@@ -300,7 +296,11 @@ impl<'a> Evaluator<'a> {
           (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
 
         match (&lhs_val, &rhs_val) {
-          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a + b)),
+          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a.add(
+            &b,
+            self.environment.config.precision,
+            self.environment.config.rounding_mode,
+          ))),
           (Value::String(a), Value::String(b)) => Ok(Value::String(Box::leak(
             format!("{}{}", a, b).into_boxed_str(),
           ))),
@@ -315,9 +315,11 @@ impl<'a> Evaluator<'a> {
             result.extend(b.clone());
             Ok(Value::List(result))
           }
-          _ => Ok(Value::Number(
-            lhs_val.number(lhs.1)? + rhs_val.number(rhs.1)?,
-          )),
+          _ => Ok(Value::Number(lhs_val.number(lhs.1)?.add(
+            &rhs_val.number(rhs.1)?,
+            self.environment.config.precision,
+            self.environment.config.rounding_mode,
+          ))),
         }
       }
       Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
@@ -327,11 +329,15 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        if rhs_num == 0.0 {
+        if rhs_num.is_zero() {
           return Err(Error::new(rhs.1, "Division by zero"));
         }
 
-        Ok(Value::Number(lhs_num / rhs_num))
+        Ok(Value::Number(lhs_num.div(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        )))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.eval_expression(lhs)? == self.eval_expression(rhs)?,
@@ -396,15 +402,18 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        if rhs_num == 0.0 {
+        if rhs_num.is_zero() {
           return Err(Error::new(rhs.1, "Modulo by zero"));
         }
 
-        Ok(Value::Number(lhs_num % rhs_num))
+        todo!()
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?
-          * self.eval_expression(rhs)?.number(rhs.1)?,
+        self.eval_expression(lhs)?.number(lhs.1)?.mul(
+          &self.eval_expression(rhs)?.number(rhs.1)?,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        ),
       )),
       Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
         self.eval_expression(lhs)? != self.eval_expression(rhs)?,
@@ -416,11 +425,19 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        Ok(Value::Number(lhs_num.powf(rhs_num)))
+        Ok(Value::Number(lhs_num.pow(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?
-          - self.eval_expression(rhs)?.number(rhs.1)?,
+        self.eval_expression(lhs)?.number(lhs.1)?.sub(
+          &self.eval_expression(rhs)?.number(rhs.1)?,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        ),
       )),
       Expression::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
       Expression::FunctionCall(name, arguments) => {
@@ -464,22 +481,24 @@ impl<'a> Evaluator<'a> {
           }
         };
 
-        let index = self.eval_expression(index)?.number(index.1)? as usize;
+        todo!()
 
-        if index >= list.len() {
-          return Err(Error::new(
-            *span,
-            format!(
-              "Index {} out of bounds for list of length {}",
-              index,
-              list.len()
-            ),
-          ));
-        }
+        // let index = self.eval_expression(index)?.number(index.1)? as usize;
 
-        Ok(list[index].clone())
+        // if index >= list.len() {
+        //   return Err(Error::new(
+        //     *span,
+        //     format!(
+        //       "Index {} out of bounds for list of length {}",
+        //       index,
+        //       list.len()
+        //     ),
+        //   ));
+        // }
+
+        // Ok(list[index].clone())
       }
-      Expression::Number(number) => Ok(Value::Number(*number)),
+      Expression::Number(number) => Ok(Value::Number(number.clone())),
       Expression::String(string) => Ok(Value::String(string)),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => {
         Ok(Value::Number(-self.eval_expression(rhs)?.number(rhs.1)?))

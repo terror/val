@@ -220,7 +220,7 @@ pub enum Expression<'a> {
   Identifier(&'a str),
   List(Vec<Spanned<Self>>),
   ListAccess(Box<Spanned<Self>>, Box<Spanned<Self>>),
-  Number(f64),
+  Number(BigFloat),
   String(&'a str),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
 }

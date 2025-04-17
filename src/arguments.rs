@@ -11,13 +11,15 @@ pub struct Arguments {
 
 impl Arguments {
   pub fn run(self) -> Result {
+    let config = Config::default();
+
     match (self.filename, self.expression) {
-      (Some(filename), _) => Self::eval(filename),
-      (_, Some(expression)) => Self::eval_expression(expression),
+      (Some(filename), _) => Self::eval(config, filename),
+      (_, Some(expression)) => Self::eval_expression(config, expression),
       _ => {
         #[cfg(not(target_family = "wasm"))]
         {
-          Self::read()
+          Self::read(config)
         }
         #[cfg(target_family = "wasm")]
         {
@@ -27,12 +29,12 @@ impl Arguments {
     }
   }
 
-  fn eval(filename: PathBuf) -> Result {
+  fn eval(config: Config, filename: PathBuf) -> Result {
     let content = fs::read_to_string(&filename)?;
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator = Evaluator::new();
+    let mut evaluator = Evaluator::new(config);
 
     match parse(&content) {
       Ok(ast) => match evaluator.eval(&ast) {
@@ -57,8 +59,8 @@ impl Arguments {
     }
   }
 
-  fn eval_expression(expr: String) -> Result {
-    let mut evaluator = Evaluator::new();
+  fn eval_expression(config: Config, expr: String) -> Result {
+    let mut evaluator = Evaluator::new(config);
 
     match parse(&expr) {
       Ok(ast) => match evaluator.eval(&ast) {
@@ -92,10 +94,10 @@ impl Arguments {
   }
 
   #[cfg(not(target_family = "wasm"))]
-  fn read() -> Result {
+  fn read(config: Config) -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
-    let config = Builder::new()
+    let editor_config = Builder::new()
       .color_mode(ColorMode::Enabled)
       .edit_mode(EditMode::Emacs)
       .history_ignore_space(true)
@@ -104,7 +106,7 @@ impl Arguments {
       .build();
 
     let mut editor =
-      Editor::<Highlighter, DefaultHistory>::with_config(config)?;
+      Editor::<Highlighter, DefaultHistory>::with_config(editor_config)?;
 
     editor.set_helper(Some(Highlighter::new()));
 
@@ -116,7 +118,7 @@ impl Arguments {
       editor.add_history_entry(line.as_str())?;
       editor.save_history(&history)?;
 
-      let mut evaluator = Evaluator::new();
+      let mut evaluator = Evaluator::new(config.clone());
 
       match parse(&line) {
         Ok(ast) => match evaluator.eval(&ast) {

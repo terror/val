@@ -2,18 +2,24 @@ use super::*;
 
 #[derive(Clone, Debug, Default)]
 pub struct Environment<'src> {
-  functions: HashMap<&'src str, Function<'src>>,
-  parent: Option<Box<Environment<'src>>>,
-  variables: HashMap<&'src str, Value<'src>>,
+  pub config: Config,
+  pub functions: HashMap<&'src str, Function<'src>>,
+  pub parent: Option<Box<Environment<'src>>>,
+  pub variables: HashMap<&'src str, Value<'src>>,
 }
 
 impl<'src> Environment<'src> {
-  pub fn new() -> Self {
-    let mut env = Self::default();
+  pub fn new(config: Config) -> Self {
+    let mut env = Self {
+      config,
+      functions: HashMap::new(),
+      parent: None,
+      variables: HashMap::new(),
+    };
 
     env.add_function(
       "sin",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -24,13 +30,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.sin()))
+        Ok(Value::Number(arguments[0].number(span)?.sin(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "cos",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -41,13 +51,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.cos()))
+        Ok(Value::Number(arguments[0].number(span)?.cos(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "tan",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -58,13 +72,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.tan()))
+        Ok(Value::Number(arguments[0].number(span)?.tan(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "csc",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -75,19 +93,27 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let sin_val = arguments[0].number(span)?.sin();
+        let sin_val = arguments[0].number(span)?.sin(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        );
 
-        if sin_val == 0.0 {
+        if sin_val.is_zero() {
           return Err(Error::new(span, "Cannot compute csc of multiple of π"));
         }
 
-        Ok(Value::Number(1.0 / sin_val))
+        Ok(Value::Number(BigFloat::from(1.0).div(
+          &sin_val,
+          config.precision,
+          config.rounding_mode,
+        )))
       }),
     );
 
     env.add_function(
       "sec",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -98,19 +124,27 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let cos_val = arguments[0].number(span)?.cos();
+        let cos_val = arguments[0].number(span)?.cos(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        );
 
-        if cos_val == 0.0 {
+        if cos_val.is_zero() {
           return Err(Error::new(span, "Cannot compute sec of π/2 + nπ"));
         }
 
-        Ok(Value::Number(1.0 / cos_val))
+        Ok(Value::Number(BigFloat::from(1.0).div(
+          &cos_val,
+          config.precision,
+          config.rounding_mode,
+        )))
       }),
     );
 
     env.add_function(
       "cot",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -121,19 +155,27 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let tan_val = arguments[0].number(span)?.tan();
+        let tan_val = arguments[0].number(span)?.tan(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        );
 
-        if tan_val == 0.0 {
+        if tan_val.is_zero() {
           return Err(Error::new(span, "Cannot compute cot of multiple of π"));
         }
 
-        Ok(Value::Number(1.0 / tan_val))
+        Ok(Value::Number(BigFloat::from(1.0).div(
+          &tan_val,
+          config.precision,
+          config.rounding_mode,
+        )))
       }),
     );
 
     env.add_function(
       "sinh",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -144,13 +186,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.sinh()))
+        Ok(Value::Number(arguments[0].number(span)?.sinh(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "cosh",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -161,13 +207,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.cosh()))
+        Ok(Value::Number(arguments[0].number(span)?.cosh(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "tanh",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -178,13 +228,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.tanh()))
+        Ok(Value::Number(arguments[0].number(span)?.tanh(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "asin",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -197,20 +251,24 @@ impl<'src> Environment<'src> {
 
         let x = arguments[0].number(span)?;
 
-        if !(-1.0..=1.0).contains(&x) {
-          return Err(Error::new(
-            span,
-            "asin argument must be between -1 and 1",
-          ));
-        }
+        // if !(-1.0..=1.0).contains(&x) {
+        //   return Err(Error::new(
+        //     span,
+        //     "asin argument must be between -1 and 1",
+        //   ));
+        // }
 
-        Ok(Value::Number(x.asin()))
+        Ok(Value::Number(x.asin(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "acos",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -223,20 +281,24 @@ impl<'src> Environment<'src> {
 
         let x = arguments[0].number(span)?;
 
-        if !(-1.0..=1.0).contains(&x) {
-          return Err(Error::new(
-            span,
-            "acos argument must be between -1 and 1",
-          ));
-        }
+        // if !(-1.0..=1.0).contains(&x) {
+        //   return Err(Error::new(
+        //     span,
+        //     "acos argument must be between -1 and 1",
+        //   ));
+        // }
 
-        Ok(Value::Number(x.acos()))
+        Ok(Value::Number(x.acos(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "arc",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -247,13 +309,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.atan()))
+        Ok(Value::Number(arguments[0].number(span)?.atan(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "acsc",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -266,20 +332,27 @@ impl<'src> Environment<'src> {
 
         let x = arguments[0].number(span)?;
 
-        if x.abs() < 1.0 {
+        if x.abs() < BigFloat::from(1.0) {
           return Err(Error::new(
             span,
             "acsc argument must have absolute value at least 1",
           ));
         }
 
-        Ok(Value::Number((1.0 / x).asin()))
+        Ok(Value::Number(
+          (BigFloat::from(1.0).div(&x, config.precision, config.rounding_mode))
+            .asin(
+              config.precision,
+              config.rounding_mode,
+              &mut Consts::new().unwrap(),
+            ),
+        ))
       }),
     );
 
     env.add_function(
       "asec",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -292,20 +365,27 @@ impl<'src> Environment<'src> {
 
         let x = arguments[0].number(span)?;
 
-        if x.abs() < 1.0 {
+        if x.abs() < BigFloat::from(1.0) {
           return Err(Error::new(
             span,
             "asec argument must have absolute value at least 1",
           ));
         }
 
-        Ok(Value::Number((1.0 / x).acos()))
+        Ok(Value::Number(
+          (BigFloat::from(1.0).div(&x, config.precision, config.rounding_mode))
+            .acos(
+              config.precision,
+              config.rounding_mode,
+              &mut Consts::new().unwrap(),
+            ),
+        ))
       }),
     );
 
     env.add_function(
       "acot",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -318,14 +398,24 @@ impl<'src> Environment<'src> {
 
         let x = arguments[0].number(span)?;
 
+        let pi_div_2 = BigFloat::from(std::f64::consts::FRAC_PI_2);
+
         // Formula: acot(x) = π/2 - atan(x)
-        Ok(Value::Number(std::f64::consts::FRAC_PI_2 - x.atan()))
+        Ok(Value::Number(pi_div_2.sub(
+          &x.atan(
+            config.precision,
+            config.rounding_mode,
+            &mut Consts::new().unwrap(),
+          ),
+          config.precision,
+          config.rounding_mode,
+        )))
       }),
     );
 
     env.add_function(
       "ln",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -338,20 +428,24 @@ impl<'src> Environment<'src> {
 
         let number = arguments[0].number(span)?;
 
-        if number <= 0.0 {
+        if number <= BigFloat::from(0.0) {
           return Err(Error::new(
             span,
             "Cannot take logarithm of zero or negative number",
           ));
         }
 
-        Ok(Value::Number(number.ln()))
+        Ok(Value::Number(number.ln(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "log2",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -364,20 +458,24 @@ impl<'src> Environment<'src> {
 
         let number = arguments[0].number(span)?;
 
-        if number <= 0.0 {
+        if number <= BigFloat::from(0.0) {
           return Err(Error::new(
             span,
             "Cannot take logarithm of zero or negative number",
           ));
         }
 
-        Ok(Value::Number(number.log2()))
+        Ok(Value::Number(number.log2(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "log10",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -390,20 +488,24 @@ impl<'src> Environment<'src> {
 
         let number = arguments[0].number(span)?;
 
-        if number <= 0.0 {
+        if number <= BigFloat::from(0.0) {
           return Err(Error::new(
             span,
             "Cannot take logarithm of zero or negative number",
           ));
         }
 
-        Ok(Value::Number(number.log10()))
+        Ok(Value::Number(number.log10(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "e",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -411,13 +513,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(arguments[0].number(span)?.exp()))
+        Ok(Value::Number(arguments[0].number(span)?.exp(
+          config.precision,
+          config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }),
     );
 
     env.add_function(
       "sqrt",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -430,20 +536,22 @@ impl<'src> Environment<'src> {
 
         let number = arguments[0].number(span)?;
 
-        if number < 0.0 {
+        if number < BigFloat::from(0.0) {
           return Err(Error::new(
             span,
             "Cannot take square root of negative number",
           ));
         }
 
-        Ok(Value::Number(number.sqrt()))
+        Ok(Value::Number(
+          number.sqrt(config.precision, config.rounding_mode),
+        ))
       }),
     );
 
     env.add_function(
       "ceil",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -460,7 +568,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "floor",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -477,7 +585,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "abs",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -494,7 +602,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "len",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -508,8 +616,10 @@ impl<'src> Environment<'src> {
         let value = &arguments[0];
 
         match value {
-          Value::String(s) => Ok(Value::Number(s.len() as f64)),
-          Value::List(items) => Ok(Value::Number(items.len() as f64)),
+          Value::String(s) => Ok(Value::Number(BigFloat::from(s.len() as f64))),
+          Value::List(items) => {
+            Ok(Value::Number(BigFloat::from(items.len() as f64)))
+          }
           _ => Err(Error::new(
             span,
             format!("Cannot get length of {}", value.type_name()),
@@ -520,7 +630,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "print",
-      Function::Builtin(|arguments, _| {
+      Function::Builtin(|arguments, _, _| {
         let mut output_strings = Vec::with_capacity(arguments.len());
 
         for argument in arguments {
@@ -535,7 +645,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "println",
-      Function::Builtin(|arguments, _| {
+      Function::Builtin(|arguments, _, _| {
         let mut output_strings = Vec::with_capacity(arguments.len());
 
         for argument in arguments {
@@ -550,7 +660,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "exit",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.is_empty() {
           process::exit(0);
         }
@@ -565,13 +675,13 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        process::exit(arguments[0].number(span)? as i32);
+        process::exit(0);
       }),
     );
 
     env.add_function(
       "quit",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.is_empty() {
           process::exit(0);
         }
@@ -586,15 +696,18 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        process::exit(arguments[0].number(span)? as i32);
+        let code = process::exit(0);
       }),
     );
 
     env.add_function(
       "sum",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.is_empty() {
-          process::exit(0);
+          return Err(Error::new(
+            span,
+            "Function `sum` expects at least one argument",
+          ));
         }
 
         if arguments.len() != 1 {
@@ -609,18 +722,23 @@ impl<'src> Environment<'src> {
 
         let list = arguments[0].list(span)?;
 
-        let numbers = list
-          .iter()
-          .map(|x| x.number(span))
-          .collect::<Result<Vec<_>, _>>()?;
+        if list.is_empty() {
+          return Ok(Value::Number(BigFloat::from(0.0)));
+        }
 
-        Ok(Value::Number(numbers.iter().sum::<f64>()))
+        let mut sum = list[0].number(span)?;
+        for val in list.iter().skip(1) {
+          sum =
+            sum.add(&val.number(span)?, config.precision, config.rounding_mode);
+        }
+
+        Ok(Value::Number(sum))
       }),
     );
 
     env.add_function(
       "input",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         use std::io::{self, BufRead, Write};
 
         if arguments.len() > 1 {
@@ -663,7 +781,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "int",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, config, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -679,12 +797,19 @@ impl<'src> Environment<'src> {
         match value {
           Value::Number(n) => Ok(Value::Number(n.floor())),
           Value::String(s) => match s.trim().parse::<f64>() {
-            Ok(n) => Ok(Value::Number(n.floor())),
+            Ok(n) => {
+              let num = BigFloat::from(n);
+
+              Ok(Value::Number(num.floor()))
+            }
             Err(_) => {
               Err(Error::new(span, format!("Cannot convert '{}' to int", s)))
             }
           },
-          Value::Boolean(b) => Ok(Value::Number(if *b { 1.0 } else { 0.0 })),
+          Value::Boolean(b) => {
+            let val = if *b { 1.0 } else { 0.0 };
+            Ok(Value::Number(BigFloat::from(val)))
+          }
           _ => Err(Error::new(
             span,
             format!("Cannot convert {} to int", value.type_name()),
@@ -695,7 +820,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "float",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -709,14 +834,17 @@ impl<'src> Environment<'src> {
         let value = &arguments[0];
 
         match value {
-          Value::Number(n) => Ok(Value::Number(*n)),
+          Value::Number(n) => Ok(Value::Number(n.clone())),
           Value::String(s) => match s.trim().parse::<f64>() {
-            Ok(n) => Ok(Value::Number(n)),
+            Ok(n) => Ok(Value::Number(BigFloat::from(n))),
             Err(_) => {
               Err(Error::new(span, format!("Cannot convert '{}' to float", s)))
             }
           },
-          Value::Boolean(b) => Ok(Value::Number(if *b { 1.0 } else { 0.0 })),
+          Value::Boolean(b) => {
+            let val = if *b { 1.0 } else { 0.0 };
+            Ok(Value::Number(BigFloat::from(val)))
+          }
           _ => Err(Error::new(
             span,
             format!("Cannot convert {} to float", value.type_name()),
@@ -727,7 +855,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "bool",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -742,7 +870,7 @@ impl<'src> Environment<'src> {
 
         match value {
           Value::Boolean(b) => Ok(Value::Boolean(*b)),
-          Value::Number(n) => Ok(Value::Boolean(*n != 0.0)),
+          Value::Number(n) => Ok(Value::Boolean(!n.is_zero())),
           Value::String(s) => Ok(Value::Boolean(!s.is_empty())),
           Value::List(items) => Ok(Value::Boolean(!items.is_empty())),
           Value::Null => Ok(Value::Boolean(false)),
@@ -756,7 +884,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "list",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.len() != 1 {
           return Err(Error::new(
             span,
@@ -783,7 +911,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "split",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.len() != 2 {
           return Err(Error::new(
             span,
@@ -812,7 +940,7 @@ impl<'src> Environment<'src> {
 
     env.add_function(
       "join",
-      Function::Builtin(|arguments, span| {
+      Function::Builtin(|arguments, _, span| {
         if arguments.len() != 2 {
           return Err(Error::new(
             span,
@@ -840,8 +968,8 @@ impl<'src> Environment<'src> {
       }),
     );
 
-    env.add_variable("e", Value::Number(std::f64::consts::E));
-    env.add_variable("pi", Value::Number(std::f64::consts::PI));
+    env.add_variable("e", Value::Number(BigFloat::from(std::f64::consts::E)));
+    env.add_variable("pi", Value::Number(BigFloat::from(std::f64::consts::PI)));
 
     env
   }
@@ -862,7 +990,9 @@ impl<'src> Environment<'src> {
   ) -> Result<Value<'src>, Error> {
     if let Some(function) = self.functions.get(name) {
       match function {
-        Function::Builtin(function) => function(arguments, span),
+        Function::Builtin(function) => {
+          function(arguments, self.config.clone(), span)
+        }
         Function::UserDefined(Value::Function(
           name,
           parameters,
@@ -941,9 +1071,10 @@ impl<'src> Environment<'src> {
 
   pub fn with_parent(parent: Environment<'src>) -> Self {
     Self {
+      config: parent.config.clone(),
       functions: parent.functions.clone(),
-      variables: HashMap::new(),
       parent: Some(Box::new(parent)),
+      variables: HashMap::new(),
     }
   }
 }
