@@ -44,6 +44,7 @@ pub enum Statement<'a> {
     Vec<Spanned<Statement<'a>>>,
     Option<Vec<Spanned<Statement<'a>>>>,
   ),
+  Loop(Vec<Spanned<Statement<'a>>>),
   Return(Option<Spanned<Expression<'a>>>),
   While(Spanned<Expression<'a>>, Vec<Spanned<Statement<'a>>>),
 }
@@ -108,6 +109,17 @@ impl Display for Statement<'_> {
           }
         }
       }
+      Statement::Loop(body) => {
+        write!(
+          f,
+          "loop(block({}))",
+          body
+            .iter()
+            .map(|s| s.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
+      }
       Statement::Return(expr) => match expr {
         Some(expression) => write!(f, "return({})", expression.0),
         None => write!(f, "return()"),
@@ -138,6 +150,7 @@ impl Statement<'_> {
       Statement::Expression(_) => "expression",
       Statement::Function(_, _, _) => "function",
       Statement::If(_, _, _) => "if",
+      Statement::Loop(_) => "loop",
       Statement::Return(_) => "return",
       Statement::While(_, _) => "while",
     })

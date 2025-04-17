@@ -109,8 +109,14 @@ fn statement_parser<'a>()
     let while_statement = just("while")
       .padded()
       .ignore_then(condition_parser)
-      .then(statement_block)
+      .then(statement_block.clone())
       .map(|(condition, body)| Statement::While(condition, body))
+      .map_with(|ast, e| (ast, e.span()));
+
+    let loop_statement = just("loop")
+      .padded()
+      .ignore_then(statement_block.clone())
+      .map(Statement::Loop)
       .map_with(|ast, e| (ast, e.span()));
 
     let return_statement = just("return")
@@ -139,6 +145,7 @@ fn statement_parser<'a>()
       block_statement,
       if_statement,
       while_statement,
+      loop_statement,
       return_statement,
       break_statement,
       continue_statement,
@@ -576,6 +583,30 @@ mod tests {
     Test::new()
     .program("while (x < 10) { if (x % 2 == 0) { continue; }; println(x); x = x + 1; }")
     .ast("statements(while(binary_op(<, identifier(x), number(10)), block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(println,identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn loop_statement() {
+    Test::new()
+    .program("loop { x = x + 1; }")
+    .ast("statements(loop(block(assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn loop_with_break() {
+    Test::new()
+    .program("loop { if (x > 10) { break; }; x = x + 1; }")
+    .ast("statements(loop(block(if(binary_op(>, identifier(x), number(10)), block(break)), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn loop_with_continue() {
+    Test::new()
+    .program("loop { if (x % 2 == 0) { continue; }; println(x); x = x + 1; }")
+    .ast("statements(loop(block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(println,identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
   }
 

@@ -2600,3 +2600,116 @@ fn higher_order_function() -> Result {
     .expected_stdout(Exact("[2, 4, 6]\n"))
     .run()
 }
+
+#[test]
+fn simple_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      loop {
+        if (i >= 5) {
+          break
+        }
+        sum = sum + i
+        i = i + 1
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10\n5\n"))
+    .run()
+}
+
+#[test]
+fn loop_with_continue() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      loop {
+        i = i + 1
+        if (i > 10) {
+          break
+        }
+        if (i % 2 == 0) {
+          continue
+        }
+        sum = sum + i
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("25\n11\n"))
+    .run()
+}
+
+#[test]
+fn nested_loops() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      result = ''
+      i = 0
+
+      loop {
+        if (i >= 3) {
+          break
+        }
+
+        j = 0
+        loop {
+          if (j >= 3) {
+            break
+          }
+          result = result + i + ',' + j + ';'
+          j = j + 1
+        }
+
+        i = i + 1
+      }
+
+      println(result)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("0,0;0,1;0,2;1,0;1,1;1,2;2,0;2,1;2,2;\n"))
+    .run()
+}
+
+#[test]
+fn infinite_loop_with_return() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn find_number(target) {
+        i = 0
+        loop {
+          if (i == target) {
+            return 'Found ' + i
+          }
+          if (i > 100) {
+            return 'Not found'
+          }
+          i = i + 1
+        }
+      }
+
+      println(find_number(42))
+      println(find_number(200))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("Found 42\nNot found\n"))
+    .run()
+}

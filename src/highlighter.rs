@@ -216,6 +216,31 @@ impl<'src> TreeHighlighter<'src> {
           }
         }
       }
+      Statement::Loop(body) => {
+        if let Some(loop_pos) = self.content[start..end].find("loop") {
+          spans.push((start + loop_pos, start + loop_pos + 4, COLOR_KEYWORD));
+        }
+
+        if let Some(open_brace) = self.content[start..end].find('{') {
+          spans.push((
+            start + open_brace,
+            start + open_brace + 1,
+            COLOR_OPERATOR,
+          ));
+        }
+
+        if let Some(close_brace) = self.content[start..end].rfind('}') {
+          spans.push((
+            start + close_brace,
+            start + close_brace + 1,
+            COLOR_OPERATOR,
+          ));
+        }
+
+        for statement in body {
+          self.collect_statement_spans(statement, spans);
+        }
+      }
       Statement::Return(expr_opt) => {
         if let Some(return_pos) = self.content[start..end].find("return") {
           spans.push((

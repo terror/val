@@ -110,6 +110,17 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Statement::Loop(body) => {
+        for (statement, span) in body {
+          children.push(Self::from((statement, span)));
+        }
+
+        Self {
+          kind: statement.kind(),
+          range,
+          children,
+        }
+      }
       Statement::Return(expression) => {
         if let Some(expression) = expression {
           children.push(Self::from((&expression.0, &expression.1)));

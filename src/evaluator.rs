@@ -229,7 +229,29 @@ impl<'a> Evaluator<'a> {
           Ok(EvalResult::Value(Value::Null))
         }
       }
+      Statement::Loop(body) => {
+        let old_inside_loop = self.inside_loop;
 
+        self.inside_loop = true;
+
+        loop {
+          for statement in body {
+            let eval_result = self.eval_statement(statement)?;
+
+            let result = eval_result.unwrap();
+
+            if eval_result.is_return() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Return(result));
+            } else if eval_result.is_break() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Value(result));
+            } else if eval_result.is_continue() {
+              break;
+            }
+          }
+        }
+      }
       Statement::Return(expr) => {
         if !self.inside_function {
           return Err(Error::new(*span, "Cannot return outside of a function"));
