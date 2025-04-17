@@ -202,6 +202,37 @@ numbers[0] = 10
 combined = numbers + [6, 7]
 ```
 
+#### Function
+
+A function is a value, and can be used in assignments, passed around to other
+functions, etc.
+
+Check out the [higher order functions example](https://github.com/terror/val/blob/master/examples/hoc.val)
+for how this works.
+
+```rust
+fn reduce(l, f, initial) {
+  i = 0
+
+  result = initial
+
+  while (i < len(l)) {
+    result = f(result, l[i])
+    i = i + 1
+  }
+
+  return result
+}
+
+fn sum(a, b) {
+  return a + b
+}
+
+l = [1, 2, 3, 4, 5]
+
+println(reduce(l, sum, 0))
+```
+
 ### Built-ins
 
 **val** offers a ton of built-in functions and constants. Below documents them:
