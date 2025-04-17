@@ -1,6 +1,6 @@
 pub(crate) use {
   ariadne::{Color, Label, Report, ReportKind, Source},
-  astro_float::{BigFloat, Consts},
+  astro_float::{BigFloat, Consts, Sign},
   chumsky::prelude::*,
   clap::Parser as Clap,
   environment::Environment,
@@ -38,7 +38,8 @@ pub use crate::{
   error::Error,
   eval_result::EvalResult,
   evaluator::Evaluator,
-  function::{BuiltinFunction, Function},
+  float_ext::FloatExt,
+  function::{BuiltinFunction, BuiltinFunctionPayload, Function},
   parser::parse,
   rounding_mode::RoundingMode,
   value::Value,
@@ -61,6 +62,7 @@ mod environment;
 mod error;
 mod eval_result;
 mod evaluator;
+mod float_ext;
 mod function;
 mod parser;
 mod rounding_mode;

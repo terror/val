@@ -41,7 +41,7 @@ impl Arguments {
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator = Evaluator::new(config);
+    let mut evaluator = Evaluator::from(Environment::new(config));
 
     match parse(&content) {
       Ok(ast) => match evaluator.eval(&ast) {
@@ -67,7 +67,7 @@ impl Arguments {
   }
 
   fn eval_expression(config: Config, expr: String) -> Result {
-    let mut evaluator = Evaluator::new(config);
+    let mut evaluator = Evaluator::from(Environment::new(config));
 
     match parse(&expr) {
       Ok(ast) => match evaluator.eval(&ast) {
@@ -125,7 +125,8 @@ impl Arguments {
       editor.add_history_entry(line.as_str())?;
       editor.save_history(&history)?;
 
-      let mut evaluator = Evaluator::new(config.clone());
+      let mut evaluator =
+        Evaluator::from(Environment::new(config.clone()).clone());
 
       match parse(&line) {
         Ok(ast) => match evaluator.eval(&ast) {

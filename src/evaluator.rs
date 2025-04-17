@@ -6,23 +6,17 @@ pub struct Evaluator<'a> {
   pub inside_loop: bool,
 }
 
-impl<'a> Evaluator<'a> {
-  pub fn new(config: Config) -> Self {
-    Self {
-      environment: Environment::new(config),
-      inside_function: false,
-      inside_loop: false,
-    }
-  }
-
-  pub fn with_environment(environment: Environment<'a>) -> Self {
+impl<'a> From<Environment<'a>> for Evaluator<'a> {
+  fn from(environment: Environment<'a>) -> Self {
     Self {
       environment,
       inside_function: false,
       inside_loop: false,
     }
   }
+}
 
+impl<'a> Evaluator<'a> {
   pub fn eval(
     &mut self,
     ast: &Spanned<Program<'a>>,
@@ -96,25 +90,34 @@ impl<'a> Evaluator<'a> {
               }
             };
 
-            todo!()
+            let index = match self
+              .eval_expression(index_box)?
+              .number(index_box.1)?
+              .to_f64(self.environment.config.rounding_mode)
+            {
+              Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+              _ => {
+                return Err(Error::new(
+                  index_box.1,
+                  "List index must be a non-negative finite number",
+                ));
+              }
+            };
 
-            // let index =
-            //   self.eval_expression(index_box)?.number(index_box.1)? as usize;
+            if index >= list.len() {
+              return Err(Error::new(
+                lhs.1,
+                format!(
+                  "Index {} out of bounds for list of length {}",
+                  index,
+                  list.len()
+                ),
+              ));
+            }
 
-            // if index >= list.len() {
-            //   return Err(Error::new(
-            //     lhs.1,
-            //     format!(
-            //       "Index {} out of bounds for list of length {}",
-            //       index,
-            //       list.len()
-            //     ),
-            //   ));
-            // }
+            list[index] = value.clone();
 
-            // list[index] = value.clone();
-
-            // self.environment.add_variable(list_name, Value::List(list));
+            self.environment.add_variable(list_name, Value::List(list));
           }
 
           _ => {
@@ -406,7 +409,27 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(rhs.1, "Modulo by zero"));
         }
 
-        todo!()
+        let quotient = lhs_num.div(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        );
+
+        let floored_quotient = quotient.floor();
+
+        let product = floored_quotient.mul(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        );
+
+        let remainder = lhs_num.sub(
+          &product,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        );
+
+        Ok(Value::Number(remainder))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
         self.eval_expression(lhs)?.number(lhs.1)?.mul(
@@ -481,22 +504,32 @@ impl<'a> Evaluator<'a> {
           }
         };
 
-        todo!()
+        let index = match self
+          .eval_expression(index)?
+          .number(index.1)?
+          .to_f64(self.environment.config.rounding_mode)
+        {
+          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+          _ => {
+            return Err(Error::new(
+              index.1,
+              "List index must be a non-negative finite number",
+            ));
+          }
+        };
 
-        // let index = self.eval_expression(index)?.number(index.1)? as usize;
+        if index >= list.len() {
+          return Err(Error::new(
+            *span,
+            format!(
+              "Index {} out of bounds for list of length {}",
+              index,
+              list.len()
+            ),
+          ));
+        }
 
-        // if index >= list.len() {
-        //   return Err(Error::new(
-        //     *span,
-        //     format!(
-        //       "Index {} out of bounds for list of length {}",
-        //       index,
-        //       list.len()
-        //     ),
-        //   ));
-        // }
-
-        // Ok(list[index].clone())
+        Ok(list[index].clone())
       }
       Expression::Number(number) => Ok(Value::Number(number.clone())),
       Expression::String(string) => Ok(Value::String(string)),
