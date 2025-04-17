@@ -131,7 +131,6 @@ impl<'a> Evaluator<'a> {
 
         Ok(EvalResult::Value(value))
       }
-
       Statement::Block(statements) => {
         let mut result = Value::Null;
 
@@ -159,7 +158,6 @@ impl<'a> Evaluator<'a> {
         }
         Ok(EvalResult::Break)
       }
-
       Statement::Continue => {
         if !self.inside_loop {
           return Err(Error::new(
@@ -170,11 +168,9 @@ impl<'a> Evaluator<'a> {
 
         Ok(EvalResult::Continue)
       }
-
       Statement::Expression(expression) => {
         Ok(EvalResult::Value(self.eval_expression(expression)?))
       }
-
       Statement::Function(name, params, body) => {
         let function = Value::Function(
           name,
@@ -189,7 +185,6 @@ impl<'a> Evaluator<'a> {
 
         Ok(EvalResult::Value(function))
       }
-
       Statement::If(condition, then_branch, else_branch) => {
         if self.eval_expression(condition)?.boolean(condition.1)? {
           let mut result = Value::Null;
@@ -262,7 +257,6 @@ impl<'a> Evaluator<'a> {
           None => Value::Null,
         }))
       }
-
       Statement::While(condition, body) => {
         let mut result = Value::Null;
 

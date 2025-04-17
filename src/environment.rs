@@ -925,15 +925,13 @@ impl<'src> Environment<'src> {
   }
 
   pub fn resolve_symbol(&self, symbol: &str) -> Option<&Value<'src>> {
-    if let Some(val) = self.variables.get(symbol) {
-      Some(val)
+    if let Some(value) = self.variables.get(symbol) {
+      Some(value)
     } else if let Some(function) = self.functions.get(symbol) {
       match function {
         Function::UserDefined(value) => Some(value),
-        _ => None, // We should support this at some point
+        Function::Builtin(_) => None, // We should support this at some point
       }
-    } else if let Some(value) = self.variables.get(symbol) {
-      Some(value)
     } else if let Some(parent) = &self.parent {
       parent.resolve_symbol(symbol)
     } else {

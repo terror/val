@@ -95,6 +95,16 @@ val -e 'sin(2) * e ^ pi * cos(sum([1, 2, 3]))'
 **n.b.** The `--expression` option and `filename` argument are mutually
 exclusive.
 
+## Features
+
+This section describes some of the language features **val** implements in
+detail, and should serve as a guide to anyone wanting to write a **val**
+program.
+
+### Statements
+
+**val** supports a few statement constructs
+
 ## Prior Art
 
 [bc(1)](https://linux.die.net/man/1/bc) - An arbitrary precision calculator
