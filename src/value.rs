@@ -11,7 +11,7 @@ pub enum Value<'src> {
   ),
   List(Vec<Self>),
   Null,
-  Number(f64),
+  Number(BigFloat),
   String(&'src str),
 }
 
@@ -33,7 +33,7 @@ impl Display for Value<'_> {
           .join(", ")
       ),
       Value::Null => write!(f, "null"),
-      Value::Number(number) => write!(f, "{number}"),
+      Value::Number(number) => write!(f, "{number}",),
       Value::String(string) => write!(f, "{string}"),
     }
   }
@@ -80,9 +80,9 @@ impl<'a> Value<'a> {
     }
   }
 
-  pub fn number(&self, span: Span) -> Result<f64, Error> {
+  pub fn number(&self, span: Span) -> Result<BigFloat, Error> {
     if let Value::Number(x) = self {
-      Ok(*x)
+      Ok(x.clone())
     } else {
       Err(Error {
         span,
