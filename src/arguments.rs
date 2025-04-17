@@ -1,19 +1,29 @@
 use super::*;
 
-#[derive(Clap)]
+#[derive(Clap, Debug)]
 #[clap(author, version)]
 pub struct Arguments {
+  #[clap(conflicts_with = "expression")]
   filename: Option<PathBuf>,
+  #[clap(short, long, conflicts_with = "filename")]
+  expression: Option<String>,
 }
 
 impl Arguments {
   pub fn run(self) -> Result {
-    match self.filename {
-      Some(filename) => Self::eval(filename),
-      #[cfg(not(target_family = "wasm"))]
-      None => Self::read(),
-      #[cfg(target_family = "wasm")]
-      None => Err(anyhow::anyhow!("Interactive mode not supported in WASM")),
+    match (self.filename, self.expression) {
+      (Some(filename), _) => Self::eval(filename),
+      (_, Some(expression)) => Self::eval_expression(expression),
+      _ => {
+        #[cfg(not(target_family = "wasm"))]
+        {
+          Self::read()
+        }
+        #[cfg(target_family = "wasm")]
+        {
+          Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
+        }
+      }
     }
   }
 
@@ -40,6 +50,40 @@ impl Arguments {
           error
             .report(&filename)
             .eprint((filename.as_str(), Source::from(&content)))?;
+        }
+
+        process::exit(1);
+      }
+    }
+  }
+
+  fn eval_expression(expr: String) -> Result {
+    let mut evaluator = Evaluator::new();
+
+    match parse(&expr) {
+      Ok(ast) => match evaluator.eval(&ast) {
+        Ok(value) => {
+          if let Value::Null = value {
+            return Ok(());
+          }
+
+          println!("{}", value);
+
+          Ok(())
+        }
+        Err(error) => {
+          error
+            .report("<expression>")
+            .eprint(("<expression>", Source::from(expr)))?;
+
+          process::exit(1);
+        }
+      },
+      Err(errors) => {
+        for error in errors {
+          error
+            .report("<expression>")
+            .eprint(("<expression>", Source::from(&expr)))?;
         }
 
         process::exit(1);
@@ -96,5 +140,82 @@ impl Arguments {
         }
       }
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use {super::*, clap::Parser, std::path::PathBuf};
+
+  #[test]
+  fn filename_only() {
+    let arguments = Arguments::parse_from(vec!["program", "file.txt"]);
+
+    assert!(arguments.filename.is_some());
+    assert!(arguments.expression.is_none());
+
+    assert_eq!(arguments.filename.unwrap(), PathBuf::from("file.txt"));
+  }
+
+  #[test]
+  fn expression_only() {
+    let arguments =
+      Arguments::parse_from(vec!["program", "--expression", "1 + 2"]);
+
+    assert!(arguments.filename.is_none());
+    assert!(arguments.expression.is_some());
+
+    assert_eq!(arguments.expression.unwrap(), "1 + 2");
+  }
+
+  #[test]
+  fn expression_short_form() {
+    let arguments = Arguments::parse_from(vec!["program", "-e", "1 + 2"]);
+
+    assert!(arguments.filename.is_none());
+    assert!(arguments.expression.is_some());
+
+    assert_eq!(arguments.expression.unwrap(), "1 + 2");
+  }
+
+  #[test]
+  fn both_should_fail() {
+    assert!(
+      Arguments::try_parse_from(vec![
+        "program",
+        "file.txt",
+        "--expression",
+        "1 + 2"
+      ])
+      .is_err()
+    );
+  }
+
+  #[test]
+  fn neither_provided() {
+    let arguments = Arguments::parse_from(vec!["program"]);
+
+    assert!(arguments.filename.is_none());
+    assert!(arguments.expression.is_none());
+  }
+
+  #[test]
+  fn conflict_error_message() {
+    let result = Arguments::try_parse_from(vec![
+      "program",
+      "file.txt",
+      "--expression",
+      "1 + 2",
+    ]);
+
+    assert!(result.is_err());
+
+    let error = result.unwrap_err().to_string();
+
+    assert!(
+      error.contains("cannot be used with"),
+      "Error should mention conflicts: {}",
+      error
+    );
   }
 }
