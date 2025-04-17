@@ -123,6 +123,130 @@ while (i < 10) {
 }
 ```
 
+### Expressions
+
+**val** supports a variety of expressions that can be combined to form more
+complex operations:
+
+| Category       | Operation             | Syntax                        | Example                              |
+| -------------- | --------------------- | ----------------------------- | ------------------------------------ |
+| **Arithmetic** | Addition              | `a + b`                       | `1 + 2`                              |
+|                | Subtraction           | `a - b`                       | `5 - 3`                              |
+|                | Multiplication        | `a * b`                       | `4 * 2`                              |
+|                | Division              | `a / b`                       | `10 / 2`                             |
+|                | Modulo                | `a % b`                       | `7 % 3`                              |
+|                | Exponentiation        | `a ^ b`                       | `2 ^ 3`                              |
+|                | Negation              | `-a`                          | `-5`                                 |
+| **Logical**    | And                   | `a && b`                      | `true && false`                      |
+|                | Or                    | <code>a &#124;&#124; b</code> | <code>true &#124;&#124; false</code> |
+|                | Not                   | `!a`                          | `!true`                              |
+| **Comparison** | Equal                 | `a == b`                      | `x == 10`                            |
+|                | Not Equal             | `a != b`                      | `y != 20`                            |
+|                | Less Than             | `a < b`                       | `a < b`                              |
+|                | Less Than or Equal    | `a <= b`                      | `i <= 5`                             |
+|                | Greater Than          | `a > b`                       | `count > 0`                          |
+|                | Greater Than or Equal | `a >= b`                      | `value >= 100`                       |
+| **Other**      | Function Call         | `function(args)`              | `sin(x)`                             |
+|                | List Indexing         | `list[index]`                 | `numbers[0]`                         |
+|                | List Creation         | `[item1, item2, ...]`         | `[1, 2, 3]`                          |
+|                | List Concatenation    | `list1 + list2`               | `[1, 2] + [3, 4]`                    |
+|                | String Concatenation  | `string1 + string2`           | `"Hello, " + name`                   |
+|                | Variable Reference    | `identifier`                  | `x`                                  |
+
+### Values
+
+**val** has several primitive value types:
+
+#### Number
+
+Numeric values are represented as double-precision floating point numbers:
+
+```rust
+x = 42
+y = 3.14159
+z = -5
+```
+
+#### Boolean
+
+Boolean values represent truth values:
+
+```rust
+a = true
+b = false
+c = a && b
+d = a || b
+e = !a
+```
+
+#### String
+
+Text values enclosed in single or double quotes:
+
+```rust
+greeting = "Hello"
+name = 'World'
+message = greeting + ", " + name + "!"
+```
+
+#### List
+
+Collections of values of any type:
+
+```rust
+numbers = [1, 2, 3, 4, 5]
+mixed = [1, "two", true, [3, 4]]
+empty = []
+first = numbers[0]
+numbers[0] = 10
+combined = numbers + [6, 7]
+```
+
+### Built-ins
+
+**val** offers a ton of built-in functions and constants. Below documents them:
+
+| Category          | Function/Constant   | Description                        | Example                  |
+| ----------------- | ------------------- | ---------------------------------- | ------------------------ |
+| **Constants**     | `pi`                | Mathematical constant π (≈3.14159) | `area = pi * r^2`        |
+|                   | `e`                 | Mathematical constant e (≈2.71828) | `growth = e^rate`        |
+| **Trigonometric** | `sin(x)`            | Sine of x (radians)                | `sin(pi/2)`              |
+|                   | `cos(x)`            | Cosine of x (radians)              | `cos(0)`                 |
+|                   | `tan(x)`            | Tangent of x (radians)             | `tan(pi/4)`              |
+|                   | `csc(x)`            | Cosecant of x (radians)            | `csc(pi/6)`              |
+|                   | `sec(x)`            | Secant of x (radians)              | `sec(0)`                 |
+|                   | `cot(x)`            | Cotangent of x (radians)           | `cot(pi/4)`              |
+| **Inverse Trig**  | `asin(x)`           | Arc sine (-1≤x≤1)                  | `asin(0.5)`              |
+|                   | `acos(x)`           | Arc cosine (-1≤x≤1)                | `acos(0.5)`              |
+|                   | `arc(x)`            | Arc tangent                        | `arc(1)`                 |
+|                   | `acsc(x)`           | Arc cosecant (abs(x)≥1)            | `acsc(2)`                |
+|                   | `asec(x)`           | Arc secant (abs(x)≥1)              | `asec(2)`                |
+|                   | `acot(x)`           | Arc cotangent                      | `acot(1)`                |
+| **Hyperbolic**    | `sinh(x)`           | Hyperbolic sine                    | `sinh(1)`                |
+|                   | `cosh(x)`           | Hyperbolic cosine                  | `cosh(1)`                |
+|                   | `tanh(x)`           | Hyperbolic tangent                 | `tanh(1)`                |
+| **Logarithmic**   | `ln(x)`             | Natural logarithm                  | `ln(e)`                  |
+|                   | `log2(x)`           | Base-2 logarithm                   | `log2(8)`                |
+|                   | `log10(x)`          | Base-10 logarithm                  | `log10(100)`             |
+|                   | `e(x)`              | e raised to power x                | `e(2)`                   |
+| **Numeric**       | `sqrt(x)`           | Square root (x≥0)                  | `sqrt(16)`               |
+|                   | `ceil(x)`           | Round up to integer                | `ceil(4.3)`              |
+|                   | `floor(x)`          | Round down to integer              | `floor(4.7)`             |
+|                   | `abs(x)`            | Absolute value                     | `abs(-5)`                |
+| **Collections**   | `len(x)`            | Length of list or string           | `len("hello")`           |
+|                   | `sum(list)`         | Sum list elements                  | `sum([1,2,3])`           |
+| **Conversion**    | `int(x)`            | Convert to integer                 | `int("42")`              |
+|                   | `float(x)`          | Convert to float                   | `float("3.14")`          |
+|                   | `bool(x)`           | Convert to boolean                 | `bool(1)`                |
+|                   | `list(x)`           | Convert to list                    | `list("abc")`            |
+| **I/O**           | `print(...)`        | Print without newline              | `print("Hello")`         |
+|                   | `println(...)`      | Print with newline                 | `println("World")`       |
+|                   | `input([prompt])`   | Read line from stdin               | `name = input("Name: ")` |
+| **String**        | `split(str, delim)` | Split string                       | `split("a,b,c", ",")`    |
+|                   | `join(list, delim)` | Join list elements                 | `join(["a","b"], "-")`   |
+| **Program**       | `exit([code])`      | Exit program                       | `exit(1)`                |
+|                   | `quit([code])`      | Alias for exit                     | `quit(0)`                |
+
 ## Prior Art
 
 [bc(1)](https://linux.die.net/man/1/bc) - An arbitrary precision calculator
