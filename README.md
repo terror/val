@@ -41,10 +41,10 @@ arguments/options we support:
 Usage: val [OPTIONS] [FILENAME]
 
 Arguments:
-  [FILENAME]  
+  [FILENAME]
 
 Options:
-  -e, --expression <EXPRESSION>        
+  -e, --expression <EXPRESSION>
   -p, --precision <PRECISION>          [default: 1024]
   -r, --rounding-mode <ROUNDING_MODE>  [default: to-even]
   -h, --help                           Print help
@@ -161,13 +161,21 @@ complex operations:
 
 #### Number
 
-Numeric values are represented as double-precision floating point numbers:
+Numeric values are represented as arbitrary floating point numbers:
 
 ```rust
-x = 42
-y = 3.14159
-z = -5
+> pi
+3.141592653589793115997963468544185161590576171875e+0
+> e
+2.718281828459045090795598298427648842334747314453125e+0
+> sin(2) * e ^ pi * cos(sum([1, 2, 3]))
+1.64814557939128835908118223753548409318930600432600320575175542910885566534716862696709583557263450637540094805515971245058657340687939442764118452427864231041058959960049996970569867866035825048029794926250103816423751837050040821914044725396611746570949840536443560831710407959633707222226883928822125018008e+1
+>
 ```
+
+You can specify the rounding mode, and what sort of precision you'd like to see
+in the output by using the `--rounding-mode` and `--precision` options
+respectively.
 
 #### Boolean
 
