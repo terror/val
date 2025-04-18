@@ -38,7 +38,7 @@ Below is the output of `val --help`, which describes some of the
 arguments/options we support:
 
 ```present cargo run -- --help
-val 0.3.4
+val 0.3.5
 Liam <liam@scalzulli.com>
 An arbitrary precision calculator language
 
@@ -52,7 +52,7 @@ Options:
   -l, --load <LOAD>                    Load files before entering the REPL
   -p, --precision <PRECISION>          Decimal precision to use for calculations [default: 1024]
   -r, --rounding-mode <ROUNDING_MODE>  Rounding mode to use for calculations [default: to-even]
-      --stack-size <STACK_SIZE>        Stack size in MB for evaluations [default: 8]
+      --stack-size <STACK_SIZE>        Stack size in MB for evaluations [default: 128]
   -h, --help                           Print help
   -V, --version                        Print version
 ```
