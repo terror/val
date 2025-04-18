@@ -51,6 +51,9 @@ pub struct Arguments {
     help = "Rounding mode to use for calculations",
   )]
   rounding_mode: RoundingMode,
+
+  #[clap(long, default_value = "8", help = "Stack size in MB for evaluations")]
+  pub stack_size: usize,
 }
 
 impl Arguments {

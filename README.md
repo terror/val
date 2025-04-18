@@ -52,6 +52,7 @@ Options:
   -l, --load <LOAD>                    Load files before entering the REPL
   -p, --precision <PRECISION>          Decimal precision to use for calculations [default: 1024]
   -r, --rounding-mode <ROUNDING_MODE>  Rounding mode to use for calculations [default: to-even]
+      --stack-size <STACK_SIZE>        Stack size in MB for evaluations [default: 8]
   -h, --help                           Print help
   -V, --version                        Print version
 ```
