@@ -913,7 +913,7 @@ impl<'src> Environment<'src> {
             )),
           },
           Value::Boolean(b) => {
-            Ok(Value::Number(BigFloat::from(if *b { 2.0 } else { 0.0 })))
+            Ok(Value::Number(BigFloat::from(if *b { 1.0 } else { 0.0 })))
           }
           _ => Err(Error::new(
             payload.span,
