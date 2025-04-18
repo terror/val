@@ -777,7 +777,7 @@ fn natural_logarithm() -> Result {
   Test::new()?
     .program("println(ln(e))")
     .expected_status(0)
-    .expected_stdout(Contains("0.99999"))
+    .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
@@ -818,7 +818,7 @@ fn builtin_variables_and_functions_can_coexist() -> Result {
     .argument("53")
     .program("println(e * e(20))")
     .expected_status(0)
-    .expected_stdout(Exact("1318815734.4832146271\n"))
+    .expected_stdout(Exact("1318815734.4832146972\n"))
     .run()
 }
 
@@ -837,7 +837,7 @@ fn functions_with_constants() -> Result {
     .argument("53")
     .program("println(ln(e * 2))")
     .expected_status(0)
-    .expected_stdout(Exact("1.6931471805599452561\n"))
+    .expected_stdout(Exact("1.6931471805599453094\n"))
     .run()?;
 
   Test::new()?
