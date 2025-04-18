@@ -16,7 +16,9 @@ fn main() {
     .unwrap()
     .join();
 
-  if let Err(error) = result.unwrap_or_else(|_| Err(anyhow::anyhow!("Thread panicked"))) {
+  if let Err(error) =
+    result.unwrap_or_else(|_| Err(anyhow::anyhow!("Thread panicked")))
+  {
     if let Some(error) = error.downcast_ref::<ReadlineError>() {
       if matches!(error, ReadlineError::Eof | ReadlineError::Interrupted) {
         return;
