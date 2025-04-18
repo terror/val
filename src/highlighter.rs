@@ -391,6 +391,11 @@ impl<'src> TreeHighlighter<'src> {
 
         self.collect_expression_spans(index, spans);
       }
+      Expression::Null => {
+        if let Some(null_pos) = self.content[start..end].find("null") {
+          spans.push((start + null_pos, start + null_pos + 4, COLOR_KEYWORD));
+        }
+      }
       Expression::Number(_) => {
         let number_pattern = self.find_number_span(start, end);
 

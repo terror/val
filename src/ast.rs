@@ -220,6 +220,7 @@ pub enum Expression<'a> {
   Identifier(&'a str),
   List(Vec<Spanned<Self>>),
   ListAccess(Box<Spanned<Self>>, Box<Spanned<Self>>),
+  Null,
   Number(BigFloat),
   String(&'a str),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
@@ -261,6 +262,7 @@ impl Display for Expression<'_> {
       Expression::ListAccess(list, index) => {
         write!(f, "list_access({}, {})", list.0, index.0)
       }
+      Expression::Null => write!(f, "null"),
       Expression::Number(number) => write!(f, "number({})", number.display()),
       Expression::String(string) => write!(f, "string(\"{}\")", string),
       Expression::UnaryOp(op, expr) => {
@@ -279,6 +281,7 @@ impl Expression<'_> {
       Expression::Identifier(_) => "identifier",
       Expression::List(_) => "list",
       Expression::ListAccess(_, _) => "list_access",
+      Expression::Null => "null",
       Expression::Number(_) => "number",
       Expression::String(_) => "string",
       Expression::UnaryOp(_, _) => "unary_op",

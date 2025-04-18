@@ -531,6 +531,7 @@ impl<'a> Evaluator<'a> {
 
         Ok(list[index].clone())
       }
+      Expression::Null => Ok(Value::Null),
       Expression::Number(number) => Ok(Value::Number(number.clone())),
       Expression::String(string) => Ok(Value::String(string)),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => {

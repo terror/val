@@ -210,6 +210,11 @@ impl From<(&Expression<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Expression::Null => Self {
+        kind: expression.kind(),
+        range,
+        children,
+      },
       Expression::Number(_) => Self {
         kind: expression.kind(),
         range,

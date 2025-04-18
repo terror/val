@@ -174,6 +174,10 @@ fn expression_parser<'a>()
       .map(Expression::Boolean)
       .map_with(|ast, e| (ast, e.span()));
 
+    let null = just("null")
+      .map(|_| Expression::Null)
+      .map_with(|ast, e| (ast, e.span()));
+
     let double_quoted_string = just('"')
       .ignore_then(none_of('"').repeated().to_slice())
       .then_ignore(just('"'))
@@ -218,6 +222,7 @@ fn expression_parser<'a>()
 
     let atom = number
       .or(boolean)
+      .or(null)
       .or(expression.clone().delimited_by(just('('), just(')')))
       .or(function_call)
       .or(list)
@@ -625,7 +630,7 @@ mod tests {
   fn invalid_operator() {
     Test::new()
       .program("2 +* 3")
-      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', '(', identifier, '[', '\"', or '''")])
+      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', 'n', '(', identifier, '[', '\"', or '''")])
       .run();
   }
 
