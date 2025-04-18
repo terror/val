@@ -1038,6 +1038,29 @@ impl<'src> Environment<'src> {
       }),
     );
 
+    env.add_function(
+      "append",
+      Function::Builtin(|payload| {
+        if payload.arguments.len() != 2 {
+          return Err(Error::new(
+            payload.span,
+            format!(
+              "Function `append` expects 2 arguments, got {}",
+              payload.arguments.len()
+            ),
+          ));
+        }
+
+        let mut list = payload.arguments[0].list(payload.span)?;
+
+        let value = payload.arguments[1].clone();
+
+        list.push(value);
+
+        Ok(Value::List(list))
+      }),
+    );
+
     env.add_variable(
       "e",
       Value::Number(BigFloat::from_f64(std::f64::consts::E, config.precision)),

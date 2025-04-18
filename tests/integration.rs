@@ -2807,3 +2807,55 @@ fn null_values() -> Result {
     .expected_stdout(Exact("\n\nnull\n"))
     .run()
 }
+
+#[test]
+fn append_to_list() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      list = [1, 2, 3]
+      result = append(list, 4)
+      println(result)
+
+      println(list)
+
+      empty = []
+      println(append(empty, 'item'))
+
+      mixed = [1, 'two']
+      println(append(mixed, true))
+
+      nested = [1, 2]
+      println(append(nested, [3, 4]))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact(
+      "[1, 2, 3, 4]\n[1, 2, 3]\n['item']\n[1, 'two', true]\n[1, 2, [3, 4]]\n",
+    ))
+    .run()
+}
+
+#[test]
+fn append_wrong_argument_count() -> Result {
+  Test::new()?
+    .program("println(append([1, 2, 3]))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `append` expects 2 arguments, got 1"))
+    .run()?;
+
+  Test::new()?
+    .program("println(append([1, 2, 3], 4, 5))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `append` expects 2 arguments, got 3"))
+    .run()
+}
+
+#[test]
+fn append_with_wrong_types() -> Result {
+  Test::new()?
+    .program("println(append('not a list', 42))")
+    .expected_status(1)
+    .expected_stderr(Contains("'not a list' is not a list"))
+    .run()
+}

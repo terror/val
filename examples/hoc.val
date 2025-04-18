@@ -4,7 +4,7 @@ fn map(l, f) {
   result = []
 
   while (i < len(l)) {
-    result = result + [f(l[i])]
+    result = append(result, f(l[i]))
     i = i + 1
   }
 
@@ -26,7 +26,7 @@ fn filter(l, f) {
 
   while (i < len(l)) {
     if (f(l[i])) {
-      result = result + [l[i]]
+      result = append(result, l[i])
     }
 
     i = i + 1
