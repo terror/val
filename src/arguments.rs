@@ -1,15 +1,47 @@
 use super::*;
 
-#[derive(Clap, Clone, Debug)]
-#[clap(author, version)]
+#[derive(Clap, Debug)]
+#[clap(
+  about,
+  author,
+  version,
+  help_template = "\
+{before-help}{name} {version}
+{author}
+{about}
+
+\x1b[1;4mUsage\x1b[0m: {usage}
+
+{all-args}{after-help}
+"
+)]
 pub struct Arguments {
-  #[clap(conflicts_with = "expression")]
+  #[clap(conflicts_with = "expression", help = "File to evaluate")]
   filename: Option<PathBuf>,
-  #[clap(short, long, conflicts_with = "filename")]
+
+  #[clap(
+    short,
+    long,
+    conflicts_with = "filename",
+    help = "Expression to evaluate"
+  )]
   expression: Option<String>,
-  #[clap(short, long, default_value = "1024")]
+
+  #[clap(
+    short,
+    long,
+    default_value = "1024",
+    help = "Decimal precision to use for calculations"
+  )]
   precision: usize,
-  #[clap(short, long, value_parser = clap::value_parser!(RoundingMode), default_value = "to-even")]
+
+  #[clap(
+    short,
+    long,
+    value_parser = clap::value_parser!(RoundingMode),
+    default_value = "to-even",
+    help = "Rounding mode to use for calculations",
+  )]
   rounding_mode: RoundingMode,
 }
 

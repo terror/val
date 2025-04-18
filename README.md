@@ -38,15 +38,19 @@ Below is the output of `val --help`, which describes some of the
 arguments/options we support:
 
 ```present cargo run -- --help
+val 0.3.1
+Liam <liam@scalzulli.com>
+An arbitrary precision calculator language
+
 Usage: val [OPTIONS] [FILENAME]
 
 Arguments:
-  [FILENAME]
+  [FILENAME]  File to evaluate
 
 Options:
-  -e, --expression <EXPRESSION>
-  -p, --precision <PRECISION>          [default: 1024]
-  -r, --rounding-mode <ROUNDING_MODE>  [default: to-even]
+  -e, --expression <EXPRESSION>        Expression to evaluate
+  -p, --precision <PRECISION>          Decimal precision to use for calculations [default: 1024]
+  -r, --rounding-mode <ROUNDING_MODE>  Rounding mode to use for calculations [default: to-even]
   -h, --help                           Print help
   -V, --version                        Print version
 ```
