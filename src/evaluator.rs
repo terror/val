@@ -282,6 +282,7 @@ impl<'a> Evaluator<'a> {
         }
 
         self.inside_loop = old_inside_loop;
+
         Ok(EvalResult::Value(result))
       }
     }
