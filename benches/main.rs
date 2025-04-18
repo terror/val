@@ -26,7 +26,7 @@ fn bench_recursive_factorial(criterion: &mut Criterion) {
 fn bench_prime_count(criterion: &mut Criterion) {
   let mut group = criterion.benchmark_group("prime_count");
 
-  for &number in &[10_000_u32, ] {
+  for &number in &[5_000_u32, 10_000_u32] {
     let program = format!(
       r#"
       fn prime(n) {{
