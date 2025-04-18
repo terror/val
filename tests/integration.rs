@@ -173,12 +173,6 @@ fn float_literals() -> Result {
     .expected_stdout(Exact("0.5\n"))
     .run()?;
 
-  // Test::new()?
-  //   .program("println(-2.718)")
-  //   .expected_status(0)
-  //   .expected_stdout(Exact("-2.718\n"))
-  //   .run()?;
-
   Test::new()?
     .program("println(1.0 + 2.5)")
     .expected_status(0)
@@ -2790,6 +2784,7 @@ fn null_values() -> Result {
       }
 
       result = returns_null()
+
       if (result == result) {
         println('Null equals itself')
       } else {
