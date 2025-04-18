@@ -16,9 +16,6 @@ use super::*;
 "
 )]
 pub struct Arguments {
-  #[clap(conflicts_with = "expression", help = "File to evaluate")]
-  filename: Option<PathBuf>,
-
   #[clap(
     short,
     long,
@@ -26,6 +23,17 @@ pub struct Arguments {
     help = "Expression to evaluate"
   )]
   expression: Option<String>,
+
+  #[clap(conflicts_with = "expression", help = "File to evaluate")]
+  filename: Option<PathBuf>,
+
+  #[clap(
+    short,
+    long,
+    conflicts_with = "filename",
+    help = "Load a file before entering the REPL"
+  )]
+  load: Option<PathBuf>,
 
   #[clap(
     short,
@@ -148,36 +156,31 @@ impl Arguments {
       Editor::<Highlighter, DefaultHistory>::with_config(editor_config)?;
 
     editor.set_helper(Some(Highlighter::new()));
-
     editor.load_history(&history).ok();
+
+    let mut evaluator = Evaluator::from(Environment::new(config.clone()));
 
     loop {
       let line = editor.readline("> ")?;
 
-      editor.add_history_entry(line.as_str())?;
+      editor.add_history_entry(&line)?;
       editor.save_history(&history)?;
 
-      let mut evaluator =
-        Evaluator::from(Environment::new(config.clone()).clone());
+      let line: &'static str = Box::leak(line.into_boxed_str());
 
-      match parse(&line) {
+      match parse(line) {
         Ok(ast) => match evaluator.eval(&ast) {
-          Ok(value) => {
-            if let Value::Null = value {
-              continue;
-            }
-
-            println!("{}", value);
-          }
+          Ok(value) if !matches!(value, Value::Null) => println!("{value}"),
+          Ok(_) => {}
           Err(error) => error
             .report("<input>")
-            .eprint(("<input>", Source::from(&line)))?,
+            .eprint(("<input>", Source::from(line)))?,
         },
         Err(errors) => {
           for error in errors {
             error
               .report("<input>")
-              .eprint(("<input>", Source::from(&line)))?;
+              .eprint(("<input>", Source::from(line)))?;
           }
         }
       }
