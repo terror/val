@@ -1059,7 +1059,7 @@ impl<'src> Environment<'src> {
     env.add_variable(
       "phi",
       Value::Number(BigFloat::from_f64(
-        1.618033988749894848204586834365638118_f64,
+        1.618_033_988_749_895_f64,
         config.precision,
       )),
     );
