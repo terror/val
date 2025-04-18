@@ -167,11 +167,11 @@ impl Arguments {
     if let Some(filenames) = &self.load {
       for filename in filenames {
         let content: &'static str =
-          Box::leak(fs::read_to_string(&filename)?.into_boxed_str());
+          Box::leak(fs::read_to_string(filename)?.into_boxed_str());
 
         let filename = filename.to_string_lossy().to_string();
 
-        match parse(&content) {
+        match parse(content) {
           Ok(ast) => match evaluator.eval(&ast) {
             Ok(_) => {}
             Err(error) => {
