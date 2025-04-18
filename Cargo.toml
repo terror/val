@@ -14,12 +14,17 @@ resolver = "2"
 [workspace]
 members = [".", "crates/*"]
 
+[[bench]]
+name = "main"
+harness = false
+
 [dependencies]
 anyhow = "1.0.97"
 ariadne = "0.5.1"
 astro-float = { version = "0.9.5", default-features = false, features = ["std"] }
 chumsky = "0.10.0"
 clap = { version = "4.5.35", features = ["derive"] }
+criterion = { version = "0.5.1", features = ["html_reports"] }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 dirs = "6.0.0"

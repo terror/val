@@ -52,7 +52,11 @@ pub struct Arguments {
   )]
   rounding_mode: RoundingMode,
 
-  #[clap(long, default_value = "8", help = "Stack size in MB for evaluations")]
+  #[clap(
+    long,
+    default_value = "128",
+    help = "Stack size in MB for evaluations"
+  )]
   pub stack_size: usize,
 }
 
