@@ -166,7 +166,32 @@ impl Arguments {
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
-        self.eval_expression(fs::read_to_string(filename)?)?;
+        let content: &'static str =
+          Box::leak(fs::read_to_string(&filename)?.into_boxed_str());
+
+        let filename = filename.to_string_lossy().to_string();
+
+        match parse(&content) {
+          Ok(ast) => match evaluator.eval(&ast) {
+            Ok(_) => {}
+            Err(error) => {
+              error
+                .report(&filename)
+                .eprint((filename.as_str(), Source::from(content)))?;
+
+              process::exit(1);
+            }
+          },
+          Err(errors) => {
+            for error in errors {
+              error
+                .report(&filename)
+                .eprint((filename.as_str(), Source::from(&content)))?;
+            }
+
+            process::exit(1);
+          }
+        }
       }
     }
 
