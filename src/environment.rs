@@ -427,13 +427,13 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let x = payload.arguments[0].number(payload.span)?;
+        let argument = payload.arguments[0].number(payload.span)?;
 
         let pi_div_2 = BigFloat::from(std::f64::consts::FRAC_PI_2);
 
         // Formula: acot(x) = π/2 - atan(x)
         Ok(Value::Number(pi_div_2.sub(
-          &x.atan(
+          &argument.atan(
             payload.config.precision,
             payload.config.rounding_mode,
             &mut Consts::new().unwrap(),
@@ -913,8 +913,7 @@ impl<'src> Environment<'src> {
             )),
           },
           Value::Boolean(b) => {
-            let val = if *b { 1.0 } else { 0.0 };
-            Ok(Value::Number(BigFloat::from(val)))
+            Ok(Value::Number(BigFloat::from(if *b { 1.0 } else { 0.0 })))
           }
           _ => Err(Error::new(
             payload.span,
@@ -1047,6 +1046,22 @@ impl<'src> Environment<'src> {
     env.add_variable(
       "pi",
       Value::Number(BigFloat::from_f64(std::f64::consts::PI, config.precision)),
+    );
+
+    env.add_variable(
+      "tau",
+      Value::Number(BigFloat::from_f64(
+        std::f64::consts::TAU,
+        config.precision,
+      )),
+    );
+
+    env.add_variable(
+      "phi",
+      Value::Number(BigFloat::from_f64(
+        1.618_033_988_749_895_f64,
+        config.precision,
+      )),
     );
 
     env

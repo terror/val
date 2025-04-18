@@ -113,7 +113,10 @@ Here's an example showcasing most of them in action:
 
 ```rust
 fn fib(n) {
-  if (n <= 1) { return n }
+  if (n <= 1) {
+    return n
+  }
+
   return fib(n - 1) + fib(n - 2)
 }
 
@@ -254,7 +257,10 @@ fn search(l, x) {
   i = 0
 
   while (i < len(l)) {
-    if (l[i] == x) { return i }
+    if (l[i] == x) {
+      return i
+    }
+
     i = i + 1
   }
 }
@@ -272,12 +278,14 @@ if (index == null) {
 
 ### Built-ins
 
-**val** offers a ton of built-in functions and constants. Below documents them:
+**val** offers a many built-in functions and constants:
 
 | Category          | Function/Constant   | Description                        | Example                  |
 | ----------------- | ------------------- | ---------------------------------- | ------------------------ |
 | **Constants**     | `pi`                | Mathematical constant π (≈3.14159) | `area = pi * r^2`        |
 |                   | `e`                 | Mathematical constant e (≈2.71828) | `growth = e^rate`        |
+|                   | `phi`               | Golden ratio φ (≈1.61803)          | `ratio = phi * width`    |
+|                   | `tau`               | Tau constant τ (≈6.28318, 2π)      | `circum = tau * r`       |
 | **Trigonometric** | `sin(x)`            | Sine of x (radians)                | `sin(pi/2)`              |
 |                   | `cos(x)`            | Cosine of x (radians)              | `cos(0)`                 |
 |                   | `tan(x)`            | Tangent of x (radians)             | `tan(pi/4)`              |

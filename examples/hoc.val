@@ -22,17 +22,17 @@ fn even(x) {
 fn filter(l, f) {
   i = 0
 
-  r = []
+  result = []
 
   while (i < len(l)) {
     if (f(l[i])) {
-      r = r + [l[i]]
+      result = result + [l[i]]
     }
 
     i = i + 1
   }
 
-  return r
+  return result
 }
 
 fn reduce(l, f, initial) {
