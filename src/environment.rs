@@ -1038,6 +1038,77 @@ impl<'src> Environment<'src> {
       }),
     );
 
+    env.add_function(
+      "gcd",
+      Function::Builtin(|payload| {
+        if payload.arguments.len() != 2 {
+          return Err(Error::new(
+            payload.span,
+            format!(
+              "Function `gcd` expects 2 arguments, got {}",
+              payload.arguments.len()
+            ),
+          ));
+        }
+
+        let a = payload.arguments[0].number(payload.span)?;
+        let b = payload.arguments[1].number(payload.span)?;
+
+        let mut x = a.abs();
+        let mut y = b.abs();
+
+        while !y.is_zero() {
+          let remainder = x.rem(&y);
+          x = y;
+          y = remainder;
+        }
+
+        Ok(Value::Number(x))
+      }),
+    );
+
+    env.add_function(
+      "lcm",
+      Function::Builtin(|payload| {
+        if payload.arguments.len() != 2 {
+          return Err(Error::new(
+            payload.span,
+            format!(
+              "Function `lcm` expects 2 arguments, got {}",
+              payload.arguments.len()
+            ),
+          ));
+        }
+
+        let a = payload.arguments[0].number(payload.span)?;
+        let b = payload.arguments[1].number(payload.span)?;
+
+        if a.is_zero() || b.is_zero() {
+          return Ok(Value::Number(BigFloat::from(0)));
+        }
+
+        let mut x = a.abs();
+        let mut y = b.abs();
+
+        let product =
+          x.mul(&y, payload.config.precision, payload.config.rounding_mode);
+
+        while !y.is_zero() {
+          let remainder = x.rem(&y);
+          x = y;
+          y = remainder;
+        }
+
+        let lcm = product.div(
+          &x,
+          payload.config.precision,
+          payload.config.rounding_mode,
+        );
+
+        Ok(Value::Number(lcm))
+      }),
+    );
+
     env.add_variable(
       "e",
       Value::Number(BigFloat::from_f64(std::f64::consts::E, config.precision)),

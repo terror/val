@@ -2807,3 +2807,43 @@ fn null_values() -> Result {
     .expected_stdout(Exact("\n\nnull\n"))
     .run()
 }
+
+#[test]
+fn gcd_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(gcd(12, 8))
+      println(gcd(17, 5))
+      println(gcd(0, 5))
+      println(gcd(100, 0))
+      println(gcd(-30, 45))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("4\n1\n5\n100\n15\n"))
+    .run()
+}
+
+#[test]
+fn lcm_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(lcm(4, 6))
+      println(lcm(21, 6))
+      println(lcm(0, 5))
+      println(lcm(7, 0))
+      println(lcm(-12, 18))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("12\n42\n0\n0\n36\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(lcm(5))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `lcm` expects 2 arguments, got 1"))
+    .run()
+}
