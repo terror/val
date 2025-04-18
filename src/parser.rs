@@ -174,9 +174,9 @@ fn expression_parser<'a>()
       .map(Expression::Boolean)
       .map_with(|ast, e| (ast, e.span()));
 
-let null = just("null")
-  .map(|_| Expression::Null)
-  .map_with(|ast, e| (ast, e.span()));
+    let null = just("null")
+      .map(|_| Expression::Null)
+      .map_with(|ast, e| (ast, e.span()));
 
     let double_quoted_string = just('"')
       .ignore_then(none_of('"').repeated().to_slice())
