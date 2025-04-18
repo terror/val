@@ -5,7 +5,7 @@ pub trait FloatExt {
   fn to_f64(&self, rounding_mode: astro_float::RoundingMode) -> Option<f64>;
 }
 
-impl FloatExt for BigFloat {
+impl FloatExt for Float {
   fn display(&self) -> String {
     if self.is_nan() {
       return "nan".into();
@@ -142,18 +142,15 @@ mod tests {
 
   #[test]
   fn specials() {
-    assert_eq!(format!("{}", BigFloat::from(0).display()), "0");
+    assert_eq!(format!("{}", Float::from(0).display()), "0");
+
+    assert_eq!(format!("{}", Float::from(f64::INFINITY).display()), "inf");
 
     assert_eq!(
-      format!("{}", BigFloat::from(f64::INFINITY).display()),
-      "inf"
-    );
-
-    assert_eq!(
-      format!("{}", BigFloat::from(f64::NEG_INFINITY).display()),
+      format!("{}", Float::from(f64::NEG_INFINITY).display()),
       "-inf"
     );
 
-    assert_eq!(format!("{}", BigFloat::nan(None).display()), "nan");
+    assert_eq!(format!("{}", Float::nan(None).display()), "nan");
   }
 }

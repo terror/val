@@ -112,7 +112,7 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(BigFloat::from(1.0).div(
+        Ok(Value::Number(Float::from(1.0).div(
           &sin_val,
           payload.config.precision,
           payload.config.rounding_mode,
@@ -146,7 +146,7 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(BigFloat::from(1.0).div(
+        Ok(Value::Number(Float::from(1.0).div(
           &cos_val,
           payload.config.precision,
           payload.config.rounding_mode,
@@ -180,7 +180,7 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(BigFloat::from(1.0).div(
+        Ok(Value::Number(Float::from(1.0).div(
           &tan_val,
           payload.config.precision,
           payload.config.rounding_mode,
@@ -272,7 +272,7 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument < BigFloat::from(-1.0) || argument > BigFloat::from(1.0) {
+        if argument < Float::from(-1.0) || argument > Float::from(1.0) {
           return Err(Error::new(
             payload.span,
             "asin argument must be between -1 and 1",
@@ -302,7 +302,7 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument < BigFloat::from(-1.0) || argument > BigFloat::from(1.0) {
+        if argument < Float::from(-1.0) || argument > Float::from(1.0) {
           return Err(Error::new(
             payload.span,
             "acos argument must be between -1 and 1",
@@ -355,7 +355,7 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument.abs() < BigFloat::from(1.0) {
+        if argument.abs() < Float::from(1.0) {
           return Err(Error::new(
             payload.span,
             "acsc argument must have absolute value at least 1",
@@ -363,7 +363,7 @@ impl<'src> Environment<'src> {
         }
 
         Ok(Value::Number(
-          (BigFloat::from(1.0).div(
+          (Float::from(1.0).div(
             &argument,
             payload.config.precision,
             payload.config.rounding_mode,
@@ -392,7 +392,7 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument.abs() < BigFloat::from(1.0) {
+        if argument.abs() < Float::from(1.0) {
           return Err(Error::new(
             payload.span,
             "asec argument must have absolute value at least 1",
@@ -400,7 +400,7 @@ impl<'src> Environment<'src> {
         }
 
         Ok(Value::Number(
-          (BigFloat::from(1.0).div(
+          (Float::from(1.0).div(
             &argument,
             payload.config.precision,
             payload.config.rounding_mode,
@@ -429,7 +429,7 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        let pi_div_2 = BigFloat::from(std::f64::consts::FRAC_PI_2);
+        let pi_div_2 = Float::from(std::f64::consts::FRAC_PI_2);
 
         // Formula: acot(x) = π/2 - atan(x)
         Ok(Value::Number(pi_div_2.sub(
@@ -659,9 +659,9 @@ impl<'src> Environment<'src> {
         let value = &payload.arguments[0];
 
         match value {
-          Value::String(s) => Ok(Value::Number(BigFloat::from(s.len() as f64))),
+          Value::String(s) => Ok(Value::Number(Float::from(s.len() as f64))),
           Value::List(items) => {
-            Ok(Value::Number(BigFloat::from(items.len() as f64)))
+            Ok(Value::Number(Float::from(items.len() as f64)))
           }
           _ => Err(Error::new(
             payload.span,
@@ -792,7 +792,7 @@ impl<'src> Environment<'src> {
         let list = payload.arguments[0].list(payload.span)?;
 
         if list.is_empty() {
-          return Ok(Value::Number(BigFloat::from(0.0)));
+          return Ok(Value::Number(Float::from(0.0)));
         }
 
         let mut sum = list[0].number(payload.span)?;
@@ -871,14 +871,14 @@ impl<'src> Environment<'src> {
         match value {
           Value::Number(n) => Ok(Value::Number(n.floor())),
           Value::String(s) => match s.trim().parse::<f64>() {
-            Ok(n) => Ok(Value::Number(BigFloat::from(n).floor())),
+            Ok(n) => Ok(Value::Number(Float::from(n).floor())),
             Err(_) => Err(Error::new(
               payload.span,
               format!("Cannot convert '{}' to int", s),
             )),
           },
           Value::Boolean(b) => {
-            Ok(Value::Number(BigFloat::from(if *b { 1.0 } else { 0.0 })))
+            Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
           }
           _ => Err(Error::new(
             payload.span,
@@ -906,14 +906,14 @@ impl<'src> Environment<'src> {
         match value {
           Value::Number(n) => Ok(Value::Number(n.clone())),
           Value::String(s) => match s.trim().parse::<f64>() {
-            Ok(n) => Ok(Value::Number(BigFloat::from(n))),
+            Ok(n) => Ok(Value::Number(Float::from(n))),
             Err(_) => Err(Error::new(
               payload.span,
               format!("Cannot convert '{}' to float", s),
             )),
           },
           Value::Boolean(b) => {
-            Ok(Value::Number(BigFloat::from(if *b { 1.0 } else { 0.0 })))
+            Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
           }
           _ => Err(Error::new(
             payload.span,
@@ -1107,7 +1107,7 @@ impl<'src> Environment<'src> {
         let b = payload.arguments[1].number(payload.span)?;
 
         if a.is_zero() || b.is_zero() {
-          return Ok(Value::Number(BigFloat::from(0)));
+          return Ok(Value::Number(Float::from(0)));
         }
 
         let mut x = a.abs();
@@ -1146,7 +1146,7 @@ impl<'src> Environment<'src> {
     env.add_variable(
       "tau",
       Value::Number(pi.mul(
-        &BigFloat::from(2.0),
+        &Float::from(2.0),
         config.precision,
         config.rounding_mode,
       )),
@@ -1154,7 +1154,7 @@ impl<'src> Environment<'src> {
 
     env.add_variable(
       "phi",
-      Value::Number(BigFloat::from_f64(
+      Value::Number(Float::from_f64(
         1.618_033_988_749_895_f64,
         config.precision,
       )),
