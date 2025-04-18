@@ -490,7 +490,7 @@ fn cosecant() -> Result {
   Test::new()?
     .program("println(csc(pi/2))")
     .expected_status(0)
-    .expected_stdout(Contains("1.00000"))
+    .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
@@ -511,7 +511,7 @@ fn secant() -> Result {
   Test::new()?
     .program("println(sec(pi/3))")
     .expected_status(0)
-    .expected_stdout(Contains("1.99"))  // ~2.0000...
+    .expected_stdout(Exact("2\n"))  // ~2.0000...
     .run()
 }
 
@@ -829,7 +829,7 @@ fn functions_with_constants() -> Result {
     .argument("53")
     .program("println(arc(pi / 4))")
     .expected_status(0)
-    .expected_stdout(Exact("0.66577375002835384465\n"))
+    .expected_stdout(Exact("0.66577375002835386362\n"))
     .run()?;
 
   Test::new()?
@@ -845,7 +845,7 @@ fn functions_with_constants() -> Result {
     .argument("53")
     .program("println(e(pi))")
     .expected_status(0)
-    .expected_stdout(Exact("23.140692632779266172\n"))
+    .expected_stdout(Exact("23.140692632779269006\n"))
     .run()
 }
 
