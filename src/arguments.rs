@@ -31,9 +31,9 @@ pub struct Arguments {
     short,
     long,
     conflicts_with = "filename",
-    help = "Load a file before entering the REPL"
+    help = "Load files before entering the REPL"
   )]
-  load: Option<PathBuf>,
+  load: Option<Vec<PathBuf>>,
 
   #[clap(
     short,
@@ -55,18 +55,13 @@ pub struct Arguments {
 
 impl Arguments {
   pub fn run(self) -> Result {
-    let config = Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    };
-
-    match (self.filename, self.expression) {
-      (Some(filename), _) => Self::eval(config, filename),
-      (_, Some(expression)) => Self::eval_expression(config, expression),
+    match (&self.filename, &self.expression) {
+      (Some(filename), _) => self.eval(filename.clone()),
+      (_, Some(expression)) => self.eval_expression(expression.clone()),
       _ => {
         #[cfg(not(target_family = "wasm"))]
         {
-          Self::read(config)
+          self.read()
         }
         #[cfg(target_family = "wasm")]
         {
@@ -76,12 +71,15 @@ impl Arguments {
     }
   }
 
-  fn eval(config: Config, filename: PathBuf) -> Result {
+  fn eval(&self, filename: PathBuf) -> Result {
     let content = fs::read_to_string(&filename)?;
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator = Evaluator::from(Environment::new(config));
+    let mut evaluator = Evaluator::from(Environment::new(Config {
+      precision: self.precision,
+      rounding_mode: self.rounding_mode.into(),
+    }));
 
     match parse(&content) {
       Ok(ast) => match evaluator.eval(&ast) {
@@ -106,10 +104,13 @@ impl Arguments {
     }
   }
 
-  fn eval_expression(config: Config, expr: String) -> Result {
-    let mut evaluator = Evaluator::from(Environment::new(config));
+  fn eval_expression(&self, value: String) -> Result {
+    let mut evaluator = Evaluator::from(Environment::new(Config {
+      precision: self.precision,
+      rounding_mode: self.rounding_mode.into(),
+    }));
 
-    match parse(&expr) {
+    match parse(&value) {
       Ok(ast) => match evaluator.eval(&ast) {
         Ok(value) => {
           if let Value::Null = value {
@@ -123,7 +124,7 @@ impl Arguments {
         Err(error) => {
           error
             .report("<expression>")
-            .eprint(("<expression>", Source::from(expr)))?;
+            .eprint(("<expression>", Source::from(value)))?;
 
           process::exit(1);
         }
@@ -132,7 +133,7 @@ impl Arguments {
         for error in errors {
           error
             .report("<expression>")
-            .eprint(("<expression>", Source::from(&expr)))?;
+            .eprint(("<expression>", Source::from(&value)))?;
         }
 
         process::exit(1);
@@ -141,7 +142,7 @@ impl Arguments {
   }
 
   #[cfg(not(target_family = "wasm"))]
-  fn read(config: Config) -> Result {
+  fn read(&self) -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
     let editor_config = Builder::new()
@@ -158,7 +159,16 @@ impl Arguments {
     editor.set_helper(Some(Highlighter::new()));
     editor.load_history(&history).ok();
 
-    let mut evaluator = Evaluator::from(Environment::new(config.clone()));
+    let mut evaluator = Evaluator::from(Environment::new(Config {
+      precision: self.precision,
+      rounding_mode: self.rounding_mode.into(),
+    }));
+
+    if let Some(filenames) = &self.load {
+      for filename in filenames {
+        self.eval_expression(fs::read_to_string(filename)?)?;
+      }
+    }
 
     loop {
       let line = editor.readline("> ")?;
@@ -254,6 +264,26 @@ mod tests {
     ]);
 
     assert!(result.is_err());
+
+    let error = result.unwrap_err().to_string();
+
+    assert!(
+      error.contains("cannot be used with"),
+      "Error should mention conflicts: {}",
+      error
+    );
+  }
+
+  #[test]
+  fn load_conflicts_with_filename() {
+    let result = Arguments::try_parse_from(vec![
+      "program",
+      "file.txt",
+      "--load",
+      "prelude.val",
+    ]);
+
+    assert!(result.is_err(), "Parser should reject filename + --load");
 
     let error = result.unwrap_err().to_string();
 
