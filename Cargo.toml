@@ -1,6 +1,6 @@
 [package]
 name = "val"
-version = "0.3.3"
+version = "0.3.4"
 authors = ["Liam <liam@scalzulli.com>"]
 categories = ["science", "parser-implementations", "command-line-interface"]
 description = "An arbitrary precision calculator language"
