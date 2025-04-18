@@ -113,7 +113,10 @@ Here's an example showcasing most of them in action:
 
 ```rust
 fn fib(n) {
-  if (n <= 1) { return n }
+  if (n <= 1) {
+    return n
+  }
+
   return fib(n - 1) + fib(n - 2)
 }
 
@@ -254,7 +257,10 @@ fn search(l, x) {
   i = 0
 
   while (i < len(l)) {
-    if (l[i] == x) { return i }
+    if (l[i] == x) {
+      return i
+    }
+
     i = i + 1
   }
 }
