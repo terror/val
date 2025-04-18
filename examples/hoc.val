@@ -1,14 +1,14 @@
 fn map(l, f) {
   i = 0
 
-  r = []
+  result = []
 
   while (i < len(l)) {
-    r = r + [f(l[i])]
+    result = result + [f(l[i])]
     i = i + 1
   }
 
-  return r
+  return result
 }
 
 fn double(x) {
