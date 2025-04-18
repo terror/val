@@ -1134,7 +1134,11 @@ impl<'src> Environment<'src> {
 
     env.add_variable(
       "e",
-      Value::Number(BigFloat::from_f64(std::f64::consts::E, config.precision)),
+      Value::Number(BigFloat::from(1.0).exp(
+        config.precision,
+        config.rounding_mode,
+        &mut Consts::new().unwrap(),
+      )),
     );
 
     env.add_variable(
