@@ -1132,18 +1132,16 @@ impl<'src> Environment<'src> {
       }),
     );
 
+    let mut consts = Consts::new().unwrap();
+
     env.add_variable(
       "e",
-      Value::Number(BigFloat::from(1.0).exp(
-        config.precision,
-        config.rounding_mode,
-        &mut Consts::new().unwrap(),
-      )),
+      Value::Number(consts.e(config.precision, config.rounding_mode)),
     );
 
     env.add_variable(
       "pi",
-      Value::Number(BigFloat::from_f64(std::f64::consts::PI, config.precision)),
+      Value::Number(consts.pi(config.precision, config.rounding_mode)),
     );
 
     env.add_variable(
