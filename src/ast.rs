@@ -221,7 +221,7 @@ pub enum Expression<'a> {
   List(Vec<Spanned<Self>>),
   ListAccess(Box<Spanned<Self>>, Box<Spanned<Self>>),
   Null,
-  Number(BigFloat),
+  Number(Float),
   String(&'a str),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
 }

@@ -2666,16 +2666,20 @@ fn loop_with_continue() -> Result {
     .program(indoc! {
       "
       sum = 0
+
       i = 0
 
       loop {
         i = i + 1
+
         if (i > 10) {
           break
         }
+
         if (i % 2 == 0) {
           continue
         }
+
         sum = sum + i
       }
 
@@ -2702,10 +2706,12 @@ fn nested_loops() -> Result {
         }
 
         j = 0
+
         loop {
           if (j >= 3) {
             break
           }
+
           result = result + i + ',' + j + ';'
           j = j + 1
         }
