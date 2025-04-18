@@ -120,7 +120,7 @@ fn fib(n) {
 i = 0
 
 while (i < 10) {
-  println('fib(' + i + ') = ' + fib(i))
+  println("fib(" + i + ") = " + fib(i))
   i = i + 1
 }
 ```
@@ -243,6 +243,31 @@ fn sum(a, b) {
 l = [1, 2, 3, 4, 5]
 
 println(reduce(l, sum, 0))
+```
+
+#### Null
+
+Represents the absence of a value.
+
+```rust
+fn search(l, x) {
+  i = 0
+
+  while (i < len(l)) {
+    if (l[i] == x) { return i }
+    i = i + 1
+  }
+}
+
+l = [1, 2, 3, 4, 5]
+
+index = search(l, 6)
+
+if (index == null) {
+  println("Value not found")
+} else {
+  println("Value found at index " + index)
+}
 ```
 
 ### Built-ins
