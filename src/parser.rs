@@ -254,14 +254,38 @@ fn expression_parser<'a>()
         (Expression::UnaryOp(op, Box::new(rhs)), span)
       });
 
-    let product = unary.clone().foldl(
+    let power = recursive(|power| {
+      unary
+        .clone()
+        .then(
+          just('^')
+            .padded()
+            .ignore_then(power.or(unary.clone()))
+            .or_not(),
+        )
+        .map(|(lhs, rhs)| match rhs {
+          Some(rhs) => {
+            let span = (lhs.1.start..rhs.1.end).into();
+
+            let expression = Expression::BinaryOp(
+              BinaryOp::Power,
+              Box::new(lhs),
+              Box::new(rhs),
+            );
+
+            (expression, span)
+          }
+          None => lhs,
+        })
+    });
+
+    let product = power.clone().foldl(
       choice((
         op('%').to(BinaryOp::Modulo),
         op('*').to(BinaryOp::Multiply),
         op('/').to(BinaryOp::Divide),
-        op('^').to(BinaryOp::Power),
       ))
-      .then(unary.clone())
+      .then(power.clone())
       .repeated(),
       |lhs, (op, rhs)| {
         let span = (lhs.1.start..rhs.1.end).into();
@@ -616,6 +640,24 @@ mod tests {
   }
 
   #[test]
+  fn power_right_associativity() {
+    Test::new()
+      .program("2 ^ 2 ^ 2 ^ 2")
+      .ast("statements(expression(binary_op(^, number(2), binary_op(^, number(2), binary_op(^, number(2), number(2))))))")
+      .run();
+
+    Test::new()
+      .program("2 ^ (2 ^ (2 ^ 2))")
+      .ast("statements(expression(binary_op(^, number(2), binary_op(^, number(2), binary_op(^, number(2), number(2))))))")
+      .run();
+
+    Test::new()
+      .program("((2 ^ 2) ^ 2) ^ 2")
+      .ast("statements(expression(binary_op(^, binary_op(^, binary_op(^, number(2), number(2)), number(2)), number(2))))")
+      .run();
+  }
+
+  #[test]
   fn unclosed_string() {
     Test::new()
       .program("\"unclosed")
@@ -640,7 +682,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![Error::new(
         SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '[', '%', '*', '/', '^', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
+        "found end of input expected any, '.', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
       )])
       .run();
   }
