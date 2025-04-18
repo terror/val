@@ -459,7 +459,7 @@ impl<'src> Environment<'src> {
 
         let number = payload.arguments[0].number(payload.span)?;
 
-        if number <= BigFloat::from(0.0) {
+        if number.is_zero() || number.is_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take logarithm of zero or negative number",
@@ -489,7 +489,7 @@ impl<'src> Environment<'src> {
 
         let number = payload.arguments[0].number(payload.span)?;
 
-        if number <= BigFloat::from(0.0) {
+        if number.is_zero() || number.is_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take logarithm of zero or negative number",
@@ -519,7 +519,7 @@ impl<'src> Environment<'src> {
 
         let number = payload.arguments[0].number(payload.span)?;
 
-        if number <= BigFloat::from(0.0) {
+        if number.is_zero() || number.is_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take logarithm of zero or negative number",

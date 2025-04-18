@@ -10,7 +10,7 @@
 on top of [**chumsky**](https://github.com/zesterer/chumsky) and
 [**ariadne**](https://github.com/zesterer/ariadne).
 
-<img width="1667" alt="Screenshot 2025-04-16 at 1 57 23 AM" src="https://github.com/user-attachments/assets/c295e572-90fa-4b33-ace0-baad1ead64fd" />
+<img width="1667" alt="Screenshot 2025-04-17 at 7 57 27 PM" src="https://github.com/user-attachments/assets/8977c82c-1e9f-413e-8f0d-7ce124f1ca66" />
 
 ## Installation
 
@@ -161,7 +161,7 @@ complex operations:
 
 #### Number
 
-Numeric values are represented as arbitrary floating point numbers (using
+Numeric values are represented as arbitrary precision floating point numbers (using
 [astro_float](https://docs.rs/astro-float/latest/astro_float/index.html) under
 the hood):
 
