@@ -2753,3 +2753,62 @@ fn infinite_loop_with_return() -> Result {
     .expected_stdout(Exact("Found 42\nNot found\n"))
     .run()
 }
+
+#[test]
+fn null_values() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn returns_nothing() { }
+
+      println(returns_nothing())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("null\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      fn returns_null() {
+        return
+      }
+
+      println(returns_null())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("null\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      fn returns_null() {
+        return
+      }
+
+      result = returns_null()
+      if (result == result) {
+        println('Null equals itself')
+      } else {
+        println('Null does not equal itself')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("Null equals itself\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      println()
+      println(println())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("\n\nnull\n"))
+    .run()
+}
