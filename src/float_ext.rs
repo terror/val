@@ -40,7 +40,7 @@ impl FloatExt for BigFloat {
       (parts.next().unwrap(), parts.next().unwrap())
     };
 
-    let exp: i32 = exp.parse().unwrap();
+    let exp = exp.parse::<i32>().unwrap();
 
     let (sign, mant) = mant.split_at(if mant.starts_with('-') { 1 } else { 0 });
 
@@ -63,13 +63,13 @@ impl FloatExt for BigFloat {
     };
 
     if result.find('.').is_some() {
-      result
+      return result
         .trim_end_matches('0')
         .trim_end_matches('.')
-        .to_string()
-    } else {
-      result
+        .to_string();
     }
+
+    result
   }
 
   // https://github.com/stencillogic/astro-float/issues/11
@@ -133,5 +133,27 @@ impl FloatExt for BigFloat {
 
       return Some(f64::from_bits(ret));
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn specials() {
+    assert_eq!(format!("{}", BigFloat::from(0).display()), "0");
+
+    assert_eq!(
+      format!("{}", BigFloat::from(f64::INFINITY).display()),
+      "Inf"
+    );
+
+    assert_eq!(
+      format!("{}", BigFloat::from(f64::NEG_INFINITY).display()),
+      "-Inf"
+    );
+
+    assert_eq!(format!("{}", BigFloat::nan(None).display()), "NaN");
   }
 }
