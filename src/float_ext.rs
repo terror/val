@@ -1,92 +1,81 @@
 use super::*;
 
 pub trait FloatExt {
-  fn to_f64(&self, rounding_mode: astro_float::RoundingMode) -> Option<f64>;
   fn display(&self) -> String;
+  fn to_f64(&self, rounding_mode: astro_float::RoundingMode) -> Option<f64>;
 }
 
 impl FloatExt for BigFloat {
   fn display(&self) -> String {
-    if let Some(parts) = self.as_raw_parts() {
-      let number =
-        BigFloat::from_raw_parts(parts.0, parts.1, parts.2, parts.3, parts.4);
-
-      if number.is_nan() {
-        return "NaN".into();
-      }
-
-      if number.is_inf_pos() {
-        return "Inf".into();
-      }
-
-      if number.is_inf_neg() {
-        return "-Inf".into();
-      }
-
-      if number.is_zero() {
-        return "0".into();
-      }
-
-      let formatted = number
-        .format(
-          Radix::Dec,
-          astro_float::RoundingMode::None,
-          &mut Consts::new().expect("BigFloat constants cache"),
-        )
-        .unwrap();
-
-      if !formatted.contains('e') {
-        return formatted;
-      }
-
-      let (mant, exp) = {
-        let mut parts = formatted.split('e');
-        (parts.next().unwrap(), parts.next().unwrap())
-      };
-
-      let exp: i32 = exp.parse().unwrap();
-
-      let (sign, mant) =
-        mant.split_at(if mant.starts_with('-') { 1 } else { 0 });
-
-      let digits = mant.replace('.', "");
-
-      let new_int_len = mant.find('.').unwrap_or(mant.len()) as i32 + exp;
-
-      let result = if new_int_len <= 0 {
-        format!(
-          "{}0.{}{}",
-          sign,
-          "0".repeat((-new_int_len) as usize),
-          digits
-        )
-      } else if new_int_len as usize >= digits.len() {
-        format!(
-          "{}{}{}",
-          sign,
-          digits,
-          "0".repeat(new_int_len as usize - digits.len())
-        )
-      } else {
-        let (left, right) = digits.split_at(new_int_len as usize);
-        format!("{}{}.{}", sign, left, right)
-      };
-
-      if result.find('.').is_some() {
-        result
-          .trim_end_matches('0')
-          .trim_end_matches('.')
-          .to_string()
-      } else {
-        result
-      }
-    } else {
-      self.to_string()
+    if self.is_nan() {
+      return "NaN".into();
     }
+
+    if self.is_inf_pos() {
+      return "Inf".into();
+    }
+
+    if self.is_inf_neg() {
+      return "-Inf".into();
+    }
+
+    if self.is_zero() {
+      return "0".into();
+    }
+
+    let formatted = self
+      .format(
+        Radix::Dec,
+        astro_float::RoundingMode::None,
+        &mut Consts::new().unwrap(),
+      )
+      .unwrap();
+
+    if !formatted.contains('e') {
+      return formatted;
+    }
+
+    let (mant, exp) = {
+      let mut parts = formatted.split('e');
+      (parts.next().unwrap(), parts.next().unwrap())
+    };
+
+    let exp = exp.parse::<i32>().unwrap();
+
+    let (sign, mant) = mant.split_at(if mant.starts_with('-') { 1 } else { 0 });
+
+    let digits = mant.replace('.', "");
+
+    let length = mant.find('.').unwrap_or(mant.len()) as i32 + exp;
+
+    let result = if length <= 0 {
+      format!("{}0.{}{}", sign, "0".repeat((-length) as usize), digits)
+    } else if length as usize >= digits.len() {
+      format!(
+        "{}{}{}",
+        sign,
+        digits,
+        "0".repeat(length as usize - digits.len())
+      )
+    } else {
+      let (left, right) = digits.split_at(length as usize);
+      format!("{}{}.{}", sign, left, right)
+    };
+
+    if result.find('.').is_some() {
+      return result
+        .trim_end_matches('0')
+        .trim_end_matches('.')
+        .to_string();
+    }
+
+    result
   }
 
+  // https://github.com/stencillogic/astro-float/issues/11
   fn to_f64(&self, rounding_mode: astro_float::RoundingMode) -> Option<f64> {
     let mut big_float = self.clone();
+
     big_float.set_precision(64, rounding_mode).ok()?;
 
     let sign = big_float.sign()?;
@@ -144,5 +133,27 @@ impl FloatExt for BigFloat {
 
       return Some(f64::from_bits(ret));
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn specials() {
+    assert_eq!(format!("{}", BigFloat::from(0).display()), "0");
+
+    assert_eq!(
+      format!("{}", BigFloat::from(f64::INFINITY).display()),
+      "Inf"
+    );
+
+    assert_eq!(
+      format!("{}", BigFloat::from(f64::NEG_INFINITY).display()),
+      "-Inf"
+    );
+
+    assert_eq!(format!("{}", BigFloat::nan(None).display()), "NaN");
   }
 }
