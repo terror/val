@@ -1,4 +1,4 @@
-import { TreeViewer } from '@/components/tree-viewer';
+import { AstNode } from '@/components/ast-node';
 import {
   Select,
   SelectContent,
@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import init, { AstNode, ParseError, parse } from 'val-wasm';
+import init, { AstNode as AstNodeType, ValError, _eval, parse } from 'val-wasm';
 
 import { Editor } from './components/editor';
 import { EditorSettingsDialog } from './components/editor-settings-dialog';
@@ -21,23 +21,21 @@ import {
 const EXAMPLES = {
   factorial: `fn factorial(n) {
   if (n <= 1) {
-    1
+    return 1
   } else {
-    n * factorial(n - 1)
+    return n * factorial(n - 1)
   }
 }
 
-print(factorial(5));`,
+println(factorial(5))`,
 };
 
 function App() {
-  const [wasmLoaded, setWasmLoaded] = useState(false);
-
-  const [ast, setAst] = useState<AstNode | null>(null);
+  const [ast, setAst] = useState<AstNodeType | null>(null);
   const [code, setCode] = useState(EXAMPLES.factorial);
-  const [errors, setErrors] = useState<ParseError[]>([]);
-
   const [currentExample, setCurrentExample] = useState('factorial');
+  const [errors, setErrors] = useState<ValError[]>([]);
+  const [wasmLoaded, setWasmLoaded] = useState(false);
 
   useEffect(() => {
     init()
@@ -56,7 +54,7 @@ function App() {
     try {
       setAst(parse(code));
     } catch (error) {
-      setErrors(error as ParseError[]);
+      setErrors(error as ValError[]);
     }
   }, [code]);
 
@@ -106,7 +104,7 @@ function App() {
                 <EditorSettingsDialog />
               </div>
               <div className='h-full min-h-0 flex-grow overflow-hidden'>
-                <Editor errors={errors} value={code} onChange={setCode} />
+                <Editor errors={errors} onChange={setCode} value={code} />
               </div>
             </div>
           </div>
@@ -118,7 +116,11 @@ function App() {
           className='min-h-0 overflow-hidden'
         >
           <div className='h-full overflow-auto p-2'>
-            <TreeViewer ast={ast} />
+            {ast ? (
+              <AstNode node={ast} />
+            ) : (
+              <div className='text-muted-foreground p-2'>No AST available</div>
+            )}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

@@ -3,7 +3,6 @@ pub(crate) use {
   astro_float::{BigFloat, Consts, Radix, Sign},
   chumsky::prelude::*,
   clap::Parser as Clap,
-  environment::Environment,
   std::{
     collections::HashMap,
     fmt::{self, Display, Formatter},
@@ -35,6 +34,7 @@ pub use crate::{
   arguments::Arguments,
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   config::Config,
+  environment::Environment,
   error::Error,
   eval_result::EvalResult,
   evaluator::Evaluator,

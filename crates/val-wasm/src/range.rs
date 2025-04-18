@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 #[wasm_bindgen]
 pub struct Range {
   pub start: u32,
