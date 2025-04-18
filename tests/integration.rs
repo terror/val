@@ -2809,6 +2809,30 @@ fn null_values() -> Result {
 }
 
 #[test]
+fn append_wrong_argument_count() -> Result {
+  Test::new()?
+    .program("println(append([1, 2, 3]))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `append` expects 2 arguments, got 1"))
+    .run()?;
+
+  Test::new()?
+    .program("println(append([1, 2, 3], 4, 5))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `append` expects 2 arguments, got 3"))
+    .run()
+}
+
+#[test]
+fn append_with_wrong_types() -> Result {
+  Test::new()?
+    .program("println(append('not a list', 42))")
+    .expected_status(1)
+    .expected_stderr(Contains("'not a list' is not a list"))
+    .run()
+}
+
+#[test]
 fn gcd_function() -> Result {
   Test::new()?
     .program(indoc! {
