@@ -8,15 +8,15 @@ pub trait FloatExt {
 impl FloatExt for BigFloat {
   fn display(&self) -> String {
     if self.is_nan() {
-      return "NaN".into();
+      return "nan".into();
     }
 
     if self.is_inf_pos() {
-      return "Inf".into();
+      return "inf".into();
     }
 
     if self.is_inf_neg() {
-      return "-Inf".into();
+      return "-inf".into();
     }
 
     if self.is_zero() {
@@ -146,14 +146,14 @@ mod tests {
 
     assert_eq!(
       format!("{}", BigFloat::from(f64::INFINITY).display()),
-      "Inf"
+      "inf"
     );
 
     assert_eq!(
       format!("{}", BigFloat::from(f64::NEG_INFINITY).display()),
-      "-Inf"
+      "-inf"
     );
 
-    assert_eq!(format!("{}", BigFloat::nan(None).display()), "NaN");
+    assert_eq!(format!("{}", BigFloat::nan(None).display()), "nan");
   }
 }
