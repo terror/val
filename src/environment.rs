@@ -1134,21 +1134,21 @@ impl<'src> Environment<'src> {
 
     let mut consts = Consts::new().unwrap();
 
+    let pi = consts.pi(config.precision, config.rounding_mode);
+
     env.add_variable(
       "e",
       Value::Number(consts.e(config.precision, config.rounding_mode)),
     );
 
-    env.add_variable(
-      "pi",
-      Value::Number(consts.pi(config.precision, config.rounding_mode)),
-    );
+    env.add_variable("pi", Value::Number(pi.clone()));
 
     env.add_variable(
       "tau",
-      Value::Number(BigFloat::from_f64(
-        std::f64::consts::TAU,
+      Value::Number(pi.mul(
+        &BigFloat::from(2.0),
         config.precision,
+        config.rounding_mode,
       )),
     );
 
