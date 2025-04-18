@@ -313,6 +313,8 @@ if (index == null) {
 |                   | `ceil(x)`           | Round up to integer                | `ceil(4.3)`              |
 |                   | `floor(x)`          | Round down to integer              | `floor(4.7)`             |
 |                   | `abs(x)`            | Absolute value                     | `abs(-5)`                |
+|                   | `gcd(a, b)`         | Greatest common divisor            | `gcd(12, 8)`             |
+|                   | `lcm(a, b)`         | Least common multiple              | `lcm(4, 6)`              |
 | **Collections**   | `len(x)`            | Length of list or string           | `len("hello")`           |
 |                   | `sum(list)`         | Sum list elements                  | `sum([1,2,3])`           |
 |                   | `append(list, val)` | Add element to end of list         | `append([1,2], 3)`       |

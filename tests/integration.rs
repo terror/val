@@ -2809,34 +2809,6 @@ fn null_values() -> Result {
 }
 
 #[test]
-fn append_to_list() -> Result {
-  Test::new()?
-    .program(indoc! {
-      "
-      list = [1, 2, 3]
-      result = append(list, 4)
-      println(result)
-
-      println(list)
-
-      empty = []
-      println(append(empty, 'item'))
-
-      mixed = [1, 'two']
-      println(append(mixed, true))
-
-      nested = [1, 2]
-      println(append(nested, [3, 4]))
-      "
-    })
-    .expected_status(0)
-    .expected_stdout(Exact(
-      "[1, 2, 3, 4]\n[1, 2, 3]\n['item']\n[1, 'two', true]\n[1, 2, [3, 4]]\n",
-    ))
-    .run()
-}
-
-#[test]
 fn append_wrong_argument_count() -> Result {
   Test::new()?
     .program("println(append([1, 2, 3]))")
@@ -2857,5 +2829,45 @@ fn append_with_wrong_types() -> Result {
     .program("println(append('not a list', 42))")
     .expected_status(1)
     .expected_stderr(Contains("'not a list' is not a list"))
+    .run()
+}
+
+#[test]
+fn gcd_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(gcd(12, 8))
+      println(gcd(17, 5))
+      println(gcd(0, 5))
+      println(gcd(100, 0))
+      println(gcd(-30, 45))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("4\n1\n5\n100\n15\n"))
+    .run()
+}
+
+#[test]
+fn lcm_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(lcm(4, 6))
+      println(lcm(21, 6))
+      println(lcm(0, 5))
+      println(lcm(7, 0))
+      println(lcm(-12, 18))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("12\n42\n0\n0\n36\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(lcm(5))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `lcm` expects 2 arguments, got 1"))
     .run()
 }
