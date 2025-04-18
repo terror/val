@@ -17,7 +17,7 @@ members = [".", "crates/*"]
 [dependencies]
 anyhow = "1.0.97"
 ariadne = "0.5.1"
-astro-float = "0.9.5"
+astro-float = { version = "0.9.5", default-features = false, features = ["std"] }
 chumsky = "0.10.0"
 clap = { version = "4.5.35", features = ["derive"] }
 
