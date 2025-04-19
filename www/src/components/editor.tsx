@@ -10,11 +10,18 @@ import {
 } from '@codemirror/language';
 import { Diagnostic, lintGutter, linter } from '@codemirror/lint';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 
 interface EditorProps {
   errors: ValError[];
   onChange?: (value: string, viewUpdate: any) => void;
+  onEditorReady?: (view: EditorView) => void;
   value: string;
 }
 
@@ -23,7 +30,7 @@ export interface EditorRef {
 }
 
 export const Editor = forwardRef<EditorRef, EditorProps>(
-  ({ value, errors, onChange }, ref) => {
+  ({ value, errors, onChange, onEditorReady }, ref) => {
     const { settings } = useEditorSettings();
 
     const viewRef = useRef<EditorView | null>(null);
@@ -33,6 +40,12 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
         return viewRef.current;
       },
     }));
+
+    useEffect(() => {
+      if (viewRef.current && onEditorReady) {
+        onEditorReady(viewRef.current);
+      }
+    }, [viewRef.current, onEditorReady]);
 
     const createEditorTheme = useCallback(
       () =>
@@ -125,6 +138,13 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
         [errors]
       );
 
+    const handleEditorCreate = (view: EditorView) => {
+      viewRef.current = view;
+      if (onEditorReady) {
+        onEditorReady(view);
+      }
+    };
+
     return (
       <CodeMirror
         value={value}
@@ -136,12 +156,12 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
         }}
         height='100%'
         extensions={createExtensions()}
-        onCreateEditor={(view) => {
-          viewRef.current = view;
-        }}
+        onCreateEditor={handleEditorCreate}
         onChange={onChange}
         className='h-full'
       />
     );
   }
 );
+
+Editor.displayName = 'Editor';
