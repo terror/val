@@ -38,7 +38,7 @@ Below is the output of `val --help`, which describes some of the
 arguments/options we support:
 
 ```present cargo run -- --help
-val 0.3.5
+val 0.3.6
 Liam <liam@scalzulli.com>
 An arbitrary precision calculator language
 
