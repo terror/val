@@ -21,10 +21,22 @@ import {
 } from './components/ui/resizable';
 import EXAMPLES from './lib/examples';
 
+const STORAGE_KEY_CODE = 'val-editor-code';
+const STORAGE_KEY_EXAMPLE = 'val-editor-example';
+
 function App() {
   const [ast, setAst] = useState<AstNodeType | null>(null);
-  const [code, setCode] = useState(EXAMPLES.factorial);
-  const [currentExample, setCurrentExample] = useState('factorial');
+
+  const [code, setCode] = useState(() => {
+    const savedCode = localStorage.getItem(STORAGE_KEY_CODE);
+    return savedCode || EXAMPLES.factorial;
+  });
+
+  const [currentExample, setCurrentExample] = useState(() => {
+    const savedExample = localStorage.getItem(STORAGE_KEY_EXAMPLE);
+    return savedExample || 'factorial';
+  });
+
   const [editorView, setEditorView] = useState<EditorView | null>(null);
   const [errors, setErrors] = useState<ValError[]>([]);
   const [wasmLoaded, setWasmLoaded] = useState(false);
@@ -60,6 +72,16 @@ function App() {
       setEditorView(editorRef.current.view);
     }
   }, [editorRef.current?.view, editorView]);
+
+  // Save code to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_CODE, code);
+  }, [code]);
+
+  // Save selected example to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
+  }, [currentExample]);
 
   const handleExampleChange = (value: string) => {
     setCurrentExample(value);
