@@ -41,7 +41,6 @@ number = 10
 println("ln(" + number + ") = " + ln(number))
 println("log2(" + number + ") = " + log2(number))
 println("log10(" + number + ") = " + log10(number))
-println()
 
 println("e(" + 2 + ") = " + e(2))
 
