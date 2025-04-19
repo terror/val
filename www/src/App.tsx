@@ -73,12 +73,10 @@ function App() {
     }
   }, [editorRef.current?.view, editorView]);
 
-  // Save code to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_CODE, code);
   }, [code]);
 
-  // Save selected example to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
   }, [currentExample]);

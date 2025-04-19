@@ -1,4 +1,4 @@
-import { highlightExtension } from '@/lib/cm-highlight-extension';
+import { highlightExtension } from '@/lib/highlight';
 import { ValError } from '@/lib/types';
 import { useEditorSettings } from '@/providers/editor-settings-provider';
 import { rust } from '@codemirror/lang-rust';
