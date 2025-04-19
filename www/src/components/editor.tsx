@@ -9,6 +9,7 @@ import {
   syntaxHighlighting,
 } from '@codemirror/language';
 import { Diagnostic, linter } from '@codemirror/lint';
+import { vim } from '@replit/codemirror-vim';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import {
   forwardRef,
@@ -60,6 +61,10 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
 
       if (settings.lineWrapping) {
         extensions.push(EditorView.lineWrapping);
+      }
+
+      if (settings.keybindings === 'vim') {
+        extensions.push(vim());
       }
 
       return extensions;
