@@ -1,7 +1,4 @@
-import {
-  addHighlightEffect,
-  removeHighlightEffect,
-} from '@/lib/cm-highlight-extension';
+import { addHighlightEffect, removeHighlightEffect } from '@/lib/highlight';
 import { AstNode as AstNodeType } from '@/lib/types';
 import { EditorView } from '@codemirror/view';
 import { ChevronDown, ChevronRight } from 'lucide-react';

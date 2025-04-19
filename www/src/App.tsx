@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/select';
 import type { AstNode as AstNodeType, ValError } from '@/lib/types';
 import { EditorView } from '@codemirror/view';
+import { Radius, SquareSigma } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import init, { parse } from 'val-wasm';
@@ -92,7 +93,10 @@ function App() {
     <div className='flex h-screen flex-col p-4'>
       <div className='mb-4 flex items-center'>
         <a href='/' className='font-semibold'>
-          val
+          <div className='flex items-center gap-x-1'>
+            <Radius className='h-4 w-4' />
+            <p>val</p>
+          </div>
         </a>
       </div>
       <ResizablePanelGroup
