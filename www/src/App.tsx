@@ -39,7 +39,6 @@ function App() {
     init()
       .then(() => {
         setWasmLoaded(true);
-        setAst(parse(code));
       })
       .catch((error) => {
         toast.error(error);
@@ -54,7 +53,7 @@ function App() {
     } catch (error) {
       setErrors(error as ValError[]);
     }
-  }, [code]);
+  }, [code, wasmLoaded]);
 
   useEffect(() => {
     if (editorRef.current?.view && !editorView) {
@@ -109,11 +108,11 @@ function App() {
               </div>
               <div className='h-full min-h-0 flex-grow overflow-hidden'>
                 <Editor
-                  ref={editorRef}
                   errors={errors}
                   onChange={setCode}
-                  value={code}
                   onEditorReady={handleEditorReady}
+                  ref={editorRef}
+                  value={code}
                 />
               </div>
             </div>

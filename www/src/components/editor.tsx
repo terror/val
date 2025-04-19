@@ -8,7 +8,7 @@ import {
   indentOnInput,
   syntaxHighlighting,
 } from '@codemirror/language';
-import { Diagnostic, lintGutter, linter } from '@codemirror/lint';
+import { Diagnostic, linter } from '@codemirror/lint';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import {
   forwardRef,
@@ -47,7 +47,25 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
       }
     }, [viewRef.current, onEditorReady]);
 
-    const createEditorTheme = useCallback(
+    const createExtensions = useCallback(() => {
+      const extensions = [
+        EditorState.tabSize.of(settings.tabSize),
+        bracketMatching(),
+        highlightExtension,
+        indentOnInput(),
+        linter(diagnostics()),
+        rust(),
+        syntaxHighlighting(defaultHighlightStyle),
+      ];
+
+      if (settings.lineWrapping) {
+        extensions.push(EditorView.lineWrapping);
+      }
+
+      return extensions;
+    }, [settings]);
+
+    const createTheme = useCallback(
       () =>
         EditorView.theme({
           '&': {
@@ -64,6 +82,9 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
             flex: '1 1 auto',
             fontFamily:
               'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+          },
+          '.cm-line': {
+            padding: '0 10px',
           },
           '.cm-content': {
             padding: '10px 0',
@@ -90,25 +111,6 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
         }),
       [settings]
     );
-
-    const createExtensions = useCallback(() => {
-      const extensions = [
-        EditorState.tabSize.of(settings.tabSize),
-        bracketMatching(),
-        highlightExtension,
-        indentOnInput(),
-        lintGutter(),
-        linter(diagnostics()),
-        rust(),
-        syntaxHighlighting(defaultHighlightStyle),
-      ];
-
-      if (settings.lineWrapping) {
-        extensions.push(EditorView.lineWrapping);
-      }
-
-      return extensions;
-    }, [settings]);
 
     const diagnostics = () =>
       useCallback(
@@ -140,6 +142,7 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
 
     const handleEditorCreate = (view: EditorView) => {
       viewRef.current = view;
+
       if (onEditorReady) {
         onEditorReady(view);
       }
@@ -148,7 +151,7 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
     return (
       <CodeMirror
         value={value}
-        theme={createEditorTheme()}
+        theme={createTheme()}
         basicSetup={{
           foldGutter: false,
           highlightActiveLineGutter: false,
