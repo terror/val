@@ -76,7 +76,7 @@ class App:
     with open(self.output_file, 'w') as f:
       f.write(content)
 
-    print(f'Successfully generated JS dictionary at {self.output_file}')
+    print(f'Successfully generated code at {self.output_file}')
     print(f'Processed {len(val_files)} val files')
 
   def _generate_js_dictionary(self, imports, dictionary_entries):
@@ -89,14 +89,13 @@ class App:
       lines.append(import_line)
 
     lines.append('')
-    lines.append('const EXAMPLES = {')
+    lines.append('export const examples = {')
 
     dictionary_text = ',\n'.join(dictionary_entries)
     lines.append(dictionary_text)
 
     lines.append('};')
     lines.append('')
-    lines.append('export default EXAMPLES;')
 
     return '\n'.join(lines)
 

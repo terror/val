@@ -20,7 +20,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from './components/ui/resizable';
-import EXAMPLES from './lib/examples';
+import { examples } from './lib/examples';
 
 const STORAGE_KEY_CODE = 'val-editor-code';
 const STORAGE_KEY_EXAMPLE = 'val-editor-example';
@@ -30,7 +30,7 @@ function App() {
 
   const [code, setCode] = useState(() => {
     const savedCode = localStorage.getItem(STORAGE_KEY_CODE);
-    return savedCode || EXAMPLES.factorial;
+    return savedCode || examples.factorial;
   });
 
   const [currentExample, setCurrentExample] = useState(() => {
@@ -84,7 +84,7 @@ function App() {
 
   const handleExampleChange = (value: string) => {
     setCurrentExample(value);
-    setCode(EXAMPLES[value as keyof typeof EXAMPLES]);
+    setCode(examples[value as keyof typeof examples]);
   };
 
   if (!wasmLoaded) return null;
@@ -120,7 +120,7 @@ function App() {
                       <SelectValue placeholder='Select example' />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.keys(EXAMPLES).map((key) => (
+                      {Object.keys(examples).map((key) => (
                         <SelectItem key={key} value={key}>
                           {key}
                         </SelectItem>
