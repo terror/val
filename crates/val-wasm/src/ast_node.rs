@@ -1,7 +1,6 @@
 use super::*;
 
-#[derive(Clone)]
-#[wasm_bindgen(getter_with_clone)]
+#[derive(Clone, Serialize)]
 pub struct AstNode {
   pub kind: String,
   pub range: Range,

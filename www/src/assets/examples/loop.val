@@ -1,0 +1,11 @@
+sum = 0; i = 0
+
+loop {
+  if (i >= 5) {
+    break
+  }
+
+  sum = sum + i; i = i + 1
+}
+
+println('sum: ' + sum, 'i: ' + i)

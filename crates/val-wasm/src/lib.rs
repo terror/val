@@ -4,7 +4,11 @@ use {
     error::{ErrorKind, ValError},
     range::Range,
   },
-  val::{Environment, Evaluator, Expression, Program, Span, Statement},
+  serde::Serialize,
+  serde_wasm_bindgen::to_value,
+  val::{
+    Environment, Evaluator, Expression, Program, RoundingMode, Span, Statement,
+  },
   wasm_bindgen::prelude::*,
 };
 
@@ -18,47 +22,58 @@ fn start() {
 }
 
 #[wasm_bindgen]
-pub fn parse(input: &str) -> Result<AstNode, Vec<ValError>> {
+pub fn parse(input: &str) -> Result<JsValue, JsValue> {
   match val::parse(input) {
-    Ok((ast, span)) => Ok(AstNode::from((&ast, &span))),
+    Ok((ast, span)) => Ok(to_value(&AstNode::from((&ast, &span))).unwrap()),
     Err(errors) => Err(
-      errors
-        .into_iter()
-        .map(|error| ValError {
-          kind: ErrorKind::Parser,
-          message: error.message,
-          range: Range::from(error.span),
-        })
-        .collect(),
+      to_value(
+        &errors
+          .into_iter()
+          .map(|error| ValError {
+            kind: ErrorKind::Parser,
+            message: error.message,
+            range: Range::from(error.span),
+          })
+          .collect::<Vec<ValError>>(),
+      )
+      .unwrap(),
     ),
   }
 }
 
 #[wasm_bindgen]
-pub fn eval(input: &str) -> Result<String, Vec<ValError>> {
+pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
   match val::parse(input) {
     Ok(ast) => {
-      let mut evaluator =
-        Evaluator::from(Environment::new(val::Config::default()));
+      let mut evaluator = Evaluator::from(Environment::new(val::Config {
+        precision: 53,
+        rounding_mode: RoundingMode::FromZero.into(),
+      }));
 
       match evaluator.eval(&ast) {
-        Ok(value) => Ok(value.to_string()),
-        Err(error) => Err(vec![ValError {
-          kind: ErrorKind::Evaluator,
-          message: error.message,
-          range: Range::from(error.span),
-        }]),
+        Ok(value) => Ok(to_value(&value.to_string()).unwrap()),
+        Err(error) => Err(
+          to_value(&[ValError {
+            kind: ErrorKind::Evaluator,
+            message: error.message,
+            range: Range::from(error.span),
+          }])
+          .unwrap(),
+        ),
       }
     }
     Err(errors) => Err(
-      errors
-        .into_iter()
-        .map(|error| ValError {
-          kind: ErrorKind::Parser,
-          message: error.message,
-          range: Range::from(error.span),
-        })
-        .collect(),
+      to_value(
+        &errors
+          .into_iter()
+          .map(|error| ValError {
+            kind: ErrorKind::Parser,
+            message: error.message,
+            range: Range::from(error.span),
+          })
+          .collect::<Vec<ValError>>(),
+      )
+      .unwrap(),
     ),
   }
 }

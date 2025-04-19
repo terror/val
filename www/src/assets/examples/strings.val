@@ -1,0 +1,92 @@
+fn reverse_string(str) {
+  n = len(str)
+
+  chars = list(str)
+  result = list(str)
+
+  i = 0
+
+  while (i < n) {
+    result[i] = chars[n - i - 1]
+    i = i + 1
+  }
+
+  return join(result, "")
+}
+
+fn is_palindrome(str) {
+  n = len(str)
+
+  chars = list(str)
+
+  i = 0
+  j = n - 1
+
+  while (i < j) {
+    if (chars[i] != chars[j]) {
+      return false
+    }
+
+    i = i + 1
+    j = j - 1
+  }
+
+  return true
+}
+
+fn count_words(text) {
+  if (len(text) == 0) {
+    return 0
+  }
+
+  words = split(text, ' ')
+
+  return len(list(words))
+}
+
+fn common_prefix(str1, str2) {
+  chars1 = list(str1)
+  chars2 = list(str2)
+
+  len1 = len(str1)
+  len2 = len(str2)
+
+  max_check = len1
+
+  if (len2 < len1) {
+    max_check = len2
+  }
+
+  prefix_chars = []
+
+  i = 0
+
+  while (i < max_check) {
+    if (chars1[i] == chars2[i]) {
+      prefix_chars = prefix_chars + [chars1[i]]
+    } else {
+      break
+    }
+
+    i = i + 1
+  }
+
+  return join(prefix_chars, "")
+}
+
+println("Testing string functions:")
+
+test_str = "racecar"
+println("Original: " + test_str)
+println("Reversed: " + reverse_string(test_str))
+println("Is palindrome: " + is_palindrome(test_str))
+
+test_str2 = "hello world"
+println("Original: " + test_str2)
+println("Reversed: " + reverse_string(test_str2))
+println("Is palindrome: " + is_palindrome(test_str2))
+println("Word count: " + count_words(test_str2))
+
+str1 = "programming"
+str2 = "progress"
+println("Common prefix of '" + str1 + "' and '" + str2 + "': " + common_prefix(str1, str2))
