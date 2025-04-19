@@ -1,0 +1,12 @@
+set dotenv-load
+
+export EDITOR := 'nvim'
+
+alias f := fmt
+
+default:
+  just --list
+
+[group: 'format']
+fmt:
+  uv run ruff check --select I --fix && uv run ruff format

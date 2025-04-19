@@ -1,4 +1,5 @@
 import { highlightExtension } from '@/lib/cm-highlight-extension';
+import { ValError } from '@/lib/types';
 import { useEditorSettings } from '@/providers/editor-settings-provider';
 import { rust } from '@codemirror/lang-rust';
 import {
@@ -10,7 +11,6 @@ import {
 import { Diagnostic, lintGutter, linter } from '@codemirror/lint';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { ValError } from 'val-wasm';
 
 interface EditorProps {
   errors: ValError[];

@@ -24,6 +24,8 @@ build-wasm:
     --out-name val \
     --out-dir ../../www/packages/val-wasm
 
+  uv run --with arrg tools/example-generator/main.py examples www/src/lib/examples.ts
+
 [group: 'check']
 check:
  cargo check

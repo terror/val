@@ -1,14 +1,12 @@
 use super::*;
 
-#[derive(Debug, Clone)]
-#[wasm_bindgen]
+#[derive(Clone, Debug, Serialize)]
 pub enum ErrorKind {
   Evaluator,
   Parser,
 }
 
-#[derive(Debug, Clone)]
-#[wasm_bindgen(getter_with_clone)]
+#[derive(Clone, Debug, Serialize)]
 pub struct ValError {
   pub kind: ErrorKind,
   pub message: String,

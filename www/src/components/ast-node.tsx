@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useState } from 'react';
-import { AstNode as AstNodeType } from 'val-wasm';
+import { AstNode as AstNodeType } from '@/lib/types';
 
 interface AstNodeProps {
   node: AstNodeType;

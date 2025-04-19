@@ -8,7 +8,8 @@ import {
 } from '@/components/ui/select';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import init, { AstNode as AstNodeType, ValError, _eval, parse } from 'val-wasm';
+import init, { evaluate, parse } from 'val-wasm';
+import type { AstNode as AstNodeType, ValError } from '@/lib/types'
 
 import { Editor } from './components/editor';
 import { EditorSettingsDialog } from './components/editor-settings-dialog';
@@ -17,18 +18,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from './components/ui/resizable';
-
-const EXAMPLES = {
-  factorial: `fn factorial(n) {
-  if (n <= 1) {
-    return 1
-  } else {
-    return n * factorial(n - 1)
-  }
-}
-
-println(factorial(5))`,
-};
+import EXAMPLES from './lib/examples';
 
 function App() {
   const [ast, setAst] = useState<AstNodeType | null>(null);
@@ -53,6 +43,7 @@ function App() {
 
     try {
       setAst(parse(code));
+      console.log(evaluate(code));
     } catch (error) {
       setErrors(error as ValError[]);
     }

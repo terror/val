@@ -1,0 +1,24 @@
+[project]
+name = "example-generator"
+version = "0.0.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.3"
+dependencies = [
+  "arrg>=0.1.0",
+  "ruff>=0.11.6",
+]
+
+[tool.ruff]
+src = ["src"]
+indent-width = 2
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 20
+indent-style = "space"
+quote-style = "single"
