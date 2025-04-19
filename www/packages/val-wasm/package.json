@@ -1,0 +1,14 @@
+{
+  "name": "val-wasm",
+  "version": "0.0.0",
+  "files": [
+    "val_bg.wasm",
+    "val.js",
+    "val.d.ts"
+  ],
+  "module": "val.js",
+  "types": "val.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
