@@ -1,0 +1,22 @@
+fn newton_sqrt(x) {
+  if (x < 0) {
+    println('Cannot compute square root of negative number')
+    return 0
+  }
+
+  if (x == 0) {
+    return 0
+  }
+
+  guess = x / 2
+  epsilon = 0.0001
+
+  while (abs(guess * guess - x) > epsilon) {
+    guess = (guess + x / guess) / 2
+  }
+
+  return guess
+}
+
+println('Square root of 16 is approximately ' + newton_sqrt(16))
+println('Square root of 2 is approximately ' + newton_sqrt(2))
