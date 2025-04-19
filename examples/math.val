@@ -1,0 +1,66 @@
+println("π (pi): " + pi)
+println("e: " + e)
+println("τ (tau): " + tau)
+println("φ (phi): " + phi)
+
+a = 7
+b = 3
+
+println(a + " + " + b + " = " + (a + b))
+println(a + " - " + b + " = " + (a - b))
+println(a + " * " + b + " = " + (a * b))
+println(a + " / " + b + " = " + (a / b))
+println(a + " % " + b + " = " + (a % b))
+println(a + " ^ " + b + " = " + (a ^ b))
+
+angle = pi / 4
+
+println("Angle: " + angle + " radians")
+println("sin(" + angle + ") = " + sin(angle))
+println("cos(" + angle + ") = " + cos(angle))
+println("tan(" + angle + ") = " + tan(angle))
+println("csc(" + angle + ") = " + csc(angle))
+println("sec(" + angle + ") = " + sec(angle))
+println("cot(" + angle + ") = " + cot(angle))
+
+value = 0.5
+
+println("asin(" + value + ") = " + asin(value))
+println("acos(" + value + ") = " + acos(value))
+println("arc(" + value + ") = " + arc(value))
+println("acsc(" + 1.5 + ") = " + acsc(1.5))
+println("asec(" + 1.5 + ") = " + asec(1.5))
+println("acot(" + value + ") = " + acot(value))
+
+println("sinh(" + value + ") = " + sinh(value))
+println("cosh(" + value + ") = " + cosh(value))
+println("tanh(" + value + ") = " + tanh(value))
+
+number = 10
+
+println("ln(" + number + ") = " + ln(number))
+println("log2(" + number + ") = " + log2(number))
+println("log10(" + number + ") = " + log10(number))
+println()
+
+println("e(" + 2 + ") = " + e(2))
+
+println("sqrt(" + number + ") = " + sqrt(number))
+println("sqrt(2) = " + sqrt(2))
+println("abs(-10) = " + abs(-10))
+
+decimal = 3.7
+
+println("ceil(" + decimal + ") = " + ceil(decimal))
+println("floor(" + decimal + ") = " + floor(decimal))
+
+x = 48
+y = 18
+
+println("gcd(" + x + ", " + y + ") = " + gcd(x, y))
+println("lcm(" + x + ", " + y + ") = " + lcm(x, y))
+
+println("sin(π/2) = " + sin(pi/2) + " (should be 1)")
+println("cos(π) = " + cos(pi) + " (should be -1)")
+println("sin²(x) + cos²(x) = " + (sin(angle)^2 + cos(angle)^2) + " (should be 1)")
+println("e^(ln(5)) = " + e(ln(5)) + " (should be 5)")
