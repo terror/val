@@ -263,7 +263,7 @@ impl Display for Expression<'_> {
         write!(f, "list_access({}, {})", list.0, index.0)
       }
       Expression::Null => write!(f, "null"),
-      Expression::Number(number) => write!(f, "number({})", number.display()),
+      Expression::Number(number) => write!(f, "number({number})"),
       Expression::String(string) => write!(f, "string(\"{}\")", string),
       Expression::UnaryOp(op, expr) => {
         write!(f, "unary_op({}, {})", op, expr.0)

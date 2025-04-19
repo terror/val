@@ -48,16 +48,16 @@ impl std::str::FromStr for RoundingMode {
   }
 }
 
-impl From<RoundingMode> for astro_float::RoundingMode {
+impl From<RoundingMode> for Round {
   fn from(mode: RoundingMode) -> Self {
     match mode {
-      RoundingMode::None => astro_float::RoundingMode::None,
-      RoundingMode::Up => astro_float::RoundingMode::Up,
-      RoundingMode::Down => astro_float::RoundingMode::Down,
-      RoundingMode::ToZero => astro_float::RoundingMode::ToZero,
-      RoundingMode::FromZero => astro_float::RoundingMode::FromZero,
-      RoundingMode::ToEven => astro_float::RoundingMode::ToEven,
-      RoundingMode::ToOdd => astro_float::RoundingMode::ToOdd,
+      RoundingMode::None => Round::Nearest,
+      RoundingMode::Up => Round::Up,
+      RoundingMode::Down => Round::Down,
+      RoundingMode::ToZero => Round::Zero,
+      RoundingMode::FromZero => Round::AwayZero,
+      RoundingMode::ToEven => Round::Nearest,
+      RoundingMode::ToOdd => Round::Nearest,
     }
   }
 }
