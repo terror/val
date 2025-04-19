@@ -97,7 +97,7 @@ program. The tool supports executing arbitrary expressions inline using the
 
 ```bash
 val -p 53 -e 'sin(2) * e ^ pi * cos(sum([1, 2, 3]))'
-16.481455793912883588
+20.203684508229124193
 ```
 
 **n.b.** The `--expression` option and `filename` argument are mutually
