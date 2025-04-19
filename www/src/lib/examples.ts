@@ -3,6 +3,7 @@ import factorial from '../assets/examples/factorial.val?raw';
 import fibonacci from '../assets/examples/fibonacci.val?raw';
 import hof from '../assets/examples/hof.val?raw';
 import loop from '../assets/examples/loop.val?raw';
+import math from '../assets/examples/math.val?raw';
 import newton from '../assets/examples/newton.val?raw';
 import primes from '../assets/examples/primes.val?raw';
 import strings from '../assets/examples/strings.val?raw';
@@ -12,6 +13,7 @@ export const examples = {
   fibonacci: fibonacci,
   hof: hof,
   loop: loop,
+  math: math,
   newton: newton,
   primes: primes,
   strings: strings,
