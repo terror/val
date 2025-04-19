@@ -30,12 +30,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.sin(
+          Float::with_val_round(
             payload.config.precision,
+            argument.sin(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -53,12 +56,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.cos(
+          Float::with_val_round(
             payload.config.precision,
+            argument.cos(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -76,12 +82,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.tan(
+          Float::with_val_round(
             payload.config.precision,
+            argument.tan(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -99,11 +108,14 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let sin_val = payload.arguments[0].number(payload.span)?.sin(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let sin_val = Float::with_val_round(
           payload.config.precision,
+          argument.sin(),
           payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        );
+        )
+        .0;
 
         if sin_val.is_zero() {
           return Err(Error::new(
@@ -112,11 +124,14 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(Float::from(1.0).div(
-          &sin_val,
-          payload.config.precision,
-          payload.config.rounding_mode,
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            Float::with_val(payload.config.precision, 1.0) / sin_val,
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -133,11 +148,14 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let cos_val = payload.arguments[0].number(payload.span)?.cos(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let cos_val = Float::with_val_round(
           payload.config.precision,
+          argument.cos(),
           payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        );
+        )
+        .0;
 
         if cos_val.is_zero() {
           return Err(Error::new(
@@ -146,11 +164,14 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(Float::from(1.0).div(
-          &cos_val,
-          payload.config.precision,
-          payload.config.rounding_mode,
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            Float::with_val(payload.config.precision, 1.0) / cos_val,
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -167,11 +188,14 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let tan_val = payload.arguments[0].number(payload.span)?.tan(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let tan_val = Float::with_val_round(
           payload.config.precision,
+          argument.tan(),
           payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        );
+        )
+        .0;
 
         if tan_val.is_zero() {
           return Err(Error::new(
@@ -180,11 +204,14 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(Float::from(1.0).div(
-          &tan_val,
-          payload.config.precision,
-          payload.config.rounding_mode,
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            Float::with_val(payload.config.precision, 1.0) / tan_val,
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -201,12 +228,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.sinh(
+          Float::with_val_round(
             payload.config.precision,
+            argument.sinh(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -224,12 +254,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.cosh(
+          Float::with_val_round(
             payload.config.precision,
+            argument.cosh(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -247,12 +280,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.tanh(
+          Float::with_val_round(
             payload.config.precision,
+            argument.tanh(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -272,18 +308,23 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument < Float::from(-1.0) || argument > Float::from(1.0) {
+        if argument < Float::with_val(payload.config.precision, -1.0)
+          || argument > Float::with_val(payload.config.precision, 1.0)
+        {
           return Err(Error::new(
             payload.span,
             "asin argument must be between -1 and 1",
           ));
         }
 
-        Ok(Value::Number(argument.asin(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            argument.asin(),
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -302,18 +343,23 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument < Float::from(-1.0) || argument > Float::from(1.0) {
+        if argument < Float::with_val(payload.config.precision, -1.0)
+          || argument > Float::with_val(payload.config.precision, 1.0)
+        {
           return Err(Error::new(
             payload.span,
             "acos argument must be between -1 and 1",
           ));
         }
 
-        Ok(Value::Number(argument.acos(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            argument.acos(),
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -330,12 +376,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.atan(
+          Float::with_val_round(
             payload.config.precision,
+            argument.atan(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -355,24 +404,29 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument.abs() < Float::from(1.0) {
+        if argument.clone().abs()
+          < Float::with_val(payload.config.precision, 1.0)
+        {
           return Err(Error::new(
             payload.span,
             "acsc argument must have absolute value at least 1",
           ));
         }
 
+        let reciprocal = Float::with_val_round(
+          payload.config.precision,
+          Float::with_val(payload.config.precision, 1.0) / argument,
+          payload.config.rounding_mode,
+        )
+        .0;
+
         Ok(Value::Number(
-          (Float::from(1.0).div(
-            &argument,
+          Float::with_val_round(
             payload.config.precision,
+            reciprocal.asin(),
             payload.config.rounding_mode,
-          ))
-          .asin(
-            payload.config.precision,
-            payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -392,24 +446,29 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        if argument.abs() < Float::from(1.0) {
+        if argument.clone().abs()
+          < Float::with_val(payload.config.precision, 1.0)
+        {
           return Err(Error::new(
             payload.span,
             "asec argument must have absolute value at least 1",
           ));
         }
 
+        let reciprocal = Float::with_val_round(
+          payload.config.precision,
+          Float::with_val(payload.config.precision, 1.0) / argument,
+          payload.config.rounding_mode,
+        )
+        .0;
+
         Ok(Value::Number(
-          (Float::from(1.0).div(
-            &argument,
+          Float::with_val_round(
             payload.config.precision,
+            reciprocal.acos(),
             payload.config.rounding_mode,
-          ))
-          .acos(
-            payload.config.precision,
-            payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -429,18 +488,26 @@ impl<'src> Environment<'src> {
 
         let argument = payload.arguments[0].number(payload.span)?;
 
-        let pi_div_2 = Float::from(std::f64::consts::FRAC_PI_2);
-
-        // Formula: acot(x) = π/2 - atan(x)
-        Ok(Value::Number(pi_div_2.sub(
-          &argument.atan(
-            payload.config.precision,
-            payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+        let pi_div_2 = Float::with_val(
           payload.config.precision,
+          std::f64::consts::FRAC_PI_2,
+        );
+
+        let atan_val = Float::with_val_round(
+          payload.config.precision,
+          argument.atan(),
           payload.config.rounding_mode,
-        )))
+        )
+        .0;
+
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            pi_div_2 - atan_val,
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -459,18 +526,21 @@ impl<'src> Environment<'src> {
 
         let number = payload.arguments[0].number(payload.span)?;
 
-        if number.is_zero() || number.is_negative() {
+        if number.is_zero() || number.is_sign_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take logarithm of zero or negative number",
           ));
         }
 
-        Ok(Value::Number(number.ln(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            number.ln(),
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -487,20 +557,23 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let number = payload.arguments[0].number(payload.span)?;
+        let argument = payload.arguments[0].number(payload.span)?;
 
-        if number.is_zero() || number.is_negative() {
+        if argument.is_zero() || argument.is_sign_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take logarithm of zero or negative number",
           ));
         }
 
-        Ok(Value::Number(number.log2(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            argument.log2(),
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -519,18 +592,21 @@ impl<'src> Environment<'src> {
 
         let number = payload.arguments[0].number(payload.span)?;
 
-        if number.is_zero() || number.is_negative() {
+        if number.is_zero() || number.is_sign_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take logarithm of zero or negative number",
           ));
         }
 
-        Ok(Value::Number(number.log10(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            number.log10(),
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -547,12 +623,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
+        let argument = payload.arguments[0].number(payload.span)?;
+
         Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.exp(
+          Float::with_val_round(
             payload.config.precision,
+            argument.exp(),
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+          )
+          .0,
         ))
       }),
     );
@@ -570,19 +649,23 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let number = payload.arguments[0].number(payload.span)?;
+        let argument = payload.arguments[0].number(payload.span)?;
 
-        if number.is_negative() {
+        if argument.is_sign_negative() {
           return Err(Error::new(
             payload.span,
             "Cannot take square root of negative number",
           ));
         }
 
-        Ok(Value::Number(number.sqrt(
-          payload.config.precision,
-          payload.config.rounding_mode,
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            payload.config.precision,
+            argument.sqrt(),
+            payload.config.rounding_mode,
+          )
+          .0,
+        ))
       }),
     );
 
@@ -643,33 +726,33 @@ impl<'src> Environment<'src> {
       }),
     );
 
-    env.add_function(
-      "len",
-      Function::Builtin(|payload| {
-        if payload.arguments.len() != 1 {
-          return Err(Error::new(
-            payload.span,
-            format!(
-              "Function `len` expects 1 argument, got {}",
-              payload.arguments.len()
-            ),
-          ));
-        }
+    // env.add_function(
+    //   "len",
+    //   Function::Builtin(|payload| {
+    //     if payload.arguments.len() != 1 {
+    //       return Err(Error::new(
+    //         payload.span,
+    //         format!(
+    //           "Function `len` expects 1 argument, got {}",
+    //           payload.arguments.len()
+    //         ),
+    //       ));
+    //     }
 
-        let value = &payload.arguments[0];
+    //     let value = &payload.arguments[0];
 
-        match value {
-          Value::String(s) => Ok(Value::Number(Float::from(s.len() as f64))),
-          Value::List(items) => {
-            Ok(Value::Number(Float::from(items.len() as f64)))
-          }
-          _ => Err(Error::new(
-            payload.span,
-            format!("Cannot get length of {}", value.type_name()),
-          )),
-        }
-      }),
-    );
+    //     match value {
+    //       Value::String(s) => Ok(Value::Number(Float::from(s.len() as f64))),
+    //       Value::List(items) => {
+    //         Ok(Value::Number(Float::from(items.len() as f64)))
+    //       }
+    //       _ => Err(Error::new(
+    //         payload.span,
+    //         format!("Cannot get length of {}", value.type_name()),
+    //       )),
+    //     }
+    //   }),
+    // );
 
     env.add_function(
       "print",
@@ -718,20 +801,22 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let code = match payload.arguments[0]
-          .number(payload.span)?
-          .to_f64(payload.config.rounding_mode)
-        {
-          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-          _ => {
-            return Err(Error::new(
-              payload.span,
-              "Argument to `exit` must be a non-negative finite number",
-            ));
-          }
-        };
+        todo!()
 
-        process::exit(code as i32);
+        // let code = match payload.arguments[0]
+        //   .number(payload.span)?
+        //   .to_f64(payload.config.rounding_mode)
+        // {
+        //   Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+        //   _ => {
+        //     return Err(Error::new(
+        //       payload.span,
+        //       "Argument to `exit` must be a non-negative finite number",
+        //     ));
+        //   }
+        // };
+
+        // process::exit(code as i32);
       }),
     );
 
@@ -752,20 +837,22 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let code = match payload.arguments[0]
-          .number(payload.span)?
-          .to_f64(payload.config.rounding_mode)
-        {
-          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-          _ => {
-            return Err(Error::new(
-              payload.span,
-              "Argument to `quit` must be a non-negative finite number",
-            ));
-          }
-        };
+        todo!()
 
-        process::exit(code as i32);
+        // let code = match payload.arguments[0]
+        //   .number(payload.span)?
+        //   .to_f64(payload.config.rounding_mode)
+        // {
+        //   Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+        //   _ => {
+        //     return Err(Error::new(
+        //       payload.span,
+        //       "Argument to `quit` must be a non-negative finite number",
+        //     ));
+        //   }
+        // };
+
+        // process::exit(code as i32);
       }),
     );
 
@@ -792,17 +879,21 @@ impl<'src> Environment<'src> {
         let list = payload.arguments[0].list(payload.span)?;
 
         if list.is_empty() {
-          return Ok(Value::Number(Float::from(0.0)));
+          return Ok(Value::Number(Float::with_val(
+            payload.config.precision,
+            0.0,
+          )));
         }
 
         let mut sum = list[0].number(payload.span)?;
 
         for val in list.iter().skip(1) {
-          sum = sum.add(
-            &val.number(payload.span)?,
+          sum = Float::with_val_round(
             payload.config.precision,
+            sum + val.number(payload.span)?,
             payload.config.rounding_mode,
-          );
+          )
+          .0;
         }
 
         Ok(Value::Number(sum))
@@ -853,75 +944,75 @@ impl<'src> Environment<'src> {
       }),
     );
 
-    env.add_function(
-      "int",
-      Function::Builtin(|payload| {
-        if payload.arguments.len() != 1 {
-          return Err(Error::new(
-            payload.span,
-            format!(
-              "Function `int` expects 1 argument, got {}",
-              payload.arguments.len()
-            ),
-          ));
-        }
+    // env.add_function(
+    //   "int",
+    //   Function::Builtin(|payload| {
+    //     if payload.arguments.len() != 1 {
+    //       return Err(Error::new(
+    //         payload.span,
+    //         format!(
+    //           "Function `int` expects 1 argument, got {}",
+    //           payload.arguments.len()
+    //         ),
+    //       ));
+    //     }
 
-        let value = &payload.arguments[0];
+    //     let value = &payload.arguments[0];
 
-        match value {
-          Value::Number(n) => Ok(Value::Number(n.floor())),
-          Value::String(s) => match s.trim().parse::<f64>() {
-            Ok(n) => Ok(Value::Number(Float::from(n).floor())),
-            Err(_) => Err(Error::new(
-              payload.span,
-              format!("Cannot convert '{}' to int", s),
-            )),
-          },
-          Value::Boolean(b) => {
-            Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
-          }
-          _ => Err(Error::new(
-            payload.span,
-            format!("Cannot convert {} to int", value.type_name()),
-          )),
-        }
-      }),
-    );
+    //     match value {
+    //       Value::Number(n) => Ok(Value::Number(n.floor())),
+    //       Value::String(s) => match s.trim().parse::<f64>() {
+    //         Ok(n) => Ok(Value::Number(Float::from(n).floor())),
+    //         Err(_) => Err(Error::new(
+    //           payload.span,
+    //           format!("Cannot convert '{}' to int", s),
+    //         )),
+    //       },
+    //       Value::Boolean(b) => {
+    //         Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
+    //       }
+    //       _ => Err(Error::new(
+    //         payload.span,
+    //         format!("Cannot convert {} to int", value.type_name()),
+    //       )),
+    //     }
+    //   }),
+    // );
 
-    env.add_function(
-      "float",
-      Function::Builtin(|payload| {
-        if payload.arguments.len() != 1 {
-          return Err(Error::new(
-            payload.span,
-            format!(
-              "Function `float` expects 1 argument, got {}",
-              payload.arguments.len()
-            ),
-          ));
-        }
+    // env.add_function(
+    //   "float",
+    //   Function::Builtin(|payload| {
+    //     if payload.arguments.len() != 1 {
+    //       return Err(Error::new(
+    //         payload.span,
+    //         format!(
+    //           "Function `float` expects 1 argument, got {}",
+    //           payload.arguments.len()
+    //         ),
+    //       ));
+    //     }
 
-        let value = &payload.arguments[0];
+    //     let value = &payload.arguments[0];
 
-        match value {
-          Value::Number(n) => Ok(Value::Number(n.clone())),
-          Value::String(s) => match s.trim().parse::<f64>() {
-            Ok(n) => Ok(Value::Number(Float::from(n))),
-            Err(_) => Err(Error::new(
-              payload.span,
-              format!("Cannot convert '{}' to float", s),
-            )),
-          },
-          Value::Boolean(b) => {
-            Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
-          }
-          _ => Err(Error::new(
-            payload.span,
-            format!("Cannot convert {} to float", value.type_name()),
-          )),
-        }
-      }),
-    );
+    //     match value {
+    //       Value::Number(n) => Ok(Value::Number(n.clone())),
+    //       Value::String(s) => match s.trim().parse::<f64>() {
+    //         Ok(n) => Ok(Value::Number(Float::from(n))),
+    //         Err(_) => Err(Error::new(
+    //           payload.span,
+    //           format!("Cannot convert '{}' to float", s),
+    //         )),
+    //       },
+    //       Value::Boolean(b) => {
+    //         Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
+    //       }
+    //       _ => Err(Error::new(
+    //         payload.span,
+    //         format!("Cannot convert {} to float", value.type_name()),
+    //       )),
+    //     }
+    //   }),
+    // );
 
     env.add_function(
       "bool",
@@ -1061,104 +1152,117 @@ impl<'src> Environment<'src> {
       }),
     );
 
-    env.add_function(
-      "gcd",
-      Function::Builtin(|payload| {
-        if payload.arguments.len() != 2 {
-          return Err(Error::new(
-            payload.span,
-            format!(
-              "Function `gcd` expects 2 arguments, got {}",
-              payload.arguments.len()
-            ),
-          ));
-        }
+    // env.add_function(
+    //   "gcd",
+    //   Function::Builtin(|payload| {
+    //     if payload.arguments.len() != 2 {
+    //       return Err(Error::new(
+    //         payload.span,
+    //         format!(
+    //           "Function `gcd` expects 2 arguments, got {}",
+    //           payload.arguments.len()
+    //         ),
+    //       ));
+    //     }
 
-        let a = payload.arguments[0].number(payload.span)?;
-        let b = payload.arguments[1].number(payload.span)?;
+    //     let a = payload.arguments[0].number(payload.span)?;
+    //     let b = payload.arguments[1].number(payload.span)?;
 
-        let mut x = a.abs();
-        let mut y = b.abs();
+    //     let mut x = a.abs();
+    //     let mut y = b.abs();
 
-        while !y.is_zero() {
-          let remainder = x.rem(&y);
-          x = y;
-          y = remainder;
-        }
+    //     while !y.is_zero() {
+    //       let remainder = x.rem(&y);
+    //       x = y;
+    //       y = remainder;
+    //     }
 
-        Ok(Value::Number(x))
-      }),
-    );
+    //     Ok(Value::Number(x))
+    //   }),
+    // );
 
-    env.add_function(
-      "lcm",
-      Function::Builtin(|payload| {
-        if payload.arguments.len() != 2 {
-          return Err(Error::new(
-            payload.span,
-            format!(
-              "Function `lcm` expects 2 arguments, got {}",
-              payload.arguments.len()
-            ),
-          ));
-        }
+    // env.add_function(
+    //   "lcm",
+    //   Function::Builtin(|payload| {
+    //     if payload.arguments.len() != 2 {
+    //       return Err(Error::new(
+    //         payload.span,
+    //         format!(
+    //           "Function `lcm` expects 2 arguments, got {}",
+    //           payload.arguments.len()
+    //         ),
+    //       ));
+    //     }
 
-        let a = payload.arguments[0].number(payload.span)?;
-        let b = payload.arguments[1].number(payload.span)?;
+    //     let a = payload.arguments[0].number(payload.span)?;
+    //     let b = payload.arguments[1].number(payload.span)?;
 
-        if a.is_zero() || b.is_zero() {
-          return Ok(Value::Number(Float::from(0)));
-        }
+    //     if a.is_zero() || b.is_zero() {
+    //       return Ok(Value::Number(Float::from(0)));
+    //     }
 
-        let mut x = a.abs();
-        let mut y = b.abs();
+    //     let mut x = a.abs();
+    //     let mut y = b.abs();
 
-        let product =
-          x.mul(&y, payload.config.precision, payload.config.rounding_mode);
+    //     let product =
+    //       x.mul(&y, payload.config.precision, payload.config.rounding_mode);
 
-        while !y.is_zero() {
-          let remainder = x.rem(&y);
-          x = y;
-          y = remainder;
-        }
+    //     while !y.is_zero() {
+    //       let remainder = x.rem(&y);
+    //       x = y;
+    //       y = remainder;
+    //     }
 
-        let lcm = product.div(
-          &x,
-          payload.config.precision,
-          payload.config.rounding_mode,
-        );
+    //     let lcm = product.div(
+    //       &x,
+    //       payload.config.precision,
+    //       payload.config.rounding_mode,
+    //     );
 
-        Ok(Value::Number(lcm))
-      }),
-    );
-
-    let mut consts = Consts::new().unwrap();
-
-    let pi = consts.pi(config.precision, config.rounding_mode);
+    //     Ok(Value::Number(lcm))
+    //   }),
+    // );
 
     env.add_variable(
       "e",
-      Value::Number(consts.e(config.precision, config.rounding_mode)),
-    );
-
-    env.add_variable("pi", Value::Number(pi.clone()));
-
-    env.add_variable(
-      "tau",
-      Value::Number(pi.mul(
-        &Float::from(2.0),
-        config.precision,
-        config.rounding_mode,
-      )),
+      Value::Number(
+        Float::with_val_round(
+          config.precision,
+          Constant::Euler,
+          config.rounding_mode,
+        )
+        .0,
+      ),
     );
 
     env.add_variable(
-      "phi",
-      Value::Number(Float::from_f64(
-        1.618_033_988_749_895_f64,
-        config.precision,
-      )),
+      "pi",
+      Value::Number(
+        Float::with_val_round(
+          config.precision,
+          Constant::Pi,
+          config.rounding_mode,
+        )
+        .0,
+      ),
     );
+
+    // env.add_variable(
+    //   "tau",
+    //   Value::Number(pi.mul(
+    //     &Float::from(2.0),
+    //     config.precision,
+    //     config.rounding_mode,
+    //   )),
+    // );
+
+    // env.add_variable(
+    //   "phi",
+    //   Value::Number(Float::from_f64(
+    //     1.618_033_988_749_895_f64,
+    //     config.precision,
+    //   )),
+    // );
 
     env
   }

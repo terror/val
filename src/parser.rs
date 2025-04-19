@@ -165,8 +165,7 @@ fn expression_parser<'a>()
     let number = text::int(10)
       .then(just('.').then(text::digits(10)).or_not())
       .to_slice()
-      .from_str()
-      .unwrapped()
+      .map(|slice| Float::with_val(1024, Float::parse(slice).unwrap()))
       .map(Expression::Number)
       .map_with(|ast, e| (ast, e.span()));
 

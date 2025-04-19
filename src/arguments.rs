@@ -41,7 +41,7 @@ pub struct Arguments {
     default_value = "1024",
     help = "Decimal precision to use for calculations"
   )]
-  precision: usize,
+  precision: u32,
 
   #[clap(
     short,
