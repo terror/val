@@ -52,16 +52,15 @@ fn statement_parser<'a>()
         .clone()
         .delimited_by(just('['), just(']'))
         .padded()
-        .map_with(|expr, e| (expr, e.span()))
+        .map_with(|expression, e| (expression, e.span()))
         .repeated(),
-      |base: Spanned<Expression<'a>>,
-       (index, span): (Spanned<Expression<'a>>, SimpleSpan)| {
-        let full_span = (base.1.start..span.end).into();
+      |base, (index, span)| {
+        let span = (base.1.start..span.end).into();
 
-        (
-          Expression::ListAccess(Box::new(base), Box::new(index)),
-          full_span,
-        )
+        let expression =
+          Expression::ListAccess(Box::new(base), Box::new(index));
+
+        (expression, span)
       },
     );
 
@@ -238,7 +237,7 @@ fn expression_parser<'a>()
         .clone()
         .delimited_by(just('['), just(']'))
         .padded()
-        .map_with(|expr, e| (expr, e.span()))
+        .map_with(|expression, e| (expression, e.span()))
         .repeated(),
       |list: Spanned<Expression<'a>>,
        (index, span): (Spanned<Expression<'a>>, SimpleSpan)| {
