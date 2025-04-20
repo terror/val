@@ -1,0 +1,33 @@
+fn fibonacci(n) {
+  if (n <= 0) {
+    println("Please enter a positive number")
+    return
+  }
+
+  a = 0
+  b = 1
+
+  println("Fibonacci Sequence (first " + n + " numbers):")
+
+  if (n >= 1) {
+    println(a)
+  }
+
+  if (n >= 2) {
+    println(b)
+  }
+
+  count = 2
+
+  while (count < n) {
+    next = a + b
+    a = b
+    b = next
+    count = count + 1
+    println(b)
+  }
+}
+
+num = int(input("How many Fibonacci numbers would you like to see? "))
+
+fibonacci(num)

@@ -50,14 +50,17 @@ fn statement_parser<'a>()
     let indexed_ident = simple_ident.foldl(
       expression
         .clone()
-        .delimited_by(just('[').padded(), just(']').padded())
+        .delimited_by(just('['), just(']'))
+        .padded()
+        .map_with(|expression, e| (expression, e.span()))
         .repeated(),
-      |base, index| {
-        let span = (base.1.start..index.1.end).into();
-        (
-          Expression::ListAccess(Box::new(base), Box::new(index)),
-          span,
-        )
+      |base, (index, span)| {
+        let span = (base.1.start..span.end).into();
+
+        let expression =
+          Expression::ListAccess(Box::new(base), Box::new(index));
+
+        (expression, span)
       },
     );
 
@@ -214,10 +217,9 @@ fn expression_parser<'a>()
       .collect::<Vec<_>>();
 
     let list = items
-      .clone()
+      .delimited_by(just('['), just(']'))
       .map(Expression::List)
-      .map_with(|ast, e| (ast, e.span()))
-      .delimited_by(just('['), just(']'));
+      .map_with(|ast, e| (ast, e.span()));
 
     let atom = number
       .or(boolean)
@@ -232,10 +234,13 @@ fn expression_parser<'a>()
     let list_access = atom.clone().foldl(
       expression
         .clone()
-        .delimited_by(just('[').padded(), just(']').padded())
+        .delimited_by(just('['), just(']'))
+        .padded()
+        .map_with(|expression, e| (expression, e.span()))
         .repeated(),
-      |list, index| {
-        let span = (list.1.start..index.1.end).into();
+      |list: Spanned<Expression<'a>>,
+       (index, span): (Spanned<Expression<'a>>, SimpleSpan)| {
+        let span = (list.1.start..span.end).into();
 
         let expression =
           Expression::ListAccess(Box::new(list), Box::new(index));

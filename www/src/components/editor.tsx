@@ -1,4 +1,5 @@
-import { highlightExtension } from '@/lib/cm-highlight-extension';
+import { highlightExtension } from '@/lib/highlight';
+import { ValError } from '@/lib/types';
 import { useEditorSettings } from '@/providers/editor-settings-provider';
 import { rust } from '@codemirror/lang-rust';
 import {
@@ -7,14 +8,21 @@ import {
   indentOnInput,
   syntaxHighlighting,
 } from '@codemirror/language';
-import { Diagnostic, lintGutter, linter } from '@codemirror/lint';
+import { Diagnostic, linter } from '@codemirror/lint';
+import { vim } from '@replit/codemirror-vim';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { ValError } from 'val-wasm';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 
 interface EditorProps {
   errors: ValError[];
   onChange?: (value: string, viewUpdate: any) => void;
+  onEditorReady?: (view: EditorView) => void;
   value: string;
 }
 
@@ -23,7 +31,7 @@ export interface EditorRef {
 }
 
 export const Editor = forwardRef<EditorRef, EditorProps>(
-  ({ value, errors, onChange }, ref) => {
+  ({ value, errors, onChange, onEditorReady }, ref) => {
     const { settings } = useEditorSettings();
 
     const viewRef = useRef<EditorView | null>(null);
@@ -34,7 +42,35 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
       },
     }));
 
-    const createEditorTheme = useCallback(
+    useEffect(() => {
+      if (viewRef.current && onEditorReady) {
+        onEditorReady(viewRef.current);
+      }
+    }, [viewRef.current, onEditorReady]);
+
+    const createExtensions = useCallback(() => {
+      const extensions = [
+        EditorState.tabSize.of(settings.tabSize),
+        bracketMatching(),
+        highlightExtension,
+        indentOnInput(),
+        linter(diagnostics()),
+        rust(),
+        syntaxHighlighting(defaultHighlightStyle),
+      ];
+
+      if (settings.lineWrapping) {
+        extensions.push(EditorView.lineWrapping);
+      }
+
+      if (settings.keybindings === 'vim') {
+        extensions.push(vim());
+      }
+
+      return extensions;
+    }, [settings]);
+
+    const createTheme = useCallback(
       () =>
         EditorView.theme({
           '&': {
@@ -51,6 +87,9 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
             flex: '1 1 auto',
             fontFamily:
               'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+          },
+          '.cm-line': {
+            padding: '0 10px',
           },
           '.cm-content': {
             padding: '10px 0',
@@ -77,25 +116,6 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
         }),
       [settings]
     );
-
-    const createExtensions = useCallback(() => {
-      const extensions = [
-        EditorState.tabSize.of(settings.tabSize),
-        bracketMatching(),
-        highlightExtension,
-        indentOnInput(),
-        lintGutter(),
-        linter(diagnostics()),
-        rust(),
-        syntaxHighlighting(defaultHighlightStyle),
-      ];
-
-      if (settings.lineWrapping) {
-        extensions.push(EditorView.lineWrapping);
-      }
-
-      return extensions;
-    }, [settings]);
 
     const diagnostics = () =>
       useCallback(
@@ -125,10 +145,18 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
         [errors]
       );
 
+    const handleEditorCreate = (view: EditorView) => {
+      viewRef.current = view;
+
+      if (onEditorReady) {
+        onEditorReady(view);
+      }
+    };
+
     return (
       <CodeMirror
         value={value}
-        theme={createEditorTheme()}
+        theme={createTheme()}
         basicSetup={{
           foldGutter: false,
           highlightActiveLineGutter: false,
@@ -136,12 +164,12 @@ export const Editor = forwardRef<EditorRef, EditorProps>(
         }}
         height='100%'
         extensions={createExtensions()}
-        onCreateEditor={(view) => {
-          viewRef.current = view;
-        }}
+        onCreateEditor={handleEditorCreate}
         onChange={onChange}
         className='h-full'
       />
     );
   }
 );
+
+Editor.displayName = 'Editor';

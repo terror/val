@@ -38,7 +38,7 @@ Below is the output of `val --help`, which describes some of the
 arguments/options we support:
 
 ```present cargo run -- --help
-val 0.3.5
+val 0.3.6
 Liam <liam@scalzulli.com>
 An arbitrary precision calculator language
 
@@ -97,7 +97,7 @@ program. The tool supports executing arbitrary expressions inline using the
 
 ```bash
 val -p 53 -e 'sin(2) * e ^ pi * cos(sum([1, 2, 3]))'
-16.481455793912883588
+20.203684508229124193
 ```
 
 **n.b.** The `--expression` option and `filename` argument are mutually

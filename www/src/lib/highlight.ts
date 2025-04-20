@@ -33,7 +33,27 @@ export const highlightExtension = ViewPlugin.fromClass(
       for (const effect of effects) {
         if (effect.is(addHighlightEffect)) {
           const { from, to } = effect.value;
-          this.decorations = Decoration.set([highlightMark.range(from, to)]);
+
+          const doc = update.state.doc;
+
+          let effectiveTo = to;
+
+          for (let pos = to - 1; pos >= from; pos--) {
+            const char = doc.sliceString(pos, pos + 1);
+
+            if (!/\s/.test(char)) {
+              effectiveTo = pos + 1;
+              break;
+            }
+          }
+
+          if (effectiveTo > from) {
+            this.decorations = Decoration.set([
+              highlightMark.range(from, effectiveTo),
+            ]);
+          } else {
+            this.decorations = Decoration.none;
+          }
         } else if (effect.is(removeHighlightEffect)) {
           this.decorations = Decoration.none;
         }

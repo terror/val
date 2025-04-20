@@ -1,0 +1,58 @@
+fn is_prime(n) {
+  if (n <= 1) {
+    return false
+  }
+
+  if (n <= 3) {
+    return true
+  }
+
+  if (n % 2 == 0 || n % 3 == 0) {
+    return false
+  }
+
+  i = 5
+
+  while (i * i <= n) {
+    if (n % i == 0 || n % (i + 2) == 0) {
+      return false
+    }
+
+    i = i + 6
+  }
+
+  return true
+}
+
+fn find_primes(start, end) {
+  println("Prime numbers between " + start + " and " + end + ":")
+
+  count = 0
+
+  current = start
+
+  while (current <= end) {
+    if (is_prime(current)) {
+      print(current + " ")
+
+      count = count + 1
+
+      if (count % 10 == 0) {
+        println("")
+      }
+    }
+
+    current = current + 1
+  }
+
+  if (count % 10 != 0) {
+    println("")
+  }
+
+  println("Found " + count + " prime numbers.")
+}
+
+lower = int(input("Enter lower bound: "))
+upper = int(input("Enter upper bound: "))
+
+find_primes(lower, upper)
