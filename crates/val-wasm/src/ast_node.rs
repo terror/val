@@ -40,7 +40,8 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
     let mut children = Vec::new();
 
     match statement {
-      Statement::Assignment(_, rhs) => {
+      Statement::Assignment(lhs, rhs) => {
+        children.push(Self::from((&lhs.0, &lhs.1)));
         children.push(Self::from((&rhs.0, &rhs.1)));
 
         Self {
