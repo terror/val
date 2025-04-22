@@ -167,7 +167,7 @@ impl<'a> Analyzer<'a> {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, indoc::indoc, pretty_assertions::assert_eq};
+  use super::*;
 
   #[derive(Debug)]
   struct Test {
@@ -214,14 +214,14 @@ mod tests {
 
       let analysis_errors = analyzer.analyze(&ast);
 
-      if analysis_errors.len() != self.errors.len() {
-        return Err(format!(
-          "Expected {} error(s), got {}:\n{:?}",
-          self.errors.len(),
-          analysis_errors.len(),
-          analysis_errors,
-        ));
-      }
+      assert_eq!(
+        analysis_errors.len(),
+        self.errors.len(),
+        "Expected {} error(s), got {}:\n{:?}",
+        self.errors.len(),
+        analysis_errors.len(),
+        analysis_errors,
+      );
 
       for (i, error) in analysis_errors.iter().enumerate() {
         if !error.message.contains(&self.errors[i]) {
@@ -238,6 +238,20 @@ mod tests {
 
   #[test]
   fn invalid_lvalues() -> Result<(), String> {
+    Test::new().program("a = 10").errors(&[]).run()?;
+
+    Test::new()
+      .program("a = [1, 2, 3]; a[0] = 10")
+      .errors(&[])
+      .run()?;
+
+    Test::new()
+      .program("\"foo\" = 10")
+      .errors(&[
+        "Left-hand side of assignment must be a variable or list access",
+      ])
+      .run()?;
+
     Test::new()
       .program("5 = 10")
       .errors(&[
@@ -247,7 +261,7 @@ mod tests {
   }
 
   #[test]
-  fn duplicate_function_parameters() -> Result<(), String> {
+  fn function_parameters() -> Result<(), String> {
     Test::new()
       .program("fn add(a, b) { return a + b; }")
       .errors(&[])
@@ -264,6 +278,21 @@ mod tests {
         "Duplicate parameter name `a`",
         "Duplicate parameter name `b`",
       ])
+      .run()
+  }
+
+  #[test]
+  fn function_calls() -> Result<(), String> {
+    Test::new().program("sin(3.14)").errors(&[]).run()?;
+
+    Test::new()
+      .program("fn greet() { return 'Hello'; }; greet()")
+      .errors(&[])
+      .run()?;
+
+    Test::new()
+      .program("undefined_function()")
+      .errors(&["Undefined function"])
       .run()
   }
 }
