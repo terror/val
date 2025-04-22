@@ -10,16 +10,16 @@ const COLOR_OPERATOR: &str = "\x1b[36m"; // Cyan
 const COLOR_RESET: &str = "\x1b[0m";
 const COLOR_STRING: &str = "\x1b[32m"; // Green
 
-pub struct TreeHighlighter<'src> {
-  content: &'src str,
+pub struct TreeHighlighter<'a> {
+  content: &'a str,
 }
 
-impl<'src> TreeHighlighter<'src> {
-  pub fn new(content: &'src str) -> Self {
+impl<'a> TreeHighlighter<'a> {
+  pub fn new(content: &'a str) -> Self {
     Self { content }
   }
 
-  pub fn highlight(&self) -> Cow<'src, str> {
+  pub fn highlight(&self) -> Cow<'a, str> {
     match parse(self.content) {
       Ok(ast) => self.colorize_ast(&ast),
       Err(_) => {
@@ -28,17 +28,14 @@ impl<'src> TreeHighlighter<'src> {
     }
   }
 
-  fn colorize_ast(&self, program: &Spanned<Program<'src>>) -> Cow<'src, str> {
+  fn colorize_ast(&self, program: &Spanned<Program<'a>>) -> Cow<'a, str> {
     let mut color_spans = Vec::new();
     self.collect_color_spans(program, &mut color_spans);
     color_spans.sort_by_key(|span| span.0);
     self.apply_color_spans(&color_spans)
   }
 
-  fn apply_color_spans(
-    &self,
-    spans: &[(usize, usize, &str)],
-  ) -> Cow<'src, str> {
+  fn apply_color_spans(&self, spans: &[(usize, usize, &str)]) -> Cow<'a, str> {
     if spans.is_empty() {
       return Cow::Borrowed(self.content);
     }
@@ -69,7 +66,7 @@ impl<'src> TreeHighlighter<'src> {
 
   fn collect_color_spans(
     &self,
-    program: &Spanned<Program<'src>>,
+    program: &Spanned<Program<'a>>,
     spans: &mut Vec<(usize, usize, &'static str)>,
   ) {
     let (node, _) = program;
@@ -85,7 +82,7 @@ impl<'src> TreeHighlighter<'src> {
 
   fn collect_statement_spans(
     &self,
-    statement: &Spanned<Statement<'src>>,
+    statement: &Spanned<Statement<'a>>,
     spans: &mut Vec<(usize, usize, &'static str)>,
   ) {
     let (node, span) = statement;
@@ -93,19 +90,21 @@ impl<'src> TreeHighlighter<'src> {
     let (start, end) = (span.start, span.end);
 
     match node {
-      Statement::Assignment(name, expr) => {
-        let name_span = self.find_identifier_span(start, name);
-
-        if let Some((name_start, name_end)) = name_span {
-          spans.push((name_start, name_end, COLOR_IDENTIFIER));
-        }
+      Statement::Assignment(lhs, rhs) => {
+        self.collect_expression_spans(lhs, spans);
 
         if let Some(eq_pos) = self.content[start..end].find('=') {
           spans.push((start + eq_pos, start + eq_pos + 1, COLOR_OPERATOR));
         }
 
-        self.collect_expression_spans(expr, spans);
+        self.collect_expression_spans(rhs, spans);
       }
+      Statement::Break => {
+        if let Some(break_pos) = self.content[start..end].find("break") {
+          spans.push((start + break_pos, start + break_pos + 5, COLOR_KEYWORD));
+        }
+      }
+
       Statement::Block(statements) => {
         if let Some(open_brace) = self.content[start..end].find('{') {
           spans.push((
@@ -125,6 +124,15 @@ impl<'src> TreeHighlighter<'src> {
 
         for statement in statements {
           self.collect_statement_spans(statement, spans);
+        }
+      }
+      Statement::Continue => {
+        if let Some(continue_pos) = self.content[start..end].find("continue") {
+          spans.push((
+            start + continue_pos,
+            start + continue_pos + 8,
+            COLOR_KEYWORD,
+          ));
         }
       }
       Statement::Expression(expression) => {
@@ -205,6 +213,31 @@ impl<'src> TreeHighlighter<'src> {
           }
         }
       }
+      Statement::Loop(body) => {
+        if let Some(loop_pos) = self.content[start..end].find("loop") {
+          spans.push((start + loop_pos, start + loop_pos + 4, COLOR_KEYWORD));
+        }
+
+        if let Some(open_brace) = self.content[start..end].find('{') {
+          spans.push((
+            start + open_brace,
+            start + open_brace + 1,
+            COLOR_OPERATOR,
+          ));
+        }
+
+        if let Some(close_brace) = self.content[start..end].rfind('}') {
+          spans.push((
+            start + close_brace,
+            start + close_brace + 1,
+            COLOR_OPERATOR,
+          ));
+        }
+
+        for statement in body {
+          self.collect_statement_spans(statement, spans);
+        }
+      }
       Statement::Return(expr_opt) => {
         if let Some(return_pos) = self.content[start..end].find("return") {
           spans.push((
@@ -250,7 +283,7 @@ impl<'src> TreeHighlighter<'src> {
 
   fn collect_expression_spans(
     &self,
-    expression: &Spanned<Expression<'src>>,
+    expression: &Spanned<Expression<'a>>,
     spans: &mut Vec<(usize, usize, &'static str)>,
   ) {
     let (node, span) = expression;
@@ -355,6 +388,11 @@ impl<'src> TreeHighlighter<'src> {
 
         self.collect_expression_spans(index, spans);
       }
+      Expression::Null => {
+        if let Some(null_pos) = self.content[start..end].find("null") {
+          spans.push((start + null_pos, start + null_pos + 4, COLOR_KEYWORD));
+        }
+      }
       Expression::Number(_) => {
         let number_pattern = self.find_number_span(start, end);
 
@@ -413,8 +451,8 @@ impl<'src> TreeHighlighter<'src> {
   fn find_operator(
     &self,
     op: &str,
-    lhs: &Spanned<Expression<'src>>,
-    rhs: &Spanned<Expression<'src>>,
+    lhs: &Spanned<Expression<'a>>,
+    rhs: &Spanned<Expression<'a>>,
   ) -> Option<usize> {
     let (start, end) = (lhs.1.end, rhs.1.start);
 

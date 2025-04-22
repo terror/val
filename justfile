@@ -10,6 +10,11 @@ alias t := test
 all: build test clippy fmt-check
 
 [group: 'dev']
+bench:
+  cargo bench
+  open target/criterion/report/index.html
+
+[group: 'dev']
 build:
   cargo build --all --all-targets
 
@@ -18,6 +23,10 @@ build-wasm:
   wasm-pack build crates/val-wasm --target web \
     --out-name val \
     --out-dir ../../www/packages/val-wasm
+
+  rm -rf www/packages/val-wasm/.gitignore
+
+  uv run --with arrg tools/example-generator/main.py examples www/src/lib/examples.ts
 
 [group: 'check']
 check:
@@ -73,6 +82,10 @@ publish:
   cargo publish
   cd ../..
   rm -rf tmp/release
+
+[group: 'misc']
+readme:
+  present --in-place README.md
 
 [group: 'dev']
 run *args:

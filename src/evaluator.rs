@@ -1,26 +1,22 @@
 use super::*;
 
 pub struct Evaluator<'a> {
-  environment: Environment<'a>,
+  pub environment: Environment<'a>,
+  pub inside_function: bool,
+  pub inside_loop: bool,
 }
 
-impl Default for Evaluator<'_> {
-  fn default() -> Self {
-    Self::new()
+impl<'a> From<Environment<'a>> for Evaluator<'a> {
+  fn from(environment: Environment<'a>) -> Self {
+    Self {
+      environment,
+      inside_function: false,
+      inside_loop: false,
+    }
   }
 }
 
 impl<'a> Evaluator<'a> {
-  pub fn new() -> Self {
-    Self {
-      environment: Environment::new(),
-    }
-  }
-
-  pub fn with_environment(environment: Environment<'a>) -> Self {
-    Self { environment }
-  }
-
   pub fn eval(
     &mut self,
     ast: &Spanned<Program<'a>>,
@@ -36,7 +32,10 @@ impl<'a> Evaluator<'a> {
 
           result = eval_result.unwrap();
 
-          if eval_result.is_return() {
+          if eval_result.is_return()
+            || eval_result.is_break()
+            || eval_result.is_continue()
+          {
             break;
           }
         }
@@ -50,12 +49,85 @@ impl<'a> Evaluator<'a> {
     &mut self,
     statement: &Spanned<Statement<'a>>,
   ) -> Result<EvalResult<'a>, Error> {
-    let (node, _) = statement;
+    let (node, span) = statement;
 
     match node {
-      Statement::Assignment(name, expr) => {
-        let value = self.eval_expression(expr)?;
-        self.environment.add_variable(name, value.clone());
+      Statement::Assignment(lhs, rhs) => {
+        let value = self.eval_expression(rhs)?;
+
+        match &lhs.0 {
+          Expression::Identifier(name) => {
+            self.environment.add_variable(name, value.clone());
+          }
+          Expression::ListAccess(base_box, index_box) => {
+            let (list_name, list_span) = match &base_box.0 {
+              Expression::Identifier(name) => (*name, base_box.1),
+              _ => {
+                return Err(Error::new(
+                  base_box.1,
+                  "left‑hand side must be a variable or list element",
+                ));
+              }
+            };
+
+            let mut list = match self.environment.resolve_symbol(list_name) {
+              Some(Value::List(items)) => items.clone(),
+              Some(other) => {
+                return Err(Error::new(
+                  list_span,
+                  format!(
+                    "'{}' is not a list (found {})",
+                    list_name,
+                    other.type_name()
+                  ),
+                ));
+              }
+              None => {
+                return Err(Error::new(
+                  list_span,
+                  format!("Undefined variable `{}`", list_name),
+                ));
+              }
+            };
+
+            let index = match self
+              .eval_expression(index_box)?
+              .number(index_box.1)?
+              .to_f64(self.environment.config.rounding_mode)
+            {
+              Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+              _ => {
+                return Err(Error::new(
+                  index_box.1,
+                  "List index must be a non-negative finite number",
+                ));
+              }
+            };
+
+            if index >= list.len() {
+              return Err(Error::new(
+                lhs.1,
+                format!(
+                  "Index {} out of bounds for list of length {}",
+                  index,
+                  list.len()
+                ),
+              ));
+            }
+
+            list[index] = value.clone();
+
+            self.environment.add_variable(list_name, Value::List(list));
+          }
+
+          _ => {
+            return Err(Error::new(
+              lhs.1,
+              "left‑hand side must be a variable or list element",
+            ));
+          }
+        }
+
         Ok(EvalResult::Value(value))
       }
       Statement::Block(statements) => {
@@ -66,12 +138,34 @@ impl<'a> Evaluator<'a> {
 
           result = eval_result.unwrap();
 
-          if eval_result.is_return() {
-            return Ok(EvalResult::Return(result));
+          if eval_result.is_return()
+            || eval_result.is_break()
+            || eval_result.is_continue()
+          {
+            return Ok(eval_result);
           }
         }
 
         Ok(EvalResult::Value(result))
+      }
+      Statement::Break => {
+        if !self.inside_loop {
+          return Err(Error::new(
+            *span,
+            "Cannot use 'break' outside of a loop",
+          ));
+        }
+        Ok(EvalResult::Break)
+      }
+      Statement::Continue => {
+        if !self.inside_loop {
+          return Err(Error::new(
+            *span,
+            "Cannot use 'continue' outside of a loop",
+          ));
+        }
+
+        Ok(EvalResult::Continue)
       }
       Statement::Expression(expression) => {
         Ok(EvalResult::Value(self.eval_expression(expression)?))
@@ -99,8 +193,11 @@ impl<'a> Evaluator<'a> {
 
             result = eval_result.unwrap();
 
-            if eval_result.is_return() {
-              return Ok(EvalResult::Return(result));
+            if eval_result.is_return()
+              || eval_result.is_break()
+              || eval_result.is_continue()
+            {
+              return Ok(eval_result);
             }
           }
 
@@ -113,8 +210,11 @@ impl<'a> Evaluator<'a> {
 
             result = eval_result.unwrap();
 
-            if eval_result.is_return() {
-              return Ok(EvalResult::Return(result));
+            if eval_result.is_return()
+              || eval_result.is_break()
+              || eval_result.is_continue()
+            {
+              return Ok(eval_result);
             }
           }
 
@@ -123,12 +223,45 @@ impl<'a> Evaluator<'a> {
           Ok(EvalResult::Value(Value::Null))
         }
       }
-      Statement::Return(expr) => Ok(EvalResult::Return(match expr {
-        Some(expr) => self.eval_expression(expr)?,
-        None => Value::Null,
-      })),
+      Statement::Loop(body) => {
+        let old_inside_loop = self.inside_loop;
+
+        self.inside_loop = true;
+
+        loop {
+          for statement in body {
+            let eval_result = self.eval_statement(statement)?;
+
+            let result = eval_result.unwrap();
+
+            if eval_result.is_return() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Return(result));
+            } else if eval_result.is_break() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Value(result));
+            } else if eval_result.is_continue() {
+              break;
+            }
+          }
+        }
+      }
+      Statement::Return(expr) => {
+        if !self.inside_function {
+          return Err(Error::new(*span, "Cannot return outside of a function"));
+        }
+
+        Ok(EvalResult::Return(match expr {
+          Some(expr) => self.eval_expression(expr)?,
+          None => Value::Null,
+        }))
+      }
       Statement::While(condition, body) => {
         let mut result = Value::Null;
+
+        let old_inside_loop = self.inside_loop;
+
+        self.inside_loop = true;
 
         while self.eval_expression(condition)?.boolean(condition.1)? {
           for statement in body {
@@ -137,10 +270,18 @@ impl<'a> Evaluator<'a> {
             result = eval_result.unwrap();
 
             if eval_result.is_return() {
+              self.inside_loop = old_inside_loop;
               return Ok(EvalResult::Return(result));
+            } else if eval_result.is_break() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Value(result));
+            } else if eval_result.is_continue() {
+              break;
             }
           }
         }
+
+        self.inside_loop = old_inside_loop;
 
         Ok(EvalResult::Value(result))
       }
@@ -159,7 +300,11 @@ impl<'a> Evaluator<'a> {
           (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
 
         match (&lhs_val, &rhs_val) {
-          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a + b)),
+          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a.add(
+            b,
+            self.environment.config.precision,
+            self.environment.config.rounding_mode,
+          ))),
           (Value::String(a), Value::String(b)) => Ok(Value::String(Box::leak(
             format!("{}{}", a, b).into_boxed_str(),
           ))),
@@ -169,9 +314,16 @@ impl<'a> Evaluator<'a> {
           (_, Value::String(b)) => Ok(Value::String(Box::leak(
             format!("{}{}", lhs_val, b).into_boxed_str(),
           ))),
-          _ => Ok(Value::Number(
-            lhs_val.number(lhs.1)? + rhs_val.number(rhs.1)?,
-          )),
+          (Value::List(a), Value::List(b)) => {
+            let mut result = a.clone();
+            result.extend(b.clone());
+            Ok(Value::List(result))
+          }
+          _ => Ok(Value::Number(lhs_val.number(lhs.1)?.add(
+            &rhs_val.number(rhs.1)?,
+            self.environment.config.precision,
+            self.environment.config.rounding_mode,
+          ))),
         }
       }
       Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
@@ -181,11 +333,15 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        if rhs_num == 0.0 {
+        if rhs_num.is_zero() {
           return Err(Error::new(rhs.1, "Division by zero"));
         }
 
-        Ok(Value::Number(lhs_num / rhs_num))
+        Ok(Value::Number(lhs_num.div(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        )))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.eval_expression(lhs)? == self.eval_expression(rhs)?,
@@ -250,15 +406,38 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        if rhs_num == 0.0 {
+        if rhs_num.is_zero() {
           return Err(Error::new(rhs.1, "Modulo by zero"));
         }
 
-        Ok(Value::Number(lhs_num % rhs_num))
+        let quotient = lhs_num.div(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        );
+
+        let floored_quotient = quotient.floor();
+
+        let product = floored_quotient.mul(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        );
+
+        let remainder = lhs_num.sub(
+          &product,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        );
+
+        Ok(Value::Number(remainder))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?
-          * self.eval_expression(rhs)?.number(rhs.1)?,
+        self.eval_expression(lhs)?.number(lhs.1)?.mul(
+          &self.eval_expression(rhs)?.number(rhs.1)?,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        ),
       )),
       Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
         self.eval_expression(lhs)? != self.eval_expression(rhs)?,
@@ -270,11 +449,19 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        Ok(Value::Number(lhs_num.powf(rhs_num)))
+        Ok(Value::Number(lhs_num.pow(
+          &rhs_num,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+          &mut Consts::new().unwrap(),
+        )))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?
-          - self.eval_expression(rhs)?.number(rhs.1)?,
+        self.eval_expression(lhs)?.number(lhs.1)?.sub(
+          &self.eval_expression(rhs)?.number(rhs.1)?,
+          self.environment.config.precision,
+          self.environment.config.rounding_mode,
+        ),
       )),
       Expression::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
       Expression::FunctionCall(name, arguments) => {
@@ -288,13 +475,14 @@ impl<'a> Evaluator<'a> {
           .environment
           .call_function(name, evaluated_arguments, *span)
       }
-      Expression::Identifier(name) => match self.environment.get_variable(name)
-      {
-        Some(value) => Ok(value.clone()),
-        None => {
-          Err(Error::new(*span, format!("Undefined variable `{}`", name)))
+      Expression::Identifier(name) => {
+        match self.environment.resolve_symbol(name) {
+          Some(value) => Ok(value.clone()),
+          None => {
+            Err(Error::new(*span, format!("Undefined variable `{}`", name)))
+          }
         }
-      },
+      }
       Expression::List(list) => {
         let mut evaluated_list = Vec::with_capacity(list.len());
 
@@ -317,7 +505,19 @@ impl<'a> Evaluator<'a> {
           }
         };
 
-        let index = self.eval_expression(index)?.number(index.1)? as usize;
+        let index = match self
+          .eval_expression(index)?
+          .number(index.1)?
+          .to_f64(self.environment.config.rounding_mode)
+        {
+          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+          _ => {
+            return Err(Error::new(
+              index.1,
+              "List index must be a non-negative finite number",
+            ));
+          }
+        };
 
         if index >= list.len() {
           return Err(Error::new(
@@ -332,7 +532,8 @@ impl<'a> Evaluator<'a> {
 
         Ok(list[index].clone())
       }
-      Expression::Number(number) => Ok(Value::Number(*number)),
+      Expression::Null => Ok(Value::Null),
+      Expression::Number(number) => Ok(Value::Number(number.clone())),
       Expression::String(string) => Ok(Value::String(string)),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => {
         Ok(Value::Number(-self.eval_expression(rhs)?.number(rhs.1)?))

@@ -42,11 +42,32 @@ fn statement_parser<'a>()
       .collect::<Vec<_>>()
       .delimited_by(just('{').padded(), just('}').padded());
 
-    let assignment_statement = text::ident()
-      .padded()
+    let simple_ident = text::ident().padded().map_with(|name, e| {
+      let span = e.span();
+      (Expression::Identifier(name), span)
+    });
+
+    let indexed_ident = simple_ident.foldl(
+      expression
+        .clone()
+        .delimited_by(just('['), just(']'))
+        .padded()
+        .map_with(|expression, e| (expression, e.span()))
+        .repeated(),
+      |base, (index, span)| {
+        let span = (base.1.start..span.end).into();
+
+        let expression =
+          Expression::ListAccess(Box::new(base), Box::new(index));
+
+        (expression, span)
+      },
+    );
+
+    let assignment_statement = indexed_ident
       .then_ignore(just('=').padded())
       .then(expression.clone())
-      .map(|(name, expr)| Statement::Assignment(name, expr))
+      .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs))
       .map_with(|ast, e| (ast, e.span()));
 
     let function_statement = just("fn")
@@ -91,14 +112,30 @@ fn statement_parser<'a>()
     let while_statement = just("while")
       .padded()
       .ignore_then(condition_parser)
-      .then(statement_block)
+      .then(statement_block.clone())
       .map(|(condition, body)| Statement::While(condition, body))
+      .map_with(|ast, e| (ast, e.span()));
+
+    let loop_statement = just("loop")
+      .padded()
+      .ignore_then(statement_block.clone())
+      .map(Statement::Loop)
       .map_with(|ast, e| (ast, e.span()));
 
     let return_statement = just("return")
       .padded()
       .ignore_then(expression.clone().or_not())
       .map(Statement::Return)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let break_statement = just("break")
+      .padded()
+      .map(|_| Statement::Break)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let continue_statement = just("continue")
+      .padded()
+      .map(|_| Statement::Continue)
       .map_with(|ast, e| (ast, e.span()));
 
     let expression_statement = expression
@@ -111,7 +148,10 @@ fn statement_parser<'a>()
       block_statement,
       if_statement,
       while_statement,
+      loop_statement,
       return_statement,
+      break_statement,
+      continue_statement,
       expression_statement,
     ))
     .padded()
@@ -135,6 +175,10 @@ fn expression_parser<'a>()
 
     let boolean = choice((just("true").to(true), just("false").to(false)))
       .map(Expression::Boolean)
+      .map_with(|ast, e| (ast, e.span()));
+
+    let null = just("null")
+      .map(|_| Expression::Null)
       .map_with(|ast, e| (ast, e.span()));
 
     let double_quoted_string = just('"')
@@ -174,13 +218,13 @@ fn expression_parser<'a>()
       .collect::<Vec<_>>();
 
     let list = items
-      .clone()
+      .delimited_by(just('['), just(']'))
       .map(Expression::List)
-      .map_with(|ast, e| (ast, e.span()))
-      .delimited_by(just('['), just(']'));
+      .map_with(|ast, e| (ast, e.span()));
 
     let atom = number
       .or(boolean)
+      .or(null)
       .or(expression.clone().delimited_by(just('('), just(')')))
       .or(function_call)
       .or(list)
@@ -191,10 +235,13 @@ fn expression_parser<'a>()
     let list_access = atom.clone().foldl(
       expression
         .clone()
-        .delimited_by(just('[').padded(), just(']').padded())
+        .delimited_by(just('['), just(']'))
+        .padded()
+        .map_with(|expression, e| (expression, e.span()))
         .repeated(),
-      |list, index| {
-        let span = (list.1.start..index.1.end).into();
+      |list: Spanned<Expression<'a>>,
+       (index, span): (Spanned<Expression<'a>>, SimpleSpan)| {
+        let span = (list.1.start..span.end).into();
 
         let expression =
           Expression::ListAccess(Box::new(list), Box::new(index));
@@ -212,14 +259,38 @@ fn expression_parser<'a>()
         (Expression::UnaryOp(op, Box::new(rhs)), span)
       });
 
-    let product = unary.clone().foldl(
+    let power = recursive(|power| {
+      unary
+        .clone()
+        .then(
+          just('^')
+            .padded()
+            .ignore_then(power.or(unary.clone()))
+            .or_not(),
+        )
+        .map(|(lhs, rhs)| match rhs {
+          Some(rhs) => {
+            let span = (lhs.1.start..rhs.1.end).into();
+
+            let expression = Expression::BinaryOp(
+              BinaryOp::Power,
+              Box::new(lhs),
+              Box::new(rhs),
+            );
+
+            (expression, span)
+          }
+          None => lhs,
+        })
+    });
+
+    let product = power.clone().foldl(
       choice((
         op('%').to(BinaryOp::Modulo),
         op('*').to(BinaryOp::Multiply),
         op('/').to(BinaryOp::Divide),
-        op('^').to(BinaryOp::Power),
       ))
-      .then(unary.clone())
+      .then(power.clone())
       .repeated(),
       |lhs, (op, rhs)| {
         let span = (lhs.1.start..rhs.1.end).into();
@@ -384,7 +455,7 @@ mod tests {
   fn assignment() {
     Test::new()
       .program("x = 5")
-      .ast("statements(assignment(x, number(5)))")
+      .ast("statements(assignment(identifier(x), number(5)))")
       .run();
   }
 
@@ -431,7 +502,7 @@ mod tests {
   fn while_loop() {
     Test::new()
     .program("while (x < 10) { x = x + 1; }")
-    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(assignment(x, binary_op(+, identifier(x), number(1))))))")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
   }
 
@@ -439,7 +510,7 @@ mod tests {
   fn nested_while_loops() {
     Test::new()
     .program("while (x < 10) { while (y < 5) { y = y + 1; }; x = x + 1; }")
-    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(while(binary_op(<, identifier(y), number(5)), block(assignment(y, binary_op(+, identifier(y), number(1))))), assignment(x, binary_op(+, identifier(x), number(1))))))")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(while(binary_op(<, identifier(y), number(5)), block(assignment(identifier(y), binary_op(+, identifier(y), number(1))))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
   }
 
@@ -447,7 +518,7 @@ mod tests {
   fn if_statement() {
     Test::new()
     .program("if (x > 5) { y = 10; }")
-    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(y, number(10)))))")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(identifier(y), number(10)))))")
     .run();
   }
 
@@ -455,7 +526,7 @@ mod tests {
   fn if_else_statement() {
     Test::new()
     .program("if (x > 5) { y = 10; } else { y = 5; }")
-    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(y, number(10))), block(assignment(y, number(5)))))")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(assignment(identifier(y), number(10))), block(assignment(identifier(y), number(5)))))")
     .run();
   }
 
@@ -463,7 +534,7 @@ mod tests {
   fn nested_if_statements() {
     Test::new()
     .program("if (x > 5) { if (y > 2) { z = 1; } else { z = 2; } } else { z = 3; }")
-    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(if(binary_op(>, identifier(y), number(2)), block(assignment(z, number(1))), block(assignment(z, number(2))))), block(assignment(z, number(3)))))")
+    .ast("statements(if(binary_op(>, identifier(x), number(5)), block(if(binary_op(>, identifier(y), number(2)), block(assignment(identifier(z), number(1))), block(assignment(identifier(z), number(2))))), block(assignment(identifier(z), number(3)))))")
     .run();
   }
 
@@ -492,7 +563,7 @@ mod tests {
   fn list_access() {
     Test::new()
       .program("a = [1, 2, 3]; a[0]")
-      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(list_access(identifier(a), number(0))))")
+      .ast("statements(assignment(identifier(a), list(number(1), number(2), number(3))), expression(list_access(identifier(a), number(0))))")
       .run();
   }
 
@@ -500,7 +571,7 @@ mod tests {
   fn list_access_with_comparison() {
     Test::new()
       .program("a = [1, 2, 3]; a[0] == 1")
-      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(binary_op(==, list_access(identifier(a), number(0)), number(1))))")
+      .ast("statements(assignment(identifier(a), list(number(1), number(2), number(3))), expression(binary_op(==, list_access(identifier(a), number(0)), number(1))))")
       .run();
   }
 
@@ -508,7 +579,7 @@ mod tests {
   fn nested_list_access() {
     Test::new()
       .program("a = [[1, 2], [3, 4]]; a[0][1]")
-      .ast("statements(assignment(a, list(list(number(1), number(2)), list(number(3), number(4)))), expression(list_access(list_access(identifier(a), number(0)), number(1))))")
+      .ast("statements(assignment(identifier(a), list(list(number(1), number(2)), list(number(3), number(4)))), expression(list_access(list_access(identifier(a), number(0)), number(1))))")
       .run();
   }
 
@@ -516,7 +587,78 @@ mod tests {
   fn list_access_with_expressions() {
     Test::new()
       .program("a = [1, 2, 3]; a[1 + 1]")
-      .ast("statements(assignment(a, list(number(1), number(2), number(3))), expression(list_access(identifier(a), binary_op(+, number(1), number(1)))))")
+      .ast("statements(assignment(identifier(a), list(number(1), number(2), number(3))), expression(list_access(identifier(a), binary_op(+, number(1), number(1)))))")
+      .run();
+  }
+
+  #[test]
+  fn break_statement() {
+    Test::new().program("break").ast("statements(break)").run();
+  }
+
+  #[test]
+  fn continue_statement() {
+    Test::new()
+      .program("continue")
+      .ast("statements(continue)")
+      .run();
+  }
+
+  #[test]
+  fn while_with_break() {
+    Test::new()
+    .program("while (x < 10) { if (x == 5) { break; }; x = x + 1; }")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(if(binary_op(==, identifier(x), number(5)), block(break)), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn while_with_continue() {
+    Test::new()
+    .program("while (x < 10) { if (x % 2 == 0) { continue; }; println(x); x = x + 1; }")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(println,identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn loop_statement() {
+    Test::new()
+    .program("loop { x = x + 1; }")
+    .ast("statements(loop(block(assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn loop_with_break() {
+    Test::new()
+    .program("loop { if (x > 10) { break; }; x = x + 1; }")
+    .ast("statements(loop(block(if(binary_op(>, identifier(x), number(10)), block(break)), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn loop_with_continue() {
+    Test::new()
+    .program("loop { if (x % 2 == 0) { continue; }; println(x); x = x + 1; }")
+    .ast("statements(loop(block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(println,identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .run();
+  }
+
+  #[test]
+  fn power_right_associativity() {
+    Test::new()
+      .program("2 ^ 2 ^ 2 ^ 2")
+      .ast("statements(expression(binary_op(^, number(2), binary_op(^, number(2), binary_op(^, number(2), number(2))))))")
+      .run();
+
+    Test::new()
+      .program("2 ^ (2 ^ (2 ^ 2))")
+      .ast("statements(expression(binary_op(^, number(2), binary_op(^, number(2), binary_op(^, number(2), number(2))))))")
+      .run();
+
+    Test::new()
+      .program("((2 ^ 2) ^ 2) ^ 2")
+      .ast("statements(expression(binary_op(^, binary_op(^, binary_op(^, number(2), number(2)), number(2)), number(2))))")
       .run();
   }
 
@@ -535,7 +677,7 @@ mod tests {
   fn invalid_operator() {
     Test::new()
       .program("2 +* 3")
-      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', '(', identifier, '[', '\"', or '''")])
+      .errors(vec![Error::new(SimpleSpan::from(3..4), "found '*' expected '-', '!', non-zero digit, '0', 't', 'f', 'n', '(', identifier, '[', '\"', or '''")])
       .run();
   }
 
@@ -545,7 +687,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![Error::new(
         SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '[', '%', '*', '/', '^', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
+        "found end of input expected any, '.', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
       )])
       .run();
   }

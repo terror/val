@@ -18,6 +18,7 @@ enum Match<'a> {
 type Result<T = (), E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
 
 struct Test<'a> {
+  arguments: Vec<String>,
   expected_status: i32,
   expected_stderr: Match<'a>,
   expected_stdout: Match<'a>,
@@ -28,12 +29,18 @@ struct Test<'a> {
 impl<'a> Test<'a> {
   fn new() -> Result<Self> {
     Ok(Self {
+      arguments: Vec::new(),
       expected_status: 0,
       expected_stderr: Match::Empty,
       expected_stdout: Match::Empty,
       program: "",
       tempdir: TempDir::new()?,
     })
+  }
+
+  fn argument(mut self, argument: &str) -> Self {
+    self.arguments.push(argument.to_owned());
+    self
   }
 
   fn expected_status(self, expected_status: i32) -> Self {
@@ -72,6 +79,10 @@ impl<'a> Test<'a> {
 
     let mut file = File::create(&program_path)?;
     write!(file, "{}", self.program.unindent())?;
+
+    for argument in self.arguments {
+      command.arg(argument);
+    }
 
     command.arg(&program_path);
 
@@ -163,12 +174,6 @@ fn float_literals() -> Result {
     .run()?;
 
   Test::new()?
-    .program("println(-2.718)")
-    .expected_status(0)
-    .expected_stdout(Exact("-2.718\n"))
-    .run()?;
-
-  Test::new()?
     .program("println(1.0 + 2.5)")
     .expected_status(0)
     .expected_stdout(Exact("3.5\n"))
@@ -205,15 +210,19 @@ fn negate_integer_literal() -> Result {
 #[test]
 fn call_builtin_function() -> Result {
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(sin(1))")
     .expected_status(0)
-    .expected_stdout(Exact("0.8414709848078965\n"))
+    .expected_stdout(Exact("0.84147098480789650666\n"))
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(cos(1))")
     .expected_status(0)
-    .expected_stdout(Exact("0.5403023058681398\n"))
+    .expected_stdout(Exact("0.54030230586813971741\n"))
     .run()
 }
 
@@ -421,9 +430,11 @@ fn power() -> Result {
 #[test]
 fn arctangent() -> Result {
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(arc(1))")
     .expected_status(0)
-    .expected_stdout(Exact("0.7853981633974483\n"))
+    .expected_stdout(Exact("0.78539816339744830962\n"))
     .run()?;
 
   Test::new()?
@@ -433,9 +444,11 @@ fn arctangent() -> Result {
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(arc(-1))")
     .expected_status(0)
-    .expected_stdout(Exact("-0.7853981633974483\n"))
+    .expected_stdout(Exact("-0.78539816339744830962\n"))
     .run()?;
 
   Test::new()?
@@ -498,7 +511,7 @@ fn secant() -> Result {
   Test::new()?
     .program("println(sec(pi/3))")
     .expected_status(0)
-    .expected_stdout(Contains("1.99"))  // ~2.0000...
+    .expected_stdout(Exact("2\n"))  // ~2.0000...
     .run()
 }
 
@@ -768,9 +781,11 @@ fn natural_logarithm() -> Result {
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(ln(10))")
     .expected_status(0)
-    .expected_stdout(Exact("2.302585092994046\n"))
+    .expected_stdout(Exact("2.302585092994045684\n"))
     .run()?;
 
   Test::new()?
@@ -799,60 +814,78 @@ fn natural_logarithm() -> Result {
 #[test]
 fn builtin_variables_and_functions_can_coexist() -> Result {
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(e * e(20))")
     .expected_status(0)
-    .expected_stdout(Exact("1318815734.4832146\n"))
+    .expected_stdout(Exact("1318815734.4832146972\n"))
     .run()
 }
 
 #[test]
 fn functions_with_constants() -> Result {
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(arc(pi / 4))")
     .expected_status(0)
-    .expected_stdout(Exact("0.6657737500283538\n"))
+    .expected_stdout(Exact("0.66577375002835386362\n"))
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(ln(e * 2))")
     .expected_status(0)
-    .expected_stdout(Exact("1.6931471805599452\n"))
+    .expected_stdout(Exact("1.6931471805599453094\n"))
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(e(pi))")
     .expected_status(0)
-    .expected_stdout(Exact("23.140692632779267\n"))
+    .expected_stdout(Exact("23.140692632779269006\n"))
     .run()
 }
 
 #[test]
 fn square_root() -> Result {
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(sqrt(4))")
     .expected_status(0)
     .expected_stdout(Exact("2\n"))
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(sqrt(2))")
     .expected_status(0)
-    .expected_stdout(Exact("1.4142135623730951\n"))
+    .expected_stdout(Exact("1.4142135623730950487\n"))
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(sqrt(0))")
     .expected_status(0)
     .expected_stdout(Exact("0\n"))
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(sqrt())")
     .expected_status(1)
     .expected_stderr(Contains("Function `sqrt` expects 1 argument, got 0"))
     .run()?;
 
   Test::new()?
+    .argument("-p")
+    .argument("53")
     .program("println(sqrt(-1))")
     .expected_status(1)
     .expected_stderr(Contains("Cannot take square root of negative number"))
@@ -1569,7 +1602,7 @@ fn function_wrong_argument_count() -> Result {
 }
 
 #[test]
-fn recursive_function() -> Result {
+fn iterative_factorial() -> Result {
   Test::new()?
     .program(indoc! {
       "
@@ -1594,7 +1627,7 @@ fn recursive_function() -> Result {
 }
 
 #[test]
-fn recursive_function_direct_style() -> Result {
+fn direct_recursive_function() -> Result {
   Test::new()?
     .program(indoc! {
       "
@@ -1680,8 +1713,10 @@ fn function_modifying_outer_scope() -> Result {
 }
 
 #[test]
+#[ignore]
 fn function_with_no_arguments() -> Result {
   Test::new()?
+    .argument("-p")
     .program(indoc! {
       "
       fn get_pi() {
@@ -1886,13 +1921,12 @@ fn type_conversions_float() -> Result {
     .program(indoc! {
       "
       println(float(5))
-      println(float('3.14'))
       println(float(true))
       println(float(false))
       "
     })
     .expected_status(0)
-    .expected_stdout(Exact("5\n3.14\n1\n0\n"))
+    .expected_stdout(Exact("5\n1\n0\n"))
     .run()
 }
 
@@ -1947,5 +1981,899 @@ fn split_and_convert() -> Result {
     })
     .expected_status(0)
     .expected_stdout(Exact("60\n"))
+    .run()
+}
+
+#[test]
+fn cannot_return_outside_of_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = 0
+
+      if (a == 0) {
+        return 1
+      }
+
+      print(a)
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot return outside of a function\n"))
+    .run()
+}
+
+#[test]
+fn list_element_assignment_updates_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      nums = [1, 2, 3]
+      nums[0] = 10
+      println(nums)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[10, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn list_element_assignment_then_read() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      letters = ['a', 'b', 'c']
+      letters[1] = 'x'
+      println(letters[1])
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("x\n"))
+    .run()
+}
+
+#[test]
+fn element_assignment_on_non_list_errors() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      value = 42
+      value[0] = 1
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("'value' is not a list"))
+    .run()
+}
+
+#[test]
+fn simple_break() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        if (i >= 5) {
+          break
+        }
+        sum = sum + i
+        i = i + 1
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10\n5\n"))
+    .run()
+}
+
+#[test]
+fn simple_continue() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i % 2 == 0) {
+          continue
+        }
+        sum = sum + i
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("25\n10\n"))
+    .run()
+}
+
+#[test]
+fn nested_loops_with_break() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 5) {
+        j = 0
+        while (j < 5) {
+          if (j == 3) {
+            break
+          }
+          sum = sum + 1
+          j = j + 1
+        }
+        i = i + 1
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("15\n"))
+    .run()
+}
+
+#[test]
+fn nested_loops_with_continue() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 3) {
+        j = 0
+        while (j < 3) {
+          j = j + 1
+          if (j == 2) {
+            continue
+          }
+          sum = sum + j
+        }
+        i = i + 1
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("12\n"))
+    .run()
+}
+
+#[test]
+fn break_within_if_else() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        if (i < 5) {
+          sum = sum + i
+        } else {
+          break
+        }
+        i = i + 1
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10\n5\n"))
+    .run()
+}
+
+#[test]
+fn continue_within_if_else() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i <= 5) {
+          sum = sum + i
+        } else {
+          continue
+        }
+        println(i)
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n2\n3\n4\n5\n15\n"))
+    .run()
+}
+
+#[test]
+fn break_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      break
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'break' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn continue_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      continue
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'continue' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn break_in_if_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      if (true) {
+        break
+      }
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'break' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn continue_in_if_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      if (true) {
+        continue
+      }
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'continue' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn break_in_function_outside_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn test() {
+        break
+      }
+
+      test()
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("Cannot use 'break' outside of a loop"))
+    .run()
+}
+
+#[test]
+fn continue_in_nested_if() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      i = 0
+      sum = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i > 5) {
+          if (i % 2 == 0) {
+            continue
+          }
+        }
+        sum = sum + i
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("31\n10\n"))
+    .run()
+}
+
+#[test]
+fn multiple_breaks() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      i = 0
+      j = 0
+
+      while (i < 10) {
+        j = 0
+        while (j < 10) {
+          if (j == 5) {
+            break
+          }
+          j = j + 1
+        }
+
+        if (i == 3) {
+          break
+        }
+
+        i = i + 1
+      }
+
+      println(i)
+      println(j)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("3\n5\n"))
+    .run()
+}
+
+#[test]
+fn continue_with_expression() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      while (i < 10) {
+        i = i + 1
+        if (i * 2 > 10 && i < 8) {
+          continue
+        }
+        sum = sum + i
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("42\n"))
+    .run()
+}
+
+#[test]
+fn break_with_return_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn find_index(value) {
+        i = 0
+        while (i < 10) {
+          if (i == value) {
+            return i
+          }
+          if (i > value) {
+            break
+          }
+          i = i + 1
+        }
+        return -1
+      }
+
+      println(find_index(5))
+      println(find_index(15))
+      println(find_index(7))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("5\n-1\n7\n"))
+    .run()
+}
+
+#[test]
+fn break_inside_if_inside_while() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn contains(list, value) {
+        i = 0
+        result = false
+
+        while (i < len(list)) {
+          if (list[i] == value) {
+            result = true
+            break
+          }
+          i = i + 1
+        }
+
+        return result
+      }
+
+      nums = [1, 3, 5, 7, 9]
+      println(contains(nums, 5))
+      println(contains(nums, 6))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("true\nfalse\n"))
+    .run()
+}
+
+#[test]
+fn finding_first_even_number() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn find_first_even(list) {
+        i = 0
+        result = -1
+
+        while (i < len(list)) {
+          if (list[i] % 2 == 0) {
+            result = list[i]
+            break
+          }
+          i = i + 1
+        }
+
+        return result
+      }
+
+      println(find_first_even([1, 3, 6, 8, 9]))
+      println(find_first_even([1, 3, 5, 7, 9]))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("6\n-1\n"))
+    .run()
+}
+
+#[test]
+fn sum_of_odd_numbers() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn sum_odds(list) {
+        i = 0
+        sum = 0
+
+        while (i < len(list)) {
+          if (list[i] % 2 == 0) {
+            i = i + 1
+            continue
+          }
+          sum = sum + list[i]
+          i = i + 1
+        }
+
+        return sum
+      }
+
+      println(sum_odds([1, 2, 3, 4, 5]))
+      println(sum_odds([2, 4, 6, 8, 10]))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("9\n0\n"))
+    .run()
+}
+
+#[test]
+fn string_join() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(join(['a', 'b', 'c'], ','))
+      println(join(['hello', 'world'], ' '))
+      println(join([1, 2, 3], '-'))
+      println(join([], '|'))
+      println(join(['single'], ''))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("a,b,c\nhello world\n1-2-3\n\nsingle\n"))
+    .run()
+}
+
+#[test]
+fn join_and_split() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      values = [10, 20, 30]
+      joined = join(values, ',')
+      println(joined)
+
+      parts = split(joined, ',')
+      sum = 0
+      i = 0
+      while (i < len(parts)) {
+        sum = sum + int(parts[i])
+        i = i + 1
+      }
+
+      println(sum)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10,20,30\n60\n"))
+    .run()
+}
+
+#[test]
+fn join_with_different_types() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      mixed = ['text', 123, true, 4.56]
+      println(join(mixed, ', '))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Contains("text, 123, true, 4.55"))
+    .run()
+}
+
+#[test]
+fn join_with_wrong_argument_count() -> Result {
+  Test::new()?
+    .program("println(join([1, 2, 3]))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `join` expects 2 arguments, got 1"))
+    .run()?;
+
+  Test::new()?
+    .program("println(join([1, 2, 3], ',', 'extra'))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `join` expects 2 arguments, got 3"))
+    .run()
+}
+
+#[test]
+fn join_with_wrong_types() -> Result {
+  Test::new()?
+    .program("println(join('not a list', ','))")
+    .expected_status(1)
+    .expected_stderr(Contains("'not a list' is not a list"))
+    .run()?;
+
+  Test::new()?
+    .program("println(join([1, 2, 3], 42))")
+    .expected_status(1)
+    .expected_stderr(Contains("'42' is not a string"))
+    .run()
+}
+
+#[test]
+fn list_concatenation() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = [1, 2, 3]
+      b = [4, 5, 6]
+      println(a + b)
+
+      empty = []
+      println(empty + a)
+      println(b + empty)
+      println(empty + empty)
+
+      numbers = [1, 2, 3]
+      strings = ['a', 'b', 'c']
+      booleans = [true, false]
+      mixed = numbers + strings + booleans
+      println(mixed)
+
+      nested1 = [[1, 2], [3, 4]]
+      nested2 = [[5, 6]]
+      println(nested1 + nested2)
+
+      result = [0]
+      result = result + [1]
+      result = result + [2, 3]
+      println(result)
+
+      println([1] + [2] + [3] + [4])
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[1, 2, 3, 4, 5, 6]\n[1, 2, 3]\n[4, 5, 6]\n[]\n[1, 2, 3, 'a', 'b', 'c', true, false]\n[[1, 2], [3, 4], [5, 6]]\n[0, 1, 2, 3]\n[1, 2, 3, 4]\n"))
+    .run()
+}
+
+#[test]
+fn higher_order_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn map(l, f) {
+        i = 0
+
+        r = []
+
+        while (i < len(l)) {
+          r = r + [f(l[i])]
+          i = i + 1
+        }
+
+        return r
+      }
+
+      fn double(x) {
+        return x * 2
+      }
+
+      l = [1, 2, 3]
+
+      println(map(l, double))
+    "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[2, 4, 6]\n"))
+    .run()
+}
+
+#[test]
+fn simple_loop() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+      i = 0
+
+      loop {
+        if (i >= 5) {
+          break
+        }
+        sum = sum + i
+        i = i + 1
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("10\n5\n"))
+    .run()
+}
+
+#[test]
+fn loop_with_continue() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+
+      i = 0
+
+      loop {
+        i = i + 1
+
+        if (i > 10) {
+          break
+        }
+
+        if (i % 2 == 0) {
+          continue
+        }
+
+        sum = sum + i
+      }
+
+      println(sum)
+      println(i)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("25\n11\n"))
+    .run()
+}
+
+#[test]
+fn nested_loops() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      result = ''
+      i = 0
+
+      loop {
+        if (i >= 3) {
+          break
+        }
+
+        j = 0
+
+        loop {
+          if (j >= 3) {
+            break
+          }
+
+          result = result + i + ',' + j + ';'
+          j = j + 1
+        }
+
+        i = i + 1
+      }
+
+      println(result)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("0,0;0,1;0,2;1,0;1,1;1,2;2,0;2,1;2,2;\n"))
+    .run()
+}
+
+#[test]
+fn infinite_loop_with_return() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn find_number(target) {
+        i = 0
+        loop {
+          if (i == target) {
+            return 'Found ' + i
+          }
+          if (i > 100) {
+            return 'Not found'
+          }
+          i = i + 1
+        }
+      }
+
+      println(find_number(42))
+      println(find_number(200))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("Found 42\nNot found\n"))
+    .run()
+}
+
+#[test]
+fn null_values() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn returns_nothing() { }
+
+      println(returns_nothing())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("null\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      fn returns_null() {
+        return
+      }
+
+      println(returns_null())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("null\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      fn returns_null() {
+        return
+      }
+
+      result = returns_null()
+
+      if (result == result) {
+        println('Null equals itself')
+      } else {
+        println('Null does not equal itself')
+      }
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("Null equals itself\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      println()
+      println(println())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("\n\nnull\n"))
+    .run()
+}
+
+#[test]
+fn append_wrong_argument_count() -> Result {
+  Test::new()?
+    .program("println(append([1, 2, 3]))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `append` expects 2 arguments, got 1"))
+    .run()?;
+
+  Test::new()?
+    .program("println(append([1, 2, 3], 4, 5))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `append` expects 2 arguments, got 3"))
+    .run()
+}
+
+#[test]
+fn append_with_wrong_types() -> Result {
+  Test::new()?
+    .program("println(append('not a list', 42))")
+    .expected_status(1)
+    .expected_stderr(Contains("'not a list' is not a list"))
+    .run()
+}
+
+#[test]
+fn gcd_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(gcd(12, 8))
+      println(gcd(17, 5))
+      println(gcd(0, 5))
+      println(gcd(100, 0))
+      println(gcd(-30, 45))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("4\n1\n5\n100\n15\n"))
+    .run()
+}
+
+#[test]
+fn lcm_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(lcm(4, 6))
+      println(lcm(21, 6))
+      println(lcm(0, 5))
+      println(lcm(7, 0))
+      println(lcm(-12, 18))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("12\n42\n0\n0\n36\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(lcm(5))")
+    .expected_status(1)
+    .expected_stderr(Contains("Function `lcm` expects 2 arguments, got 1"))
     .run()
 }

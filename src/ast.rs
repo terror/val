@@ -33,8 +33,10 @@ impl Program<'_> {
 
 #[derive(Debug, Clone)]
 pub enum Statement<'a> {
-  Assignment(&'a str, Spanned<Expression<'a>>),
+  Assignment(Spanned<Expression<'a>>, Spanned<Expression<'a>>),
   Block(Vec<Spanned<Statement<'a>>>),
+  Break,
+  Continue,
   Expression(Spanned<Expression<'a>>),
   Function(&'a str, Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
   If(
@@ -42,6 +44,7 @@ pub enum Statement<'a> {
     Vec<Spanned<Statement<'a>>>,
     Option<Vec<Spanned<Statement<'a>>>>,
   ),
+  Loop(Vec<Spanned<Statement<'a>>>),
   Return(Option<Spanned<Expression<'a>>>),
   While(Spanned<Expression<'a>>, Vec<Spanned<Statement<'a>>>),
 }
@@ -49,8 +52,8 @@ pub enum Statement<'a> {
 impl Display for Statement<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
-      Statement::Assignment(name, expression) => {
-        write!(f, "assignment({}, {})", name, expression.0)
+      Statement::Assignment(lhs, rhs) => {
+        write!(f, "assignment({}, {})", lhs.0, rhs.0)
       }
       Statement::Block(statements) => {
         write!(
@@ -63,6 +66,8 @@ impl Display for Statement<'_> {
             .join(", ")
         )
       }
+      Statement::Break => write!(f, "break"),
+      Statement::Continue => write!(f, "continue"),
       Statement::Expression(expression) => {
         write!(f, "expression({})", expression.0)
       }
@@ -87,22 +92,34 @@ impl Display for Statement<'_> {
           .join(", ");
 
         match else_branch {
-          Some(else_stmts) => {
-            let else_str = else_stmts
-              .iter()
-              .map(|s| s.0.to_string())
-              .collect::<Vec<_>>()
-              .join(", ");
+          Some(else_statements) => {
             write!(
               f,
               "if({}, block({}), block({}))",
-              condition.0, then_str, else_str
+              condition.0,
+              then_str,
+              else_statements
+                .iter()
+                .map(|s| s.0.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
             )
           }
           None => {
             write!(f, "if({}, block({}))", condition.0, then_str)
           }
         }
+      }
+      Statement::Loop(body) => {
+        write!(
+          f,
+          "loop(block({}))",
+          body
+            .iter()
+            .map(|s| s.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
       }
       Statement::Return(expr) => match expr {
         Some(expression) => write!(f, "return({})", expression.0),
@@ -129,9 +146,12 @@ impl Statement<'_> {
     String::from(match self {
       Statement::Assignment(_, _) => "assignment",
       Statement::Block(_) => "block",
+      Statement::Break => "break",
+      Statement::Continue => "continue",
       Statement::Expression(_) => "expression",
       Statement::Function(_, _, _) => "function",
       Statement::If(_, _, _) => "if",
+      Statement::Loop(_) => "loop",
       Statement::Return(_) => "return",
       Statement::While(_, _) => "while",
     })
@@ -200,7 +220,8 @@ pub enum Expression<'a> {
   Identifier(&'a str),
   List(Vec<Spanned<Self>>),
   ListAccess(Box<Spanned<Self>>, Box<Spanned<Self>>),
-  Number(f64),
+  Null,
+  Number(Float),
   String(&'a str),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
 }
@@ -241,7 +262,8 @@ impl Display for Expression<'_> {
       Expression::ListAccess(list, index) => {
         write!(f, "list_access({}, {})", list.0, index.0)
       }
-      Expression::Number(number) => write!(f, "number({})", number),
+      Expression::Null => write!(f, "null"),
+      Expression::Number(number) => write!(f, "number({})", number.display()),
       Expression::String(string) => write!(f, "string(\"{}\")", string),
       Expression::UnaryOp(op, expr) => {
         write!(f, "unary_op({}, {})", op, expr.0)
@@ -259,6 +281,7 @@ impl Expression<'_> {
       Expression::Identifier(_) => "identifier",
       Expression::List(_) => "list",
       Expression::ListAccess(_, _) => "list_access",
+      Expression::Null => "null",
       Expression::Number(_) => "number",
       Expression::String(_) => "string",
       Expression::UnaryOp(_, _) => "unary_op",

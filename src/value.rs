@@ -1,18 +1,18 @@
 use super::*;
 
 #[derive(Clone, Debug)]
-pub enum Value<'src> {
+pub enum Value<'a> {
   Boolean(bool),
   Function(
-    &'src str,
-    Vec<&'src str>,
-    Vec<Spanned<Statement<'src>>>,
-    Environment<'src>,
+    &'a str,
+    Vec<&'a str>,
+    Vec<Spanned<Statement<'a>>>,
+    Environment<'a>,
   ),
   List(Vec<Self>),
   Null,
-  Number(f64),
-  String(&'src str),
+  Number(Float),
+  String(&'a str),
 }
 
 impl Display for Value<'_> {
@@ -33,7 +33,7 @@ impl Display for Value<'_> {
           .join(", ")
       ),
       Value::Null => write!(f, "null"),
-      Value::Number(number) => write!(f, "{number}"),
+      Value::Number(number) => write!(f, "{}", number.display()),
       Value::String(string) => write!(f, "{string}"),
     }
   }
@@ -80,9 +80,9 @@ impl<'a> Value<'a> {
     }
   }
 
-  pub fn number(&self, span: Span) -> Result<f64, Error> {
+  pub fn number(&self, span: Span) -> Result<Float, Error> {
     if let Value::Number(x) = self {
-      Ok(*x)
+      Ok(x.clone())
     } else {
       Err(Error {
         span,

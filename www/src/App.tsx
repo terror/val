@@ -1,4 +1,4 @@
-import { TreeViewer } from '@/components/tree-viewer';
+import { AstNode } from '@/components/ast-node';
 import {
   Select,
   SelectContent,
@@ -6,36 +6,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useEffect, useState } from 'react';
+import type { AstNode as AstNodeType, ValError } from '@/lib/types';
+import { EditorView } from '@codemirror/view';
+import { Radius } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import init, { AstNode, ParseError, parse } from 'val-wasm';
+import init, { parse } from 'val-wasm';
 
-import { Editor } from './components/editor';
+import { Editor, EditorRef } from './components/editor';
 import { EditorSettingsDialog } from './components/editor-settings-dialog';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from './components/ui/resizable';
+import { examples } from './lib/examples';
 
-const EXAMPLES = {
-  Factorial: `fn factorial(n) {
-  if (n <= 1) {
-    1
-  } else {
-    n * factorial(n - 1)
-  }
-}
-
-print(factorial(5));`,
-};
+const STORAGE_KEY_CODE = 'val-editor-code';
+const STORAGE_KEY_EXAMPLE = 'val-editor-example';
 
 function App() {
+  const [ast, setAst] = useState<AstNodeType | null>(null);
+
+  const [code, setCode] = useState(() => {
+    const savedCode = localStorage.getItem(STORAGE_KEY_CODE);
+    return savedCode || examples.factorial;
+  });
+
+  const [currentExample, setCurrentExample] = useState(() => {
+    const savedExample = localStorage.getItem(STORAGE_KEY_EXAMPLE);
+    return savedExample || 'factorial';
+  });
+
+  const [editorView, setEditorView] = useState<EditorView | null>(null);
+  const [errors, setErrors] = useState<ValError[]>([]);
   const [wasmLoaded, setWasmLoaded] = useState(false);
-  const [code, setCode] = useState(EXAMPLES.Factorial);
-  const [currentExample, setCurrentExample] = useState('Factorial');
-  const [ast, setAst] = useState<AstNode | null>(null);
-  const [parseErrors, setParseErrors] = useState<ParseError[]>([]);
+
+  const editorRef = useRef<EditorRef>(null);
+
+  const handleEditorReady = (view: EditorView) => {
+    setEditorView(view);
+  };
 
   useEffect(() => {
     init()
@@ -48,17 +59,32 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if (!wasmLoaded) return;
+
     try {
       setAst(parse(code));
-      setParseErrors([]);
     } catch (error) {
-      setParseErrors(error as ParseError[]);
+      setErrors(error as ValError[]);
     }
+  }, [code, wasmLoaded]);
+
+  useEffect(() => {
+    if (editorRef.current?.view && !editorView) {
+      setEditorView(editorRef.current.view);
+    }
+  }, [editorRef.current?.view, editorView]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_CODE, code);
   }, [code]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
+  }, [currentExample]);
 
   const handleExampleChange = (value: string) => {
     setCurrentExample(value);
-    setCode(EXAMPLES[value as keyof typeof EXAMPLES]);
+    setCode(examples[value as keyof typeof examples]);
   };
 
   if (!wasmLoaded) return null;
@@ -66,8 +92,11 @@ function App() {
   return (
     <div className='flex h-screen flex-col p-4'>
       <div className='mb-4 flex items-center'>
-        <a href='/' className='font-semibold'>
-          val
+        <a href='/val' className='font-semibold'>
+          <div className='flex items-center gap-x-1'>
+            <Radius className='h-4 w-4' />
+            <p>val</p>
+          </div>
         </a>
       </div>
       <ResizablePanelGroup
@@ -91,7 +120,7 @@ function App() {
                       <SelectValue placeholder='Select example' />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.keys(EXAMPLES).map((key) => (
+                      {Object.keys(examples).map((key) => (
                         <SelectItem key={key} value={key}>
                           {key}
                         </SelectItem>
@@ -102,7 +131,13 @@ function App() {
                 <EditorSettingsDialog />
               </div>
               <div className='h-full min-h-0 flex-grow overflow-hidden'>
-                <Editor errors={parseErrors} value={code} onChange={setCode} />
+                <Editor
+                  errors={errors}
+                  onChange={setCode}
+                  onEditorReady={handleEditorReady}
+                  ref={editorRef}
+                  value={code}
+                />
               </div>
             </div>
           </div>
@@ -114,7 +149,11 @@ function App() {
           className='min-h-0 overflow-hidden'
         >
           <div className='h-full overflow-auto p-2'>
-            <TreeViewer ast={ast} />
+            {ast ? (
+              <AstNode node={ast} editorView={editorView} />
+            ) : (
+              <div className='text-muted-foreground p-2'>No AST available</div>
+            )}
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>

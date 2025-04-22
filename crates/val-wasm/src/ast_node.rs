@@ -1,7 +1,6 @@
 use super::*;
 
-#[derive(Clone)]
-#[wasm_bindgen(getter_with_clone)]
+#[derive(Clone, Serialize)]
 pub struct AstNode {
   pub kind: String,
   pub range: Range,
@@ -41,7 +40,8 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
     let mut children = Vec::new();
 
     match statement {
-      Statement::Assignment(_, rhs) => {
+      Statement::Assignment(lhs, rhs) => {
+        children.push(Self::from((&lhs.0, &lhs.1)));
         children.push(Self::from((&rhs.0, &rhs.1)));
 
         Self {
@@ -61,6 +61,16 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Statement::Break => Self {
+        kind: statement.kind(),
+        range,
+        children,
+      },
+      Statement::Continue => Self {
+        kind: statement.kind(),
+        range,
+        children,
+      },
       Statement::Expression(expression) => {
         children.push(Self::from((&expression.0, &expression.1)));
 
@@ -92,6 +102,17 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
           for (statement, span) in else_statements {
             children.push(Self::from((statement, span)));
           }
+        }
+
+        Self {
+          kind: statement.kind(),
+          range,
+          children,
+        }
+      }
+      Statement::Loop(body) => {
+        for (statement, span) in body {
+          children.push(Self::from((statement, span)));
         }
 
         Self {
@@ -189,6 +210,11 @@ impl From<(&Expression<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Expression::Null => Self {
+        kind: expression.kind(),
+        range,
+        children,
+      },
       Expression::Number(_) => Self {
         kind: expression.kind(),
         range,
