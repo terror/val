@@ -2,11 +2,17 @@ use super::*;
 
 pub struct Analyzer<'a> {
   environment: Environment<'a>,
+  inside_function: bool,
+  inside_loop: bool,
 }
 
 impl<'a> Analyzer<'a> {
   pub fn new(environment: Environment<'a>) -> Self {
-    Self { environment }
+    Self {
+      environment,
+      inside_function: false,
+      inside_loop: false,
+    }
   }
 
   pub fn analyze(&mut self, ast: &Spanned<Program<'a>>) -> Vec<Error> {
@@ -55,8 +61,18 @@ impl<'a> Analyzer<'a> {
           errors.extend(self.analyze_statement(statement));
         }
       }
-      Statement::Break => {}
-      Statement::Continue => {}
+      Statement::Break => {
+        if !self.inside_loop {
+          errors
+            .push(Error::new(*span, "Cannot use 'break' outside of a loop"));
+        }
+      }
+      Statement::Continue => {
+        if !self.inside_loop {
+          errors
+            .push(Error::new(*span, "Cannot use 'continue' outside of a loop"));
+        }
+      }
       Statement::Expression(expr) => {
         errors.extend(self.analyze_expression(expr));
       }
@@ -83,9 +99,22 @@ impl<'a> Analyzer<'a> {
           .environment
           .add_function(name, Function::UserDefined(function.clone()));
 
+        let old_environment = self.environment.clone();
+        let old_inside_function = self.inside_function;
+
+        self.environment = Environment::with_parent(self.environment.clone());
+        self.inside_function = true;
+
+        for &parameter in parameters {
+          self.environment.add_variable(parameter, Value::Null);
+        }
+
         for statement in body {
           errors.extend(self.analyze_statement(statement));
         }
+
+        self.environment = old_environment;
+        self.inside_function = old_inside_function;
       }
       Statement::If(condition, then_branch, else_branch) => {
         errors.extend(self.analyze_expression(condition));
@@ -101,9 +130,18 @@ impl<'a> Analyzer<'a> {
         }
       }
       Statement::Loop(body) => {
+        let parent_env = self.environment.clone();
+        let old_inside_loop = self.inside_loop;
+
+        self.environment = Environment::with_parent(parent_env.clone());
+        self.inside_loop = true;
+
         for statement in body {
           errors.extend(self.analyze_statement(statement));
         }
+
+        self.environment = parent_env;
+        self.inside_loop = old_inside_loop;
       }
       Statement::Return(expr) => {
         if let Some(expr) = expr {
@@ -113,9 +151,18 @@ impl<'a> Analyzer<'a> {
       Statement::While(condition, body) => {
         errors.extend(self.analyze_expression(condition));
 
+        let parent_env = self.environment.clone();
+        let old_inside_loop = self.inside_loop;
+
+        self.environment = Environment::with_parent(parent_env.clone());
+        self.inside_loop = true;
+
         for statement in body {
           errors.extend(self.analyze_statement(statement));
         }
+
+        self.environment = parent_env;
+        self.inside_loop = old_inside_loop;
       }
     }
 
@@ -142,6 +189,23 @@ impl<'a> Analyzer<'a> {
         if !self.environment.functions.contains_key(name) {
           errors
             .push(Error::new(*span, format!("Undefined function `{}`", name)));
+        } else {
+          match self.environment.functions.get(name) {
+            Some(Function::UserDefined(Value::Function(_, params, _, _))) => {
+              if arguments.len() != params.len() {
+                errors.push(Error::new(
+                  *span,
+                  format!(
+                    "Function `{}` expects {} arguments, got {}",
+                    name,
+                    params.len(),
+                    arguments.len()
+                  ),
+                ));
+              }
+            }
+            _ => {}
+          }
         }
 
         for argument in arguments {
@@ -167,7 +231,7 @@ impl<'a> Analyzer<'a> {
 
 #[cfg(test)]
 mod tests {
-  use super::*;
+  use {super::*, anyhow::anyhow};
 
   #[derive(Debug)]
   struct Test {
@@ -200,11 +264,11 @@ mod tests {
       }
     }
 
-    fn run(self) -> Result<(), String> {
+    fn run(self) -> Result {
       let ast = match parse(&self.program) {
         Ok(ast) => ast,
         Err(errors) => {
-          return Err(format!("Failed to parse program: {:?}", errors));
+          return Err(anyhow!("Failed to parse program: {:?}", errors));
         }
       };
 
@@ -225,9 +289,11 @@ mod tests {
 
       for (i, error) in analysis_errors.iter().enumerate() {
         if !error.message.contains(&self.errors[i]) {
-          return Err(format!(
+          return Err(anyhow!(
             "Error {} expected to contain '{}', got '{}'",
-            i, self.errors[i], error.message
+            i,
+            self.errors[i],
+            error.message
           ));
         }
       }
@@ -237,13 +303,10 @@ mod tests {
   }
 
   #[test]
-  fn invalid_lvalues() -> Result<(), String> {
+  fn invalid_lvalues() -> Result {
     Test::new().program("a = 10").errors(&[]).run()?;
 
-    Test::new()
-      .program("a = [1, 2, 3]; a[0] = 10")
-      .errors(&[])
-      .run()?;
+    Test::new().program("a = [1, 2, 3]; a[0] = 10").run()?;
 
     Test::new()
       .program("\"foo\" = 10")
@@ -261,10 +324,9 @@ mod tests {
   }
 
   #[test]
-  fn function_parameters() -> Result<(), String> {
+  fn function_parameters() -> Result {
     Test::new()
       .program("fn add(a, b) { return a + b; }")
-      .errors(&[])
       .run()?;
 
     Test::new()
@@ -282,7 +344,7 @@ mod tests {
   }
 
   #[test]
-  fn function_calls() -> Result<(), String> {
+  fn function_calls() -> Result {
     Test::new().program("sin(3.14)").errors(&[]).run()?;
 
     Test::new()
@@ -293,6 +355,32 @@ mod tests {
     Test::new()
       .program("undefined_function()")
       .errors(&["Undefined function"])
+      .run()
+  }
+
+  #[test]
+  fn break_outside_of_loop() -> Result {
+    Test::new()
+      .program("a = 0; while (a < 100) { if (i == 25) { break }; a = a + 1 }")
+      .run()?;
+
+    Test::new()
+      .program("break")
+      .errors(&["Cannot use 'break' outside of a loop"])
+      .run()
+  }
+
+  #[test]
+  fn continue_outside_of_loop() -> Result {
+    Test::new()
+      .program(
+        "a = 0; while (a < 100) { if (i == 25) { continue }; a = a + 1 }",
+      )
+      .run()?;
+
+    Test::new()
+      .program("continue")
+      .errors(&["Cannot use 'continue' outside of a loop"])
       .run()
   }
 }
