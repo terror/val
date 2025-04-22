@@ -44,7 +44,7 @@ impl<'a> Analyzer<'a> {
         if !is_valid_lvalue {
           errors.push(Error::new(
             lhs.1,
-            "left-hand side must be a variable or list element",
+            "Left-hand side of assignment must be a variable or list access",
           ));
         }
 
@@ -101,8 +101,8 @@ impl<'a> Analyzer<'a> {
         }
       }
       Statement::Loop(body) => {
-        for stmt in body {
-          errors.extend(self.analyze_statement(stmt));
+        for statement in body {
+          errors.extend(self.analyze_statement(statement));
         }
       }
       Statement::Return(expr) => {
@@ -113,8 +113,8 @@ impl<'a> Analyzer<'a> {
       Statement::While(condition, body) => {
         errors.extend(self.analyze_expression(condition));
 
-        for stmt in body {
-          errors.extend(self.analyze_statement(stmt));
+        for statement in body {
+          errors.extend(self.analyze_statement(statement));
         }
       }
     }
@@ -162,5 +162,108 @@ impl<'a> Analyzer<'a> {
     }
 
     errors
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use {super::*, indoc::indoc, pretty_assertions::assert_eq};
+
+  #[derive(Debug)]
+  struct Test {
+    program: String,
+    errors: Vec<String>,
+  }
+
+  impl Test {
+    fn new() -> Self {
+      Self {
+        program: String::new(),
+        errors: Vec::new(),
+      }
+    }
+
+    fn errors(self, errors: &[&str]) -> Self {
+      Self {
+        errors: errors
+          .iter()
+          .map(|s| s.to_string())
+          .collect::<Vec<String>>(),
+        ..self
+      }
+    }
+
+    fn program(self, program: &str) -> Self {
+      Self {
+        program: program.to_owned(),
+        ..self
+      }
+    }
+
+    fn run(self) -> Result<(), String> {
+      let ast = match parse(&self.program) {
+        Ok(ast) => ast,
+        Err(errors) => {
+          return Err(format!("Failed to parse program: {:?}", errors));
+        }
+      };
+
+      let environment = Environment::new(Config::default());
+
+      let mut analyzer = Analyzer::new(environment);
+
+      let analysis_errors = analyzer.analyze(&ast);
+
+      if analysis_errors.len() != self.errors.len() {
+        return Err(format!(
+          "Expected {} error(s), got {}:\n{:?}",
+          self.errors.len(),
+          analysis_errors.len(),
+          analysis_errors,
+        ));
+      }
+
+      for (i, error) in analysis_errors.iter().enumerate() {
+        if !error.message.contains(&self.errors[i]) {
+          return Err(format!(
+            "Error {} expected to contain '{}', got '{}'",
+            i, self.errors[i], error.message
+          ));
+        }
+      }
+
+      Ok(())
+    }
+  }
+
+  #[test]
+  fn invalid_lvalues() -> Result<(), String> {
+    Test::new()
+      .program("5 = 10")
+      .errors(&[
+        "Left-hand side of assignment must be a variable or list access",
+      ])
+      .run()
+  }
+
+  #[test]
+  fn duplicate_function_parameters() -> Result<(), String> {
+    Test::new()
+      .program("fn add(a, b) { return a + b; }")
+      .errors(&[])
+      .run()?;
+
+    Test::new()
+      .program("fn add(a, a) { return a + a; }")
+      .errors(&["Duplicate parameter name `a`"])
+      .run()?;
+
+    Test::new()
+      .program("fn add(a, b, a, c, b) { return a + b + c; }")
+      .errors(&[
+        "Duplicate parameter name `a`",
+        "Duplicate parameter name `b`",
+      ])
+      .run()
   }
 }
