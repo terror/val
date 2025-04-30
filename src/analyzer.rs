@@ -77,7 +77,7 @@ impl<'a> Analyzer<'a> {
         errors.extend(self.analyze_expression(expr));
       }
       Statement::Function(name, parameters, body) => {
-        let mut parameter_names = std::collections::HashSet::new();
+        let mut parameter_names = HashSet::new();
 
         for &name in parameters {
           if !parameter_names.insert(name) {
@@ -124,8 +124,8 @@ impl<'a> Analyzer<'a> {
         }
 
         if let Some(else_statements) = else_branch {
-          for stmt in else_statements {
-            errors.extend(self.analyze_statement(stmt));
+          for statement in else_statements {
+            errors.extend(self.analyze_statement(statement));
           }
         }
       }
@@ -186,19 +186,24 @@ impl<'a> Analyzer<'a> {
         errors.extend(self.analyze_expression(expr));
       }
       Expression::FunctionCall(name, arguments) => {
-        if !self.environment.functions.contains_key(name) {
+        if !self.environment.has_symbol(name) {
           errors
             .push(Error::new(*span, format!("Undefined function `{}`", name)));
         } else {
           match self.environment.functions.get(name) {
-            Some(Function::UserDefined(Value::Function(_, params, _, _))) => {
-              if arguments.len() != params.len() {
+            Some(Function::UserDefined(Value::Function(
+              _,
+              parameters,
+              _,
+              _,
+            ))) => {
+              if arguments.len() != parameters.len() {
                 errors.push(Error::new(
                   *span,
                   format!(
                     "Function `{}` expects {} arguments, got {}",
                     name,
-                    params.len(),
+                    parameters.len(),
                     arguments.len()
                   ),
                 ));
@@ -354,7 +359,7 @@ mod tests {
 
     Test::new()
       .program("undefined_function()")
-      .errors(&["Undefined function"])
+      .errors(&["Undefined function `undefined_function`"])
       .run()
   }
 

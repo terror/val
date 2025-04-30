@@ -1245,6 +1245,17 @@ impl<'a> Environment<'a> {
     }
   }
 
+  pub fn has_symbol(&self, symbol: &str) -> bool {
+    let contains = self.functions.contains_key(symbol)
+      || self.variables.contains_key(symbol);
+
+    if let Some(parent) = &self.parent {
+      contains || parent.has_symbol(symbol)
+    } else {
+      contains
+    }
+  }
+
   pub fn resolve_symbol(&self, symbol: &str) -> Option<&Value<'a>> {
     if let Some(value) = self.variables.get(symbol) {
       Some(value)

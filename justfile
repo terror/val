@@ -96,8 +96,8 @@ serve-web: build-wasm
   cd www && bun run dev
 
 [group: 'test']
-test:
-  cargo test
+test *args:
+  cargo test -- {{ args }}
 
 [group: 'test']
 test-release-workflow:

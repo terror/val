@@ -155,6 +155,7 @@ impl<'a> Evaluator<'a> {
             "Cannot use 'break' outside of a loop",
           ));
         }
+
         Ok(EvalResult::Break)
       }
       Statement::Continue => {

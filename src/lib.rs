@@ -4,7 +4,7 @@ pub(crate) use {
   chumsky::prelude::*,
   clap::Parser as Clap,
   std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
     fs,
     ops::Range,
