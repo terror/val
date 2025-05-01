@@ -41,11 +41,10 @@ impl<'a> Analyzer<'a> {
 
     match statement {
       Statement::Assignment(lhs, rhs) => {
-        let is_valid_lvalue = match &lhs.0 {
-          Expression::Identifier(_) => true,
-          Expression::ListAccess(_, _) => true,
-          _ => false,
-        };
+        let is_valid_lvalue = matches!(
+          &lhs.0,
+          Expression::Identifier(_) | Expression::ListAccess(_, _)
+        );
 
         if !is_valid_lvalue {
           errors.push(Error::new(
@@ -189,27 +188,23 @@ impl<'a> Analyzer<'a> {
         if !self.environment.has_symbol(name) {
           errors
             .push(Error::new(*span, format!("Undefined function `{}`", name)));
-        } else {
-          match self.environment.functions.get(name) {
-            Some(Function::UserDefined(Value::Function(
-              _,
-              parameters,
-              _,
-              _,
-            ))) => {
-              if arguments.len() != parameters.len() {
-                errors.push(Error::new(
-                  *span,
-                  format!(
-                    "Function `{}` expects {} arguments, got {}",
-                    name,
-                    parameters.len(),
-                    arguments.len()
-                  ),
-                ));
-              }
-            }
-            _ => {}
+        } else if let Some(Function::UserDefined(Value::Function(
+          _,
+          parameters,
+          _,
+          _,
+        ))) = self.environment.functions.get(name)
+        {
+          if arguments.len() != parameters.len() {
+            errors.push(Error::new(
+              *span,
+              format!(
+                "Function `{}` expects {} arguments, got {}",
+                name,
+                parameters.len(),
+                arguments.len()
+              ),
+            ));
           }
         }
 
