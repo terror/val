@@ -1,14 +1,16 @@
+use super::*;
+
 #[derive(Clone, Debug)]
 pub struct Config {
-  pub precision: usize,
-  pub rounding_mode: astro_float::RoundingMode,
+  pub precision: u32,
+  pub rounding_mode: Round,
 }
 
 impl Default for Config {
   fn default() -> Self {
     Self {
       precision: 1024,
-      rounding_mode: astro_float::RoundingMode::ToEven,
+      rounding_mode: Round::Nearest,
     }
   }
 }

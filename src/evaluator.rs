@@ -90,34 +90,24 @@ impl<'a> Evaluator<'a> {
               }
             };
 
-            let index = match self
-              .eval_expression(index_box)?
-              .number(index_box.1)?
-              .to_f64(self.environment.config.rounding_mode)
-            {
-              Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-              _ => {
-                return Err(Error::new(
-                  index_box.1,
-                  "List index must be a non-negative finite number",
-                ));
-              }
-            };
+            todo!()
 
-            if index >= list.len() {
-              return Err(Error::new(
-                lhs.1,
-                format!(
-                  "Index {} out of bounds for list of length {}",
-                  index,
-                  list.len()
-                ),
-              ));
-            }
+            // let index = self.eval_expression(index_box)?.number(index_box.1)?.to_usize();
 
-            list[index] = value.clone();
+            // if index >= list.len() {
+            //   return Err(Error::new(
+            //     lhs.1,
+            //     format!(
+            //       "Index {} out of bounds for list of length {}",
+            //       index,
+            //       list.len()
+            //     ),
+            //   ));
+            // }
 
-            self.environment.add_variable(list_name, Value::List(list));
+            // list[index as usize] = value.clone();
+
+            // self.environment.add_variable(list_name, Value::List(list));
           }
 
           _ => {
@@ -300,11 +290,14 @@ impl<'a> Evaluator<'a> {
           (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
 
         match (&lhs_val, &rhs_val) {
-          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a.add(
-            b,
-            self.environment.config.precision,
-            self.environment.config.rounding_mode,
-          ))),
+          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(
+            Float::with_val_round(
+              self.environment.config.precision,
+              a + b,
+              self.environment.config.rounding_mode,
+            )
+            .0,
+          )),
           (Value::String(a), Value::String(b)) => Ok(Value::String(Box::leak(
             format!("{}{}", a, b).into_boxed_str(),
           ))),
@@ -319,11 +312,14 @@ impl<'a> Evaluator<'a> {
             result.extend(b.clone());
             Ok(Value::List(result))
           }
-          _ => Ok(Value::Number(lhs_val.number(lhs.1)?.add(
-            &rhs_val.number(rhs.1)?,
-            self.environment.config.precision,
-            self.environment.config.rounding_mode,
-          ))),
+          _ => Ok(Value::Number(
+            Float::with_val_round(
+              self.environment.config.precision,
+              lhs_val.number(lhs.1)? + rhs_val.number(rhs.1)?,
+              self.environment.config.rounding_mode,
+            )
+            .0,
+          )),
         }
       }
       Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
@@ -337,11 +333,14 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(rhs.1, "Division by zero"));
         }
 
-        Ok(Value::Number(lhs_num.div(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            self.environment.config.precision,
+            lhs_num / rhs_num,
+            self.environment.config.rounding_mode,
+          )
+          .0,
+        ))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.eval_expression(lhs)? == self.eval_expression(rhs)?,
@@ -410,34 +409,23 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(rhs.1, "Modulo by zero"));
         }
 
-        let quotient = lhs_num.div(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        );
-
-        let floored_quotient = quotient.floor();
-
-        let product = floored_quotient.mul(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        );
-
-        let remainder = lhs_num.sub(
-          &product,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        );
-
-        Ok(Value::Number(remainder))
+        Ok(Value::Number(
+          Float::with_val_round(
+            self.environment.config.precision,
+            lhs_num % rhs_num,
+            self.environment.config.rounding_mode,
+          )
+          .0,
+        ))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?.mul(
-          &self.eval_expression(rhs)?.number(rhs.1)?,
+        Float::with_val_round(
           self.environment.config.precision,
+          self.eval_expression(lhs)?.number(lhs.1)?
+            * self.eval_expression(rhs)?.number(rhs.1)?,
           self.environment.config.rounding_mode,
-        ),
+        )
+        .0,
       )),
       Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
         self.eval_expression(lhs)? != self.eval_expression(rhs)?,
@@ -449,19 +437,23 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        Ok(Value::Number(lhs_num.pow(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        Ok(Value::Number(
+          Float::with_val_round(
+            self.environment.config.precision,
+            lhs_num.pow(&rhs_num),
+            self.environment.config.rounding_mode,
+          )
+          .0,
+        ))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?.sub(
-          &self.eval_expression(rhs)?.number(rhs.1)?,
+        Float::with_val_round(
           self.environment.config.precision,
+          self.eval_expression(lhs)?.number(lhs.1)?
+            - self.eval_expression(rhs)?.number(rhs.1)?,
           self.environment.config.rounding_mode,
-        ),
+        )
+        .0,
       )),
       Expression::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
       Expression::FunctionCall(name, arguments) => {
@@ -505,32 +497,34 @@ impl<'a> Evaluator<'a> {
           }
         };
 
-        let index = match self
-          .eval_expression(index)?
-          .number(index.1)?
-          .to_f64(self.environment.config.rounding_mode)
-        {
-          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-          _ => {
-            return Err(Error::new(
-              index.1,
-              "List index must be a non-negative finite number",
-            ));
-          }
-        };
+        todo!()
 
-        if index >= list.len() {
-          return Err(Error::new(
-            *span,
-            format!(
-              "Index {} out of bounds for list of length {}",
-              index,
-              list.len()
-            ),
-          ));
-        }
+        // let index = match self
+        //   .eval_expression(index)?
+        //   .number(index.1)?
+        //   .to_f64(self.environment.config.rounding_mode)
+        // {
+        //   Some(n) if n.is_finite() && n >= 0.0 => n as usize,
+        //   _ => {
+        //     return Err(Error::new(
+        //       index.1,
+        //       "List index must be a non-negative finite number",
+        //     ));
+        //   }
+        // };
 
-        Ok(list[index].clone())
+        // if index >= list.len() {
+        //   return Err(Error::new(
+        //     *span,
+        //     format!(
+        //       "Index {} out of bounds for list of length {}",
+        //       index,
+        //       list.len()
+        //     ),
+        //   ));
+        // }
+
+        // Ok(list[index].clone())
       }
       Expression::Null => Ok(Value::Null),
       Expression::Number(number) => Ok(Value::Number(number.clone())),
