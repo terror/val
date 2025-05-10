@@ -10,16 +10,16 @@ const COLOR_OPERATOR: &str = "\x1b[36m"; // Cyan
 const COLOR_RESET: &str = "\x1b[0m";
 const COLOR_STRING: &str = "\x1b[32m"; // Green
 
-pub struct TreeHighlighter<'src> {
-  content: &'src str,
+pub struct TreeHighlighter<'a> {
+  content: &'a str,
 }
 
-impl<'src> TreeHighlighter<'src> {
-  pub fn new(content: &'src str) -> Self {
+impl<'a> TreeHighlighter<'a> {
+  pub fn new(content: &'a str) -> Self {
     Self { content }
   }
 
-  pub fn highlight(&self) -> Cow<'src, str> {
+  pub fn highlight(&self) -> Cow<'a, str> {
     match parse(self.content) {
       Ok(ast) => self.colorize_ast(&ast),
       Err(_) => {
@@ -28,17 +28,14 @@ impl<'src> TreeHighlighter<'src> {
     }
   }
 
-  fn colorize_ast(&self, program: &Spanned<Program<'src>>) -> Cow<'src, str> {
+  fn colorize_ast(&self, program: &Spanned<Program<'a>>) -> Cow<'a, str> {
     let mut color_spans = Vec::new();
     self.collect_color_spans(program, &mut color_spans);
     color_spans.sort_by_key(|span| span.0);
     self.apply_color_spans(&color_spans)
   }
 
-  fn apply_color_spans(
-    &self,
-    spans: &[(usize, usize, &str)],
-  ) -> Cow<'src, str> {
+  fn apply_color_spans(&self, spans: &[(usize, usize, &str)]) -> Cow<'a, str> {
     if spans.is_empty() {
       return Cow::Borrowed(self.content);
     }
@@ -69,7 +66,7 @@ impl<'src> TreeHighlighter<'src> {
 
   fn collect_color_spans(
     &self,
-    program: &Spanned<Program<'src>>,
+    program: &Spanned<Program<'a>>,
     spans: &mut Vec<(usize, usize, &'static str)>,
   ) {
     let (node, _) = program;
@@ -85,7 +82,7 @@ impl<'src> TreeHighlighter<'src> {
 
   fn collect_statement_spans(
     &self,
-    statement: &Spanned<Statement<'src>>,
+    statement: &Spanned<Statement<'a>>,
     spans: &mut Vec<(usize, usize, &'static str)>,
   ) {
     let (node, span) = statement;
@@ -286,7 +283,7 @@ impl<'src> TreeHighlighter<'src> {
 
   fn collect_expression_spans(
     &self,
-    expression: &Spanned<Expression<'src>>,
+    expression: &Spanned<Expression<'a>>,
     spans: &mut Vec<(usize, usize, &'static str)>,
   ) {
     let (node, span) = expression;
@@ -454,8 +451,8 @@ impl<'src> TreeHighlighter<'src> {
   fn find_operator(
     &self,
     op: &str,
-    lhs: &Spanned<Expression<'src>>,
-    rhs: &Spanned<Expression<'src>>,
+    lhs: &Spanned<Expression<'a>>,
+    rhs: &Spanned<Expression<'a>>,
   ) -> Option<usize> {
     let (start, end) = (lhs.1.end, rhs.1.start);
 

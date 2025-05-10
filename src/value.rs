@@ -1,18 +1,18 @@
 use super::*;
 
 #[derive(Clone, Debug)]
-pub enum Value<'src> {
+pub enum Value<'a> {
   Boolean(bool),
   Function(
-    &'src str,
-    Vec<&'src str>,
-    Vec<Spanned<Statement<'src>>>,
-    Environment<'src>,
+    &'a str,
+    Vec<&'a str>,
+    Vec<Spanned<Statement<'a>>>,
+    Environment<'a>,
   ),
   List(Vec<Self>),
   Null,
   Number(Float),
-  String(&'src str),
+  String(&'a str),
 }
 
 impl Display for Value<'_> {

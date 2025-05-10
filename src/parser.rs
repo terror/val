@@ -42,29 +42,7 @@ fn statement_parser<'a>()
       .collect::<Vec<_>>()
       .delimited_by(just('{').padded(), just('}').padded());
 
-    let simple_ident = text::ident().padded().map_with(|name, e| {
-      let span = e.span();
-      (Expression::Identifier(name), span)
-    });
-
-    let indexed_ident = simple_ident.foldl(
-      expression
-        .clone()
-        .delimited_by(just('['), just(']'))
-        .padded()
-        .map_with(|expression, e| (expression, e.span()))
-        .repeated(),
-      |base, (index, span)| {
-        let span = (base.1.start..span.end).into();
-
-        let expression =
-          Expression::ListAccess(Box::new(base), Box::new(index));
-
-        (expression, span)
-      },
-    );
-
-    let assignment_statement = indexed_ident
+    let assignment_statement = expression_parser()
       .then_ignore(just('=').padded())
       .then(expression.clone())
       .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs))

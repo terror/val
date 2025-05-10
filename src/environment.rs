@@ -1,14 +1,14 @@
 use super::*;
 
 #[derive(Clone, Debug, Default)]
-pub struct Environment<'src> {
+pub struct Environment<'a> {
   pub config: Config,
-  pub functions: HashMap<&'src str, Function<'src>>,
-  pub parent: Option<Box<Environment<'src>>>,
-  pub variables: HashMap<&'src str, Value<'src>>,
+  pub functions: HashMap<&'a str, Function<'a>>,
+  pub parent: Option<Box<Environment<'a>>>,
+  pub variables: HashMap<&'a str, Value<'a>>,
 }
 
-impl<'src> Environment<'src> {
+impl<'a> Environment<'a> {
   pub fn new(config: Config) -> Self {
     let mut env = Self {
       config: config.clone(),
@@ -1163,20 +1163,20 @@ impl<'src> Environment<'src> {
     env
   }
 
-  pub fn add_function(&mut self, name: &'src str, function: Function<'src>) {
+  pub fn add_function(&mut self, name: &'a str, function: Function<'a>) {
     self.functions.insert(name, function);
   }
 
-  pub fn add_variable(&mut self, name: &'src str, value: Value<'src>) {
+  pub fn add_variable(&mut self, name: &'a str, value: Value<'a>) {
     self.variables.insert(name, value);
   }
 
   pub fn call_function(
     &self,
     name: &str,
-    arguments: Vec<Value<'src>>,
+    arguments: Vec<Value<'a>>,
     span: Span,
-  ) -> Result<Value<'src>, Error> {
+  ) -> Result<Value<'a>, Error> {
     if let Some(function) = self.functions.get(name) {
       match function {
         Function::Builtin(function) => function(BuiltinFunctionPayload {
@@ -1245,7 +1245,18 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub fn resolve_symbol(&self, symbol: &str) -> Option<&Value<'src>> {
+  pub fn has_symbol(&self, symbol: &str) -> bool {
+    let contains = self.functions.contains_key(symbol)
+      || self.variables.contains_key(symbol);
+
+    if let Some(parent) = &self.parent {
+      contains || parent.has_symbol(symbol)
+    } else {
+      contains
+    }
+  }
+
+  pub fn resolve_symbol(&self, symbol: &str) -> Option<&Value<'a>> {
     if let Some(value) = self.variables.get(symbol) {
       Some(value)
     } else if let Some(function) = self.functions.get(symbol) {
@@ -1260,7 +1271,7 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub fn with_parent(parent: Environment<'src>) -> Self {
+  pub fn with_parent(parent: Environment<'a>) -> Self {
     Self {
       config: parent.config.clone(),
       functions: parent.functions.clone(),

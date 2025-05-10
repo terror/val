@@ -4,7 +4,7 @@ pub(crate) use {
   chumsky::prelude::*,
   clap::Parser as Clap,
   std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
     fs,
     ops::Range,
@@ -31,6 +31,7 @@ pub(crate) use {
 };
 
 pub use crate::{
+  analyzer::Analyzer,
   arguments::Arguments,
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   config::Config,
@@ -56,6 +57,7 @@ pub mod arguments;
 #[cfg(not(target_family = "wasm"))]
 mod highlighter;
 
+mod analyzer;
 mod ast;
 mod config;
 mod environment;

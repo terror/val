@@ -59,7 +59,6 @@ pub struct Arguments {
   )]
   pub stack_size: usize,
 }
-
 impl Arguments {
   pub fn run(self) -> Result {
     match (&self.filename, &self.expression) {
@@ -83,22 +82,40 @@ impl Arguments {
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator = Evaluator::from(Environment::new(Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }));
-
     match parse(&content) {
-      Ok(ast) => match evaluator.eval(&ast) {
-        Ok(_) => Ok(()),
-        Err(error) => {
-          error
-            .report(&filename)
-            .eprint((filename.as_str(), Source::from(content)))?;
+      Ok(ast) => {
+        let environment = Environment::new(Config {
+          precision: self.precision,
+          rounding_mode: self.rounding_mode.into(),
+        });
+
+        let mut analyzer = Analyzer::new(environment.clone());
+
+        let analysis_errors = analyzer.analyze(&ast);
+
+        if !analysis_errors.is_empty() {
+          for error in analysis_errors {
+            error
+              .report(&filename)
+              .eprint((filename.as_str(), Source::from(&content)))?;
+          }
 
           process::exit(1);
         }
-      },
+
+        let mut evaluator = Evaluator::from(environment);
+
+        match evaluator.eval(&ast) {
+          Ok(_) => Ok(()),
+          Err(error) => {
+            error
+              .report(&filename)
+              .eprint((filename.as_str(), Source::from(content)))?;
+
+            process::exit(1);
+          }
+        }
+      }
       Err(errors) => {
         for error in errors {
           error

@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Error {
   pub span: Span,
   pub message: String,
