@@ -1,4 +1,4 @@
-import { StateEffect } from '@codemirror/state';
+import { StateEffect, Transaction } from '@codemirror/state';
 import {
   Decoration,
   DecorationSet,
@@ -25,8 +25,10 @@ export const highlightExtension = ViewPlugin.fromClass(
 
     update(update: ViewUpdate) {
       const effects = update.transactions
-        .flatMap((tr) => tr.effects)
-        .filter((e) => e.is(addHighlightEffect) || e.is(removeHighlightEffect));
+        .flatMap((tr: Transaction) => tr.effects)
+        .filter((e: StateEffect<unknown>) =>
+          e.is(addHighlightEffect) || e.is(removeHighlightEffect)
+        );
 
       if (!effects.length) return;
 
@@ -61,6 +63,6 @@ export const highlightExtension = ViewPlugin.fromClass(
     }
   },
   {
-    decorations: (v) => v.decorations,
+    decorations: (v: { decorations: DecorationSet }) => v.decorations,
   }
 );
