@@ -64,6 +64,32 @@ impl PartialEq for Value<'_> {
 }
 
 impl<'a> Value<'a> {
+  pub fn format_with_config(&self, config: &Config) -> String {
+    match self {
+      Value::Boolean(boolean) => boolean.to_string(),
+      Value::BuiltinFunction(name, _) | Value::Function(name, _, _, _) => {
+        format!("<function: {name}>")
+      }
+      Value::List(list) => {
+        let items = list
+          .iter()
+          .map(|item| match item {
+            Value::String(string) => format!("\'{string}\'"),
+            _ => item.format_with_config(config),
+          })
+          .collect::<Vec<_>>()
+          .join(", ");
+
+        format!("[{items}]")
+      }
+      Value::Null => "null".into(),
+      Value::Number(number) => {
+        number.display_with_digits(config.digits, config.rounding_mode)
+      }
+      Value::String(string) => (*string).into(),
+    }
+  }
+
   pub fn boolean(&self, span: Span) -> Result<bool, Error> {
     if let Value::Boolean(x) = self {
       Ok(*x)
@@ -118,5 +144,53 @@ impl<'a> Value<'a> {
       Value::Number(_) => "number",
       Value::String(_) => "string",
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn float_from_str(s: &str, precision: usize) -> Float {
+    with_consts(|consts| {
+      Float::parse(
+        s,
+        Radix::Dec,
+        precision,
+        astro_float::RoundingMode::FromZero,
+        consts,
+      )
+    })
+  }
+
+  #[test]
+  fn number_format_respects_digits() {
+    let config = Config {
+      precision: 256,
+      rounding_mode: astro_float::RoundingMode::ToEven,
+      digits: Some(2),
+    };
+
+    let value = Value::Number(float_from_str("3.4567", config.precision));
+
+    assert_eq!(value.format_with_config(&config), "3.46");
+  }
+
+  #[test]
+  fn list_format_propagates_digits() {
+    let config = Config {
+      precision: 256,
+      rounding_mode: astro_float::RoundingMode::ToZero,
+      digits: Some(3),
+    };
+
+    let items = vec![
+      Value::Number(float_from_str("1.234567", config.precision)),
+      Value::String("hello"),
+    ];
+
+    let value = Value::List(items);
+
+    assert_eq!(value.format_with_config(&config), "[1.234, 'hello']");
   }
 }

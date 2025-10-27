@@ -50,7 +50,8 @@ Arguments:
 Options:
   -e, --expression <EXPRESSION>        Expression to evaluate
   -l, --load <LOAD>                    Load files before entering the REPL
-  -p, --precision <PRECISION>          Decimal precision to use for calculations [default: 1024]
+  -p, --precision <PRECISION>          Binary precision (in bits) to use for calculations [default: 1024]
+  -d, --digits <DIGITS>                Decimal digits to use for calculations and output
   -r, --rounding-mode <ROUNDING_MODE>  Rounding mode to use for calculations [default: to-even]
       --stack-size <STACK_SIZE>        Stack size in MB for evaluations [default: 128]
   -h, --help                           Print help
@@ -185,8 +186,12 @@ the hood):
 ```
 
 You can specify the rounding mode, and what sort of precision you'd like to see
-in the output by using the `--rounding-mode` and `--precision` options
-respectively.
+in the output by using the `--rounding-mode`, `--precision`, and `--digits`
+options respectively. `--precision` controls the underlying binary precision
+used during calculations, while `--digits` can be used when you care about the
+number of decimal places in the result. The rounding behavior when trimming
+to a fixed number of decimal places follows the selected `--rounding-mode`
+(default: `to-even`).
 
 #### Boolean
 

@@ -39,9 +39,17 @@ pub struct Arguments {
     short,
     long,
     default_value = "1024",
-    help = "Decimal precision to use for calculations"
+    help = "Binary precision (in bits) to use for calculations"
   )]
   precision: usize,
+
+  #[clap(
+    long,
+    short = 'd',
+    conflicts_with = "precision",
+    help = "Decimal digits to use for calculations and output"
+  )]
+  digits: Option<usize>,
 
   #[clap(
     short,
@@ -83,10 +91,7 @@ impl Arguments {
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator = Evaluator::from(Environment::new(Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }));
+    let mut evaluator = Evaluator::from(Environment::new(self.to_config()));
 
     match parse(&content) {
       Ok(ast) => match evaluator.eval(&ast) {
@@ -112,10 +117,7 @@ impl Arguments {
   }
 
   fn eval_expression(&self, value: String) -> Result {
-    let mut evaluator = Evaluator::from(Environment::new(Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }));
+    let mut evaluator = Evaluator::from(Environment::new(self.to_config()));
 
     match parse(&value) {
       Ok(ast) => match evaluator.eval(&ast) {
@@ -124,7 +126,10 @@ impl Arguments {
             return Ok(());
           }
 
-          println!("{}", value);
+          println!(
+            "{}",
+            value.format_with_config(&evaluator.environment.config)
+          );
 
           Ok(())
         }
@@ -166,10 +171,7 @@ impl Arguments {
     editor.set_helper(Some(Highlighter::new()));
     editor.load_history(&history).ok();
 
-    let mut evaluator = Evaluator::from(Environment::new(Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }));
+    let mut evaluator = Evaluator::from(Environment::new(self.to_config()));
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
@@ -212,7 +214,12 @@ impl Arguments {
 
       match parse(line) {
         Ok(ast) => match evaluator.eval(&ast) {
-          Ok(value) if !matches!(value, Value::Null) => println!("{value}"),
+          Ok(value) if !matches!(value, Value::Null) => {
+            println!(
+              "{}",
+              value.format_with_config(&evaluator.environment.config)
+            );
+          }
           Ok(_) => {}
           Err(error) => error
             .report("<input>")
@@ -227,6 +234,29 @@ impl Arguments {
         }
       }
     }
+  }
+
+  fn to_config(&self) -> Config {
+    Config {
+      precision: self.precision_bits(),
+      rounding_mode: self.rounding_mode.into(),
+      digits: self.digits,
+    }
+  }
+
+  fn precision_bits(&self) -> usize {
+    self
+      .digits
+      .map(Self::digits_to_binary_precision)
+      .unwrap_or(self.precision)
+  }
+
+  fn digits_to_binary_precision(digits: usize) -> usize {
+    if digits == 0 {
+      return 0;
+    }
+
+    ((digits as f64) * f64::consts::LOG2_10).ceil() as usize
   }
 }
 
@@ -323,6 +353,40 @@ mod tests {
       error.contains("cannot be used with"),
       "Error should mention conflicts: {}",
       error
+    );
+  }
+
+  #[test]
+  fn digits_option_sets_decimal_precision() {
+    let arguments = Arguments::parse_from(vec![
+      "program",
+      "--digits",
+      "25",
+      "--rounding-mode",
+      "to-zero",
+    ]);
+
+    assert_eq!(arguments.digits, Some(25));
+
+    assert_eq!(
+      arguments.precision_bits(),
+      Arguments::digits_to_binary_precision(25)
+    );
+  }
+
+  #[test]
+  fn digits_conflicts_with_precision() {
+    let result = Arguments::try_parse_from(vec![
+      "program",
+      "--digits",
+      "10",
+      "--precision",
+      "512",
+    ]);
+
+    assert!(
+      result.is_err(),
+      "Parser should reject simultaneous --digits and --precision"
     );
   }
 }
