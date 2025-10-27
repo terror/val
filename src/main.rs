@@ -19,10 +19,10 @@ fn main() {
   if let Err(error) =
     result.unwrap_or_else(|_| Err(anyhow::anyhow!("Thread panicked")))
   {
-    if let Some(error) = error.downcast_ref::<ReadlineError>() {
-      if matches!(error, ReadlineError::Eof | ReadlineError::Interrupted) {
-        return;
-      }
+    if let Some(&ReadlineError::Eof | &ReadlineError::Interrupted) =
+      error.downcast_ref::<ReadlineError>()
+    {
+      return;
     }
 
     eprintln!("error: {error}");
