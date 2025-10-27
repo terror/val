@@ -185,7 +185,9 @@ the hood):
 ```
 
 You can specify the rounding mode, and what sort of precision you'd like to see
-in the output by using the `--rounding-mode` and `--precision` options
+in the output by using the `--rounding-mode` and `--precision` options (note
+that `--precision` controls binary precision, measured in bits, not decimal
+digits).
 respectively.
 
 #### Boolean

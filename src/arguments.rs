@@ -39,7 +39,7 @@ pub struct Arguments {
     short,
     long,
     default_value = "1024",
-    help = "Decimal precision to use for calculations"
+    help = "Binary precision (bits) to use for calculations"
   )]
   precision: usize,
 
