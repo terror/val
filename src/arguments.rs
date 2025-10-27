@@ -47,7 +47,7 @@ pub struct Arguments {
     long,
     short = 'd',
     conflicts_with = "precision",
-    help = "Decimal digits to use for calculations"
+    help = "Decimal digits to use for calculations and output"
   )]
   digits: Option<usize>,
 
@@ -126,7 +126,8 @@ impl Arguments {
             return Ok(());
           }
 
-          println!("{}", value);
+          let output = value.format_with_config(&evaluator.environment.config);
+          println!("{output}");
 
           Ok(())
         }
@@ -211,7 +212,11 @@ impl Arguments {
 
       match parse(line) {
         Ok(ast) => match evaluator.eval(&ast) {
-          Ok(value) if !matches!(value, Value::Null) => println!("{value}"),
+          Ok(value) if !matches!(value, Value::Null) => {
+            let output =
+              value.format_with_config(&evaluator.environment.config);
+            println!("{output}");
+          }
           Ok(_) => {}
           Err(error) => error
             .report("<input>")
@@ -232,6 +237,7 @@ impl Arguments {
     Config {
       precision: self.precision_bits(),
       rounding_mode: self.rounding_mode.into(),
+      digits: self.digits,
     }
   }
 
