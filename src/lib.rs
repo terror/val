@@ -1,4 +1,7 @@
+mod consts;
+
 pub(crate) use {
+  crate::consts::with_consts,
   ariadne::{Color, Label, Report, ReportKind, Source},
   astro_float::{BigFloat as Float, Consts, Radix, Sign},
   chumsky::prelude::*,

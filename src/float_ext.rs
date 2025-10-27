@@ -13,13 +13,10 @@ impl FloatExt for Float {
       _ if self.is_inf_neg() => "-inf".into(),
       _ if self.is_zero() => "0".into(),
       _ => {
-        let formatted = self
-          .format(
-            Radix::Dec,
-            astro_float::RoundingMode::None,
-            &mut Consts::new().unwrap(),
-          )
-          .unwrap();
+        let formatted = with_consts(|consts| {
+          self.format(Radix::Dec, astro_float::RoundingMode::None, consts)
+        })
+        .unwrap();
 
         if !formatted.contains('e') {
           return formatted;
@@ -138,13 +135,15 @@ mod tests {
   use super::*;
 
   fn float_from_str(s: &str) -> Float {
-    Float::parse(
-      s,
-      Radix::Dec,
-      128,
-      astro_float::RoundingMode::FromZero,
-      &mut Consts::new().unwrap(),
-    )
+    with_consts(|consts| {
+      Float::parse(
+        s,
+        Radix::Dec,
+        128,
+        astro_float::RoundingMode::FromZero,
+        consts,
+      )
+    })
   }
 
   #[test]

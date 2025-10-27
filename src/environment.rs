@@ -30,13 +30,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.sin(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.sin(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -53,13 +57,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.cos(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.cos(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -76,13 +84,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.tan(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.tan(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -99,11 +111,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let sin_val = payload.arguments[0].number(payload.span)?.sin(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        );
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let sin_val = with_consts(|consts| {
+          argument.sin(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
 
         if sin_val.is_zero() {
           return Err(Error::new(
@@ -133,11 +149,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let cos_val = payload.arguments[0].number(payload.span)?.cos(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        );
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let cos_val = with_consts(|consts| {
+          argument.cos(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
 
         if cos_val.is_zero() {
           return Err(Error::new(
@@ -167,11 +187,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        let tan_val = payload.arguments[0].number(payload.span)?.tan(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        );
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let tan_val = with_consts(|consts| {
+          argument.tan(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
 
         if tan_val.is_zero() {
           return Err(Error::new(
@@ -201,13 +225,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.sinh(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.sinh(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -224,13 +252,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.cosh(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.cosh(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -247,13 +279,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.tanh(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.tanh(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -279,11 +315,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(argument.asin(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        let result = with_consts(|consts| {
+          argument.asin(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -309,11 +349,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(argument.acos(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        let result = with_consts(|consts| {
+          argument.acos(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -330,13 +374,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.atan(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.atan(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -362,18 +410,21 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          (Float::from(1.0).div(
-            &argument,
+        let reciprocal = Float::from(1.0).div(
+          &argument,
+          payload.config.precision,
+          payload.config.rounding_mode,
+        );
+
+        let result = with_consts(|consts| {
+          reciprocal.asin(
             payload.config.precision,
             payload.config.rounding_mode,
-          ))
-          .asin(
-            payload.config.precision,
-            payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -399,18 +450,21 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          (Float::from(1.0).div(
-            &argument,
+        let reciprocal = Float::from(1.0).div(
+          &argument,
+          payload.config.precision,
+          payload.config.rounding_mode,
+        );
+
+        let result = with_consts(|consts| {
+          reciprocal.acos(
             payload.config.precision,
             payload.config.rounding_mode,
-          ))
-          .acos(
-            payload.config.precision,
-            payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -432,12 +486,16 @@ impl<'src> Environment<'src> {
         let pi_div_2 = Float::from(std::f64::consts::FRAC_PI_2);
 
         // Formula: acot(x) = π/2 - atan(x)
-        Ok(Value::Number(pi_div_2.sub(
-          &argument.atan(
+        let atan = with_consts(|consts| {
+          argument.atan(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
+            consts,
+          )
+        });
+
+        Ok(Value::Number(pi_div_2.sub(
+          &atan,
           payload.config.precision,
           payload.config.rounding_mode,
         )))
@@ -466,11 +524,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(number.ln(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        let result = with_consts(|consts| {
+          number.ln(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -496,11 +558,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(number.log2(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        let result = with_consts(|consts| {
+          number.log2(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -526,11 +592,15 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(number.log10(
-          payload.config.precision,
-          payload.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        let result = with_consts(|consts| {
+          number.log10(
+            payload.config.precision,
+            payload.config.rounding_mode,
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -547,13 +617,17 @@ impl<'src> Environment<'src> {
           ));
         }
 
-        Ok(Value::Number(
-          payload.arguments[0].number(payload.span)?.exp(
+        let argument = payload.arguments[0].number(payload.span)?;
+
+        let result = with_consts(|consts| {
+          argument.exp(
             payload.config.precision,
             payload.config.rounding_mode,
-            &mut Consts::new().unwrap(),
-          ),
-        ))
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }),
     );
 
@@ -1132,14 +1206,13 @@ impl<'src> Environment<'src> {
       }),
     );
 
-    let mut consts = Consts::new().unwrap();
+    let e_value =
+      with_consts(|consts| consts.e(config.precision, config.rounding_mode));
 
-    let pi = consts.pi(config.precision, config.rounding_mode);
+    let pi =
+      with_consts(|consts| consts.pi(config.precision, config.rounding_mode));
 
-    env.add_variable(
-      "e",
-      Value::Number(consts.e(config.precision, config.rounding_mode)),
-    );
+    env.add_variable("e", Value::Number(e_value));
 
     env.add_variable("pi", Value::Number(pi.clone()));
 
