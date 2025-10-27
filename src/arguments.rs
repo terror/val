@@ -249,13 +249,11 @@ impl Arguments {
   }
 
   fn digits_to_binary_precision(digits: usize) -> usize {
-    const LOG2_10: f64 = 3.321_928_094_887_362;
-
     if digits == 0 {
       return 0;
     }
 
-    ((digits as f64) * LOG2_10).ceil() as usize
+    ((digits as f64) * f64::consts::LOG2_10).ceil() as usize
   }
 }
 

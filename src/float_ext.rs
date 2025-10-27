@@ -178,7 +178,7 @@ fn normalize_decimal(value: &Float) -> String {
     out.push_str(sign);
     out.push('0');
     out.push('.');
-    out.extend(std::iter::repeat('0').take(zeros));
+    out.extend(std::iter::repeat_n('0', zeros));
     out.push_str(&digits);
     out
   } else if length >= digits_len {
@@ -186,7 +186,7 @@ fn normalize_decimal(value: &Float) -> String {
     let mut out = String::with_capacity(sign.len() + digits.len() + zeros);
     out.push_str(sign);
     out.push_str(&digits);
-    out.extend(std::iter::repeat('0').take(zeros));
+    out.extend(std::iter::repeat_n('0', zeros));
     out
   } else {
     let split_at = length as usize;
@@ -331,14 +331,14 @@ fn build_decimal_string(
       for &digit in frac_digits {
         out.push((digit + b'0') as char);
       }
-      out.extend(std::iter::repeat('0').take(digits - frac_digits.len()));
+      out.extend(std::iter::repeat_n('0', digits - frac_digits.len()));
     }
   }
 
   out
 }
 
-fn increment_digits(digits: &mut Vec<u8>) -> bool {
+fn increment_digits(digits: &mut [u8]) -> bool {
   for digit in digits.iter_mut().rev() {
     if *digit < 9 {
       *digit += 1;

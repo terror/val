@@ -52,11 +52,10 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
       }));
 
       match evaluator.eval(&ast) {
-        Ok(value) => {
-          let rendered =
-            value.format_with_config(&evaluator.environment.config);
-          Ok(to_value(&rendered).unwrap())
-        }
+        Ok(value) => Ok(
+          to_value(&value.format_with_config(&evaluator.environment.config))
+            .unwrap(),
+        ),
         Err(error) => Err(
           to_value(&[ValError {
             kind: ErrorKind::Evaluator,
