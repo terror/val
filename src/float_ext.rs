@@ -131,7 +131,7 @@ fn format_zero(digits: Option<usize>) -> String {
       let mut out = String::with_capacity(2 + count);
       out.push('0');
       out.push('.');
-      out.extend(std::iter::repeat('0').take(count));
+      out.extend(std::iter::repeat_n('0', count));
       out
     }
   }
@@ -269,10 +269,9 @@ fn adjust_decimal_digits(
 
   if round_up {
     if digits > 0 {
-      if increment_digits(&mut frac_digits) {
-        if increment_digits(&mut int_digits) {
-          int_digits.insert(0, 1);
-        }
+      if increment_digits(&mut frac_digits) && increment_digits(&mut int_digits)
+      {
+        int_digits.insert(0, 1);
       }
     } else if increment_digits(&mut int_digits) {
       int_digits.insert(0, 1);
