@@ -449,12 +449,16 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        Ok(Value::Number(lhs_num.pow(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-          &mut Consts::new().unwrap(),
-        )))
+        let result = with_consts(|consts| {
+          lhs_num.pow(
+            &rhs_num,
+            self.environment.config.precision,
+            self.environment.config.rounding_mode,
+            consts,
+          )
+        });
+
+        Ok(Value::Number(result))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
         self.eval_expression(lhs)?.number(lhs.1)?.sub(
