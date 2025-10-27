@@ -7,126 +7,166 @@ pub trait FloatExt {
 
 impl FloatExt for Float {
   fn display(&self) -> String {
-    match () {
-      _ if self.is_nan() => "nan".into(),
-      _ if self.is_inf_pos() => "inf".into(),
-      _ if self.is_inf_neg() => "-inf".into(),
-      _ if self.is_zero() => "0".into(),
-      _ => {
-        let formatted = with_consts(|consts| {
-          self.format(Radix::Dec, astro_float::RoundingMode::None, consts)
-        })
-        .unwrap();
+    if self.is_nan() {
+      return "nan".into();
+    }
 
-        if !formatted.contains('e') {
-          return formatted;
-        }
+    if self.is_inf_pos() {
+      return "inf".into();
+    }
 
-        let (mantissa, exponent) = {
-          let mut parts = formatted.split('e');
-          (parts.next().unwrap(), parts.next().unwrap())
-        };
+    if self.is_inf_neg() {
+      return "-inf".into();
+    }
 
-        let exponent = exponent.parse::<i32>().unwrap();
+    if self.is_zero() {
+      return "0".into();
+    }
 
-        let (sign, mantissa) =
-          mantissa.split_at(if mantissa.starts_with('-') { 1 } else { 0 });
+    let formatted = with_consts(|consts| {
+      self.format(Radix::Dec, astro_float::RoundingMode::None, consts)
+    })
+    .expect("failed to format Float as decimal");
 
-        let digits = mantissa.replace('.', "");
+    let Some((mantissa_with_sign, exponent_str)) = formatted.split_once('e')
+    else {
+      return formatted;
+    };
 
-        let length =
-          mantissa.find('.').unwrap_or(mantissa.len()) as i32 + exponent;
+    let Ok(exponent) = exponent_str.parse::<i32>() else {
+      return formatted;
+    };
 
-        let result = match length {
-          length if length <= 0 => {
-            format!("{}0.{}{}", sign, "0".repeat((-length) as usize), digits)
-          }
-          length if (length as usize) >= digits.len() => {
-            format!(
-              "{}{}{}",
-              sign,
-              digits,
-              "0".repeat(length as usize - digits.len())
-            )
-          }
-          _ => {
-            let (left, right) = digits.split_at(length as usize);
-            format!("{}{}.{}", sign, left, right)
-          }
-        };
+    let (sign, mantissa) =
+      if let Some(rest) = mantissa_with_sign.strip_prefix('-') {
+        ("-", rest)
+      } else if let Some(rest) = mantissa_with_sign.strip_prefix('+') {
+        ("", rest)
+      } else {
+        ("", mantissa_with_sign)
+      };
 
-        if result.find('.').is_some() {
-          return result
-            .trim_end_matches('0')
-            .trim_end_matches('.')
-            .to_string();
-        }
+    let mut parts = mantissa.split('.');
+    let int_part = parts.next().unwrap_or("");
+    let frac_part = parts.next().unwrap_or("");
 
-        result
+    let mut digits = String::with_capacity(int_part.len() + frac_part.len());
+    digits.push_str(int_part);
+    digits.push_str(frac_part);
+
+    let length = int_part.len() as i32 + exponent;
+    let digits_len = digits.len() as i32;
+
+    let mut result = if length <= 0 {
+      let zeros = (-length) as usize;
+      let mut out =
+        String::with_capacity(sign.len() + 2 + zeros + digits.len());
+      out.push_str(sign);
+      out.push('0');
+      out.push('.');
+      out.extend(std::iter::repeat_n('0', zeros));
+      out.push_str(&digits);
+      out
+    } else if length >= digits_len {
+      let zeros = (length - digits_len) as usize;
+      let mut out = String::with_capacity(sign.len() + digits.len() + zeros);
+      out.push_str(sign);
+      out.push_str(&digits);
+      out.extend(std::iter::repeat_n('0', zeros));
+      out
+    } else {
+      let split_at = length as usize;
+      let (left, right) = digits.split_at(split_at);
+      let mut out =
+        String::with_capacity(sign.len() + left.len() + 1 + right.len());
+      out.push_str(sign);
+      out.push_str(left);
+      out.push('.');
+      out.push_str(right);
+      out
+    };
+
+    if result.contains('.') {
+      while result.ends_with('0') {
+        result.pop();
+      }
+
+      if result.ends_with('.') {
+        result.pop();
       }
     }
+
+    result
   }
 
   fn to_f64(&self, rounding_mode: astro_float::RoundingMode) -> Option<f64> {
-    let mut big_float = self.clone();
+    if self.is_nan() {
+      return None;
+    }
 
+    if self.is_inf_pos() {
+      return Some(f64::INFINITY);
+    }
+
+    if self.is_inf_neg() {
+      return Some(f64::NEG_INFINITY);
+    }
+
+    if self.is_zero() {
+      return Some(0.0);
+    }
+
+    let mut big_float = self.clone();
     big_float.set_precision(64, rounding_mode).ok()?;
 
     let sign = big_float.sign()?;
-
-    let exponent = big_float.exponent()? as isize;
-
+    let mut exponent = big_float.exponent()? as isize;
     let mantissa_digits = big_float.mantissa_digits()?;
+    let mantissa = *mantissa_digits.first().unwrap_or(&0);
 
-    if mantissa_digits.is_empty() {
-      return Some(0.0);
-    }
-
-    let mantissa = mantissa_digits[0];
+    const F64_EXPONENT_BIAS: isize = 0x3ff;
+    const F64_EXPONENT_MAX: isize = 0x7ff;
+    const F64_SIGNIFICAND_BITS: usize = 52;
+    const INTERNAL_SHIFT: usize = 12;
+    const SIGN_MASK: u64 = 1u64 << 63;
 
     if mantissa == 0 {
-      return Some(0.0);
+      return Some(if sign == Sign::Neg {
+        f64::from_bits(SIGN_MASK)
+      } else {
+        0.0
+      });
     }
 
-    let mut exponent = exponent + 0b1111111111;
+    exponent += F64_EXPONENT_BIAS;
 
-    let mut ret = 0u64;
-
-    if exponent >= 0b11111111111 {
-      Some(match sign {
+    if exponent >= F64_EXPONENT_MAX {
+      return Some(match sign {
         Sign::Pos => f64::INFINITY,
         Sign::Neg => f64::NEG_INFINITY,
-      })
-    } else if exponent <= 0 {
-      let shift = -exponent;
-
-      if shift < 52 {
-        ret |= mantissa >> (shift + 12);
-
-        if sign == Sign::Neg {
-          ret |= 0x8000000000000000u64;
-        }
-
-        Some(f64::from_bits(ret))
-      } else {
-        Some(0.0)
-      }
-    } else {
-      let mantissa = mantissa << 1;
-
-      exponent -= 1;
-
-      if sign == Sign::Neg {
-        ret |= 1;
-      }
-
-      ret <<= 11;
-      ret |= exponent as u64;
-      ret <<= 52;
-      ret |= mantissa >> 12;
-
-      Some(f64::from_bits(ret))
+      });
     }
+
+    let sign_bit = if sign == Sign::Neg { SIGN_MASK } else { 0 };
+
+    if exponent <= 0 {
+      let shift = (-exponent) as usize;
+
+      if shift >= F64_SIGNIFICAND_BITS {
+        return Some(f64::from_bits(sign_bit));
+      }
+
+      let fraction = mantissa >> (shift + INTERNAL_SHIFT);
+
+      return Some(f64::from_bits(sign_bit | fraction));
+    }
+
+    let adjusted_mantissa = mantissa << 1;
+    let adjusted_exponent = (exponent - 1) as u64;
+    let exponent_bits = adjusted_exponent << F64_SIGNIFICAND_BITS;
+    let fraction_bits = adjusted_mantissa >> INTERNAL_SHIFT;
+
+    Some(f64::from_bits(sign_bit | exponent_bits | fraction_bits))
   }
 }
 
@@ -209,5 +249,38 @@ mod tests {
       Float::from(-1.0).to_f64(astro_float::RoundingMode::ToEven),
       Some(-1.0)
     );
+  }
+
+  #[test]
+  fn convert_special_values_to_double_precision() {
+    assert_eq!(
+      Float::from(f64::INFINITY).to_f64(astro_float::RoundingMode::ToEven),
+      Some(f64::INFINITY)
+    );
+
+    assert_eq!(
+      Float::from(f64::NEG_INFINITY).to_f64(astro_float::RoundingMode::ToEven),
+      Some(f64::NEG_INFINITY)
+    );
+
+    assert_eq!(
+      Float::nan(None).to_f64(astro_float::RoundingMode::ToEven),
+      None
+    );
+  }
+
+  #[test]
+  fn convert_underflow_preserves_sign() {
+    let tiny_negative = float_from_str("-1e-4000");
+
+    let result = tiny_negative.to_f64(astro_float::RoundingMode::ToEven);
+
+    assert!(result.is_some());
+
+    let value = result.unwrap();
+
+    assert!(value.is_sign_negative());
+
+    assert_eq!(value, -0.0);
   }
 }
