@@ -1,4 +1,4 @@
-use {crate::Consts, std::cell::RefCell};
+use super::*;
 
 thread_local! {
   static CONSTS: RefCell<Consts> = RefCell::new(Consts::new().expect("failed to initialize astro_float constants"));

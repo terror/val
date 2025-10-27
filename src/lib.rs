@@ -7,6 +7,7 @@ pub(crate) use {
   chumsky::prelude::*,
   clap::Parser as Clap,
   std::{
+    cell::RefCell,
     collections::HashMap,
     fmt::{self, Display, Formatter},
     fs,
