@@ -351,7 +351,7 @@ fn expression_parser<'a>()
       },
     );
 
-    let logical_or = logical_and.clone().foldl(
+    logical_and.clone().foldl(
       just("||")
         .padded()
         .to(BinaryOp::LogicalOr)
@@ -362,9 +362,7 @@ fn expression_parser<'a>()
         let span = (lhs.1.start..rhs.1.end).into();
         (Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)), span)
       },
-    );
-
-    logical_or
+    )
   })
 }
 

@@ -107,9 +107,9 @@ impl FloatExt for Float {
           ret |= 0x8000000000000000u64;
         }
 
-        return Some(f64::from_bits(ret));
+        Some(f64::from_bits(ret))
       } else {
-        return Some(0.0);
+        Some(0.0)
       }
     } else {
       let mantissa = mantissa << 1;
@@ -125,7 +125,7 @@ impl FloatExt for Float {
       ret <<= 52;
       ret |= mantissa >> 12;
 
-      return Some(f64::from_bits(ret));
+      Some(f64::from_bits(ret))
     }
   }
 }
