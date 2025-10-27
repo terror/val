@@ -126,8 +126,10 @@ impl Arguments {
             return Ok(());
           }
 
-          let output = value.format_with_config(&evaluator.environment.config);
-          println!("{output}");
+          println!(
+            "{}",
+            value.format_with_config(&evaluator.environment.config)
+          );
 
           Ok(())
         }
@@ -213,9 +215,10 @@ impl Arguments {
       match parse(line) {
         Ok(ast) => match evaluator.eval(&ast) {
           Ok(value) if !matches!(value, Value::Null) => {
-            let output =
-              value.format_with_config(&evaluator.environment.config);
-            println!("{output}");
+            println!(
+              "{}",
+              value.format_with_config(&evaluator.environment.config)
+            );
           }
           Ok(_) => {}
           Err(error) => error
