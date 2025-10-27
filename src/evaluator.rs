@@ -71,7 +71,7 @@ impl<'a> Evaluator<'a> {
             };
 
             let mut list = match self.environment.resolve_symbol(list_name) {
-              Some(Value::List(items)) => items.clone(),
+              Some(Value::List(items)) => items,
               Some(other) => {
                 return Err(Error::new(
                   list_span,
@@ -481,7 +481,7 @@ impl<'a> Evaluator<'a> {
       }
       Expression::Identifier(name) => {
         match self.environment.resolve_symbol(name) {
-          Some(value) => Ok(value.clone()),
+          Some(value) => Ok(value),
           None => {
             Err(Error::new(*span, format!("Undefined variable `{}`", name)))
           }
