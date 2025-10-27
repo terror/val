@@ -45,9 +45,10 @@ impl PartialEq for Value<'_> {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Value::Boolean(a), Value::Boolean(b)) => a == b,
-      (Value::BuiltinFunction(a_name, _), Value::BuiltinFunction(b_name, _)) => {
-        a_name == b_name
-      }
+      (
+        Value::BuiltinFunction(a_name, _),
+        Value::BuiltinFunction(b_name, _),
+      ) => a_name == b_name,
       (Value::Function(a_name, _, _, _), Value::Function(b_name, _, _, _)) => {
         a_name == b_name
       }

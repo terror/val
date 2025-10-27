@@ -482,7 +482,9 @@ impl<'a> Evaluator<'a> {
       Expression::Identifier(name) => {
         match self.environment.resolve_symbol(name) {
           Some(value) => Ok(value),
-          None => Err(Error::new(*span, format!("Undefined variable `{}`", name))),
+          None => {
+            Err(Error::new(*span, format!("Undefined variable `{}`", name)))
+          }
         }
       }
       Expression::List(list) => {

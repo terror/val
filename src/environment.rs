@@ -1280,8 +1280,7 @@ impl<'src> Environment<'src> {
 
           call_environment.add_function(name, function.clone());
 
-          for (parameter, argument) in parameters.iter().zip(arguments.iter())
-          {
+          for (parameter, argument) in parameters.iter().zip(arguments.iter()) {
             let parameter_name = *parameter;
 
             match argument {
@@ -1296,8 +1295,7 @@ impl<'src> Environment<'src> {
                   .add_function(parameter_name, Function::Builtin(*builtin));
               }
               _ => {
-                call_environment
-                  .add_variable(parameter_name, argument.clone());
+                call_environment.add_variable(parameter_name, argument.clone());
               }
             }
           }
