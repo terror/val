@@ -1280,14 +1280,25 @@ impl<'src> Environment<'src> {
 
           call_environment.add_function(name, function.clone());
 
-          for (parameter, argument) in parameters.iter().zip(arguments.iter()) {
-            if matches!(argument, Value::Function(_, _, _, _)) {
-              call_environment.add_function(
-                parameter,
-                Function::UserDefined(argument.clone()),
-              )
-            } else {
-              call_environment.add_variable(parameter, argument.clone())
+          for (parameter, argument) in parameters.iter().zip(arguments.iter())
+          {
+            let parameter_name = *parameter;
+
+            match argument {
+              Value::Function(_, _, _, _) => {
+                call_environment.add_function(
+                  parameter_name,
+                  Function::UserDefined(argument.clone()),
+                );
+              }
+              Value::BuiltinFunction(_, builtin) => {
+                call_environment
+                  .add_function(parameter_name, Function::Builtin(*builtin));
+              }
+              _ => {
+                call_environment
+                  .add_variable(parameter_name, argument.clone());
+              }
             }
           }
 
@@ -1318,13 +1329,16 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub fn resolve_symbol(&self, symbol: &str) -> Option<&Value<'src>> {
+  pub fn resolve_symbol(&self, symbol: &str) -> Option<Value<'src>> {
     if let Some(value) = self.variables.get(symbol) {
-      Some(value)
-    } else if let Some(function) = self.functions.get(symbol) {
+      Some(value.clone())
+    } else if let Some((name, function)) = self.functions.get_key_value(symbol)
+    {
       match function {
-        Function::UserDefined(value) => Some(value),
-        Function::Builtin(_) => None, // We should support this at some point
+        Function::UserDefined(value) => Some(value.clone()),
+        Function::Builtin(builtin) => {
+          Some(Value::BuiltinFunction(name, *builtin))
+        }
       }
     } else if let Some(parent) = &self.parent {
       parent.resolve_symbol(symbol)

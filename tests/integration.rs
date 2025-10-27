@@ -2604,6 +2604,23 @@ fn list_concatenation() -> Result {
 }
 
 #[test]
+fn builtin_function_as_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn apply(f, x) {
+        return f(x)
+      }
+
+      println(apply(sin, 0))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("0\n"))
+    .run()
+}
+
+#[test]
 fn higher_order_function() -> Result {
   Test::new()?
     .program(indoc! {
