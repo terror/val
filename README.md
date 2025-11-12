@@ -23,6 +23,32 @@ the Rust package manager:
 cargo install val
 ```
 
+Otherwise, see below for the complete package list:
+
+#### Cross-platform
+
+<table>
+  <thead>
+    <tr>
+      <th>Package Manager</th>
+      <th>Package</th>
+      <th>Command</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href=https://www.rust-lang.org>Cargo</a></td>
+      <td><a href=https://crates.io/crates/val>val</a></td>
+      <td><code>cargo install val</code></td>
+    </tr>
+    <tr>
+      <td><a href=https://brew.sh>Homebrew</a></td>
+      <td><a href=https://github.com/terror/homebrew-tap>terror/tap/val</a></td>
+      <td><code>brew install terror/tap/val</code></td>
+    </tr>
+  </tbody>
+</table>
+
 ### Pre-built binaries
 
 Pre-built binaries for Linux, MacOS, and Windows can be found on [the releases
