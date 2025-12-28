@@ -385,7 +385,7 @@ fn should_round(
         return true;
       }
 
-      last_kept % 2 == 1
+      !last_kept.is_multiple_of(2)
     }
     astro_float::RoundingMode::ToOdd => {
       if !truncated_non_zero {
@@ -404,7 +404,7 @@ fn should_round(
         return true;
       }
 
-      last_kept % 2 == 0
+      last_kept.is_multiple_of(2)
     }
     astro_float::RoundingMode::None => false,
   }
