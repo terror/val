@@ -23,10 +23,8 @@ pub struct Arguments {
     help = "Expression to evaluate"
   )]
   expression: Option<String>,
-
   #[clap(conflicts_with = "expression", help = "File to evaluate")]
   filename: Option<PathBuf>,
-
   #[clap(
     short,
     long,
@@ -34,7 +32,6 @@ pub struct Arguments {
     help = "Load files before entering the REPL"
   )]
   load: Option<Vec<PathBuf>>,
-
   #[clap(
     short,
     long,
@@ -42,7 +39,6 @@ pub struct Arguments {
     help = "Binary precision (in bits) to use for calculations"
   )]
   precision: usize,
-
   #[clap(
     long,
     short = 'd',
@@ -50,7 +46,6 @@ pub struct Arguments {
     help = "Decimal digits to use for calculations and output"
   )]
   digits: Option<usize>,
-
   #[clap(
     short,
     long,
@@ -59,7 +54,6 @@ pub struct Arguments {
     help = "Rounding mode to use for calculations",
   )]
   rounding_mode: RoundingMode,
-
   #[clap(
     long,
     default_value = "128",
