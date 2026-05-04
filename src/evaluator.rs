@@ -170,6 +170,38 @@ impl<'a> Evaluator<'a> {
       Statement::Expression(expression) => {
         Ok(EvalResult::Value(self.eval_expression(expression)?))
       }
+      Statement::For(name, iterable, body) => {
+        let list = self.eval_expression(iterable)?.list(iterable.1)?;
+        let mut result = Value::Null;
+
+        let old_inside_loop = self.inside_loop;
+
+        self.inside_loop = true;
+
+        for item in list {
+          self.environment.add_variable(name, item);
+
+          for statement in body {
+            let eval_result = self.eval_statement(statement)?;
+
+            result = eval_result.unwrap();
+
+            if eval_result.is_return() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Return(result));
+            } else if eval_result.is_break() {
+              self.inside_loop = old_inside_loop;
+              return Ok(EvalResult::Value(result));
+            } else if eval_result.is_continue() {
+              break;
+            }
+          }
+        }
+
+        self.inside_loop = old_inside_loop;
+
+        Ok(EvalResult::Value(result))
+      }
       Statement::Function(name, params, body) => {
         let function = Value::Function(
           name,

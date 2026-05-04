@@ -38,6 +38,11 @@ pub enum Statement<'a> {
   Break,
   Continue,
   Expression(Spanned<Expression<'a>>),
+  For(
+    &'a str,
+    Spanned<Expression<'a>>,
+    Vec<Spanned<Statement<'a>>>,
+  ),
   Function(&'a str, Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
   If(
     Spanned<Expression<'a>>,
@@ -70,6 +75,19 @@ impl Display for Statement<'_> {
       Statement::Continue => write!(f, "continue"),
       Statement::Expression(expression) => {
         write!(f, "expression({})", expression.0)
+      }
+      Statement::For(name, iterable, body) => {
+        write!(
+          f,
+          "for({}, {}, block({}))",
+          name,
+          iterable.0,
+          body
+            .iter()
+            .map(|s| s.0.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
+        )
       }
       Statement::Function(name, params, body) => {
         write!(
@@ -149,6 +167,7 @@ impl Statement<'_> {
       Statement::Break => "break",
       Statement::Continue => "continue",
       Statement::Expression(_) => "expression",
+      Statement::For(_, _, _) => "for",
       Statement::Function(_, _, _) => "function",
       Statement::If(_, _, _) => "if",
       Statement::Loop(_) => "loop",

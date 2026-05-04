@@ -116,6 +116,15 @@ fn statement_parser<'a>()
       .map(|(condition, body)| Statement::While(condition, body))
       .map_with(|ast, e| (ast, e.span()));
 
+    let for_statement = just("for")
+      .padded()
+      .ignore_then(text::ident().padded())
+      .then_ignore(just("in").padded())
+      .then(expression.clone())
+      .then(statement_block.clone())
+      .map(|((name, iterable), body)| Statement::For(name, iterable, body))
+      .map_with(|ast, e| (ast, e.span()));
+
     let loop_statement = just("loop")
       .padded()
       .ignore_then(statement_block.clone())
@@ -148,6 +157,7 @@ fn statement_parser<'a>()
       block_statement,
       if_statement,
       while_statement,
+      for_statement,
       loop_statement,
       return_statement,
       break_statement,
@@ -502,6 +512,14 @@ mod tests {
     .program("while (x < 10) { x = x + 1; }")
     .ast("statements(while(binary_op(<, identifier(x), number(10)), block(assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
+  }
+
+  #[test]
+  fn for_loop() {
+    Test::new()
+      .program("for x in [1, 2, 3] { println(x) }")
+      .ast("statements(for(x, list(number(1), number(2), number(3)), block(expression(function_call(println,identifier(x))))))")
+      .run();
   }
 
   #[test]

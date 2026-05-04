@@ -1060,6 +1060,101 @@ fn floor_function() -> Result {
 }
 
 #[test]
+fn for_loop_over_list() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+
+      for x in [1, 2, 3] {
+        sum = sum + x
+      }
+
+      println(sum)
+      "
+    })
+    .expected_stdout(Exact("6\n"))
+    .run()
+}
+
+#[test]
+fn for_loop_over_non_list_errors() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      for x in 1 {
+        println(x)
+      }
+      "
+    })
+    .expected_status(1)
+    .expected_stderr(Contains("'1' is not a list"))
+    .run()
+}
+
+#[test]
+fn for_loop_over_range() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+
+      for i in range(0, 10) {
+        sum = sum + i
+      }
+
+      println(sum)
+      "
+    })
+    .expected_stdout(Exact("45\n"))
+    .run()
+}
+
+#[test]
+fn for_loop_over_range_with_step() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      result = []
+
+      for i in range(5, 0, -2) {
+        result = append(result, i)
+      }
+
+      println(result)
+      "
+    })
+    .expected_stdout(Exact("[5, 3, 1]\n"))
+    .run()
+}
+
+#[test]
+fn for_loop_with_break_and_continue() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      sum = 0
+
+      for i in range(0, 10) {
+        if (i == 2) {
+          continue
+        }
+
+        if (i == 5) {
+          break
+        }
+
+        sum = sum + i
+      }
+
+      println(sum)
+      "
+    })
+    .expected_stdout(Exact("8\n"))
+    .run()
+}
+
+#[test]
 fn function_call_as_argument() -> Result {
   Test::new()?
     .program(indoc! {
@@ -2522,6 +2617,15 @@ fn print_without_newline() -> Result {
     .program("print(1 + 1)")
     .expected_status(0)
     .expected_stdout(Exact("2"))
+    .run()
+}
+
+#[test]
+fn range_rejects_zero_step() -> Result {
+  Test::new()?
+    .program("println(range(0, 10, 0))")
+    .expected_status(1)
+    .expected_stderr(Contains("Step argument to `range` must not be zero"))
     .run()
 }
 

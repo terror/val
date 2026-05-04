@@ -137,9 +137,10 @@ program.
 
 ### Statements
 
-**val** supports a few statement constructs such as `if`, `while`, `loop`, `fn`,
-`return`, etc. Check out the [grammar](https://github.com/terror/val/blob/master/GRAMMAR.txt)
-for all of the various statement types.
+**val** supports a few statement constructs such as `if`, `for`, `while`,
+`loop`, `fn`, `return`, etc. Check out the
+[grammar](https://github.com/terror/val/blob/master/GRAMMAR.txt) for all of
+the various statement types.
 
 Here's an example showcasing most of them in action:
 
@@ -152,11 +153,8 @@ fn fib(n) {
   return fib(n - 1) + fib(n - 2)
 }
 
-i = 0
-
-while (i < 10) {
+for i in range(0, 10) {
   println("fib(" + i + ") = " + fib(i))
-  i = i + 1
 }
 ```
 
@@ -256,18 +254,15 @@ combined = numbers + [6, 7]
 A function is a value, and can be used in assignments, passed around to other
 functions, etc.
 
-Check out the [higher order functions example](https://github.com/terror/val/blob/master/examples/hoc.val)
+Check out the [higher order functions example](https://github.com/terror/val/blob/master/examples/hof.val)
 for how this works.
 
 ```rust
 fn reduce(l, f, initial) {
-  i = 0
-
   result = initial
 
-  while (i < len(l)) {
-    result = f(result, l[i])
-    i = i + 1
+  for item in l {
+    result = f(result, item)
   }
 
   return result
@@ -348,6 +343,7 @@ if (index == null) {
 | **Collections**   | `len(x)`            | Length of list or string           | `len("hello")`           |
 |                   | `sum(list)`         | Sum list elements                  | `sum([1,2,3])`           |
 |                   | `append(list, val)` | Add element to end of list         | `append([1,2], 3)`       |
+|                   | `range(a, b[, s])`  | List from a to b, stepping by s    | `range(0, 10)`           |
 | **Conversion**    | `int(x)`            | Convert to integer                 | `int("42")`              |
 |                   | `float(x)`          | Convert to float                   | `float("3.14")`          |
 |                   | `bool(x)`           | Convert to boolean                 | `bool(1)`                |

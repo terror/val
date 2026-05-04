@@ -141,6 +141,31 @@ impl<'src> TreeHighlighter<'src> {
       Statement::Expression(expression) => {
         self.collect_expression_spans(expression, spans);
       }
+      Statement::For(name, iterable, body) => {
+        if let Some(for_pos) = self.content[start..end].find("for") {
+          spans.push((start + for_pos, start + for_pos + 3, COLOR_KEYWORD));
+        }
+
+        let name_span = self.find_identifier_span(start, name);
+
+        if let Some((name_start, name_end)) = name_span {
+          spans.push((name_start, name_end, COLOR_IDENTIFIER));
+        }
+
+        self.collect_expression_spans(iterable, spans);
+
+        if let Some((_, name_end)) = name_span
+          && let Some(in_pos) = self.content[name_end..iterable.1.start]
+            .find(|c: char| !c.is_whitespace())
+        {
+          let in_start = name_end + in_pos;
+          spans.push((in_start, in_start + 2, COLOR_KEYWORD));
+        }
+
+        for statement in body {
+          self.collect_statement_spans(statement, spans);
+        }
+      }
       Statement::Function(name, params, body) => {
         if let Some(fn_pos) = self.content[start..end].find("fn") {
           spans.push((start + fn_pos, start + fn_pos + 2, COLOR_KEYWORD));

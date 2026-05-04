@@ -1136,6 +1136,79 @@ impl<'src> Environment<'src> {
     );
 
     env.add_function(
+      "range",
+      Function::Builtin(|payload| {
+        if payload.arguments.len() != 2 && payload.arguments.len() != 3 {
+          return Err(Error::new(
+            payload.span,
+            format!(
+              "Function `range` expects 2 or 3 arguments, got {}",
+              payload.arguments.len()
+            ),
+          ));
+        }
+
+        let mut numbers = Vec::with_capacity(payload.arguments.len());
+
+        for argument in &payload.arguments {
+          let number = argument
+            .number(payload.span)?
+            .to_f64(payload.config.rounding_mode);
+
+          match number {
+            Some(number)
+              if number.is_finite()
+                && number.fract() == 0.0
+                && number >= i64::MIN as f64
+                && number <= i64::MAX as f64 =>
+            {
+              numbers.push(number as i64);
+            }
+            _ => {
+              return Err(Error::new(
+                payload.span,
+                "Arguments to `range` must be finite integers",
+              ));
+            }
+          }
+        }
+
+        let (start, end) = (numbers[0], numbers[1]);
+
+        let step = if let Some(step) = numbers.get(2) {
+          *step
+        } else {
+          1
+        };
+
+        if step == 0 {
+          return Err(Error::new(
+            payload.span,
+            "Step argument to `range` must not be zero",
+          ));
+        }
+
+        let (mut current, mut result) = (start, Vec::new());
+
+        while if step > 0 {
+          current < end
+        } else {
+          current > end
+        } {
+          result.push(Value::Number(Float::from(current)));
+          current = match current.checked_add(step) {
+            Some(current) => current,
+            None => {
+              return Err(Error::new(payload.span, "`range` overflowed"));
+            }
+          };
+        }
+
+        Ok(Value::List(result))
+      }),
+    );
+
+    env.add_function(
       "gcd",
       Function::Builtin(|payload| {
         if payload.arguments.len() != 2 {
