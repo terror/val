@@ -80,6 +80,19 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
           children,
         }
       }
+      Statement::For(_, iterable, body) => {
+        children.push(Self::from((&iterable.0, &iterable.1)));
+
+        for (statement, span) in body {
+          children.push(Self::from((statement, span)));
+        }
+
+        Self {
+          kind: statement.kind(),
+          range,
+          children,
+        }
+      }
       Statement::Function(_, _, body) => {
         for (statement, span) in body {
           children.push(Self::from((statement, span)));

@@ -1,30 +1,60 @@
-Program        → Statement (';' Statement)* ';'?
+Program          → StatementList
 
-Statement      → Assignment | Block | ExpressionStmt | Function | If | Return | While
-Assignment     → Identifier '=' Expression
-Block          → '{' Statement* '}'
-ExpressionStmt → Expression
-Function       → 'fn' Identifier '(' (Identifier (',' Identifier)*)? ','? ')' '{' Statement* '}'
-If             → 'if' '(' Expression ')' '{' Statement* '}' ('else' '{' Statement* '}')?
-Return         → 'return' Expression?
-While          → 'while' '(' Expression ')' '{' Statement* '}'
+StatementList    → (Statement ';'?)*
 
-Expression     → LogicalOr
-LogicalOr      → LogicalOr '||' LogicalAnd | LogicalAnd
-LogicalAnd     → LogicalAnd '&&' Equality | Equality
-Equality       → Equality ('==' | '!=') Relational | Relational
-Relational     → Relational ('>=' | '<=' | '>' | '<') Sum | Sum
-Sum            → Sum ('+' | '-') Product | Product
-Product        → Product ('*' | '/' | '%' | '^') Unary | Unary
-Unary          → ('-' | '!') Unary | ListAccess
-ListAccess     → Atom ('[' Expression ']')* | Atom
-Atom           → Number | Boolean | String | List | FunctionCall | Identifier | '(' Expression ')'
+Statement        → Assignment
+                 | Block
+                 | Break
+                 | Continue
+                 | ExpressionStmt
+                 | For
+                 | Function
+                 | If
+                 | Loop
+                 | Return
+                 | While
 
-Number         → Digit+ ('.' Digit+)?
-Boolean        → 'true' | 'false'
-String         → '"' [^"]* '"' | "'" [^']* "'"
-List           → '[' (Expression (',' Expression)*)? ','? ']'
-FunctionCall   → Identifier '(' (Expression (',' Expression)*)? ','? ')'
-Identifier     → Letter (Letter | Digit)*
-Digit          → '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-Letter         → 'a' | 'b' | ... | 'z' | 'A' | 'B' | ... | 'Z' | '_'
+Assignment       → AssignmentTarget '=' Expression
+AssignmentTarget → Identifier ('[' Expression ']')*
+Block            → '{' StatementList '}'
+Break            → 'break'
+Continue         → 'continue'
+ExpressionStmt   → Expression
+For              → 'for' Identifier 'in' Expression Block
+Function         → 'fn' Identifier '(' Parameters? ','? ')' Block
+If               → 'if' '(' Expression ')' Block ('else' Block)?
+Loop             → 'loop' Block
+Return           → 'return' Expression?
+While            → 'while' '(' Expression ')' Block
+
+Parameters       → Identifier (',' Identifier)*
+
+Expression       → LogicalOr
+LogicalOr        → LogicalAnd ('||' LogicalAnd)*
+LogicalAnd       → Equality ('&&' Equality)*
+Equality         → Relational (('==' | '!=') Relational)*
+Relational       → Sum (('>=' | '<=' | '>' | '<') Sum)*
+Sum              → Product (('+' | '-') Product)*
+Product          → Power (('*' | '/' | '%') Power)*
+Power            → Unary ('^' Power)?
+Unary            → ('-' | '!')* ListAccess
+ListAccess       → Atom ('[' Expression ']')*
+Atom             → Number
+                 | Boolean
+                 | Null
+                 | String
+                 | List
+                 | FunctionCall
+                 | Identifier
+                 | '(' Expression ')'
+
+Number           → Digit+ ('.' Digit+)?
+Boolean          → 'true' | 'false'
+Null             → 'null'
+String           → '"' [^"]* '"' | "'" [^']* "'"
+List             → '[' Arguments? ','? ']'
+FunctionCall     → Identifier '(' Arguments? ','? ')'
+Arguments        → Expression (',' Expression)*
+Identifier       → Letter (Letter | Digit)*
+Digit            → '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+Letter           → 'a' | 'b' | ... | 'z' | 'A' | 'B' | ... | 'Z' | '_'

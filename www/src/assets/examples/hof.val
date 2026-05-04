@@ -1,11 +1,8 @@
 fn map(l, f) {
-  i = 0
-
   result = []
 
-  while (i < len(l)) {
-    result = append(result, f(l[i]))
-    i = i + 1
+  for item in l {
+    result = append(result, f(item))
   }
 
   return result
@@ -20,29 +17,22 @@ fn even(x) {
 }
 
 fn filter(l, f) {
-  i = 0
-
   result = []
 
-  while (i < len(l)) {
-    if (f(l[i])) {
-      result = append(result, l[i])
+  for item in l {
+    if (f(item)) {
+      result = append(result, item)
     }
-
-    i = i + 1
   }
 
   return result
 }
 
 fn reduce(l, f, initial) {
-  i = 0
-
   result = initial
 
-  while (i < len(l)) {
-    result = f(result, l[i])
-    i = i + 1
+  for item in l {
+    result = f(result, item)
   }
 
   return result
