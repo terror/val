@@ -751,7 +751,7 @@ impl<'src> Environment<'src> {
         let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
         for argument in &payload.arguments {
-          output_strings.push(format!("{}", argument));
+          output_strings.push(argument.format_with_config(&payload.config));
         }
 
         print!("{}", output_strings.join(" "));
@@ -766,7 +766,7 @@ impl<'src> Environment<'src> {
         let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
         for argument in &payload.arguments {
-          output_strings.push(format!("{}", argument));
+          output_strings.push(argument.format_with_config(&payload.config));
         }
 
         println!("{}", output_strings.join(" "));

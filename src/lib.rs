@@ -9,6 +9,7 @@ pub(crate) use {
   std::{
     cell::RefCell,
     collections::HashMap,
+    f64,
     fmt::{self, Display, Formatter},
     fs,
     ops::Range,
