@@ -7,7 +7,8 @@ use {
   serde::Serialize,
   serde_wasm_bindgen::to_value,
   val::{
-    Environment, Evaluator, Expression, Program, RoundingMode, Span, Statement,
+    AssignmentTarget, Environment, Evaluator, Expression, Program,
+    RoundingMode, Span, Statement,
   },
   wasm_bindgen::prelude::*,
 };
@@ -50,7 +51,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
         rounding_mode: RoundingMode::FromZero.into(),
       }));
 
-      match evaluator.eval(&ast) {
+      match evaluator.evaluate(&ast) {
         Ok(value) => Ok(to_value(&value.to_string()).unwrap()),
         Err(error) => Err(
           to_value(&[ValError {

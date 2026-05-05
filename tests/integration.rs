@@ -1965,6 +1965,21 @@ fn list_element_assignment_updates_value() -> Result {
 }
 
 #[test]
+fn nested_list_element_assignment_updates_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      nums = [[1, 2], [3, 4]]
+      nums[1][0] = 5
+      println(nums)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[[1, 2], [5, 4]]\n"))
+    .run()
+}
+
+#[test]
 fn list_literals() -> Result {
   Test::new()?
     .program("println([1, 2, 1 + 2])")

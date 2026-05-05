@@ -14,7 +14,8 @@ fn bench_increment_value(criterion: &mut Criterion) {
 
     group.bench_function(format!("n = {number}"), |bencher| {
       bencher.iter(|| {
-        black_box(Evaluator::from(Environment::default()).eval(&ast)).unwrap();
+        black_box(Evaluator::from(Environment::default()).evaluate(&ast))
+          .unwrap();
       });
     });
   }
@@ -70,7 +71,8 @@ fn bench_prime_count(criterion: &mut Criterion) {
 
     group.bench_function(format!("n = {number}"), |bencher| {
       bencher.iter(|| {
-        black_box(Evaluator::from(Environment::default()).eval(&ast)).unwrap();
+        black_box(Evaluator::from(Environment::default()).evaluate(&ast))
+          .unwrap();
       });
     });
   }
@@ -90,7 +92,8 @@ fn bench_recursive_factorial(criterion: &mut Criterion) {
 
     group.bench_function(format!("n = {number}"), |bencher| {
       bencher.iter(|| {
-        black_box(Evaluator::from(Environment::default()).eval(&ast)).unwrap();
+        black_box(Evaluator::from(Environment::default()).evaluate(&ast))
+          .unwrap();
       });
     });
   }

@@ -162,6 +162,34 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
   }
 }
 
+impl From<(&AssignmentTarget<'_>, &Span)> for AstNode {
+  fn from(value: (&AssignmentTarget<'_>, &Span)) -> Self {
+    let (target, span) = value;
+
+    let range = Range::from(span);
+
+    let mut children = Vec::new();
+
+    match target {
+      AssignmentTarget::Identifier(_) => Self {
+        kind: target.kind(),
+        range,
+        children,
+      },
+      AssignmentTarget::ListAccess(list, index) => {
+        children.push(Self::from((&list.0, &list.1)));
+        children.push(Self::from((&index.0, &index.1)));
+
+        Self {
+          kind: target.kind(),
+          range,
+          children,
+        }
+      }
+    }
+  }
+}
+
 impl From<(&Expression<'_>, &Span)> for AstNode {
   fn from(value: (&Expression<'_>, &Span)) -> Self {
     let (expression, span) = value;

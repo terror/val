@@ -60,9 +60,9 @@ impl<'src> Function<'src> {
           }
 
           for statement in body {
-            let result = evaluator.eval_statement(statement)?;
+            let result = evaluator.evaluate_statement(statement)?;
 
-            if result.is_return() {
+            if matches!(&result, Completion::Return(_)) {
               return Ok(result.unwrap());
             }
           }

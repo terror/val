@@ -72,7 +72,7 @@ impl Arguments {
     }));
 
     match parse(&content) {
-      Ok(ast) => match evaluator.eval(&ast) {
+      Ok(ast) => match evaluator.evaluate(&ast) {
         Ok(_) => Ok(()),
         Err(error) => {
           error
@@ -94,14 +94,14 @@ impl Arguments {
     }
   }
 
-  fn eval_expression(&self, value: String) -> Result {
+  fn evaluate_expression(&self, value: String) -> Result {
     let mut evaluator = Evaluator::from(Environment::new(Config {
       precision: self.precision,
       rounding_mode: self.rounding_mode.into(),
     }));
 
     match parse(&value) {
-      Ok(ast) => match evaluator.eval(&ast) {
+      Ok(ast) => match evaluator.evaluate(&ast) {
         Ok(value) => {
           if let Value::Null = value {
             return Ok(());
@@ -162,7 +162,7 @@ impl Arguments {
         let filename = filename.to_string_lossy().to_string();
 
         match parse(content) {
-          Ok(ast) => match evaluator.eval(&ast) {
+          Ok(ast) => match evaluator.evaluate(&ast) {
             Ok(_) => {}
             Err(error) => {
               error
@@ -194,7 +194,7 @@ impl Arguments {
       let line: &'static str = Box::leak(line.into_boxed_str());
 
       match parse(line) {
-        Ok(ast) => match evaluator.eval(&ast) {
+        Ok(ast) => match evaluator.evaluate(&ast) {
           Ok(value) if !matches!(value, Value::Null) => println!("{value}"),
           Ok(_) => {}
           Err(error) => error
@@ -215,7 +215,7 @@ impl Arguments {
   pub fn run(self) -> Result {
     match (&self.filename, &self.expression) {
       (Some(filename), _) => self.eval(filename),
-      (_, Some(expression)) => self.eval_expression(expression.clone()),
+      (_, Some(expression)) => self.evaluate_expression(expression.clone()),
       _ => {
         #[cfg(not(target_family = "wasm"))]
         {

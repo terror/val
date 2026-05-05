@@ -31,6 +31,24 @@ fn program_parser<'a>()
     .map_with(|ast, e| (ast, e.span()))
 }
 
+fn index_parser<'a, P>(
+  expression: P,
+) -> impl Parser<
+  'a,
+  &'a str,
+  (Spanned<Expression<'a>>, SimpleSpan),
+  extra::Err<Rich<'a, char>>,
+> + Clone
+where
+  P: Parser<'a, &'a str, Spanned<Expression<'a>>, extra::Err<Rich<'a, char>>>
+    + Clone,
+{
+  expression
+    .delimited_by(just('['), just(']'))
+    .padded()
+    .map_with(|expression, e| (expression, e.span()))
+}
+
 fn statement_parser<'a>()
 -> impl Parser<'a, &'a str, Spanned<Statement<'a>>, extra::Err<Rich<'a, char>>>
 + Clone {
@@ -47,27 +65,22 @@ fn statement_parser<'a>()
 
     let simple_ident = text::ident().padded().map_with(|name, e| {
       let span = e.span();
-      (Expression::Identifier(name), span)
+      (AssignmentTarget::Identifier(name), span)
     });
 
-    let indexed_ident = simple_ident.foldl(
-      expression
-        .clone()
-        .delimited_by(just('['), just(']'))
-        .padded()
-        .map_with(|expression, e| (expression, e.span()))
-        .repeated(),
+    let assignment_target = simple_ident.foldl(
+      index_parser(expression.clone()).repeated(),
       |base, (index, span)| {
         let span = (base.1.start..span.end).into();
 
-        let expression =
-          Expression::ListAccess(Box::new(base), Box::new(index));
+        let target =
+          AssignmentTarget::ListAccess(Box::new(base), Box::new(index));
 
-        (expression, span)
+        (target, span)
       },
     );
 
-    let assignment_statement = indexed_ident
+    let assignment_statement = assignment_target
       .then_ignore(just('=').padded())
       .then(expression.clone())
       .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs))
@@ -246,12 +259,7 @@ fn expression_parser<'a>()
       .padded();
 
     let list_access = atom.clone().foldl(
-      expression
-        .clone()
-        .delimited_by(just('['), just(']'))
-        .padded()
-        .map_with(|expression, e| (expression, e.span()))
-        .repeated(),
+      index_parser(expression.clone()).repeated(),
       |list: Spanned<Expression<'a>>,
        (index, span): (Spanned<Expression<'a>>, SimpleSpan)| {
         let span = (list.1.start..span.end).into();
@@ -467,6 +475,11 @@ mod tests {
     Test::new()
       .program("x = 5")
       .ast("statements(assignment(identifier(x), number(5)))")
+      .run();
+
+    Test::new()
+      .program("foo[0][1] = bar")
+      .ast("statements(assignment(list_access(list_access(identifier(foo), number(0)), number(1)), identifier(bar)))")
       .run();
   }
 

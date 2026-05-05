@@ -34,7 +34,7 @@ check:
 
 [group: 'check']
 ci: test clippy forbid
-  cargo +nightly fmt --all -- --check
+  cargo fmt --all -- --check
   cargo update --locked --package val
 
 [group: 'check']
@@ -43,11 +43,11 @@ clippy:
 
 [group: 'format']
 fmt:
-  cargo +nightly fmt
+  cargo fmt
 
 [group: 'format']
 fmt-check:
-  cargo +nightly fmt --all -- --check
+  cargo fmt --all -- --check
 
 [group: 'format']
 fmt-web:
