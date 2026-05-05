@@ -10,7 +10,7 @@ pub struct Environment<'src> {
 
 impl<'src> Environment<'src> {
   pub fn new(config: Config) -> Self {
-    let mut env = Self {
+    let mut environment = Self {
       config: config.clone(),
       functions: HashMap::new(),
       parent: None,
@@ -19,19 +19,17 @@ impl<'src> Environment<'src> {
 
     for builtin in BUILTINS {
       match builtin {
-        Builtin::Constant { .. } => {
-          env.add_variable(builtin.name(), builtin.value()(config.clone()));
+        Builtin::Constant { value, .. } => {
+          environment.add_variable(builtin.name(), value(config.clone()));
         }
-        Builtin::Function { .. } => {
-          env.add_function(
-            builtin.name(),
-            Function::Builtin(builtin.function()),
-          );
+        Builtin::Function { function, .. } => {
+          environment
+            .add_function(builtin.name(), Function::Builtin(*function));
         }
       }
     }
 
-    env
+    environment
   }
 
   pub fn add_function(&mut self, name: &'src str, function: Function<'src>) {

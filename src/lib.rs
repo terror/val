@@ -37,9 +37,7 @@ pub(crate) use {
 pub use crate::{
   arguments::Arguments,
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
-  builtin::{
-    Builtin, BuiltinConstant, BuiltinFunction, BuiltinFunctionPayload,
-  },
+  builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
   config::Config,
   environment::Environment,
   error::Error,
