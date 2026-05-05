@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Config {
   pub precision: usize,
   pub rounding_mode: astro_float::RoundingMode,

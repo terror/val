@@ -61,25 +61,8 @@ pub struct Arguments {
 }
 
 impl Arguments {
-  pub fn run(self) -> Result {
-    match (&self.filename, &self.expression) {
-      (Some(filename), _) => self.eval(filename.clone()),
-      (_, Some(expression)) => self.eval_expression(expression.clone()),
-      _ => {
-        #[cfg(not(target_family = "wasm"))]
-        {
-          self.read()
-        }
-        #[cfg(target_family = "wasm")]
-        {
-          Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
-        }
-      }
-    }
-  }
-
-  fn eval(&self, filename: PathBuf) -> Result {
-    let content = fs::read_to_string(&filename)?;
+  fn eval(&self, filename: &PathBuf) -> Result {
+    let content = fs::read_to_string(filename)?;
 
     let filename = filename.to_string_lossy().to_string();
 
@@ -124,7 +107,7 @@ impl Arguments {
             return Ok(());
           }
 
-          println!("{}", value);
+          println!("{value}");
 
           Ok(())
         }
@@ -228,6 +211,23 @@ impl Arguments {
       }
     }
   }
+
+  pub fn run(self) -> Result {
+    match (&self.filename, &self.expression) {
+      (Some(filename), _) => self.eval(filename),
+      (_, Some(expression)) => self.eval_expression(expression.clone()),
+      _ => {
+        #[cfg(not(target_family = "wasm"))]
+        {
+          self.read()
+        }
+        #[cfg(target_family = "wasm")]
+        {
+          Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
+        }
+      }
+    }
+  }
 }
 
 #[cfg(test)]
@@ -301,8 +301,7 @@ mod tests {
 
     assert!(
       error.contains("cannot be used with"),
-      "Error should mention conflicts: {}",
-      error
+      "Error should mention conflicts: {error}"
     );
   }
 
@@ -321,8 +320,7 @@ mod tests {
 
     assert!(
       error.contains("cannot be used with"),
-      "Error should mention conflicts: {}",
-      error
+      "Error should mention conflicts: {error}"
     );
   }
 }

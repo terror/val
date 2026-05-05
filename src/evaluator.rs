@@ -16,7 +16,19 @@ impl<'a> From<Environment<'a>> for Evaluator<'a> {
   }
 }
 
+fn finite_non_negative_usize(number: f64) -> Option<usize> {
+  if number.is_finite() && number >= 0.0 {
+    let number = number.trunc();
+    format!("{number:.0}").parse().ok()
+  } else {
+    None
+  }
+}
+
 impl<'a> Evaluator<'a> {
+  /// # Errors
+  ///
+  /// Returns an evaluation error when a statement or expression is invalid.
   pub fn eval(
     &mut self,
     ast: &Spanned<Program<'a>>,
@@ -45,7 +57,7 @@ impl<'a> Evaluator<'a> {
     }
   }
 
-  pub fn eval_statement(
+  pub(crate) fn eval_statement(
     &mut self,
     statement: &Spanned<Statement<'a>>,
   ) -> Result<EvalResult<'a>, Error> {
@@ -85,23 +97,21 @@ impl<'a> Evaluator<'a> {
               None => {
                 return Err(Error::new(
                   list_span,
-                  format!("Undefined variable `{}`", list_name),
+                  format!("Undefined variable `{list_name}`"),
                 ));
               }
             };
 
-            let index = match self
+            let Some(index) = self
               .eval_expression(index_box)?
               .number(index_box.1)?
               .to_f64(self.environment.config.rounding_mode)
-            {
-              Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-              _ => {
-                return Err(Error::new(
-                  index_box.1,
-                  "List index must be a non-negative finite number",
-                ));
-              }
+              .and_then(finite_non_negative_usize)
+            else {
+              return Err(Error::new(
+                index_box.1,
+                "List index must be a non-negative finite number",
+              ));
             };
 
             if index >= list.len() {
@@ -335,14 +345,14 @@ impl<'a> Evaluator<'a> {
             self.environment.config.precision,
             self.environment.config.rounding_mode,
           ))),
-          (Value::String(a), Value::String(b)) => Ok(Value::String(Box::leak(
-            format!("{}{}", a, b).into_boxed_str(),
-          ))),
+          (Value::String(a), Value::String(b)) => {
+            Ok(Value::String(Box::leak(format!("{a}{b}").into_boxed_str())))
+          }
           (Value::String(a), _) => Ok(Value::String(Box::leak(
-            format!("{}{}", a, rhs_val).into_boxed_str(),
+            format!("{a}{rhs_val}").into_boxed_str(),
           ))),
           (_, Value::String(b)) => Ok(Value::String(Box::leak(
-            format!("{}{}", lhs_val, b).into_boxed_str(),
+            format!("{lhs_val}{b}").into_boxed_str(),
           ))),
           (Value::List(a), Value::List(b)) => {
             let mut result = a.clone();
@@ -513,7 +523,7 @@ impl<'a> Evaluator<'a> {
         match self.environment.resolve_symbol(name) {
           Some(value) => Ok(value),
           None => {
-            Err(Error::new(*span, format!("Undefined variable `{}`", name)))
+            Err(Error::new(*span, format!("Undefined variable `{name}`")))
           }
         }
       }
@@ -534,23 +544,21 @@ impl<'a> Evaluator<'a> {
           _ => {
             return Err(Error::new(
               list.1,
-              format!("'{}' is not a list", list_value),
+              format!("'{list_value}' is not a list"),
             ));
           }
         };
 
-        let index = match self
+        let Some(index) = self
           .eval_expression(index)?
           .number(index.1)?
           .to_f64(self.environment.config.rounding_mode)
-        {
-          Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-          _ => {
-            return Err(Error::new(
-              index.1,
-              "List index must be a non-negative finite number",
-            ));
-          }
+          .and_then(finite_non_negative_usize)
+        else {
+          return Err(Error::new(
+            index.1,
+            "List index must be a non-negative finite number",
+          ));
         };
 
         if index >= list.len() {

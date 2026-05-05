@@ -179,7 +179,7 @@ pub(crate) const BUILTINS: &[Builtin] = &[
   },
 ];
 
-fn abs<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn abs<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -195,7 +195,7 @@ fn abs<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   ))
 }
 
-fn acos<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn acos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -226,7 +226,7 @@ fn acos<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn acot<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn acot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -256,7 +256,7 @@ fn acot<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   )))
 }
 
-fn acsc<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -293,7 +293,9 @@ fn acsc<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn append<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn append<'a>(
+  payload: &BuiltinFunctionPayload<'a>,
+) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 2 {
     return Err(Error::new(
       payload.span,
@@ -313,7 +315,7 @@ fn append<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::List(list))
 }
 
-fn arc<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn arc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -337,7 +339,7 @@ fn arc<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn asec<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -374,7 +376,7 @@ fn asec<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn asin<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn asin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -405,7 +407,9 @@ fn asin<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn r#bool<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn r#bool<'a>(
+  payload: &BuiltinFunctionPayload<'a>,
+) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -424,14 +428,14 @@ fn r#bool<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     Value::String(s) => Ok(Value::Boolean(!s.is_empty())),
     Value::List(items) => Ok(Value::Boolean(!items.is_empty())),
     Value::Null => Ok(Value::Boolean(false)),
-    _ => Err(Error::new(
+    Value::Function(_) => Err(Error::new(
       payload.span,
       format!("Cannot convert {} to bool", value.type_name()),
     )),
   }
 }
 
-fn ceil<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn ceil<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -447,23 +451,23 @@ fn ceil<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   ))
 }
 
-fn constant_e(config: Config) -> Value<'static> {
+fn constant_e(config: &Config) -> Value<'static> {
   Value::Number(with_consts(|consts| {
     consts.e(config.precision, config.rounding_mode)
   }))
 }
 
-fn constant_phi(config: Config) -> Value<'static> {
+fn constant_phi(config: &Config) -> Value<'static> {
   Value::Number(Float::from_f64(1.618_033_988_749_895_f64, config.precision))
 }
 
-fn constant_pi(config: Config) -> Value<'static> {
+fn constant_pi(config: &Config) -> Value<'static> {
   Value::Number(with_consts(|consts| {
     consts.pi(config.precision, config.rounding_mode)
   }))
 }
 
-fn constant_tau(config: Config) -> Value<'static> {
+fn constant_tau(config: &Config) -> Value<'static> {
   let pi =
     with_consts(|consts| consts.pi(config.precision, config.rounding_mode));
 
@@ -474,7 +478,7 @@ fn constant_tau(config: Config) -> Value<'static> {
   ))
 }
 
-fn cos<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn cos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -498,7 +502,7 @@ fn cos<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn cosh<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn cosh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -522,7 +526,7 @@ fn cosh<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn cot<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn cot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -557,7 +561,7 @@ fn cot<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   )))
 }
 
-fn csc<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -592,7 +596,7 @@ fn csc<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   )))
 }
 
-fn e<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -616,7 +620,7 @@ fn e<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn exit<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn exit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.is_empty() {
     process::exit(0);
   }
@@ -635,19 +639,45 @@ fn exit<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     .number(payload.span)?
     .to_f64(payload.config.rounding_mode)
   {
-    Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-    _ => {
-      return Err(Error::new(
-        payload.span,
-        "Argument to `exit` must be a non-negative finite number",
-      ));
-    }
+    Some(n) => finite_non_negative_usize(n),
+    None => None,
   };
 
-  process::exit(code as i32);
+  let Some(code) = code else {
+    return Err(Error::new(
+      payload.span,
+      "Argument to `exit` must be a non-negative finite number",
+    ));
+  };
+
+  let Ok(code) = i32::try_from(code) else {
+    return Err(Error::new(
+      payload.span,
+      "Argument to `exit` must fit in a 32-bit signed integer",
+    ));
+  };
+
+  process::exit(code);
 }
 
-fn float<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn finite_i64(number: f64) -> Option<i64> {
+  if number.is_finite() && number.fract() == 0.0 {
+    format!("{number:.0}").parse().ok()
+  } else {
+    None
+  }
+}
+
+fn finite_non_negative_usize(number: f64) -> Option<usize> {
+  if number.is_finite() && number >= 0.0 {
+    let number = number.trunc();
+    format!("{number:.0}").parse().ok()
+  } else {
+    None
+  }
+}
+
+fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -666,7 +696,7 @@ fn float<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
       Ok(n) => Ok(Value::Number(Float::from(n))),
       Err(_) => Err(Error::new(
         payload.span,
-        format!("Cannot convert '{}' to float", s),
+        format!("Cannot convert '{s}' to float"),
       )),
     },
     Value::Boolean(b) => {
@@ -679,7 +709,7 @@ fn float<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 }
 
-fn floor<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn floor<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -695,7 +725,7 @@ fn floor<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   ))
 }
 
-fn gcd<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn gcd<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 2 {
     return Err(Error::new(
       payload.span,
@@ -721,7 +751,7 @@ fn gcd<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(x))
 }
 
-fn input<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn input<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   use std::io::{self, BufRead, Write};
 
   if payload.arguments.len() > 1 {
@@ -757,12 +787,12 @@ fn input<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     }
     Err(e) => Err(Error::new(
       payload.span,
-      format!("Failed to read input: {}", e),
+      format!("Failed to read input: {e}"),
     )),
   }
 }
 
-fn int<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -781,7 +811,7 @@ fn int<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
       Ok(n) => Ok(Value::Number(Float::from(n).floor())),
       Err(_) => Err(Error::new(
         payload.span,
-        format!("Cannot convert '{}' to int", s),
+        format!("Cannot convert '{s}' to int"),
       )),
     },
     Value::Boolean(b) => {
@@ -794,7 +824,7 @@ fn int<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 }
 
-fn join<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 2 {
     return Err(Error::new(
       payload.span,
@@ -821,7 +851,7 @@ fn join<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::String(Box::leak(joined_string.into_boxed_str())))
 }
 
-fn lcm<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn lcm<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 2 {
     return Err(Error::new(
       payload.span,
@@ -857,7 +887,7 @@ fn lcm<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(lcm))
 }
 
-fn len<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -871,8 +901,12 @@ fn len<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let value = &payload.arguments[0];
 
   match value {
-    Value::String(s) => Ok(Value::Number(Float::from(s.len() as f64))),
-    Value::List(items) => Ok(Value::Number(Float::from(items.len() as f64))),
+    Value::String(s) => len_to_float(s.len())
+      .map(Value::Number)
+      .ok_or_else(|| Error::new(payload.span, "String length is too large")),
+    Value::List(items) => len_to_float(items.len())
+      .map(Value::Number)
+      .ok_or_else(|| Error::new(payload.span, "List length is too large")),
     _ => Err(Error::new(
       payload.span,
       format!("Cannot get length of {}", value.type_name()),
@@ -880,7 +914,11 @@ fn len<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 }
 
-fn list<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn len_to_float(len: usize) -> Option<Float> {
+  i64::try_from(len).ok().map(Float::from)
+}
+
+fn list<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -904,7 +942,7 @@ fn list<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 }
 
-fn ln<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn ln<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -935,7 +973,7 @@ fn ln<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn log10<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn log10<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -966,7 +1004,7 @@ fn log10<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn log2<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn log2<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -997,33 +1035,39 @@ fn log2<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn print<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn print<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+  use std::io::Write;
+
   let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
-    output_strings.push(format!("{}", argument));
+    output_strings.push(format!("{argument}"));
   }
 
-  print!("{}", output_strings.join(" "));
+  write!(std::io::stdout(), "{}", output_strings.join(" "))
+    .map_err(|error| Error::new(payload.span, error.to_string()))?;
 
   Ok(Value::Null)
 }
 
 fn println<'a>(
-  payload: BuiltinFunctionPayload<'a>,
+  payload: &BuiltinFunctionPayload<'a>,
 ) -> Result<Value<'a>, Error> {
+  use std::io::Write;
+
   let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
-    output_strings.push(format!("{}", argument));
+    output_strings.push(format!("{argument}"));
   }
 
-  println!("{}", output_strings.join(" "));
+  writeln!(std::io::stdout(), "{}", output_strings.join(" "))
+    .map_err(|error| Error::new(payload.span, error.to_string()))?;
 
   Ok(Value::Null)
 }
 
-fn quit<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn quit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.is_empty() {
     process::exit(0);
   }
@@ -1042,19 +1086,28 @@ fn quit<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     .number(payload.span)?
     .to_f64(payload.config.rounding_mode)
   {
-    Some(n) if n.is_finite() && n >= 0.0 => n as usize,
-    _ => {
-      return Err(Error::new(
-        payload.span,
-        "Argument to `quit` must be a non-negative finite number",
-      ));
-    }
+    Some(n) => finite_non_negative_usize(n),
+    None => None,
   };
 
-  process::exit(code as i32);
+  let Some(code) = code else {
+    return Err(Error::new(
+      payload.span,
+      "Argument to `quit` must be a non-negative finite number",
+    ));
+  };
+
+  let Ok(code) = i32::try_from(code) else {
+    return Err(Error::new(
+      payload.span,
+      "Argument to `quit` must fit in a 32-bit signed integer",
+    ));
+  };
+
+  process::exit(code);
 }
 
-fn range<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 2 && payload.arguments.len() != 3 {
     return Err(Error::new(
       payload.span,
@@ -1072,14 +1125,9 @@ fn range<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
       .number(payload.span)?
       .to_f64(payload.config.rounding_mode);
 
-    match number {
-      Some(number)
-        if number.is_finite()
-          && number.fract() == 0.0
-          && number >= i64::MIN as f64
-          && number <= i64::MAX as f64 =>
-      {
-        numbers.push(number as i64);
+    match number.and_then(finite_i64) {
+      Some(number) => {
+        numbers.push(number);
       }
       _ => {
         return Err(Error::new(
@@ -1124,7 +1172,7 @@ fn range<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::List(result))
 }
 
-fn sec<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn sec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -1156,7 +1204,7 @@ fn sec<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   )))
 }
 
-fn sin<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn sin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -1180,7 +1228,7 @@ fn sin<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn sinh<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn sinh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -1204,7 +1252,7 @@ fn sinh<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn split<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn split<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 2 {
     return Err(Error::new(
       payload.span,
@@ -1228,7 +1276,7 @@ fn split<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   ))
 }
 
-fn sqrt<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn sqrt<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -1254,7 +1302,7 @@ fn sqrt<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   )))
 }
 
-fn sum<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn sum<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.is_empty() {
     return Err(Error::new(
       payload.span,
@@ -1291,7 +1339,7 @@ fn sum<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(sum))
 }
 
-fn tan<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn tan<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -1315,7 +1363,7 @@ fn tan<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Ok(Value::Number(result))
 }
 
-fn tanh<'a>(payload: BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+fn tanh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
@@ -1376,7 +1424,7 @@ mod tests {
       "constant",
       BUILTINS.iter().filter_map(|builtin| match builtin {
         Builtin::Constant { name, .. } => Some(*name),
-        _ => None,
+        Builtin::Function { .. } => None,
       }),
     );
 
@@ -1384,7 +1432,7 @@ mod tests {
       "function",
       BUILTINS.iter().filter_map(|builtin| match builtin {
         Builtin::Function { name, .. } => Some(*name),
-        _ => None,
+        Builtin::Constant { .. } => None,
       }),
     );
   }

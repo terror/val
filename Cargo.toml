@@ -11,8 +11,24 @@ license = "CC0-1.0"
 repository = "https://github.com/terror/val"
 resolver = "2"
 
+[profile.release]
+lto = true
+codegen-units = 1
+
+[lints]
+workspace = true
+
 [workspace]
 members = [".", "crates/*"]
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+arbitrary-source-item-ordering = "deny"
+pedantic = { level = "deny", priority = -1 }
+wildcard_imports = "allow"
+
+[workspace.lints.rust]
+unreachable_pub = "deny"
 
 [[bench]]
 name = "main"

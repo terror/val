@@ -98,23 +98,21 @@ impl<'a> Test<'a> {
 
     match &self.expected_stderr {
       Match::Empty => {
-        if !stderr.is_empty() {
-          panic!("Expected empty stderr, but received: {}", stderr);
-        }
+        assert!(
+          stderr.is_empty(),
+          "Expected empty stderr, but received: {stderr}"
+        );
       }
       Match::Contains(pattern) => {
         assert!(
           stderr.contains(pattern),
-          "Expected stderr to contain: '{}', but got: '{}'",
-          pattern,
-          stderr
+          "Expected stderr to contain: '{pattern}', but got: '{stderr}'",
         );
       }
       Match::Exact(expected) => {
         assert_eq!(
           stderr, *expected,
-          "Expected exact stderr: '{}', but got: '{}'",
-          expected, stderr
+          "Expected exact stderr: '{expected}', but got: '{stderr}'",
         );
       }
     }
@@ -123,23 +121,21 @@ impl<'a> Test<'a> {
 
     match &self.expected_stdout {
       Match::Empty => {
-        if !stdout.is_empty() {
-          panic!("Expected empty stdout, but received: {}", stdout);
-        }
+        assert!(
+          stdout.is_empty(),
+          "Expected empty stdout, but received: {stdout}"
+        );
       }
       Match::Contains(pattern) => {
         assert!(
           stdout.contains(pattern),
-          "Expected stdout to contain: '{}', but got: '{}'",
-          pattern,
-          stdout
+          "Expected stdout to contain: '{pattern}', but got: '{stdout}'",
         );
       }
       Match::Exact(expected) => {
         assert_eq!(
           stdout, *expected,
-          "Expected exact stdout: '{}', but got: '{}'",
-          expected, stdout
+          "Expected exact stdout: '{expected}', but got: '{stdout}'",
         );
       }
     }
@@ -1193,7 +1189,7 @@ fn function_calling_builtin() -> Result {
 }
 
 #[test]
-#[ignore]
+#[ignore = "captures current unsupported function scope behavior"]
 fn function_modifying_outer_scope() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1255,7 +1251,7 @@ fn function_with_multiple_statements() -> Result {
 }
 
 #[test]
-#[ignore]
+#[ignore = "captures current unsupported zero-argument function behavior"]
 fn function_with_no_arguments() -> Result {
   Test::new()?
     .argument("-p")

@@ -51,51 +51,51 @@ impl PartialEq for Value<'_> {
 }
 
 impl<'a> Value<'a> {
-  pub fn boolean(&self, span: Span) -> Result<bool, Error> {
+  pub(crate) fn boolean(&self, span: Span) -> Result<bool, Error> {
     if let Value::Boolean(x) = self {
       Ok(*x)
     } else {
       Err(Error {
         span,
-        message: format!("'{}' is not a boolean", self),
+        message: format!("'{self}' is not a boolean"),
       })
     }
   }
 
-  pub fn list(&self, span: Span) -> Result<Vec<Value<'a>>, Error> {
+  pub(crate) fn list(&self, span: Span) -> Result<Vec<Value<'a>>, Error> {
     if let Value::List(x) = self {
       Ok(x.clone())
     } else {
       Err(Error {
         span,
-        message: format!("'{}' is not a list", self),
+        message: format!("'{self}' is not a list"),
       })
     }
   }
 
-  pub fn number(&self, span: Span) -> Result<Float, Error> {
+  pub(crate) fn number(&self, span: Span) -> Result<Float, Error> {
     if let Value::Number(x) = self {
       Ok(x.clone())
     } else {
       Err(Error {
         span,
-        message: format!("'{}' is not a number", self),
+        message: format!("'{self}' is not a number"),
       })
     }
   }
 
-  pub fn string(&self, span: Span) -> Result<&str, Error> {
+  pub(crate) fn string(&self, span: Span) -> Result<&str, Error> {
     if let Value::String(x) = self {
       Ok(*x)
     } else {
       Err(Error {
         span,
-        message: format!("'{}' is not a string", self),
+        message: format!("'{self}' is not a string"),
       })
     }
   }
 
-  pub fn type_name(&self) -> &'static str {
+  pub(crate) fn type_name(&self) -> &'static str {
     match self {
       Value::Boolean(_) => "boolean",
       Value::Function(_) => "function",

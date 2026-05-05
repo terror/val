@@ -1,7 +1,7 @@
 use super::*;
 
 pub type BuiltinFunction =
-  for<'src> fn(BuiltinFunctionPayload<'src>) -> Result<Value<'src>, Error>;
+  for<'src> fn(&BuiltinFunctionPayload<'src>) -> Result<Value<'src>, Error>;
 
 pub struct BuiltinFunctionPayload<'src> {
   pub arguments: Vec<Value<'src>>,
@@ -13,7 +13,7 @@ pub struct BuiltinFunctionPayload<'src> {
 pub enum Builtin {
   Constant {
     name: &'static str,
-    value: fn(Config) -> Value<'static>,
+    value: fn(&Config) -> Value<'static>,
   },
   Function {
     function: BuiltinFunction,
@@ -22,6 +22,7 @@ pub enum Builtin {
 }
 
 impl Builtin {
+  #[must_use]
   pub fn kind(&self) -> &'static str {
     match self {
       Self::Constant { .. } => "constant",
@@ -29,6 +30,7 @@ impl Builtin {
     }
   }
 
+  #[must_use]
   pub fn name(&self) -> &'static str {
     match self {
       Self::Constant { name, .. } | Self::Function { name, .. } => name,

@@ -10,16 +10,16 @@ const COLOR_OPERATOR: &str = "\x1b[36m"; // Cyan
 const COLOR_RESET: &str = "\x1b[0m";
 const COLOR_STRING: &str = "\x1b[32m"; // Green
 
-pub struct TreeHighlighter<'src> {
+pub(crate) struct TreeHighlighter<'src> {
   content: &'src str,
 }
 
 impl<'src> TreeHighlighter<'src> {
-  pub fn new(content: &'src str) -> Self {
+  pub(crate) fn new(content: &'src str) -> Self {
     Self { content }
   }
 
-  pub fn highlight(&self) -> Cow<'src, str> {
+  pub(crate) fn highlight(&self) -> Cow<'src, str> {
     match parse(self.content) {
       Ok(ast) => self.colorize_ast(&ast),
       Err(_) => {
@@ -429,7 +429,7 @@ impl<'src> TreeHighlighter<'src> {
         }
       }
       Expression::String(value) => {
-        let quoted_value = format!("'{}'", value);
+        let quoted_value = format!("'{value}'");
 
         if let Some(str_pos) = self.content[start..end].find(&quoted_value) {
           spans.push((
@@ -438,7 +438,7 @@ impl<'src> TreeHighlighter<'src> {
             COLOR_STRING,
           ));
         } else {
-          let double_quoted = format!("\"{}\"", value);
+          let double_quoted = format!("\"{value}\"");
 
           if let Some(str_pos) = self.content[start..end].find(&double_quoted) {
             spans.push((
@@ -499,13 +499,13 @@ impl<'src> TreeHighlighter<'src> {
   }
 }
 
-pub struct Highlighter {
+pub(crate) struct Highlighter {
   completer: FilenameCompleter,
   hinter: HistoryHinter,
 }
 
 impl Highlighter {
-  pub fn new() -> Self {
+  pub(crate) fn new() -> Self {
     Self {
       completer: FilenameCompleter::new(),
       hinter: HistoryHinter::new(),
@@ -541,7 +541,7 @@ impl RustylineHighlighter for Highlighter {
   }
 
   fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-    Owned(format!("\x1b[90m{}\x1b[0m", hint))
+    Owned(format!("\x1b[90m{hint}\x1b[0m"))
   }
 
   fn highlight<'l>(&self, line: &'l str, _pos: usize) -> Cow<'l, str> {

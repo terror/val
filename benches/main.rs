@@ -15,7 +15,7 @@ fn bench_increment_value(criterion: &mut Criterion) {
     group.bench_function(format!("n = {number}"), |bencher| {
       bencher.iter(|| {
         black_box(Evaluator::from(Environment::default()).eval(&ast)).unwrap();
-      })
+      });
     });
   }
 
@@ -27,7 +27,7 @@ fn bench_prime_count(criterion: &mut Criterion) {
 
   for &number in &[5_000_u32, 10_000_u32] {
     let program = format!(
-      r#"
+      r"
       fn prime(n) {{
         if (n < 2) {{
           return false
@@ -63,7 +63,7 @@ fn bench_prime_count(criterion: &mut Criterion) {
       }}
 
       count({number})
-      "#
+      "
     );
 
     let ast = val::parse(&program).unwrap();
@@ -91,7 +91,7 @@ fn bench_recursive_factorial(criterion: &mut Criterion) {
     group.bench_function(format!("n = {number}"), |bencher| {
       bencher.iter(|| {
         black_box(Evaluator::from(Environment::default()).eval(&ast)).unwrap();
-      })
+      });
     });
   }
 
