@@ -54,22 +54,21 @@ impl<'src> Function<'src> {
           call_environment.add_symbol(parameter, argument.clone());
         }
 
-        let mut evaluator = Evaluator::from(call_environment);
-        evaluator.inside_function = true;
-
-        if body.is_empty() {
-          return Ok(Value::Null);
-        }
-
-        for statement in body {
-          let result = evaluator.eval_statement(statement)?;
-
-          if result.is_return() {
-            return Ok(result.unwrap());
+        Evaluator::from(call_environment).enter_function(|evaluator| {
+          if body.is_empty() {
+            return Ok(Value::Null);
           }
-        }
 
-        Ok(Value::Null)
+          for statement in body {
+            let result = evaluator.eval_statement(statement)?;
+
+            if result.is_return() {
+              return Ok(result.unwrap());
+            }
+          }
+
+          Ok(Value::Null)
+        })
       }
     }
   }

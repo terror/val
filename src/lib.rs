@@ -65,6 +65,7 @@ mod ast;
 mod builtin;
 mod builtins;
 mod config;
+mod context;
 mod environment;
 mod error;
 mod eval_result;
