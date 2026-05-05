@@ -1,8 +1,8 @@
 use {super::*, crate::context::Context};
 
 pub struct Evaluator<'a> {
-  pub environment: Environment<'a>,
   context: Context,
+  pub environment: Environment<'a>,
 }
 
 impl<'a> From<Environment<'a>> for Evaluator<'a> {
@@ -58,13 +58,13 @@ impl<'a> Evaluator<'a> {
         let mut result = Value::Null;
 
         for statement in statements {
-          let eval_result = self.eval_statement(statement)?;
+          let completion = self.eval_statement(statement)?;
 
-          result = eval_result.unwrap();
+          result = completion.unwrap();
 
-          if eval_result.is_return()
-            || eval_result.is_break()
-            || eval_result.is_continue()
+          if completion.is_return()
+            || completion.is_break()
+            || completion.is_continue()
           {
             break;
           }
@@ -78,7 +78,7 @@ impl<'a> Evaluator<'a> {
   pub(crate) fn eval_statement(
     &mut self,
     statement: &Spanned<Statement<'a>>,
-  ) -> Result<EvalResult<'a>, Error> {
+  ) -> Result<Completion<'a>, Error> {
     let (node, span) = statement;
 
     match node {
@@ -156,25 +156,25 @@ impl<'a> Evaluator<'a> {
           }
         }
 
-        Ok(EvalResult::Value(value))
+        Ok(Completion::Value(value))
       }
       Statement::Block(statements) => {
         let mut result = Value::Null;
 
         for statement in statements {
-          let eval_result = self.eval_statement(statement)?;
+          let completion = self.eval_statement(statement)?;
 
-          result = eval_result.unwrap();
+          result = completion.unwrap();
 
-          if eval_result.is_return()
-            || eval_result.is_break()
-            || eval_result.is_continue()
+          if completion.is_return()
+            || completion.is_break()
+            || completion.is_continue()
           {
-            return Ok(eval_result);
+            return Ok(completion);
           }
         }
 
-        Ok(EvalResult::Value(result))
+        Ok(Completion::Value(result))
       }
       Statement::Break => {
         if !self.context.inside_loop() {
@@ -183,7 +183,7 @@ impl<'a> Evaluator<'a> {
             "Cannot use 'break' outside of a loop",
           ));
         }
-        Ok(EvalResult::Break)
+        Ok(Completion::Break)
       }
       Statement::Continue => {
         if !self.context.inside_loop() {
@@ -193,10 +193,10 @@ impl<'a> Evaluator<'a> {
           ));
         }
 
-        Ok(EvalResult::Continue)
+        Ok(Completion::Continue)
       }
       Statement::Expression(expression) => {
-        Ok(EvalResult::Value(self.eval_expression(expression)?))
+        Ok(Completion::Value(self.eval_expression(expression)?))
       }
       Statement::For(name, iterable, body) => {
         let list = self.eval_expression(iterable)?.list(iterable.1)?;
@@ -207,21 +207,21 @@ impl<'a> Evaluator<'a> {
             evaluator.environment.add_symbol(name, item);
 
             for statement in body {
-              let eval_result = evaluator.eval_statement(statement)?;
+              let completion = evaluator.eval_statement(statement)?;
 
-              result = eval_result.unwrap();
+              result = completion.unwrap();
 
-              if eval_result.is_return() {
-                return Ok(EvalResult::Return(result));
-              } else if eval_result.is_break() {
-                return Ok(EvalResult::Value(result));
-              } else if eval_result.is_continue() {
+              if completion.is_return() {
+                return Ok(Completion::Return(result));
+              } else if completion.is_break() {
+                return Ok(Completion::Value(result));
+              } else if completion.is_continue() {
                 break;
               }
             }
           }
 
-          Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
         })
       }
       Statement::Function(name, params, body) => {
@@ -234,59 +234,59 @@ impl<'a> Evaluator<'a> {
 
         self.environment.add_function(name, function.clone());
 
-        Ok(EvalResult::Value(Value::Function(function)))
+        Ok(Completion::Value(Value::Function(function)))
       }
       Statement::If(condition, then_branch, else_branch) => {
         if self.eval_expression(condition)?.boolean(condition.1)? {
           let mut result = Value::Null;
 
           for statement in then_branch {
-            let eval_result = self.eval_statement(statement)?;
+            let completion = self.eval_statement(statement)?;
 
-            result = eval_result.unwrap();
+            result = completion.unwrap();
 
-            if eval_result.is_return()
-              || eval_result.is_break()
-              || eval_result.is_continue()
+            if completion.is_return()
+              || completion.is_break()
+              || completion.is_continue()
             {
-              return Ok(eval_result);
+              return Ok(completion);
             }
           }
 
-          Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
         } else if let Some(else_statements) = else_branch {
           let mut result = Value::Null;
 
           for statement in else_statements {
-            let eval_result = self.eval_statement(statement)?;
+            let completion = self.eval_statement(statement)?;
 
-            result = eval_result.unwrap();
+            result = completion.unwrap();
 
-            if eval_result.is_return()
-              || eval_result.is_break()
-              || eval_result.is_continue()
+            if completion.is_return()
+              || completion.is_break()
+              || completion.is_continue()
             {
-              return Ok(eval_result);
+              return Ok(completion);
             }
           }
 
-          Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
         } else {
-          Ok(EvalResult::Value(Value::Null))
+          Ok(Completion::Value(Value::Null))
         }
       }
       Statement::Loop(body) => self.enter_loop(|evaluator| {
         loop {
           for statement in body {
-            let eval_result = evaluator.eval_statement(statement)?;
+            let completion = evaluator.eval_statement(statement)?;
 
-            let result = eval_result.unwrap();
+            let result = completion.unwrap();
 
-            if eval_result.is_return() {
-              return Ok(EvalResult::Return(result));
-            } else if eval_result.is_break() {
-              return Ok(EvalResult::Value(result));
-            } else if eval_result.is_continue() {
+            if completion.is_return() {
+              return Ok(Completion::Return(result));
+            } else if completion.is_break() {
+              return Ok(Completion::Value(result));
+            } else if completion.is_continue() {
               break;
             }
           }
@@ -297,7 +297,7 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(*span, "Cannot return outside of a function"));
         }
 
-        Ok(EvalResult::Return(match expr {
+        Ok(Completion::Return(match expr {
           Some(expr) => self.eval_expression(expr)?,
           None => Value::Null,
         }))
@@ -308,21 +308,21 @@ impl<'a> Evaluator<'a> {
         self.enter_loop(|evaluator| {
           while evaluator.eval_expression(condition)?.boolean(condition.1)? {
             for statement in body {
-              let eval_result = evaluator.eval_statement(statement)?;
+              let completion = evaluator.eval_statement(statement)?;
 
-              result = eval_result.unwrap();
+              result = completion.unwrap();
 
-              if eval_result.is_return() {
-                return Ok(EvalResult::Return(result));
-              } else if eval_result.is_break() {
-                return Ok(EvalResult::Value(result));
-              } else if eval_result.is_continue() {
+              if completion.is_return() {
+                return Ok(Completion::Return(result));
+              } else if completion.is_break() {
+                return Ok(Completion::Value(result));
+              } else if completion.is_continue() {
                 break;
               }
             }
           }
 
-          Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
         })
       }
     }
