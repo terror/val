@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub enum Value<'src> {
   Boolean(bool),
-  BuiltinFunction(&'src str, BuiltinFunction<'src>),
+  BuiltinFunction(&'src str, BuiltinFunction),
   Function(
     &'src str,
     Vec<&'src str>,

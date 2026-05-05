@@ -1,7 +1,7 @@
 mod consts;
 
 pub(crate) use {
-  crate::consts::with_consts,
+  crate::{builtins::BUILTINS, consts::with_consts},
   ariadne::{Color, Label, Report, ReportKind, Source},
   astro_float::{BigFloat as Float, Consts, Radix, Sign},
   chumsky::prelude::*,
@@ -37,13 +37,14 @@ pub(crate) use {
 pub use crate::{
   arguments::Arguments,
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
+  builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
   config::Config,
   environment::Environment,
   error::Error,
   eval_result::EvalResult,
   evaluator::Evaluator,
   float_ext::FloatExt,
-  function::{BuiltinFunction, BuiltinFunctionPayload, Function},
+  function::Function,
   parser::parse,
   rounding_mode::RoundingMode,
   value::Value,
@@ -61,6 +62,8 @@ pub mod arguments;
 mod highlighter;
 
 mod ast;
+mod builtin;
+mod builtins;
 mod config;
 mod environment;
 mod error;
