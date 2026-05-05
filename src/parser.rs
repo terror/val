@@ -675,5 +675,4 @@ mod tests {
       .ast("statements(expression(binary_op(/, number(8), number(4))))")
       .run();
   }
-
 }
