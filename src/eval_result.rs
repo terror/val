@@ -8,22 +8,22 @@ pub enum EvalResult<'a> {
 }
 
 impl<'a> EvalResult<'a> {
-  pub fn unwrap(&self) -> Value<'a> {
+  pub(crate) fn unwrap(&self) -> Value<'a> {
     match self {
       EvalResult::Value(v) | EvalResult::Return(v) => v.clone(),
       EvalResult::Break | EvalResult::Continue => Value::Null,
     }
   }
 
-  pub fn is_return(&self) -> bool {
+  pub(crate) fn is_return(&self) -> bool {
     matches!(self, EvalResult::Return(_))
   }
 
-  pub fn is_break(&self) -> bool {
+  pub(crate) fn is_break(&self) -> bool {
     matches!(self, EvalResult::Break)
   }
 
-  pub fn is_continue(&self) -> bool {
+  pub(crate) fn is_continue(&self) -> bool {
     matches!(self, EvalResult::Continue)
   }
 }

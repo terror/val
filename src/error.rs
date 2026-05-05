@@ -2,19 +2,22 @@ use super::*;
 
 #[derive(Debug, PartialEq)]
 pub struct Error {
-  pub span: Span,
   pub message: String,
+  pub span: Span,
 }
 
 impl Error {
   pub fn new(span: Span, message: impl Into<String>) -> Self {
     Self {
-      span,
       message: message.into(),
+      span,
     }
   }
 
-  pub fn report<'a>(&self, id: &'a str) -> Report<'a, (&'a str, Range<usize>)> {
+  pub(crate) fn report<'a>(
+    &self,
+    id: &'a str,
+  ) -> Report<'a, (&'a str, Range<usize>)> {
     let span_range = self.span.into_range();
 
     let mut report = Report::build(

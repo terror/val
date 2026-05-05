@@ -15,14 +15,14 @@ pub enum Function<'src> {
 }
 
 impl<'src> Function<'src> {
-  pub fn call(
+  pub(crate) fn call(
     &self,
     arguments: Vec<Value<'src>>,
     config: Config,
     span: Span,
   ) -> Result<Value<'src>, Error> {
     match self {
-      Self::Builtin { function, .. } => function(BuiltinFunctionPayload {
+      Self::Builtin { function, .. } => function(&BuiltinFunctionPayload {
         arguments,
         config,
         span,
@@ -61,7 +61,7 @@ impl<'src> Function<'src> {
           return Ok(Value::Null);
         }
 
-        for statement in body.iter() {
+        for statement in body {
           let result = evaluator.eval_statement(statement)?;
 
           if result.is_return() {
@@ -74,7 +74,7 @@ impl<'src> Function<'src> {
     }
   }
 
-  pub fn name(&self) -> &'src str {
+  pub(crate) fn name(&self) -> &'src str {
     match self {
       Self::Builtin { name, .. } | Self::UserDefined { name, .. } => name,
     }

@@ -54,11 +54,21 @@ impl FloatExt for Float {
     digits.push_str(int_part);
     digits.push_str(frac_part);
 
-    let length = int_part.len() as i32 + exponent;
-    let digits_len = digits.len() as i32;
+    let Ok(length) = i32::try_from(int_part.len()) else {
+      return formatted;
+    };
+
+    let length = length + exponent;
+
+    let Ok(digits_len) = i32::try_from(digits.len()) else {
+      return formatted;
+    };
 
     let mut result = if length <= 0 {
-      let zeros = (-length) as usize;
+      let Ok(zeros) = usize::try_from(-length) else {
+        return formatted;
+      };
+
       let mut out =
         String::with_capacity(sign.len() + 2 + zeros + digits.len());
       out.push_str(sign);
@@ -68,14 +78,20 @@ impl FloatExt for Float {
       out.push_str(&digits);
       out
     } else if length >= digits_len {
-      let zeros = (length - digits_len) as usize;
+      let Ok(zeros) = usize::try_from(length - digits_len) else {
+        return formatted;
+      };
+
       let mut out = String::with_capacity(sign.len() + digits.len() + zeros);
       out.push_str(sign);
       out.push_str(&digits);
       out.extend(std::iter::repeat_n('0', zeros));
       out
     } else {
-      let split_at = length as usize;
+      let Ok(split_at) = usize::try_from(length) else {
+        return formatted;
+      };
+
       let (left, right) = digits.split_at(split_at);
       let mut out =
         String::with_capacity(sign.len() + left.len() + 1 + right.len());
@@ -100,6 +116,12 @@ impl FloatExt for Float {
   }
 
   fn to_f64(&self, rounding_mode: astro_float::RoundingMode) -> Option<f64> {
+    const F64_EXPONENT_BIAS: isize = 0x3ff;
+    const F64_EXPONENT_MAX: isize = 0x7ff;
+    const F64_SIGNIFICAND_BITS: usize = 52;
+    const INTERNAL_SHIFT: usize = 12;
+    const SIGN_MASK: u64 = 1u64 << 63;
+
     if self.is_nan() {
       return None;
     }
@@ -124,12 +146,6 @@ impl FloatExt for Float {
     let mantissa_digits = big_float.mantissa_digits()?;
     let mantissa = *mantissa_digits.first().unwrap_or(&0);
 
-    const F64_EXPONENT_BIAS: isize = 0x3ff;
-    const F64_EXPONENT_MAX: isize = 0x7ff;
-    const F64_SIGNIFICAND_BITS: usize = 52;
-    const INTERNAL_SHIFT: usize = 12;
-    const SIGN_MASK: u64 = 1u64 << 63;
-
     if mantissa == 0 {
       return Some(if sign == Sign::Neg {
         f64::from_bits(SIGN_MASK)
@@ -150,7 +166,7 @@ impl FloatExt for Float {
     let sign_bit = if sign == Sign::Neg { SIGN_MASK } else { 0 };
 
     if exponent <= 0 {
-      let shift = (-exponent) as usize;
+      let shift = (-exponent).cast_unsigned();
 
       if shift >= F64_SIGNIFICAND_BITS {
         return Some(f64::from_bits(sign_bit));
@@ -162,7 +178,7 @@ impl FloatExt for Float {
     }
 
     let adjusted_mantissa = mantissa << 1;
-    let adjusted_exponent = (exponent - 1) as u64;
+    let adjusted_exponent = u64::try_from(exponent - 1).ok()?;
     let exponent_bits = adjusted_exponent << F64_SIGNIFICAND_BITS;
     let fraction_bits = adjusted_mantissa >> INTERNAL_SHIFT;
 
@@ -204,8 +220,8 @@ mod tests {
   fn integers() {
     assert_eq!(Float::from(1).display(), "1");
     assert_eq!(Float::from(-1).display(), "-1");
-    assert_eq!(Float::from(123456789).display(), "123456789");
-    assert_eq!(Float::from(-123456789).display(), "-123456789");
+    assert_eq!(Float::from(123_456_789).display(), "123456789");
+    assert_eq!(Float::from(-123_456_789).display(), "-123456789");
   }
 
   #[test]
@@ -281,6 +297,6 @@ mod tests {
 
     assert!(value.is_sign_negative());
 
-    assert_eq!(value, -0.0);
+    assert_eq!(value.to_bits(), (-0.0_f64).to_bits());
   }
 }

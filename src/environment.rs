@@ -14,9 +14,10 @@ struct Symbol<'src> {
 }
 
 impl<'src> Environment<'src> {
+  #[must_use]
   pub fn new(config: Config) -> Self {
     let mut environment = Self {
-      config: config.clone(),
+      config,
       parent: None,
       symbols: HashMap::new(),
     };
@@ -24,7 +25,7 @@ impl<'src> Environment<'src> {
     for builtin in BUILTINS {
       match builtin {
         Builtin::Constant { value, .. } => {
-          environment.add_symbol(builtin.name(), value(config.clone()));
+          environment.add_symbol(builtin.name(), value(&config));
         }
         Builtin::Function { function, .. } => {
           environment.add_function(
@@ -49,20 +50,20 @@ impl<'src> Environment<'src> {
     self.symbols.entry(name).or_default().function = Some(function);
   }
 
-  pub fn call_function(
+  pub(crate) fn call_function(
     &self,
     name: &str,
     arguments: Vec<Value<'src>>,
     span: Span,
   ) -> Result<Value<'src>, Error> {
     if let Some(function) = self.resolve_function(name) {
-      function.call(arguments, self.config.clone(), span)
+      function.call(arguments, self.config, span)
     } else if self.resolve_symbol(name).is_some() {
-      Err(Error::new(span, format!("`{}` is not a function", name)))
+      Err(Error::new(span, format!("`{name}` is not a function")))
     } else {
       Err(Error::new(
         span,
-        format!("Function `{}` is not defined", name),
+        format!("Function `{name}` is not defined"),
       ))
     }
   }
@@ -85,7 +86,7 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub fn resolve_symbol(&self, symbol: &str) -> Option<Value<'src>> {
+  pub(crate) fn resolve_symbol(&self, symbol: &str) -> Option<Value<'src>> {
     if let Some(symbol) = self.symbols.get(symbol) {
       if let Some(value) = &symbol.value {
         Some(value.clone())
@@ -99,9 +100,9 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub fn with_parent(parent: Environment<'src>) -> Self {
+  pub(crate) fn with_parent(parent: Environment<'src>) -> Self {
     Self {
-      config: parent.config.clone(),
+      config: parent.config,
       parent: Some(Box::new(parent)),
       symbols: HashMap::new(),
     }

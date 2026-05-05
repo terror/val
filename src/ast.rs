@@ -24,6 +24,7 @@ impl Display for Program<'_> {
 }
 
 impl Program<'_> {
+  #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
       Program::Statements(_) => "statements",
@@ -160,6 +161,7 @@ impl Display for Statement<'_> {
 }
 
 impl Statement<'_> {
+  #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
       Statement::Assignment(_, _) => "assignment",
@@ -251,7 +253,7 @@ impl Display for Expression<'_> {
       Expression::BinaryOp(op, lhs, rhs) => {
         write!(f, "binary_op({}, {}, {})", op, lhs.0, rhs.0)
       }
-      Expression::Boolean(boolean) => write!(f, "boolean({})", boolean),
+      Expression::Boolean(boolean) => write!(f, "boolean({boolean})"),
       Expression::FunctionCall(name, arguments) => {
         write!(
           f,
@@ -265,7 +267,7 @@ impl Display for Expression<'_> {
         )
       }
       Expression::Identifier(identifier) => {
-        write!(f, "identifier({})", identifier)
+        write!(f, "identifier({identifier})")
       }
       Expression::List(list) => {
         write!(
@@ -283,7 +285,7 @@ impl Display for Expression<'_> {
       }
       Expression::Null => write!(f, "null"),
       Expression::Number(number) => write!(f, "number({})", number.display()),
-      Expression::String(string) => write!(f, "string(\"{}\")", string),
+      Expression::String(string) => write!(f, "string(\"{string}\")"),
       Expression::UnaryOp(op, expr) => {
         write!(f, "unary_op({}, {})", op, expr.0)
       }
@@ -292,6 +294,7 @@ impl Display for Expression<'_> {
 }
 
 impl Expression<'_> {
+  #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
       Expression::BinaryOp(_, _, _) => "binary_op",

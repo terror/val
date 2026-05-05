@@ -1,5 +1,8 @@
 use super::*;
 
+/// # Errors
+///
+/// Returns parser errors when input cannot be parsed into a complete program.
 pub fn parse(input: &str) -> Result<Spanned<Program<'_>>, Vec<Error>> {
   let result = program_parser().parse(input);
 
@@ -428,7 +431,7 @@ mod tests {
     Test::new()
       .program("25")
       .ast("statements(expression(number(25)))")
-      .run()
+      .run();
   }
 
   #[test]
