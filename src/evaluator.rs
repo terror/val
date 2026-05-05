@@ -1,8 +1,8 @@
 use {super::*, crate::context::Context};
 
 pub struct Evaluator<'a> {
-  context: Context,
-  pub environment: Environment<'a>,
+  pub(crate) context: Context,
+  pub(crate) environment: Environment<'a>,
 }
 
 impl<'a> From<Environment<'a>> for Evaluator<'a> {

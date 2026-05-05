@@ -1,5 +1,3 @@
-mod consts;
-
 pub(crate) use {
   crate::{builtins::BUILTINS, consts::with_consts},
   ariadne::{Color, Label, Report, ReportKind, Source},
@@ -34,6 +32,31 @@ pub(crate) use {
   std::borrow::Cow::{self, Owned},
 };
 
+type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
+type Spanned<T> = (T, Span);
+
+mod ast;
+mod builtin;
+mod builtins;
+mod completion;
+mod config;
+mod consts;
+mod context;
+mod environment;
+mod error;
+mod evaluator;
+mod float_ext;
+mod function;
+mod parser;
+mod rounding_mode;
+mod value;
+
+#[doc(hidden)]
+pub mod arguments;
+
+#[cfg(not(target_family = "wasm"))]
+mod highlighter;
+
 pub use crate::{
   arguments::Arguments,
   ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
@@ -51,27 +74,3 @@ pub use crate::{
 };
 
 pub type Span = SimpleSpan<usize>;
-
-type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
-type Spanned<T> = (T, Span);
-
-#[doc(hidden)]
-pub mod arguments;
-
-#[cfg(not(target_family = "wasm"))]
-mod highlighter;
-
-mod ast;
-mod builtin;
-mod builtins;
-mod completion;
-mod config;
-mod context;
-mod environment;
-mod error;
-mod evaluator;
-mod float_ext;
-mod function;
-mod parser;
-mod rounding_mode;
-mod value;
