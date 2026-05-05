@@ -26,8 +26,9 @@ use {
     thread,
   },
   val::{
-    AssignmentTarget, Config, Environment, Evaluator, Expression, Program,
-    Spanned, Statement, Value, parse,
+    Config, Environment, Evaluator, Spanned, Value,
+    ast::{AssignmentTarget, Expression, Program, Statement},
+    parse,
   },
 };
 

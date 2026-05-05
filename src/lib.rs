@@ -1,8 +1,10 @@
 use {
-  crate::{builtins::BUILTINS, consts::with_consts},
   ariadne::{Color, Label, Report, ReportKind},
+  ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   astro_float::{BigFloat as Float, Consts, Radix, Sign},
+  builtins::BUILTINS,
   chumsky::prelude::*,
+  consts::with_consts,
   std::{
     cell::RefCell,
     collections::HashMap,
@@ -14,7 +16,6 @@ use {
 };
 
 pub use crate::{
-  ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
   completion::Completion,
   config::Config,
@@ -33,7 +34,7 @@ pub type Spanned<T> = (T, Span);
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
-mod ast;
+pub mod ast;
 mod builtin;
 mod builtins;
 mod completion;
