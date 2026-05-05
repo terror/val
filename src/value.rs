@@ -3,13 +3,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub enum Value<'src> {
   Boolean(bool),
-  BuiltinFunction(&'src str, BuiltinFunction),
-  Function(
-    &'src str,
-    Vec<&'src str>,
-    Vec<Spanned<Statement<'src>>>,
-    Environment<'src>,
-  ),
+  Function(Function<'src>),
   List(Vec<Self>),
   Null,
   Number(Float),
@@ -20,8 +14,7 @@ impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
       Value::Boolean(boolean) => write!(f, "{boolean}"),
-      Value::BuiltinFunction(name, _) => write!(f, "<function: {name}>"),
-      Value::Function(name, _, _, _) => write!(f, "<function: {name}>"),
+      Value::Function(function) => write!(f, "<function: {}>", function.name()),
       Value::List(list) => write!(
         f,
         "[{}]",
@@ -45,13 +38,7 @@ impl PartialEq for Value<'_> {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Value::Boolean(a), Value::Boolean(b)) => a == b,
-      (
-        Value::BuiltinFunction(a_name, _),
-        Value::BuiltinFunction(b_name, _),
-      ) => a_name == b_name,
-      (Value::Function(a_name, _, _, _), Value::Function(b_name, _, _, _)) => {
-        a_name == b_name
-      }
+      (Value::Function(a), Value::Function(b)) => a.name() == b.name(),
       (Value::List(a), Value::List(b)) => {
         a.len() == b.len() && a.iter().zip(b.iter()).all(|(a, b)| a == b)
       }
@@ -111,8 +98,7 @@ impl<'a> Value<'a> {
   pub fn type_name(&self) -> &'static str {
     match self {
       Value::Boolean(_) => "boolean",
-      Value::BuiltinFunction(_, _) => "function",
-      Value::Function(_, _, _, _) => "function",
+      Value::Function(_) => "function",
       Value::List(_) => "list",
       Value::Null => "null",
       Value::Number(_) => "number",

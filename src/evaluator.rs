@@ -57,7 +57,7 @@ impl<'a> Evaluator<'a> {
 
         match &lhs.0 {
           Expression::Identifier(name) => {
-            self.environment.add_variable(name, value.clone());
+            self.environment.add_symbol(name, value.clone());
           }
           Expression::ListAccess(base_box, index_box) => {
             let (list_name, list_span) = match &base_box.0 {
@@ -117,7 +117,7 @@ impl<'a> Evaluator<'a> {
 
             list[index] = value.clone();
 
-            self.environment.add_variable(list_name, Value::List(list));
+            self.environment.add_symbol(list_name, Value::List(list));
           }
 
           _ => {
@@ -179,7 +179,7 @@ impl<'a> Evaluator<'a> {
         self.inside_loop = true;
 
         for item in list {
-          self.environment.add_variable(name, item);
+          self.environment.add_symbol(name, item);
 
           for statement in body {
             let eval_result = self.eval_statement(statement)?;
@@ -203,18 +203,16 @@ impl<'a> Evaluator<'a> {
         Ok(EvalResult::Value(result))
       }
       Statement::Function(name, params, body) => {
-        let function = Value::Function(
+        let function = Function::UserDefined {
+          body: body.clone(),
+          environment: self.environment.clone(),
           name,
-          params.clone(),
-          body.clone(),
-          self.environment.clone(),
-        );
+          parameters: params.clone(),
+        };
 
-        self
-          .environment
-          .add_function(name, Function::UserDefined(function.clone()));
+        self.environment.add_function(name, function.clone());
 
-        Ok(EvalResult::Value(function))
+        Ok(EvalResult::Value(Value::Function(function)))
       }
       Statement::If(condition, then_branch, else_branch) => {
         if self.eval_expression(condition)?.boolean(condition.1)? {
