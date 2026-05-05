@@ -51,7 +51,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
         rounding_mode: RoundingMode::FromZero.into(),
       }));
 
-      match evaluator.eval(&ast) {
+      match evaluator.evaluate(&ast) {
         Ok(value) => Ok(to_value(&value.to_string()).unwrap()),
         Err(error) => Err(
           to_value(&[ValError {

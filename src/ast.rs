@@ -208,6 +208,26 @@ impl AssignmentTarget<'_> {
   }
 }
 
+impl<'a> AssignmentTarget<'a> {
+  pub(crate) fn indices(&self) -> Vec<&Spanned<Expression<'a>>> {
+    match self {
+      AssignmentTarget::Identifier(_) => Vec::new(),
+      AssignmentTarget::ListAccess(base, index) => {
+        let mut indices = base.0.indices();
+        indices.push(index);
+        indices
+      }
+    }
+  }
+
+  pub(crate) fn root(&self, span: Span) -> (&'a str, Span) {
+    match self {
+      AssignmentTarget::Identifier(name) => (name, span),
+      AssignmentTarget::ListAccess(base, _) => base.0.root(base.1),
+    }
+  }
+}
+
 #[derive(Debug, Clone)]
 pub enum UnaryOp {
   Negate,

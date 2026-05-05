@@ -24,241 +24,6 @@ fn finite_non_negative_usize(number: f64) -> Option<usize> {
 }
 
 impl<'a> Evaluator<'a> {
-  pub(crate) fn enter_function<T>(
-    &mut self,
-    f: impl FnOnce(&mut Self) -> Result<T, Error>,
-  ) -> Result<T, Error> {
-    self.context.enter_function();
-    let result = f(self);
-    self.context.exit_function();
-    result
-  }
-
-  fn enter_loop<T>(
-    &mut self,
-    f: impl FnOnce(&mut Self) -> Result<T, Error>,
-  ) -> Result<T, Error> {
-    self.context.enter_loop();
-    let result = f(self);
-    self.context.exit_loop();
-    result
-  }
-
-  /// # Errors
-  ///
-  /// Returns an evaluation error when a statement or expression is invalid.
-  pub fn eval(
-    &mut self,
-    ast: &Spanned<Program<'a>>,
-  ) -> Result<Value<'a>, Error> {
-    let (node, _) = ast;
-
-    match node {
-      Program::Statements(statements) => {
-        let mut result = Value::Null;
-
-        for statement in statements {
-          let completion = self.eval_statement(statement)?;
-
-          result = completion.unwrap();
-
-          if completion.is_return()
-            || completion.is_break()
-            || completion.is_continue()
-          {
-            break;
-          }
-        }
-
-        Ok(result)
-      }
-    }
-  }
-
-  pub(crate) fn eval_statement(
-    &mut self,
-    statement: &Spanned<Statement<'a>>,
-  ) -> Result<Completion<'a>, Error> {
-    let (node, span) = statement;
-
-    match node {
-      Statement::Assignment(lhs, rhs) => {
-        let value = self.eval_expression(rhs)?;
-
-        self.assign(lhs, value.clone())?;
-
-        Ok(Completion::Value(value))
-      }
-      Statement::Block(statements) => {
-        let mut result = Value::Null;
-
-        for statement in statements {
-          let completion = self.eval_statement(statement)?;
-
-          result = completion.unwrap();
-
-          if completion.is_return()
-            || completion.is_break()
-            || completion.is_continue()
-          {
-            return Ok(completion);
-          }
-        }
-
-        Ok(Completion::Value(result))
-      }
-      Statement::Break => {
-        if !self.context.inside_loop() {
-          return Err(Error::new(
-            *span,
-            "Cannot use 'break' outside of a loop",
-          ));
-        }
-        Ok(Completion::Break)
-      }
-      Statement::Continue => {
-        if !self.context.inside_loop() {
-          return Err(Error::new(
-            *span,
-            "Cannot use 'continue' outside of a loop",
-          ));
-        }
-
-        Ok(Completion::Continue)
-      }
-      Statement::Expression(expression) => {
-        Ok(Completion::Value(self.eval_expression(expression)?))
-      }
-      Statement::For(name, iterable, body) => {
-        let list = self.eval_expression(iterable)?.list(iterable.1)?;
-        let mut result = Value::Null;
-
-        self.enter_loop(|evaluator| {
-          for item in list {
-            evaluator.environment.add_symbol(name, item);
-
-            for statement in body {
-              let completion = evaluator.eval_statement(statement)?;
-
-              result = completion.unwrap();
-
-              if completion.is_return() {
-                return Ok(Completion::Return(result));
-              } else if completion.is_break() {
-                return Ok(Completion::Value(result));
-              } else if completion.is_continue() {
-                break;
-              }
-            }
-          }
-
-          Ok(Completion::Value(result))
-        })
-      }
-      Statement::Function(name, params, body) => {
-        let function = Function::UserDefined {
-          body: body.clone(),
-          environment: self.environment.clone(),
-          name,
-          parameters: params.clone(),
-        };
-
-        self.environment.add_function(name, function.clone());
-
-        Ok(Completion::Value(Value::Function(function)))
-      }
-      Statement::If(condition, then_branch, else_branch) => {
-        if self.eval_expression(condition)?.boolean(condition.1)? {
-          let mut result = Value::Null;
-
-          for statement in then_branch {
-            let completion = self.eval_statement(statement)?;
-
-            result = completion.unwrap();
-
-            if completion.is_return()
-              || completion.is_break()
-              || completion.is_continue()
-            {
-              return Ok(completion);
-            }
-          }
-
-          Ok(Completion::Value(result))
-        } else if let Some(else_statements) = else_branch {
-          let mut result = Value::Null;
-
-          for statement in else_statements {
-            let completion = self.eval_statement(statement)?;
-
-            result = completion.unwrap();
-
-            if completion.is_return()
-              || completion.is_break()
-              || completion.is_continue()
-            {
-              return Ok(completion);
-            }
-          }
-
-          Ok(Completion::Value(result))
-        } else {
-          Ok(Completion::Value(Value::Null))
-        }
-      }
-      Statement::Loop(body) => self.enter_loop(|evaluator| {
-        loop {
-          for statement in body {
-            let completion = evaluator.eval_statement(statement)?;
-
-            let result = completion.unwrap();
-
-            if completion.is_return() {
-              return Ok(Completion::Return(result));
-            } else if completion.is_break() {
-              return Ok(Completion::Value(result));
-            } else if completion.is_continue() {
-              break;
-            }
-          }
-        }
-      }),
-      Statement::Return(expr) => {
-        if !self.context.inside_function() {
-          return Err(Error::new(*span, "Cannot return outside of a function"));
-        }
-
-        Ok(Completion::Return(match expr {
-          Some(expr) => self.eval_expression(expr)?,
-          None => Value::Null,
-        }))
-      }
-      Statement::While(condition, body) => {
-        let mut result = Value::Null;
-
-        self.enter_loop(|evaluator| {
-          while evaluator.eval_expression(condition)?.boolean(condition.1)? {
-            for statement in body {
-              let completion = evaluator.eval_statement(statement)?;
-
-              result = completion.unwrap();
-
-              if completion.is_return() {
-                return Ok(Completion::Return(result));
-              } else if completion.is_break() {
-                return Ok(Completion::Value(result));
-              } else if completion.is_continue() {
-                break;
-              }
-            }
-          }
-
-          Ok(Completion::Value(result))
-        })
-      }
-    }
-  }
-
   fn assign(
     &mut self,
     target: &Spanned<AssignmentTarget<'a>>,
@@ -270,9 +35,9 @@ impl<'a> Evaluator<'a> {
         Ok(())
       }
       AssignmentTarget::ListAccess(_, _) => {
-        let (name, name_span) = Self::assignment_root(target);
-        let mut indices = Vec::new();
-        Self::assignment_indices(target, &mut indices);
+        let (name, name_span) = target.0.root(target.1);
+
+        let indices = target.0.indices();
 
         let Some(root) = self.environment.resolve_symbol(name) else {
           return Err(Error::new(
@@ -283,30 +48,10 @@ impl<'a> Evaluator<'a> {
 
         let root =
           self.assign_indices(name, root, &indices, value, target.1)?;
+
         self.environment.add_symbol(name, root);
+
         Ok(())
-      }
-    }
-  }
-
-  fn assignment_root(
-    target: &Spanned<AssignmentTarget<'a>>,
-  ) -> (&'a str, Span) {
-    match &target.0 {
-      AssignmentTarget::Identifier(name) => (name, target.1),
-      AssignmentTarget::ListAccess(base, _) => Self::assignment_root(base),
-    }
-  }
-
-  fn assignment_indices<'target>(
-    target: &'target Spanned<AssignmentTarget<'a>>,
-    indices: &mut Vec<&'target Spanned<Expression<'a>>>,
-  ) {
-    match &target.0 {
-      AssignmentTarget::Identifier(_) => {}
-      AssignmentTarget::ListAccess(base, index) => {
-        Self::assignment_indices(base, indices);
-        indices.push(index);
       }
     }
   }
@@ -333,7 +78,14 @@ impl<'a> Evaluator<'a> {
       }
     };
 
-    let index = self.list_index(index)?;
+    let index = self
+      .evaluate_expression(index)?
+      .number(index.1)?
+      .to_f64(self.environment.config.rounding_mode)
+      .and_then(finite_non_negative_usize)
+      .ok_or_else(|| {
+        Error::new(index.1, "List index must be a non-negative finite number")
+      })?;
 
     if index >= list.len() {
       return Err(Error::new(
@@ -352,21 +104,58 @@ impl<'a> Evaluator<'a> {
     Ok(Value::List(list))
   }
 
-  fn list_index(
+  pub(crate) fn enter_function<T>(
     &mut self,
-    index: &Spanned<Expression<'a>>,
-  ) -> Result<usize, Error> {
-    self
-      .eval_expression(index)?
-      .number(index.1)?
-      .to_f64(self.environment.config.rounding_mode)
-      .and_then(finite_non_negative_usize)
-      .ok_or_else(|| {
-        Error::new(index.1, "List index must be a non-negative finite number")
-      })
+    f: impl FnOnce(&mut Self) -> Result<T, Error>,
+  ) -> Result<T, Error> {
+    self.context.enter_function();
+    let result = f(self);
+    self.context.exit_function();
+    result
   }
 
-  fn eval_expression(
+  fn enter_loop<T>(
+    &mut self,
+    f: impl FnOnce(&mut Self) -> Result<T, Error>,
+  ) -> Result<T, Error> {
+    self.context.enter_loop();
+    let result = f(self);
+    self.context.exit_loop();
+    result
+  }
+
+  /// # Errors
+  ///
+  /// Returns an evaluation error when a statement or expression is invalid.
+  pub fn evaluate(
+    &mut self,
+    ast: &Spanned<Program<'a>>,
+  ) -> Result<Value<'a>, Error> {
+    let (node, _) = ast;
+
+    match node {
+      Program::Statements(statements) => {
+        let mut result = Value::Null;
+
+        for statement in statements {
+          let completion = self.evaluate_statement(statement)?;
+
+          result = completion.unwrap();
+
+          if matches!(
+            &completion,
+            Completion::Return(_) | Completion::Break | Completion::Continue
+          ) {
+            break;
+          }
+        }
+
+        Ok(result)
+      }
+    }
+  }
+
+  fn evaluate_expression(
     &mut self,
     ast: &Spanned<Expression<'a>>,
   ) -> Result<Value<'a>, Error> {
@@ -374,8 +163,10 @@ impl<'a> Evaluator<'a> {
 
     match node {
       Expression::BinaryOp(BinaryOp::Add, lhs, rhs) => {
-        let (lhs_val, rhs_val) =
-          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+        let (lhs_val, rhs_val) = (
+          self.evaluate_expression(lhs)?,
+          self.evaluate_expression(rhs)?,
+        );
 
         match (&lhs_val, &rhs_val) {
           (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a.add(
@@ -405,8 +196,10 @@ impl<'a> Evaluator<'a> {
         }
       }
       Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
-        let (lhs_val, rhs_val) =
-          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+        let (lhs_val, rhs_val) = (
+          self.evaluate_expression(lhs)?,
+          self.evaluate_expression(rhs)?,
+        );
 
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
@@ -422,7 +215,7 @@ impl<'a> Evaluator<'a> {
         )))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
-        self.eval_expression(lhs)? == self.eval_expression(rhs)?,
+        self.evaluate_expression(lhs)? == self.evaluate_expression(rhs)?,
       )),
       Expression::BinaryOp(
         op @ (BinaryOp::LessThan
@@ -432,8 +225,10 @@ impl<'a> Evaluator<'a> {
         lhs,
         rhs,
       ) => {
-        let (lhs_val, rhs_val) =
-          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+        let (lhs_val, rhs_val) = (
+          self.evaluate_expression(lhs)?,
+          self.evaluate_expression(rhs)?,
+        );
 
         match (&lhs_val, &rhs_val) {
           (Value::Number(a), Value::Number(b)) => {
@@ -467,19 +262,21 @@ impl<'a> Evaluator<'a> {
       }
       Expression::BinaryOp(BinaryOp::LogicalAnd, lhs, rhs) => {
         Ok(Value::Boolean(
-          self.eval_expression(lhs)?.boolean(lhs.1)?
-            && self.eval_expression(rhs)?.boolean(rhs.1)?,
+          self.evaluate_expression(lhs)?.boolean(lhs.1)?
+            && self.evaluate_expression(rhs)?.boolean(rhs.1)?,
         ))
       }
       Expression::BinaryOp(BinaryOp::LogicalOr, lhs, rhs) => {
         Ok(Value::Boolean(
-          self.eval_expression(lhs)?.boolean(lhs.1)?
-            || self.eval_expression(rhs)?.boolean(rhs.1)?,
+          self.evaluate_expression(lhs)?.boolean(lhs.1)?
+            || self.evaluate_expression(rhs)?.boolean(rhs.1)?,
         ))
       }
       Expression::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
-        let (lhs_val, rhs_val) =
-          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+        let (lhs_val, rhs_val) = (
+          self.evaluate_expression(lhs)?,
+          self.evaluate_expression(rhs)?,
+        );
 
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
@@ -511,18 +308,20 @@ impl<'a> Evaluator<'a> {
         Ok(Value::Number(remainder))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?.mul(
-          &self.eval_expression(rhs)?.number(rhs.1)?,
+        self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
+          &self.evaluate_expression(rhs)?.number(rhs.1)?,
           self.environment.config.precision,
           self.environment.config.rounding_mode,
         ),
       )),
       Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
-        self.eval_expression(lhs)? != self.eval_expression(rhs)?,
+        self.evaluate_expression(lhs)? != self.evaluate_expression(rhs)?,
       )),
       Expression::BinaryOp(BinaryOp::Power, lhs, rhs) => {
-        let (lhs_val, rhs_val) =
-          (self.eval_expression(lhs)?, self.eval_expression(rhs)?);
+        let (lhs_val, rhs_val) = (
+          self.evaluate_expression(lhs)?,
+          self.evaluate_expression(rhs)?,
+        );
 
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
@@ -539,8 +338,8 @@ impl<'a> Evaluator<'a> {
         Ok(Value::Number(result))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
-        self.eval_expression(lhs)?.number(lhs.1)?.sub(
-          &self.eval_expression(rhs)?.number(rhs.1)?,
+        self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
+          &self.evaluate_expression(rhs)?.number(rhs.1)?,
           self.environment.config.precision,
           self.environment.config.rounding_mode,
         ),
@@ -550,7 +349,7 @@ impl<'a> Evaluator<'a> {
         let mut evaluated_arguments = Vec::with_capacity(arguments.len());
 
         for argument in arguments {
-          evaluated_arguments.push(self.eval_expression(argument)?);
+          evaluated_arguments.push(self.evaluate_expression(argument)?);
         }
 
         self
@@ -569,13 +368,13 @@ impl<'a> Evaluator<'a> {
         let mut evaluated_list = Vec::with_capacity(list.len());
 
         for item in list {
-          evaluated_list.push(self.eval_expression(item)?);
+          evaluated_list.push(self.evaluate_expression(item)?);
         }
 
         Ok(Value::List(evaluated_list))
       }
       Expression::ListAccess(list, index) => {
-        let list_value = self.eval_expression(list)?;
+        let list_value = self.evaluate_expression(list)?;
 
         let list = match &list_value {
           Value::List(items) => items.clone(),
@@ -588,7 +387,7 @@ impl<'a> Evaluator<'a> {
         };
 
         let Some(index) = self
-          .eval_expression(index)?
+          .evaluate_expression(index)?
           .number(index.1)?
           .to_f64(self.environment.config.rounding_mode)
           .and_then(finite_non_negative_usize)
@@ -615,11 +414,200 @@ impl<'a> Evaluator<'a> {
       Expression::Null => Ok(Value::Null),
       Expression::Number(number) => Ok(Value::Number(number.clone())),
       Expression::String(string) => Ok(Value::String(string)),
-      Expression::UnaryOp(UnaryOp::Negate, rhs) => {
-        Ok(Value::Number(-self.eval_expression(rhs)?.number(rhs.1)?))
+      Expression::UnaryOp(UnaryOp::Negate, rhs) => Ok(Value::Number(
+        -self.evaluate_expression(rhs)?.number(rhs.1)?,
+      )),
+      Expression::UnaryOp(UnaryOp::Not, rhs) => Ok(Value::Boolean(
+        !self.evaluate_expression(rhs)?.boolean(rhs.1)?,
+      )),
+    }
+  }
+
+  pub(crate) fn evaluate_statement(
+    &mut self,
+    statement: &Spanned<Statement<'a>>,
+  ) -> Result<Completion<'a>, Error> {
+    let (node, span) = statement;
+
+    match node {
+      Statement::Assignment(lhs, rhs) => {
+        let value = self.evaluate_expression(rhs)?;
+
+        self.assign(lhs, value.clone())?;
+
+        Ok(Completion::Value(value))
       }
-      Expression::UnaryOp(UnaryOp::Not, rhs) => {
-        Ok(Value::Boolean(!self.eval_expression(rhs)?.boolean(rhs.1)?))
+      Statement::Block(statements) => {
+        let mut result = Value::Null;
+
+        for statement in statements {
+          let completion = self.evaluate_statement(statement)?;
+
+          result = completion.unwrap();
+
+          if matches!(
+            &completion,
+            Completion::Return(_) | Completion::Break | Completion::Continue
+          ) {
+            return Ok(completion);
+          }
+        }
+
+        Ok(Completion::Value(result))
+      }
+      Statement::Break => {
+        if !self.context.inside_loop() {
+          return Err(Error::new(
+            *span,
+            "Cannot use 'break' outside of a loop",
+          ));
+        }
+
+        Ok(Completion::Break)
+      }
+      Statement::Continue => {
+        if !self.context.inside_loop() {
+          return Err(Error::new(
+            *span,
+            "Cannot use 'continue' outside of a loop",
+          ));
+        }
+
+        Ok(Completion::Continue)
+      }
+      Statement::Expression(expression) => {
+        Ok(Completion::Value(self.evaluate_expression(expression)?))
+      }
+      Statement::For(name, iterable, body) => {
+        let list = self.evaluate_expression(iterable)?.list(iterable.1)?;
+
+        let mut result = Value::Null;
+
+        self.enter_loop(|evaluator| {
+          for item in list {
+            evaluator.environment.add_symbol(name, item);
+
+            for statement in body {
+              let completion = evaluator.evaluate_statement(statement)?;
+
+              result = completion.unwrap();
+
+              if matches!(&completion, Completion::Return(_)) {
+                return Ok(Completion::Return(result));
+              } else if matches!(&completion, Completion::Break) {
+                return Ok(Completion::Value(result));
+              } else if matches!(&completion, Completion::Continue) {
+                break;
+              }
+            }
+          }
+
+          Ok(Completion::Value(result))
+        })
+      }
+      Statement::Function(name, params, body) => {
+        let function = Function::UserDefined {
+          body: body.clone(),
+          environment: self.environment.clone(),
+          name,
+          parameters: params.clone(),
+        };
+
+        self.environment.add_function(name, function.clone());
+
+        Ok(Completion::Value(Value::Function(function)))
+      }
+      Statement::If(condition, then_branch, else_branch) => {
+        if self.evaluate_expression(condition)?.boolean(condition.1)? {
+          let mut result = Value::Null;
+
+          for statement in then_branch {
+            let completion = self.evaluate_statement(statement)?;
+
+            result = completion.unwrap();
+
+            if matches!(
+              &completion,
+              Completion::Return(_) | Completion::Break | Completion::Continue
+            ) {
+              return Ok(completion);
+            }
+          }
+
+          Ok(Completion::Value(result))
+        } else if let Some(else_statements) = else_branch {
+          let mut result = Value::Null;
+
+          for statement in else_statements {
+            let completion = self.evaluate_statement(statement)?;
+
+            result = completion.unwrap();
+
+            if matches!(
+              &completion,
+              Completion::Return(_) | Completion::Break | Completion::Continue
+            ) {
+              return Ok(completion);
+            }
+          }
+
+          Ok(Completion::Value(result))
+        } else {
+          Ok(Completion::Value(Value::Null))
+        }
+      }
+      Statement::Loop(body) => self.enter_loop(|evaluator| {
+        loop {
+          for statement in body {
+            let completion = evaluator.evaluate_statement(statement)?;
+
+            let result = completion.unwrap();
+
+            if matches!(&completion, Completion::Return(_)) {
+              return Ok(Completion::Return(result));
+            } else if matches!(&completion, Completion::Break) {
+              return Ok(Completion::Value(result));
+            } else if matches!(&completion, Completion::Continue) {
+              break;
+            }
+          }
+        }
+      }),
+      Statement::Return(expr) => {
+        if !self.context.inside_function() {
+          return Err(Error::new(*span, "Cannot return outside of a function"));
+        }
+
+        Ok(Completion::Return(match expr {
+          Some(expr) => self.evaluate_expression(expr)?,
+          None => Value::Null,
+        }))
+      }
+      Statement::While(condition, body) => {
+        let mut result = Value::Null;
+
+        self.enter_loop(|evaluator| {
+          while evaluator
+            .evaluate_expression(condition)?
+            .boolean(condition.1)?
+          {
+            for statement in body {
+              let completion = evaluator.evaluate_statement(statement)?;
+
+              result = completion.unwrap();
+
+              if matches!(&completion, Completion::Return(_)) {
+                return Ok(Completion::Return(result));
+              } else if matches!(&completion, Completion::Break) {
+                return Ok(Completion::Value(result));
+              } else if matches!(&completion, Completion::Continue) {
+                break;
+              }
+            }
+          }
+
+          Ok(Completion::Value(result))
+        })
       }
     }
   }
