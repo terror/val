@@ -1,65 +1,21 @@
-pub(crate) use {
-  crate::{builtins::BUILTINS, consts::with_consts},
-  ariadne::{Color, Label, Report, ReportKind, Source},
+use {
+  ariadne::{Color, Label, Report, ReportKind},
+  ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   astro_float::{BigFloat as Float, Consts, Radix, Sign},
+  builtins::BUILTINS,
   chumsky::prelude::*,
-  clap::Parser as Clap,
+  consts::with_consts,
   std::{
     cell::RefCell,
     collections::HashMap,
     fmt::{self, Display, Formatter},
-    fs,
     ops::Range,
-    path::PathBuf,
     process,
+    str::FromStr,
   },
 };
-
-#[cfg(not(target_family = "wasm"))]
-pub(crate) use {
-  crate::highlighter::Highlighter,
-  regex::Regex,
-  rustyline::{
-    Context, Editor, Helper,
-    completion::{Completer, FilenameCompleter, Pair},
-    config::{Builder, ColorMode, CompletionType, EditMode},
-    error::ReadlineError,
-    highlight::{CmdKind, Highlighter as RustylineHighlighter},
-    hint::{Hinter, HistoryHinter},
-    history::DefaultHistory,
-    validate::Validator,
-  },
-  std::borrow::Cow::{self, Owned},
-};
-
-type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
-type Spanned<T> = (T, Span);
-
-mod ast;
-mod builtin;
-mod builtins;
-mod completion;
-mod config;
-mod consts;
-mod context;
-mod environment;
-mod error;
-mod evaluator;
-mod float_ext;
-mod function;
-mod parser;
-mod rounding_mode;
-mod value;
-
-#[doc(hidden)]
-pub mod arguments;
-
-#[cfg(not(target_family = "wasm"))]
-mod highlighter;
 
 pub use crate::{
-  arguments::Arguments,
-  ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
   completion::Completion,
   config::Config,
@@ -74,3 +30,22 @@ pub use crate::{
 };
 
 pub type Span = SimpleSpan<usize>;
+pub type Spanned<T> = (T, Span);
+
+type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
+
+pub mod ast;
+mod builtin;
+mod builtins;
+mod completion;
+mod config;
+mod consts;
+mod context;
+mod environment;
+mod error;
+mod evaluator;
+mod float_ext;
+mod function;
+mod parser;
+mod rounding_mode;
+mod value;

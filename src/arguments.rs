@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clap, Debug)]
+#[derive(Debug, Parser)]
 #[clap(
   about,
   author,
@@ -15,7 +15,7 @@ use super::*;
 {all-args}{after-help}
 "
 )]
-pub struct Arguments {
+pub(crate) struct Arguments {
   #[clap(
     short,
     long,
@@ -212,7 +212,7 @@ impl Arguments {
     }
   }
 
-  pub fn run(self) -> Result {
+  pub(crate) fn run(self) -> Result {
     match (&self.filename, &self.expression) {
       (Some(filename), _) => self.eval(filename),
       (_, Some(expression)) => self.evaluate_expression(expression.clone()),

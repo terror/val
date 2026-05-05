@@ -11,8 +11,8 @@ pub enum RoundingMode {
   Up = 2,
 }
 
-impl std::fmt::Display for RoundingMode {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl Display for RoundingMode {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     let s = match self {
       RoundingMode::Down => "down",
       RoundingMode::FromZero => "from-zero",
@@ -26,7 +26,7 @@ impl std::fmt::Display for RoundingMode {
   }
 }
 
-impl std::str::FromStr for RoundingMode {
+impl FromStr for RoundingMode {
   type Err = String;
 
   fn from_str(s: &str) -> Result<Self, Self::Err> {
