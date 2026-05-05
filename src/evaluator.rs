@@ -1,17 +1,15 @@
-use super::*;
+use {super::*, crate::context::Context};
 
 pub struct Evaluator<'a> {
+  context: Context,
   pub environment: Environment<'a>,
-  pub inside_function: bool,
-  pub inside_loop: bool,
 }
 
 impl<'a> From<Environment<'a>> for Evaluator<'a> {
   fn from(environment: Environment<'a>) -> Self {
     Self {
       environment,
-      inside_function: false,
-      inside_loop: false,
+      context: Context::default(),
     }
   }
 }
@@ -26,6 +24,26 @@ fn finite_non_negative_usize(number: f64) -> Option<usize> {
 }
 
 impl<'a> Evaluator<'a> {
+  pub(crate) fn enter_function<T>(
+    &mut self,
+    f: impl FnOnce(&mut Self) -> Result<T, Error>,
+  ) -> Result<T, Error> {
+    self.context.enter_function();
+    let result = f(self);
+    self.context.exit_function();
+    result
+  }
+
+  fn enter_loop<T>(
+    &mut self,
+    f: impl FnOnce(&mut Self) -> Result<T, Error>,
+  ) -> Result<T, Error> {
+    self.context.enter_loop();
+    let result = f(self);
+    self.context.exit_loop();
+    result
+  }
+
   /// # Errors
   ///
   /// Returns an evaluation error when a statement or expression is invalid.
@@ -40,13 +58,13 @@ impl<'a> Evaluator<'a> {
         let mut result = Value::Null;
 
         for statement in statements {
-          let eval_result = self.eval_statement(statement)?;
+          let completion = self.eval_statement(statement)?;
 
-          result = eval_result.unwrap();
+          result = completion.unwrap();
 
-          if eval_result.is_return()
-            || eval_result.is_break()
-            || eval_result.is_continue()
+          if completion.is_return()
+            || completion.is_break()
+            || completion.is_continue()
           {
             break;
           }
@@ -60,7 +78,7 @@ impl<'a> Evaluator<'a> {
   pub(crate) fn eval_statement(
     &mut self,
     statement: &Spanned<Statement<'a>>,
-  ) -> Result<EvalResult<'a>, Error> {
+  ) -> Result<Completion<'a>, Error> {
     let (node, span) = statement;
 
     match node {
@@ -138,79 +156,73 @@ impl<'a> Evaluator<'a> {
           }
         }
 
-        Ok(EvalResult::Value(value))
+        Ok(Completion::Value(value))
       }
       Statement::Block(statements) => {
         let mut result = Value::Null;
 
         for statement in statements {
-          let eval_result = self.eval_statement(statement)?;
+          let completion = self.eval_statement(statement)?;
 
-          result = eval_result.unwrap();
+          result = completion.unwrap();
 
-          if eval_result.is_return()
-            || eval_result.is_break()
-            || eval_result.is_continue()
+          if completion.is_return()
+            || completion.is_break()
+            || completion.is_continue()
           {
-            return Ok(eval_result);
+            return Ok(completion);
           }
         }
 
-        Ok(EvalResult::Value(result))
+        Ok(Completion::Value(result))
       }
       Statement::Break => {
-        if !self.inside_loop {
+        if !self.context.inside_loop() {
           return Err(Error::new(
             *span,
             "Cannot use 'break' outside of a loop",
           ));
         }
-        Ok(EvalResult::Break)
+        Ok(Completion::Break)
       }
       Statement::Continue => {
-        if !self.inside_loop {
+        if !self.context.inside_loop() {
           return Err(Error::new(
             *span,
             "Cannot use 'continue' outside of a loop",
           ));
         }
 
-        Ok(EvalResult::Continue)
+        Ok(Completion::Continue)
       }
       Statement::Expression(expression) => {
-        Ok(EvalResult::Value(self.eval_expression(expression)?))
+        Ok(Completion::Value(self.eval_expression(expression)?))
       }
       Statement::For(name, iterable, body) => {
         let list = self.eval_expression(iterable)?.list(iterable.1)?;
         let mut result = Value::Null;
 
-        let old_inside_loop = self.inside_loop;
+        self.enter_loop(|evaluator| {
+          for item in list {
+            evaluator.environment.add_symbol(name, item);
 
-        self.inside_loop = true;
+            for statement in body {
+              let completion = evaluator.eval_statement(statement)?;
 
-        for item in list {
-          self.environment.add_symbol(name, item);
+              result = completion.unwrap();
 
-          for statement in body {
-            let eval_result = self.eval_statement(statement)?;
-
-            result = eval_result.unwrap();
-
-            if eval_result.is_return() {
-              self.inside_loop = old_inside_loop;
-              return Ok(EvalResult::Return(result));
-            } else if eval_result.is_break() {
-              self.inside_loop = old_inside_loop;
-              return Ok(EvalResult::Value(result));
-            } else if eval_result.is_continue() {
-              break;
+              if completion.is_return() {
+                return Ok(Completion::Return(result));
+              } else if completion.is_break() {
+                return Ok(Completion::Value(result));
+              } else if completion.is_continue() {
+                break;
+              }
             }
           }
-        }
 
-        self.inside_loop = old_inside_loop;
-
-        Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
+        })
       }
       Statement::Function(name, params, body) => {
         let function = Function::UserDefined {
@@ -222,76 +234,70 @@ impl<'a> Evaluator<'a> {
 
         self.environment.add_function(name, function.clone());
 
-        Ok(EvalResult::Value(Value::Function(function)))
+        Ok(Completion::Value(Value::Function(function)))
       }
       Statement::If(condition, then_branch, else_branch) => {
         if self.eval_expression(condition)?.boolean(condition.1)? {
           let mut result = Value::Null;
 
           for statement in then_branch {
-            let eval_result = self.eval_statement(statement)?;
+            let completion = self.eval_statement(statement)?;
 
-            result = eval_result.unwrap();
+            result = completion.unwrap();
 
-            if eval_result.is_return()
-              || eval_result.is_break()
-              || eval_result.is_continue()
+            if completion.is_return()
+              || completion.is_break()
+              || completion.is_continue()
             {
-              return Ok(eval_result);
+              return Ok(completion);
             }
           }
 
-          Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
         } else if let Some(else_statements) = else_branch {
           let mut result = Value::Null;
 
           for statement in else_statements {
-            let eval_result = self.eval_statement(statement)?;
+            let completion = self.eval_statement(statement)?;
 
-            result = eval_result.unwrap();
+            result = completion.unwrap();
 
-            if eval_result.is_return()
-              || eval_result.is_break()
-              || eval_result.is_continue()
+            if completion.is_return()
+              || completion.is_break()
+              || completion.is_continue()
             {
-              return Ok(eval_result);
+              return Ok(completion);
             }
           }
 
-          Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
         } else {
-          Ok(EvalResult::Value(Value::Null))
+          Ok(Completion::Value(Value::Null))
         }
       }
-      Statement::Loop(body) => {
-        let old_inside_loop = self.inside_loop;
-
-        self.inside_loop = true;
-
+      Statement::Loop(body) => self.enter_loop(|evaluator| {
         loop {
           for statement in body {
-            let eval_result = self.eval_statement(statement)?;
+            let completion = evaluator.eval_statement(statement)?;
 
-            let result = eval_result.unwrap();
+            let result = completion.unwrap();
 
-            if eval_result.is_return() {
-              self.inside_loop = old_inside_loop;
-              return Ok(EvalResult::Return(result));
-            } else if eval_result.is_break() {
-              self.inside_loop = old_inside_loop;
-              return Ok(EvalResult::Value(result));
-            } else if eval_result.is_continue() {
+            if completion.is_return() {
+              return Ok(Completion::Return(result));
+            } else if completion.is_break() {
+              return Ok(Completion::Value(result));
+            } else if completion.is_continue() {
               break;
             }
           }
         }
-      }
+      }),
       Statement::Return(expr) => {
-        if !self.inside_function {
+        if !self.context.inside_function() {
           return Err(Error::new(*span, "Cannot return outside of a function"));
         }
 
-        Ok(EvalResult::Return(match expr {
+        Ok(Completion::Return(match expr {
           Some(expr) => self.eval_expression(expr)?,
           None => Value::Null,
         }))
@@ -299,31 +305,25 @@ impl<'a> Evaluator<'a> {
       Statement::While(condition, body) => {
         let mut result = Value::Null;
 
-        let old_inside_loop = self.inside_loop;
+        self.enter_loop(|evaluator| {
+          while evaluator.eval_expression(condition)?.boolean(condition.1)? {
+            for statement in body {
+              let completion = evaluator.eval_statement(statement)?;
 
-        self.inside_loop = true;
+              result = completion.unwrap();
 
-        while self.eval_expression(condition)?.boolean(condition.1)? {
-          for statement in body {
-            let eval_result = self.eval_statement(statement)?;
-
-            result = eval_result.unwrap();
-
-            if eval_result.is_return() {
-              self.inside_loop = old_inside_loop;
-              return Ok(EvalResult::Return(result));
-            } else if eval_result.is_break() {
-              self.inside_loop = old_inside_loop;
-              return Ok(EvalResult::Value(result));
-            } else if eval_result.is_continue() {
-              break;
+              if completion.is_return() {
+                return Ok(Completion::Return(result));
+              } else if completion.is_break() {
+                return Ok(Completion::Value(result));
+              } else if completion.is_continue() {
+                break;
+              }
             }
           }
-        }
 
-        self.inside_loop = old_inside_loop;
-
-        Ok(EvalResult::Value(result))
+          Ok(Completion::Value(result))
+        })
       }
     }
   }

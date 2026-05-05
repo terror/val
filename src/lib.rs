@@ -38,10 +38,10 @@ pub use crate::{
   arguments::Arguments,
   ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
   builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
+  completion::Completion,
   config::Config,
   environment::Environment,
   error::Error,
-  eval_result::EvalResult,
   evaluator::Evaluator,
   float_ext::FloatExt,
   function::Function,
@@ -64,10 +64,11 @@ mod highlighter;
 mod ast;
 mod builtin;
 mod builtins;
+mod completion;
 mod config;
+mod context;
 mod environment;
 mod error;
-mod eval_result;
 mod evaluator;
 mod float_ext;
 mod function;
