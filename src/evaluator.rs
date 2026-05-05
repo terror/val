@@ -14,15 +14,6 @@ impl<'a> From<Environment<'a>> for Evaluator<'a> {
   }
 }
 
-fn finite_non_negative_usize(number: f64) -> Option<usize> {
-  if number.is_finite() && number >= 0.0 {
-    let number = number.trunc();
-    format!("{number:.0}").parse().ok()
-  } else {
-    None
-  }
-}
-
 impl<'a> Evaluator<'a> {
   fn assign(
     &mut self,
@@ -82,7 +73,14 @@ impl<'a> Evaluator<'a> {
       .evaluate_expression(index)?
       .number(index.1)?
       .to_f64(self.environment.config.rounding_mode)
-      .and_then(finite_non_negative_usize)
+      .and_then(|number| {
+        if number.is_finite() && number >= 0.0 {
+          let number = number.trunc();
+          format!("{number:.0}").parse::<usize>().ok()
+        } else {
+          None
+        }
+      })
       .ok_or_else(|| {
         Error::new(index.1, "List index must be a non-negative finite number")
       })?;
@@ -390,7 +388,14 @@ impl<'a> Evaluator<'a> {
           .evaluate_expression(index)?
           .number(index.1)?
           .to_f64(self.environment.config.rounding_mode)
-          .and_then(finite_non_negative_usize)
+          .and_then(|number| {
+            if number.is_finite() && number >= 0.0 {
+              let number = number.trunc();
+              format!("{number:.0}").parse::<usize>().ok()
+            } else {
+              None
+            }
+          })
         else {
           return Err(Error::new(
             index.1,
@@ -492,12 +497,11 @@ impl<'a> Evaluator<'a> {
 
               result = completion.unwrap();
 
-              if matches!(&completion, Completion::Return(_)) {
-                return Ok(Completion::Return(result));
-              } else if matches!(&completion, Completion::Break) {
-                return Ok(Completion::Value(result));
-              } else if matches!(&completion, Completion::Continue) {
-                break;
+              match completion {
+                Completion::Break => return Ok(Completion::Value(result)),
+                Completion::Continue => break,
+                Completion::Return(_) => return Ok(Completion::Return(result)),
+                Completion::Value(_) => {}
               }
             }
           }
@@ -563,23 +567,22 @@ impl<'a> Evaluator<'a> {
 
             let result = completion.unwrap();
 
-            if matches!(&completion, Completion::Return(_)) {
-              return Ok(Completion::Return(result));
-            } else if matches!(&completion, Completion::Break) {
-              return Ok(Completion::Value(result));
-            } else if matches!(&completion, Completion::Continue) {
-              break;
+            match completion {
+              Completion::Break => return Ok(Completion::Value(result)),
+              Completion::Continue => break,
+              Completion::Return(_) => return Ok(Completion::Return(result)),
+              Completion::Value(_) => {}
             }
           }
         }
       }),
-      Statement::Return(expr) => {
+      Statement::Return(expression) => {
         if !self.context.inside_function() {
           return Err(Error::new(*span, "Cannot return outside of a function"));
         }
 
-        Ok(Completion::Return(match expr {
-          Some(expr) => self.evaluate_expression(expr)?,
+        Ok(Completion::Return(match expression {
+          Some(expression) => self.evaluate_expression(expression)?,
           None => Value::Null,
         }))
       }
@@ -596,12 +599,11 @@ impl<'a> Evaluator<'a> {
 
               result = completion.unwrap();
 
-              if matches!(&completion, Completion::Return(_)) {
-                return Ok(Completion::Return(result));
-              } else if matches!(&completion, Completion::Break) {
-                return Ok(Completion::Value(result));
-              } else if matches!(&completion, Completion::Continue) {
-                break;
+              match completion {
+                Completion::Break => return Ok(Completion::Value(result)),
+                Completion::Continue => break,
+                Completion::Return(_) => return Ok(Completion::Return(result)),
+                Completion::Value(_) => {}
               }
             }
           }
