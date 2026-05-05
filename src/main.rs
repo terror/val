@@ -1,9 +1,41 @@
 use {
+  arguments::Arguments,
+  ariadne::Source,
   clap::Parser,
-  rustyline::error::ReadlineError,
-  std::{backtrace::BacktraceStatus, process, thread},
-  val::arguments::Arguments,
+  highlighter::Highlighter,
+  regex::Regex,
+  rounding_mode::RoundingMode,
+  rustyline::{
+    Context, Editor, Helper,
+    completion::{Completer, FilenameCompleter, Pair},
+    config::{Builder, ColorMode, CompletionType, EditMode},
+    error::ReadlineError,
+    highlight::{CmdKind, Highlighter as RustylineHighlighter},
+    hint::{Hinter, HistoryHinter},
+    history::DefaultHistory,
+    validate::Validator,
+  },
+  std::{
+    backtrace::BacktraceStatus,
+    borrow::{Cow, Cow::Owned},
+    fmt::{self, Display, Formatter},
+    fs,
+    path::PathBuf,
+    process,
+    str::FromStr,
+    thread,
+  },
+  val::{
+    AssignmentTarget, Config, Environment, Evaluator, Expression, Program,
+    Spanned, Statement, Value, parse,
+  },
 };
+
+mod arguments;
+mod highlighter;
+mod rounding_mode;
+
+type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
 fn main() {
   let arguments = Arguments::parse();

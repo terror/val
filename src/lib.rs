@@ -1,39 +1,37 @@
-pub(crate) use {
+use {
   crate::{builtins::BUILTINS, consts::with_consts},
-  ariadne::{Color, Label, Report, ReportKind, Source},
+  ariadne::{Color, Label, Report, ReportKind},
   astro_float::{BigFloat as Float, Consts, Radix, Sign},
   chumsky::prelude::*,
-  clap::Parser as Clap,
   std::{
     cell::RefCell,
     collections::HashMap,
     fmt::{self, Display, Formatter},
-    fs,
     ops::Range,
-    path::PathBuf,
     process,
+    str::FromStr,
   },
 };
 
-#[cfg(not(target_family = "wasm"))]
-pub(crate) use {
-  crate::highlighter::Highlighter,
-  regex::Regex,
-  rustyline::{
-    Context, Editor, Helper,
-    completion::{Completer, FilenameCompleter, Pair},
-    config::{Builder, ColorMode, CompletionType, EditMode},
-    error::ReadlineError,
-    highlight::{CmdKind, Highlighter as RustylineHighlighter},
-    hint::{Hinter, HistoryHinter},
-    history::DefaultHistory,
-    validate::Validator,
-  },
-  std::borrow::Cow::{self, Owned},
+pub use crate::{
+  ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
+  builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
+  completion::Completion,
+  config::Config,
+  environment::Environment,
+  error::Error,
+  evaluator::Evaluator,
+  float_ext::FloatExt,
+  function::Function,
+  parser::parse,
+  rounding_mode::RoundingMode,
+  value::Value,
 };
+
+pub type Span = SimpleSpan<usize>;
+pub type Spanned<T> = (T, Span);
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
-type Spanned<T> = (T, Span);
 
 mod ast;
 mod builtin;
@@ -50,27 +48,3 @@ mod function;
 mod parser;
 mod rounding_mode;
 mod value;
-
-#[doc(hidden)]
-pub mod arguments;
-
-#[cfg(not(target_family = "wasm"))]
-mod highlighter;
-
-pub use crate::{
-  arguments::Arguments,
-  ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
-  builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
-  completion::Completion,
-  config::Config,
-  environment::Environment,
-  error::Error,
-  evaluator::Evaluator,
-  float_ext::FloatExt,
-  function::Function,
-  parser::parse,
-  rounding_mode::RoundingMode,
-  value::Value,
-};
-
-pub type Span = SimpleSpan<usize>;

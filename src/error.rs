@@ -14,10 +14,8 @@ impl Error {
     }
   }
 
-  pub(crate) fn report<'a>(
-    &self,
-    id: &'a str,
-  ) -> Report<'a, (&'a str, Range<usize>)> {
+  #[must_use]
+  pub fn report<'a>(&self, id: &'a str) -> Report<'a, (&'a str, Range<usize>)> {
     let span_range = self.span.into_range();
 
     let mut report = Report::build(
