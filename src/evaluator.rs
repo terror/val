@@ -85,76 +85,7 @@ impl<'a> Evaluator<'a> {
       Statement::Assignment(lhs, rhs) => {
         let value = self.eval_expression(rhs)?;
 
-        match &lhs.0 {
-          Expression::Identifier(name) => {
-            self.environment.add_symbol(name, value.clone());
-          }
-          Expression::ListAccess(base_box, index_box) => {
-            let (list_name, list_span) = match &base_box.0 {
-              Expression::Identifier(name) => (*name, base_box.1),
-              _ => {
-                return Err(Error::new(
-                  base_box.1,
-                  "left‑hand side must be a variable or list element",
-                ));
-              }
-            };
-
-            let mut list = match self.environment.resolve_symbol(list_name) {
-              Some(Value::List(items)) => items,
-              Some(other) => {
-                return Err(Error::new(
-                  list_span,
-                  format!(
-                    "'{}' is not a list (found {})",
-                    list_name,
-                    other.type_name()
-                  ),
-                ));
-              }
-              None => {
-                return Err(Error::new(
-                  list_span,
-                  format!("Undefined variable `{list_name}`"),
-                ));
-              }
-            };
-
-            let Some(index) = self
-              .eval_expression(index_box)?
-              .number(index_box.1)?
-              .to_f64(self.environment.config.rounding_mode)
-              .and_then(finite_non_negative_usize)
-            else {
-              return Err(Error::new(
-                index_box.1,
-                "List index must be a non-negative finite number",
-              ));
-            };
-
-            if index >= list.len() {
-              return Err(Error::new(
-                lhs.1,
-                format!(
-                  "Index {} out of bounds for list of length {}",
-                  index,
-                  list.len()
-                ),
-              ));
-            }
-
-            list[index] = value.clone();
-
-            self.environment.add_symbol(list_name, Value::List(list));
-          }
-
-          _ => {
-            return Err(Error::new(
-              lhs.1,
-              "left‑hand side must be a variable or list element",
-            ));
-          }
-        }
+        self.assign(lhs, value.clone())?;
 
         Ok(Completion::Value(value))
       }
@@ -326,6 +257,113 @@ impl<'a> Evaluator<'a> {
         })
       }
     }
+  }
+
+  fn assign(
+    &mut self,
+    target: &Spanned<AssignmentTarget<'a>>,
+    value: Value<'a>,
+  ) -> Result<(), Error> {
+    match &target.0 {
+      AssignmentTarget::Identifier(name) => {
+        self.environment.add_symbol(name, value);
+        Ok(())
+      }
+      AssignmentTarget::ListAccess(_, _) => {
+        let (name, name_span) = Self::assignment_root(target);
+        let mut indices = Vec::new();
+        Self::assignment_indices(target, &mut indices);
+
+        let Some(root) = self.environment.resolve_symbol(name) else {
+          return Err(Error::new(
+            name_span,
+            format!("Undefined variable `{name}`"),
+          ));
+        };
+
+        let root =
+          self.assign_indices(name, root, &indices, value, target.1)?;
+        self.environment.add_symbol(name, root);
+        Ok(())
+      }
+    }
+  }
+
+  fn assignment_root(
+    target: &Spanned<AssignmentTarget<'a>>,
+  ) -> (&'a str, Span) {
+    match &target.0 {
+      AssignmentTarget::Identifier(name) => (name, target.1),
+      AssignmentTarget::ListAccess(base, _) => Self::assignment_root(base),
+    }
+  }
+
+  fn assignment_indices<'target>(
+    target: &'target Spanned<AssignmentTarget<'a>>,
+    indices: &mut Vec<&'target Spanned<Expression<'a>>>,
+  ) {
+    match &target.0 {
+      AssignmentTarget::Identifier(_) => {}
+      AssignmentTarget::ListAccess(base, index) => {
+        Self::assignment_indices(base, indices);
+        indices.push(index);
+      }
+    }
+  }
+
+  fn assign_indices(
+    &mut self,
+    name: &'a str,
+    value: Value<'a>,
+    indices: &[&Spanned<Expression<'a>>],
+    assigned: Value<'a>,
+    span: Span,
+  ) -> Result<Value<'a>, Error> {
+    let Some((index, rest)) = indices.split_first() else {
+      return Ok(assigned);
+    };
+
+    let mut list = match value {
+      Value::List(items) => items,
+      other => {
+        return Err(Error::new(
+          index.1,
+          format!("'{}' is not a list (found {})", name, other.type_name()),
+        ));
+      }
+    };
+
+    let index = self.list_index(index)?;
+
+    if index >= list.len() {
+      return Err(Error::new(
+        span,
+        format!(
+          "Index {} out of bounds for list of length {}",
+          index,
+          list.len()
+        ),
+      ));
+    }
+
+    list[index] =
+      self.assign_indices(name, list[index].clone(), rest, assigned, span)?;
+
+    Ok(Value::List(list))
+  }
+
+  fn list_index(
+    &mut self,
+    index: &Spanned<Expression<'a>>,
+  ) -> Result<usize, Error> {
+    self
+      .eval_expression(index)?
+      .number(index.1)?
+      .to_f64(self.environment.config.rounding_mode)
+      .and_then(finite_non_negative_usize)
+      .ok_or_else(|| {
+        Error::new(index.1, "List index must be a non-negative finite number")
+      })
   }
 
   fn eval_expression(

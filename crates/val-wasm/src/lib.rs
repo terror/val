@@ -7,7 +7,8 @@ use {
   serde::Serialize,
   serde_wasm_bindgen::to_value,
   val::{
-    Environment, Evaluator, Expression, Program, RoundingMode, Span, Statement,
+    AssignmentTarget, Environment, Evaluator, Expression, Program,
+    RoundingMode, Span, Statement,
   },
   wasm_bindgen::prelude::*,
 };

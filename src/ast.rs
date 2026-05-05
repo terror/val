@@ -34,7 +34,7 @@ impl Program<'_> {
 
 #[derive(Debug, Clone)]
 pub enum Statement<'a> {
-  Assignment(Spanned<Expression<'a>>, Spanned<Expression<'a>>),
+  Assignment(Spanned<AssignmentTarget<'a>>, Spanned<Expression<'a>>),
   Block(Vec<Spanned<Statement<'a>>>),
   Break,
   Continue,
@@ -175,6 +175,35 @@ impl Statement<'_> {
       Statement::Loop(_) => "loop",
       Statement::Return(_) => "return",
       Statement::While(_, _) => "while",
+    })
+  }
+}
+
+#[derive(Debug, Clone)]
+pub enum AssignmentTarget<'a> {
+  Identifier(&'a str),
+  ListAccess(Box<Spanned<Self>>, Box<Spanned<Expression<'a>>>),
+}
+
+impl Display for AssignmentTarget<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      AssignmentTarget::Identifier(identifier) => {
+        write!(f, "identifier({identifier})")
+      }
+      AssignmentTarget::ListAccess(list, index) => {
+        write!(f, "list_access({}, {})", list.0, index.0)
+      }
+    }
+  }
+}
+
+impl AssignmentTarget<'_> {
+  #[must_use]
+  pub fn kind(&self) -> String {
+    String::from(match self {
+      AssignmentTarget::Identifier(_) => "identifier",
+      AssignmentTarget::ListAccess(_, _) => "list_access",
     })
   }
 }

@@ -94,7 +94,7 @@ impl<'src> TreeHighlighter<'src> {
 
     match node {
       Statement::Assignment(lhs, rhs) => {
-        self.collect_expression_spans(lhs, spans);
+        self.collect_assignment_target_spans(lhs, spans);
 
         if let Some(eq_pos) = self.content[start..end].find('=') {
           spans.push((start + eq_pos, start + eq_pos + 1, COLOR_OPERATOR));
@@ -304,6 +304,42 @@ impl<'src> TreeHighlighter<'src> {
 
         for statement in body {
           self.collect_statement_spans(statement, spans);
+        }
+      }
+    }
+  }
+
+  fn collect_assignment_target_spans(
+    &self,
+    target: &Spanned<AssignmentTarget<'src>>,
+    spans: &mut Vec<(usize, usize, &'static str)>,
+  ) {
+    let (node, span) = target;
+
+    match node {
+      AssignmentTarget::Identifier(identifier) => {
+        spans.push((
+          span.start,
+          span.start + identifier.len(),
+          COLOR_IDENTIFIER,
+        ));
+      }
+      AssignmentTarget::ListAccess(list, index) => {
+        self.collect_assignment_target_spans(list, spans);
+        self.collect_expression_spans(index, spans);
+
+        if let Some(open_bracket) =
+          self.content[list.1.end..index.1.start].find('[')
+        {
+          let start = list.1.end + open_bracket;
+          spans.push((start, start + 1, COLOR_OPERATOR));
+        }
+
+        if let Some(close_bracket) =
+          self.content[index.1.end..span.end].find(']')
+        {
+          let start = index.1.end + close_bracket;
+          spans.push((start, start + 1, COLOR_OPERATOR));
         }
       }
     }

@@ -36,7 +36,7 @@ pub(crate) use {
 
 pub use crate::{
   arguments::Arguments,
-  ast::{BinaryOp, Expression, Program, Statement, UnaryOp},
+  ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
   completion::Completion,
   config::Config,
