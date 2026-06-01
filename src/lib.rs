@@ -13,6 +13,7 @@ use {
     process,
     str::FromStr,
   },
+  symbol::Symbol,
 };
 
 pub use crate::{
@@ -48,4 +49,5 @@ mod float_ext;
 mod function;
 mod parser;
 mod rounding_mode;
+mod symbol;
 mod value;

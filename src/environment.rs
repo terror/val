@@ -7,12 +7,6 @@ pub struct Environment<'src> {
   symbols: HashMap<&'src str, Symbol<'src>>,
 }
 
-#[derive(Clone, Debug, Default)]
-struct Symbol<'src> {
-  function: Option<Function<'src>>,
-  value: Option<Value<'src>>,
-}
-
 impl<'src> Environment<'src> {
   #[must_use]
   pub fn new(config: Config) -> Self {
