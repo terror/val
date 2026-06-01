@@ -9,12 +9,12 @@ impl Context {
     self.function_depth += 1;
   }
 
-  pub(crate) fn exit_function(&mut self) {
-    self.function_depth -= 1;
-  }
-
   pub(crate) fn enter_loop(&mut self) {
     self.loop_depth += 1;
+  }
+
+  pub(crate) fn exit_function(&mut self) {
+    self.function_depth -= 1;
   }
 
   pub(crate) fn exit_loop(&mut self) {

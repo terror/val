@@ -348,20 +348,20 @@ mod tests {
   }
 
   impl<'a> Test<'a> {
-    fn new() -> Self {
-      Self {
-        ast: "",
-        errors: Vec::new(),
-        program: "",
-      }
-    }
-
     fn ast(self, ast: &'a str) -> Self {
       Self { ast, ..self }
     }
 
     fn errors(self, errors: Vec<Error>) -> Self {
       Self { errors, ..self }
+    }
+
+    fn new() -> Self {
+      Self {
+        ast: "",
+        errors: Vec::new(),
+        program: "",
+      }
     }
 
     fn program(self, program: &'a str) -> Self {

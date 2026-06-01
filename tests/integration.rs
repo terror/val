@@ -27,17 +27,6 @@ struct Test<'a> {
 }
 
 impl<'a> Test<'a> {
-  fn new() -> Result<Self> {
-    Ok(Self {
-      arguments: Vec::new(),
-      expected_status: 0,
-      expected_stderr: Match::Empty,
-      expected_stdout: Match::Empty,
-      program: "",
-      tempdir: TempDir::new()?,
-    })
-  }
-
   fn argument(mut self, argument: &str) -> Self {
     self.arguments.push(argument.to_owned());
     self
@@ -62,6 +51,17 @@ impl<'a> Test<'a> {
       expected_stdout,
       ..self
     }
+  }
+
+  fn new() -> Result<Self> {
+    Ok(Self {
+      arguments: Vec::new(),
+      expected_status: 0,
+      expected_stderr: Match::Empty,
+      expected_stdout: Match::Empty,
+      program: "",
+      tempdir: TempDir::new()?,
+    })
   }
 
   fn program(self, program: &'a str) -> Self {
