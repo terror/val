@@ -50,48 +50,46 @@ impl<'src> Environment<'src> {
     arguments: Vec<Value<'src>>,
     span: Span,
   ) -> Result<Value<'src>, Error> {
-    if let Some(function) = self.resolve_function(name) {
-      function.call(arguments, self.config, span)
-    } else if self.resolve_symbol(name).is_some() {
-      Err(Error::new(span, format!("`{name}` is not a function")))
-    } else {
-      Err(Error::new(
+    match self.resolve_function(name) {
+      Some(function) => function.call(arguments, self.config, span),
+      None if self.resolve_symbol(name).is_some() => {
+        Err(Error::new(span, format!("`{name}` is not a function")))
+      }
+      None => Err(Error::new(
         span,
         format!("Function `{name}` is not defined"),
-      ))
+      )),
     }
   }
 
   fn resolve_function(&self, name: &str) -> Option<Function<'src>> {
-    if let Some(symbol) = self.symbols.get(name) {
-      if let Some(function) = &symbol.function {
-        Some(function.clone())
-      } else if let Some(Value::Function(function)) = &symbol.value {
-        Some(function.clone())
-      } else if let Some(parent) = &self.parent {
-        parent.resolve_function(name)
-      } else {
-        None
-      }
-    } else if let Some(parent) = &self.parent {
-      parent.resolve_function(name)
-    } else {
-      None
-    }
+    self
+      .local_function(name)
+      .or_else(|| self.parent.as_deref()?.resolve_function(name))
   }
 
-  pub(crate) fn resolve_symbol(&self, symbol: &str) -> Option<Value<'src>> {
-    if let Some(symbol) = self.symbols.get(symbol) {
-      if let Some(value) = &symbol.value {
-        Some(value.clone())
-      } else {
-        symbol.function.clone().map(Value::Function)
-      }
-    } else if let Some(parent) = &self.parent {
-      parent.resolve_symbol(symbol)
-    } else {
-      None
-    }
+  pub(crate) fn resolve_symbol(&self, name: &str) -> Option<Value<'src>> {
+    self
+      .local_symbol(name)
+      .or_else(|| self.parent.as_deref()?.resolve_symbol(name))
+  }
+
+  fn local_function(&self, name: &str) -> Option<Function<'src>> {
+    let symbol = self.symbols.get(name)?;
+
+    symbol.function.clone().or_else(|| match &symbol.value {
+      Some(Value::Function(function)) => Some(function.clone()),
+      _ => None,
+    })
+  }
+
+  fn local_symbol(&self, name: &str) -> Option<Value<'src>> {
+    let symbol = self.symbols.get(name)?;
+
+    symbol
+      .value
+      .clone()
+      .or_else(|| symbol.function.clone().map(Value::Function))
   }
 
   pub(crate) fn with_parent(parent: Environment<'src>) -> Self {
