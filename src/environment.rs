@@ -63,7 +63,7 @@ impl<'src> Environment<'src> {
     for builtin in BUILTINS {
       match builtin {
         Builtin::Constant { value, .. } => {
-          environment.add_symbol(builtin.name(), value(&config));
+          environment.add_symbol(builtin.name(), value(config));
         }
         Builtin::Function { function, .. } => {
           environment.add_function(

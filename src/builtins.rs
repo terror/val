@@ -180,15 +180,7 @@ pub(crate) const BUILTINS: &[Builtin] = &[
 ];
 
 fn abs<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `abs` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "abs", 1)?;
 
   Ok(Value::Number(
     payload.arguments[0].number(payload.span)?.abs(),
@@ -196,229 +188,107 @@ fn abs<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn acos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `acos` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "acos", 1)?;
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument < Float::from(-1.0) || argument > Float::from(1.0) {
+  if argument < Number::from_i64(-1) || argument > Number::from_i64(1) {
     return Err(Error::new(
       payload.span,
       "acos argument must be between -1 and 1",
     ));
   }
 
-  let result = with_consts(|consts| {
-    argument.acos(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(argument.acos(payload.config)))
 }
 
 fn acot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `acot` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "acot", 1)?;
 
   let argument = payload.arguments[0].number(payload.span)?;
+  let pi_div_2 =
+    Number::pi(payload.config).div(&Number::from_i64(2), payload.config);
 
-  let pi_div_2 = Float::from(std::f64::consts::FRAC_PI_2);
-
-  let atan = with_consts(|consts| {
-    argument.atan(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(pi_div_2.sub(
-    &atan,
-    payload.config.precision,
-    payload.config.rounding_mode,
-  )))
+  Ok(Value::Number(
+    pi_div_2.sub(&argument.atan(payload.config), payload.config),
+  ))
 }
 
 fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `acsc` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "acsc", 1)?;
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument.abs() < Float::from(1.0) {
+  if argument.abs() < Number::from_i64(1) {
     return Err(Error::new(
       payload.span,
       "acsc argument must have absolute value at least 1",
     ));
   }
 
-  let reciprocal = Float::from(1.0).div(
-    &argument,
-    payload.config.precision,
-    payload.config.rounding_mode,
-  );
+  let reciprocal = Number::one().div(&argument, payload.config);
 
-  let result = with_consts(|consts| {
-    reciprocal.asin(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(reciprocal.asin(payload.config)))
 }
 
 fn append<'a>(
   payload: &BuiltinFunctionPayload<'a>,
 ) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `append` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "append", 2)?;
 
   let mut list = payload.arguments[0].list(payload.span)?;
 
-  let value = payload.arguments[1].clone();
-
-  list.push(value);
+  list.push(payload.arguments[1].clone());
 
   Ok(Value::List(list))
 }
 
 fn arc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `arc` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "arc", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
-
-  let result = with_consts(|consts| {
-    argument.atan(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .atan(payload.config),
+  ))
 }
 
 fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `asec` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "asec", 1)?;
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument.abs() < Float::from(1.0) {
+  if argument.abs() < Number::from_i64(1) {
     return Err(Error::new(
       payload.span,
       "asec argument must have absolute value at least 1",
     ));
   }
 
-  let reciprocal = Float::from(1.0).div(
-    &argument,
-    payload.config.precision,
-    payload.config.rounding_mode,
-  );
+  let reciprocal = Number::one().div(&argument, payload.config);
 
-  let result = with_consts(|consts| {
-    reciprocal.acos(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(reciprocal.acos(payload.config)))
 }
 
 fn asin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `asin` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "asin", 1)?;
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument < Float::from(-1.0) || argument > Float::from(1.0) {
+  if argument < Number::from_i64(-1) || argument > Number::from_i64(1) {
     return Err(Error::new(
       payload.span,
       "asin argument must be between -1 and 1",
     ));
   }
 
-  let result = with_consts(|consts| {
-    argument.asin(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(argument.asin(payload.config)))
 }
 
 fn r#bool<'a>(
   payload: &BuiltinFunctionPayload<'a>,
 ) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `bool` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "bool", 1)?;
 
   let value = &payload.arguments[0];
 
@@ -436,272 +306,114 @@ fn r#bool<'a>(
 }
 
 fn ceil<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `ceil` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "ceil", 1)?;
 
   Ok(Value::Number(
     payload.arguments[0].number(payload.span)?.ceil(),
   ))
 }
 
-fn constant_e(config: &Config) -> Value<'static> {
-  Value::Number(with_consts(|consts| {
-    consts.e(config.precision, config.rounding_mode)
-  }))
+fn constant_e(config: Config) -> Value<'static> {
+  Value::Number(Number::e(config))
 }
 
-fn constant_phi(config: &Config) -> Value<'static> {
-  Value::Number(Float::from_f64(1.618_033_988_749_895_f64, config.precision))
+fn constant_phi(config: Config) -> Value<'static> {
+  Value::Number(Number::phi(config))
 }
 
-fn constant_pi(config: &Config) -> Value<'static> {
-  Value::Number(with_consts(|consts| {
-    consts.pi(config.precision, config.rounding_mode)
-  }))
+fn constant_pi(config: Config) -> Value<'static> {
+  Value::Number(Number::pi(config))
 }
 
-fn constant_tau(config: &Config) -> Value<'static> {
-  let pi =
-    with_consts(|consts| consts.pi(config.precision, config.rounding_mode));
-
-  Value::Number(pi.mul(
-    &Float::from(2.0),
-    config.precision,
-    config.rounding_mode,
-  ))
+fn constant_tau(config: Config) -> Value<'static> {
+  Value::Number(Number::tau(config))
 }
 
 fn cos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `cos` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "cos", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
-
-  let result = with_consts(|consts| {
-    argument.cos(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .cos(payload.config),
+  ))
 }
 
 fn cosh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `cosh` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "cosh", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
-
-  let result = with_consts(|consts| {
-    argument.cosh(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .cosh(payload.config),
+  ))
 }
 
 fn cot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `cot` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "cot", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
+  let tan = payload.arguments[0]
+    .number(payload.span)?
+    .tan(payload.config);
 
-  let tan_val = with_consts(|consts| {
-    argument.tan(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  if tan_val.is_zero() {
+  if tan.is_zero() {
     return Err(Error::new(
       payload.span,
       "Cannot compute cot of multiple of π",
     ));
   }
 
-  Ok(Value::Number(Float::from(1.0).div(
-    &tan_val,
-    payload.config.precision,
-    payload.config.rounding_mode,
-  )))
+  Ok(Value::Number(Number::one().div(&tan, payload.config)))
 }
 
 fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `csc` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "csc", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
+  let sin = payload.arguments[0]
+    .number(payload.span)?
+    .sin(payload.config);
 
-  let sin_val = with_consts(|consts| {
-    argument.sin(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  if sin_val.is_zero() {
+  if sin.is_zero() {
     return Err(Error::new(
       payload.span,
       "Cannot compute csc of multiple of π",
     ));
   }
 
-  Ok(Value::Number(Float::from(1.0).div(
-    &sin_val,
-    payload.config.precision,
-    payload.config.rounding_mode,
-  )))
+  Ok(Value::Number(Number::one().div(&sin, payload.config)))
 }
 
 fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `e` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "e", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
-
-  let result = with_consts(|consts| {
-    argument.exp(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .exp(payload.config),
+  ))
 }
 
 fn exit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.is_empty() {
-    process::exit(0);
-  }
-
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `exit` expects 0 or 1 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
-  let code = match payload.arguments[0]
-    .number(payload.span)?
-    .to_f64(payload.config.rounding_mode)
-  {
-    Some(n) => finite_non_negative_usize(n),
-    None => None,
-  };
-
-  let Some(code) = code else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `exit` must be a non-negative finite number",
-    ));
-  };
-
-  let Ok(code) = i32::try_from(code) else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `exit` must fit in a 32-bit signed integer",
-    ));
-  };
-
-  process::exit(code);
-}
-
-fn finite_i64(number: f64) -> Option<i64> {
-  if number.is_finite() && number.fract() == 0.0 {
-    format!("{number:.0}").parse().ok()
-  } else {
-    None
-  }
-}
-
-fn finite_non_negative_usize(number: f64) -> Option<usize> {
-  if number.is_finite() && number >= 0.0 {
-    let number = number.trunc();
-    format!("{number:.0}").parse().ok()
-  } else {
-    None
-  }
+  exit_or_quit(payload, "exit")
 }
 
 fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `float` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "float", 1)?;
 
   let value = &payload.arguments[0];
 
   match value {
-    Value::Number(n) => Ok(Value::Number(n.clone())),
-    Value::String(s) => match s.trim().parse::<f64>() {
-      Ok(n) => Ok(Value::Number(Float::from(n))),
-      Err(_) => Err(Error::new(
-        payload.span,
-        format!("Cannot convert '{s}' to float"),
-      )),
-    },
-    Value::Boolean(b) => {
-      Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
+    Value::Number(number) => {
+      Ok(Value::Number(number.to_approx(payload.config)))
     }
+    Value::String(s) => Number::parse_decimal(s)
+      .map(|number| Value::Number(number.to_approx(payload.config)))
+      .ok_or_else(|| {
+        Error::new(payload.span, format!("Cannot convert '{s}' to float"))
+      }),
+    Value::Boolean(b) => Ok(Value::Number(
+      Number::from_bool(*b).to_approx(payload.config),
+    )),
     _ => Err(Error::new(
       payload.span,
       format!("Cannot convert {} to float", value.type_name()),
@@ -710,15 +422,7 @@ fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn floor<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `floor` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "floor", 1)?;
 
   Ok(Value::Number(
     payload.arguments[0].number(payload.span)?.floor(),
@@ -726,29 +430,12 @@ fn floor<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn gcd<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `gcd` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "gcd", 2)?;
 
-  let a = payload.arguments[0].number(payload.span)?;
-  let b = payload.arguments[1].number(payload.span)?;
+  let a = integer_argument(payload, "gcd", 0)?.abs();
+  let b = integer_argument(payload, "gcd", 1)?.abs();
 
-  let mut x = a.abs();
-  let mut y = b.abs();
-
-  while !y.is_zero() {
-    let remainder = x.rem(&y);
-    x = y;
-    y = remainder;
-  }
-
-  Ok(Value::Number(x))
+  Ok(Value::Number(Number::from_integer(a.gcd(&b))))
 }
 
 fn input<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -793,30 +480,18 @@ fn input<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `int` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "int", 1)?;
 
   let value = &payload.arguments[0];
 
   match value {
-    Value::Number(n) => Ok(Value::Number(n.floor())),
-    Value::String(s) => match s.trim().parse::<f64>() {
-      Ok(n) => Ok(Value::Number(Float::from(n).floor())),
-      Err(_) => Err(Error::new(
-        payload.span,
-        format!("Cannot convert '{s}' to int"),
-      )),
-    },
-    Value::Boolean(b) => {
-      Ok(Value::Number(Float::from(if *b { 1.0 } else { 0.0 })))
-    }
+    Value::Number(number) => Ok(Value::Number(number.floor())),
+    Value::String(s) => Number::parse_decimal(s)
+      .map(|number| Value::Number(number.floor()))
+      .ok_or_else(|| {
+        Error::new(payload.span, format!("Cannot convert '{s}' to int"))
+      }),
+    Value::Boolean(b) => Ok(Value::Number(Number::from_bool(*b))),
     _ => Err(Error::new(
       payload.span,
       format!("Cannot convert {} to int", value.type_name()),
@@ -825,15 +500,7 @@ fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `join` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "join", 2)?;
 
   let list = payload.arguments[0].list(payload.span)?;
 
@@ -852,61 +519,22 @@ fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn lcm<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `lcm` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "lcm", 2)?;
 
-  let a = payload.arguments[0].number(payload.span)?;
-  let b = payload.arguments[1].number(payload.span)?;
+  let a = integer_argument(payload, "lcm", 0)?.abs();
+  let b = integer_argument(payload, "lcm", 1)?.abs();
 
-  if a.is_zero() || b.is_zero() {
-    return Ok(Value::Number(Float::from(0)));
-  }
-
-  let mut x = a.abs();
-  let mut y = b.abs();
-
-  let product =
-    x.mul(&y, payload.config.precision, payload.config.rounding_mode);
-
-  while !y.is_zero() {
-    let remainder = x.rem(&y);
-    x = y;
-    y = remainder;
-  }
-
-  let lcm =
-    product.div(&x, payload.config.precision, payload.config.rounding_mode);
-
-  Ok(Value::Number(lcm))
+  Ok(Value::Number(Number::from_integer(a.lcm(&b))))
 }
 
 fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `len` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "len", 1)?;
 
   let value = &payload.arguments[0];
 
   match value {
-    Value::String(s) => len_to_float(s.len())
-      .map(Value::Number)
-      .ok_or_else(|| Error::new(payload.span, "String length is too large")),
-    Value::List(items) => len_to_float(items.len())
-      .map(Value::Number)
-      .ok_or_else(|| Error::new(payload.span, "List length is too large")),
+    Value::String(s) => Ok(Value::Number(Number::from_usize(s.len()))),
+    Value::List(items) => Ok(Value::Number(Number::from_usize(items.len()))),
     _ => Err(Error::new(
       payload.span,
       format!("Cannot get length of {}", value.type_name()),
@@ -914,20 +542,8 @@ fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 }
 
-fn len_to_float(len: usize) -> Option<Float> {
-  i64::try_from(len).ok().map(Float::from)
-}
-
 fn list<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `list` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "list", 1)?;
 
   let value = &payload.arguments[0];
 
@@ -943,15 +559,7 @@ fn list<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn ln<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function 'ln' expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "ln", 1)?;
 
   let number = payload.arguments[0].number(payload.span)?;
 
@@ -962,27 +570,11 @@ fn ln<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let result = with_consts(|consts| {
-    number.ln(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(number.ln(payload.config)))
 }
 
 fn log10<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `log10` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "log10", 1)?;
 
   let number = payload.arguments[0].number(payload.span)?;
 
@@ -993,27 +585,11 @@ fn log10<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let result = with_consts(|consts| {
-    number.log10(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(number.log10(payload.config)))
 }
 
 fn log2<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `log2` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "log2", 1)?;
 
   let number = payload.arguments[0].number(payload.span)?;
 
@@ -1024,15 +600,7 @@ fn log2<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let result = with_consts(|consts| {
-    number.log2(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(number.log2(payload.config)))
 }
 
 fn print<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -1068,68 +636,20 @@ fn println<'a>(
 }
 
 fn quit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.is_empty() {
-    process::exit(0);
-  }
-
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `quit` expects 0 or 1 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
-  let code = match payload.arguments[0]
-    .number(payload.span)?
-    .to_f64(payload.config.rounding_mode)
-  {
-    Some(n) => finite_non_negative_usize(n),
-    None => None,
-  };
-
-  let Some(code) = code else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `quit` must be a non-negative finite number",
-    ));
-  };
-
-  let Ok(code) = i32::try_from(code) else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `quit` must fit in a 32-bit signed integer",
-    ));
-  };
-
-  process::exit(code);
+  exit_or_quit(payload, "quit")
 }
 
 fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 && payload.arguments.len() != 3 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `range` expects 2 or 3 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count_between(payload, "range", 2, 3)?;
 
   let mut numbers = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
-    let number = argument
-      .number(payload.span)?
-      .to_f64(payload.config.rounding_mode);
-
-    match number.and_then(finite_i64) {
+    match argument.number(payload.span)?.to_i64() {
       Some(number) => {
         numbers.push(number);
       }
-      _ => {
+      None => {
         return Err(Error::new(
           payload.span,
           "Arguments to `range` must be finite integers",
@@ -1139,12 +659,7 @@ fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 
   let (start, end) = (numbers[0], numbers[1]);
-
-  let step = if let Some(step) = numbers.get(2) {
-    *step
-  } else {
-    1
-  };
+  let step = numbers.get(2).copied().unwrap_or(1);
 
   if step == 0 {
     return Err(Error::new(
@@ -1153,115 +668,60 @@ fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let (mut current, mut result) = (start, Vec::new());
+  let mut current = start;
+  let mut result = Vec::new();
 
   while if step > 0 {
     current < end
   } else {
     current > end
   } {
-    result.push(Value::Number(Float::from(current)));
-    current = match current.checked_add(step) {
-      Some(current) => current,
-      None => {
-        return Err(Error::new(payload.span, "`range` overflowed"));
-      }
-    };
+    result.push(Value::Number(Number::from_i64(current)));
+
+    current = current
+      .checked_add(step)
+      .ok_or_else(|| Error::new(payload.span, "`range` overflowed"))?;
   }
 
   Ok(Value::List(result))
 }
 
 fn sec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sec` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "sec", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
+  let cos = payload.arguments[0]
+    .number(payload.span)?
+    .cos(payload.config);
 
-  let cos_val = with_consts(|consts| {
-    argument.cos(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  if cos_val.is_zero() {
+  if cos.is_zero() {
     return Err(Error::new(payload.span, "Cannot compute sec of π/2 + nπ"));
   }
 
-  Ok(Value::Number(Float::from(1.0).div(
-    &cos_val,
-    payload.config.precision,
-    payload.config.rounding_mode,
-  )))
+  Ok(Value::Number(Number::one().div(&cos, payload.config)))
 }
 
 fn sin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sin` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "sin", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
-
-  let result = with_consts(|consts| {
-    argument.sin(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .sin(payload.config),
+  ))
 }
 
 fn sinh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sinh` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "sinh", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
-
-  let result = with_consts(|consts| {
-    argument.sinh(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .sinh(payload.config),
+  ))
 }
 
 fn split<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `split` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "split", 2)?;
 
   let string = payload.arguments[0].string(payload.span)?;
 
@@ -1277,15 +737,7 @@ fn split<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn sqrt<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sqrt` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "sqrt", 1)?;
 
   let number = payload.arguments[0].number(payload.span)?;
 
@@ -1296,10 +748,7 @@ fn sqrt<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  Ok(Value::Number(number.sqrt(
-    payload.config.precision,
-    payload.config.rounding_mode,
-  )))
+  Ok(Value::Number(number.sqrt(payload.config)))
 }
 
 fn sum<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -1310,81 +759,137 @@ fn sum<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sum` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "sum", 1)?;
 
   let list = payload.arguments[0].list(payload.span)?;
 
-  if list.is_empty() {
-    return Ok(Value::Number(Float::from(0.0)));
-  }
+  let mut sum = Number::zero();
 
-  let mut sum = list[0].number(payload.span)?;
-
-  for val in list.iter().skip(1) {
-    sum = sum.add(
-      &val.number(payload.span)?,
-      payload.config.precision,
-      payload.config.rounding_mode,
-    );
+  for value in list {
+    sum = sum.add(&value.number(payload.span)?, payload.config);
   }
 
   Ok(Value::Number(sum))
 }
 
 fn tan<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `tan` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
+  expect_count(payload, "tan", 1)?;
 
-  let argument = payload.arguments[0].number(payload.span)?;
-
-  let result = with_consts(|consts| {
-    argument.tan(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
-
-  Ok(Value::Number(result))
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .tan(payload.config),
+  ))
 }
 
 fn tanh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
+  expect_count(payload, "tanh", 1)?;
+
+  Ok(Value::Number(
+    payload.arguments[0]
+      .number(payload.span)?
+      .tanh(payload.config),
+  ))
+}
+
+fn exact_integer_argument(
+  payload: &BuiltinFunctionPayload<'_>,
+  function: &str,
+  index: usize,
+) -> Result<Integer, Error> {
+  payload.arguments[index]
+    .number(payload.span)?
+    .to_integer()
+    .ok_or_else(|| {
+      Error::new(
+        payload.span,
+        format!("Arguments to `{function}` must be finite integers"),
+      )
+    })
+}
+
+fn exit_or_quit<'a>(
+  payload: &BuiltinFunctionPayload<'a>,
+  name: &str,
+) -> Result<Value<'a>, Error> {
+  if payload.arguments.is_empty() {
+    process::exit(0);
+  }
+
   if payload.arguments.len() != 1 {
     return Err(Error::new(
       payload.span,
       format!(
-        "Function `tanh` expects 1 argument, got {}",
+        "Function `{name}` expects 0 or 1 arguments, got {}",
         payload.arguments.len()
       ),
     ));
   }
 
-  let argument = payload.arguments[0].number(payload.span)?;
+  let Some(code) = payload.arguments[0]
+    .number(payload.span)?
+    .to_non_negative_usize()
+  else {
+    return Err(Error::new(
+      payload.span,
+      format!("Argument to `{name}` must be a non-negative finite number"),
+    ));
+  };
 
-  let result = with_consts(|consts| {
-    argument.tanh(
-      payload.config.precision,
-      payload.config.rounding_mode,
-      consts,
-    )
-  });
+  let Ok(code) = i32::try_from(code) else {
+    return Err(Error::new(
+      payload.span,
+      format!("Argument to `{name}` must fit in a 32-bit signed integer"),
+    ));
+  };
 
-  Ok(Value::Number(result))
+  process::exit(code);
+}
+
+fn expect_count(
+  payload: &BuiltinFunctionPayload<'_>,
+  name: &str,
+  expected: usize,
+) -> Result<(), Error> {
+  if payload.arguments.len() != expected {
+    return Err(Error::new(
+      payload.span,
+      format!(
+        "Function `{name}` expects {expected} argument{}, got {}",
+        if expected == 1 { "" } else { "s" },
+        payload.arguments.len()
+      ),
+    ));
+  }
+
+  Ok(())
+}
+
+fn expect_count_between(
+  payload: &BuiltinFunctionPayload<'_>,
+  name: &str,
+  min: usize,
+  max: usize,
+) -> Result<(), Error> {
+  if payload.arguments.len() < min || payload.arguments.len() > max {
+    return Err(Error::new(
+      payload.span,
+      format!(
+        "Function `{name}` expects {min} or {max} arguments, got {}",
+        payload.arguments.len()
+      ),
+    ));
+  }
+
+  Ok(())
+}
+
+fn integer_argument(
+  payload: &BuiltinFunctionPayload<'_>,
+  function: &str,
+  index: usize,
+) -> Result<Integer, Error> {
+  exact_integer_argument(payload, function, index)
 }
 
 #[cfg(test)]

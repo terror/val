@@ -41,7 +41,7 @@ pub(crate) struct Arguments {
     default_value = "1024",
     help = "Binary precision (bits) to use for calculations"
   )]
-  precision: usize,
+  precision: u32,
 
   #[clap(
     short,

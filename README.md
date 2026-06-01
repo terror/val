@@ -194,9 +194,10 @@ complex operations:
 
 #### Number
 
-Numeric values are represented as arbitrary precision floating point numbers (using
-[astro_float](https://docs.rs/astro-float/latest/astro_float/index.html) under
-the hood):
+Numeric values are represented exactly as rational numbers where possible, using
+[`rug::Rational`](https://docs.rs/rug/latest/rug/struct.Rational.html).
+Approximate math, such as trigonometric functions, logarithms, exponentials, and
+constants like `pi`, uses [`rug::Float`](https://docs.rs/rug/latest/rug/struct.Float.html):
 
 ```rust
 > pi
@@ -209,10 +210,12 @@ the hood):
 ```
 
 You can specify the rounding mode, and what sort of precision you'd like to see
-in the output by using the `--rounding-mode` and `--precision` options (note
-that `--precision` controls binary precision, measured in bits, not decimal
-digits).
-respectively.
+for approximate calculations by using the `--rounding-mode` and `--precision`
+options. `--precision` controls binary precision, measured in bits, not decimal
+digits.
+
+The `rug` backend uses GMP and MPFR through `gmp-mpfr-sys`, so browser WASM
+builds need separate handling from the native CLI build.
 
 #### Boolean
 

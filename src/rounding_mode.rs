@@ -1,14 +1,12 @@
-use super::*;
+use {super::*, rug::float::Round};
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub enum RoundingMode {
-  Down = 4,
-  FromZero = 16,
-  None = 1,
-  ToEven = 32,
-  ToOdd = 64,
-  ToZero = 8,
-  Up = 2,
+  Down,
+  FromZero,
+  ToEven,
+  ToZero,
+  Up,
 }
 
 impl Display for RoundingMode {
@@ -16,9 +14,7 @@ impl Display for RoundingMode {
     let s = match self {
       RoundingMode::Down => "down",
       RoundingMode::FromZero => "from-zero",
-      RoundingMode::None => "none",
       RoundingMode::ToEven => "to-even",
-      RoundingMode::ToOdd => "to-odd",
       RoundingMode::ToZero => "to-zero",
       RoundingMode::Up => "up",
     };
@@ -34,11 +30,9 @@ impl FromStr for RoundingMode {
       "down" => Ok(RoundingMode::Down),
       "fromzero" | "from_zero" | "from-zero" | "away_from_zero"
       | "away-from-zero" => Ok(RoundingMode::FromZero),
-      "none" => Ok(RoundingMode::None),
       "toeven" | "to_even" | "to-even" | "nearest_even" | "bankers" => {
         Ok(RoundingMode::ToEven)
       }
-      "toodd" | "to_odd" | "to-odd" | "nearest_odd" => Ok(RoundingMode::ToOdd),
       "tozero" | "to_zero" | "to-zero" | "toward_zero" | "toward-zero" => {
         Ok(RoundingMode::ToZero)
       }
@@ -48,16 +42,14 @@ impl FromStr for RoundingMode {
   }
 }
 
-impl From<RoundingMode> for astro_float::RoundingMode {
+impl From<RoundingMode> for Round {
   fn from(mode: RoundingMode) -> Self {
     match mode {
-      RoundingMode::Down => astro_float::RoundingMode::Down,
-      RoundingMode::FromZero => astro_float::RoundingMode::FromZero,
-      RoundingMode::None => astro_float::RoundingMode::None,
-      RoundingMode::ToEven => astro_float::RoundingMode::ToEven,
-      RoundingMode::ToOdd => astro_float::RoundingMode::ToOdd,
-      RoundingMode::ToZero => astro_float::RoundingMode::ToZero,
-      RoundingMode::Up => astro_float::RoundingMode::Up,
+      RoundingMode::Down => Round::Down,
+      RoundingMode::FromZero => Round::AwayZero,
+      RoundingMode::ToEven => Round::Nearest,
+      RoundingMode::ToZero => Round::Zero,
+      RoundingMode::Up => Round::Up,
     }
   }
 }

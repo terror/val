@@ -6,7 +6,7 @@ pub enum Value<'src> {
   Function(Function<'src>),
   List(Vec<Self>),
   Null,
-  Number(Float),
+  Number(Number),
   String(&'src str),
 }
 
@@ -73,7 +73,7 @@ impl<'a> Value<'a> {
     }
   }
 
-  pub(crate) fn number(&self, span: Span) -> Result<Float, Error> {
+  pub(crate) fn number(&self, span: Span) -> Result<Number, Error> {
     if let Value::Number(x) = self {
       Ok(x.clone())
     } else {
