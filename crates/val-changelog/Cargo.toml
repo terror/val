@@ -1,0 +1,11 @@
+[package]
+name = "val-changelog"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+regex = "1.12.3"
+
+[lints]
+workspace = true
