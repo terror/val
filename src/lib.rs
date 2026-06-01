@@ -4,6 +4,7 @@ use {
   builtins::BUILTINS,
   chumsky::prelude::*,
   context::Context,
+  decimal::Decimal,
   rug::{
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
@@ -44,6 +45,7 @@ mod builtins;
 mod completion;
 mod config;
 mod context;
+mod decimal;
 mod environment;
 mod error;
 mod evaluator;

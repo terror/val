@@ -92,44 +92,26 @@ impl Number {
 
   #[must_use]
   pub fn display(&self) -> String {
-    match self {
-      Self::Approx(number) => Self::display_float(number),
-      Self::Exact(number) => Self::display_rational(number),
-    }
+    self.to_string()
   }
 
   fn display_float(number: &Float) -> String {
-    if number.is_nan() {
-      return "nan".into();
+    let (negative, digits, point) =
+      number.to_sign_string_exp_round(10, None, Round::Nearest);
+
+    match point {
+      Some(point) => {
+        Decimal::new(digits, negative, i64::from(point)).into_string()
+      }
+      None if digits == "0" || digits == "NaN" => digits.to_lowercase(),
+      None if negative => format!("-{digits}"),
+      None => digits,
     }
-
-    if number.is_infinite() {
-      return if number.is_sign_negative() {
-        "-inf".into()
-      } else {
-        "inf".into()
-      };
-    }
-
-    if number.is_zero() {
-      return "0".into();
-    }
-
-    let formatted = number.to_string_radix_round(10, None, Round::Nearest);
-
-    Self::format_decimal_string(&formatted)
   }
 
   fn display_rational(number: &Rational) -> String {
-    if number.is_integer() {
-      return number.numer().to_string();
-    }
-
-    if let Some(decimal) = Self::terminating_decimal(number) {
-      return decimal;
-    }
-
-    format!("{}/{}", number.numer(), number.denom())
+    Decimal::from_rational(number)
+      .map_or_else(|| number.to_string(), Decimal::into_string)
   }
 
   #[must_use]
@@ -166,65 +148,6 @@ impl Number {
       Self::Approx(number) => Self::Approx(number.clone().floor()),
       Self::Exact(number) => Self::Exact(number.clone().floor()),
     }
-  }
-
-  fn format_decimal_string(formatted: &str) -> String {
-    let Some((mantissa_with_sign, exponent_str)) = formatted.split_once('e')
-    else {
-      return Self::trim_decimal_zeros(formatted.to_owned());
-    };
-
-    let Ok(exponent) = exponent_str.parse::<i32>() else {
-      return Self::trim_decimal_zeros(formatted.to_owned());
-    };
-
-    let (sign, mantissa) =
-      if let Some(rest) = mantissa_with_sign.strip_prefix('-') {
-        ("-", rest)
-      } else if let Some(rest) = mantissa_with_sign.strip_prefix('+') {
-        ("", rest)
-      } else {
-        ("", mantissa_with_sign)
-      };
-
-    let mut parts = mantissa.split('.');
-    let int_part = parts.next().unwrap_or("");
-    let frac_part = parts.next().unwrap_or("");
-
-    let digits = format!("{int_part}{frac_part}");
-
-    let Ok(int_length) = i32::try_from(int_part.len()) else {
-      return Self::trim_decimal_zeros(formatted.to_owned());
-    };
-
-    let length = int_length + exponent;
-
-    let Ok(digits_len) = i32::try_from(digits.len()) else {
-      return Self::trim_decimal_zeros(formatted.to_owned());
-    };
-
-    let result = if length <= 0 {
-      let Ok(zeros) = usize::try_from(-length) else {
-        return Self::trim_decimal_zeros(formatted.to_owned());
-      };
-
-      format!("{sign}0.{}{}", "0".repeat(zeros), digits)
-    } else if length >= digits_len {
-      let Ok(zeros) = usize::try_from(length - digits_len) else {
-        return Self::trim_decimal_zeros(formatted.to_owned());
-      };
-
-      format!("{sign}{digits}{}", "0".repeat(zeros))
-    } else {
-      let Ok(split_at) = usize::try_from(length) else {
-        return Self::trim_decimal_zeros(formatted.to_owned());
-      };
-
-      let (left, right) = digits.split_at(split_at);
-      format!("{sign}{left}.{right}")
-    };
-
-    Self::trim_decimal_zeros(result)
   }
 
   #[must_use]
@@ -456,59 +379,6 @@ impl Number {
     Self::pi(config).mul(&Self::from_i64(2), config)
   }
 
-  fn terminating_decimal(number: &Rational) -> Option<String> {
-    let numerator = number.numer().clone();
-    let denominator = number.denom().clone();
-    let mut reduced = denominator.clone();
-    let mut twos = 0usize;
-    let mut fives = 0usize;
-
-    while reduced.is_divisible_u(2) {
-      reduced /= 2;
-      twos += 1;
-    }
-
-    while reduced.is_divisible_u(5) {
-      reduced /= 5;
-      fives += 1;
-    }
-
-    if reduced != 1 {
-      return None;
-    }
-
-    let places = twos.max(fives);
-    let mut scaled = numerator;
-
-    for _ in 0..places - twos {
-      scaled *= 2;
-    }
-
-    for _ in 0..places - fives {
-      scaled *= 5;
-    }
-
-    let negative = scaled.is_negative();
-
-    if negative {
-      scaled = -scaled;
-    }
-
-    let mut digits = scaled.to_string();
-
-    if digits.len() <= places {
-      digits = format!("{}{}", "0".repeat(places - digits.len() + 1), digits);
-    }
-
-    let split_at = digits.len() - places;
-    let (integer, fraction) = digits.split_at(split_at);
-    let sign = if negative { "-" } else { "" };
-
-    Some(Self::trim_decimal_zeros(format!(
-      "{sign}{integer}.{fraction}"
-    )))
-  }
-
   #[must_use]
   pub fn to_approx(&self, config: Config) -> Self {
     Self::Approx(self.to_float(config))
@@ -562,23 +432,18 @@ impl Number {
     }
   }
 
-  fn trim_decimal_zeros(mut result: String) -> String {
-    if result.contains('.') {
-      while result.ends_with('0') {
-        result.pop();
-      }
-
-      if result.ends_with('.') {
-        result.pop();
-      }
-    }
-
-    result
-  }
-
   #[must_use]
   pub fn zero() -> Self {
     Self::from_i64(0)
+  }
+}
+
+impl Display for Number {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      Self::Approx(number) => f.write_str(&Self::display_float(number)),
+      Self::Exact(number) => f.write_str(&Self::display_rational(number)),
+    }
   }
 }
 
@@ -605,23 +470,24 @@ impl PartialOrd for Number {
 
 #[cfg(test)]
 mod tests {
-  use {super::*, pretty_assertions::assert_eq};
+  use {super::*, pretty_assertions::assert_eq, rug::float::Special};
 
   #[test]
-  fn display_exact() {
+  fn display_approx() {
     #[track_caller]
-    fn case(input: &str, expected: &str) {
-      assert_eq!(Number::parse_decimal(input).unwrap().display(), expected);
+    fn case(number: Float, expected: &str) {
+      let number = Number::Approx(number);
+
+      assert_eq!(number.to_string(), expected);
+      assert_eq!(number.display(), expected);
     }
 
-    case("123", "123");
-    case("12.34", "12.34");
-    case("0.001", "0.001");
-
-    let third =
-      Number::from_i64(1).div(&Number::from_i64(3), Config::default());
-
-    assert_eq!(third.display(), "1/3");
+    case(Float::with_val(8, 23), "23");
+    case(Float::with_val(8, -0.0625), "-0.0625");
+    case(Float::with_val(8, 4.8e4), "48130");
+    case(Float::with_val(8, Special::Infinity), "inf");
+    case(Float::with_val(8, Special::NegInfinity), "-inf");
+    case(Float::with_val(8, Special::Nan), "nan");
   }
 
   #[test]
