@@ -3,6 +3,7 @@ use {
   ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   builtins::BUILTINS,
   chumsky::prelude::*,
+  context::Context,
   rug::{
     Complete, Float, Integer, Rational,
     float::{Constant, Round},

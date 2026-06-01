@@ -1,4 +1,4 @@
-use {super::*, crate::context::Context};
+use super::*;
 
 pub struct Evaluator<'a> {
   pub(crate) context: Context,
@@ -147,7 +147,6 @@ impl<'a> Evaluator<'a> {
 
     match node {
       Expression::BinaryOp(BinaryOp::Add, lhs, rhs) => {
-        let config = self.environment.config;
         let (lhs_val, rhs_val) = (
           self.evaluate_expression(lhs)?,
           self.evaluate_expression(rhs)?,
@@ -155,7 +154,7 @@ impl<'a> Evaluator<'a> {
 
         match (&lhs_val, &rhs_val) {
           (Value::Number(a), Value::Number(b)) => {
-            Ok(Value::Number(a.add(b, config)))
+            Ok(Value::Number(a.add(b, self.environment.config)))
           }
           (Value::String(a), Value::String(b)) => {
             Ok(Value::String(Box::leak(format!("{a}{b}").into_boxed_str())))
@@ -172,12 +171,13 @@ impl<'a> Evaluator<'a> {
             Ok(Value::List(result))
           }
           _ => Ok(Value::Number(
-            lhs_val.number(lhs.1)?.add(&rhs_val.number(rhs.1)?, config),
+            lhs_val
+              .number(lhs.1)?
+              .add(&rhs_val.number(rhs.1)?, self.environment.config),
           )),
         }
       }
       Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
-        let config = self.environment.config;
         let (lhs_val, rhs_val) = (
           self.evaluate_expression(lhs)?,
           self.evaluate_expression(rhs)?,
@@ -190,7 +190,9 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(rhs.1, "Division by zero"));
         }
 
-        Ok(Value::Number(lhs_num.div(&rhs_num, config)))
+        Ok(Value::Number(
+          lhs_num.div(&rhs_num, self.environment.config),
+        ))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.evaluate_expression(lhs)? == self.evaluate_expression(rhs)?,
@@ -251,7 +253,6 @@ impl<'a> Evaluator<'a> {
         ))
       }
       Expression::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
-        let config = self.environment.config;
         let (lhs_val, rhs_val) = (
           self.evaluate_expression(lhs)?,
           self.evaluate_expression(rhs)?,
@@ -264,7 +265,9 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(rhs.1, "Modulo by zero"));
         }
 
-        Ok(Value::Number(lhs_num.rem(&rhs_num, config)))
+        Ok(Value::Number(
+          lhs_num.rem(&rhs_num, self.environment.config),
+        ))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
@@ -276,7 +279,6 @@ impl<'a> Evaluator<'a> {
         self.evaluate_expression(lhs)? != self.evaluate_expression(rhs)?,
       )),
       Expression::BinaryOp(BinaryOp::Power, lhs, rhs) => {
-        let config = self.environment.config;
         let (lhs_val, rhs_val) = (
           self.evaluate_expression(lhs)?,
           self.evaluate_expression(rhs)?,
@@ -285,7 +287,9 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        Ok(Value::Number(lhs_num.pow(&rhs_num, config)))
+        Ok(Value::Number(
+          lhs_num.pow(&rhs_num, self.environment.config),
+        ))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
