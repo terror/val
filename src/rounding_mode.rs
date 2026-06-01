@@ -1,4 +1,4 @@
-use {super::*, rug::float::Round};
+use super::*;
 
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub enum RoundingMode {
@@ -11,14 +11,17 @@ pub enum RoundingMode {
 
 impl Display for RoundingMode {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    let s = match self {
-      RoundingMode::Down => "down",
-      RoundingMode::FromZero => "from-zero",
-      RoundingMode::ToEven => "to-even",
-      RoundingMode::ToZero => "to-zero",
-      RoundingMode::Up => "up",
-    };
-    write!(f, "{s}")
+    write!(
+      f,
+      "{}",
+      match self {
+        RoundingMode::Down => "down",
+        RoundingMode::FromZero => "from-zero",
+        RoundingMode::ToEven => "to-even",
+        RoundingMode::ToZero => "to-zero",
+        RoundingMode::Up => "up",
+      }
+    )
   }
 }
 

@@ -5,6 +5,7 @@ use {
   highlighter::Highlighter,
   regex::Regex,
   rounding_mode::RoundingMode,
+  rug::float::Round,
   rustyline::{
     Context, Editor, Helper,
     completion::{Completer, FilenameCompleter, Pair},
