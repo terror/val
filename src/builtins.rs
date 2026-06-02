@@ -208,7 +208,7 @@ fn acos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument < Number::from_i64(-1) || argument > Number::from_i64(1) {
+  if argument < Number::from(-1_i64) || argument > Number::from(1_i64) {
     return Err(Error::new(
       payload.span,
       "acos argument must be between -1 and 1",
@@ -230,8 +230,16 @@ fn acot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 
   let argument = payload.arguments[0].number(payload.span)?;
-  let pi_div_2 =
-    Number::pi(payload.config).div(&Number::from_i64(2), payload.config);
+
+  let pi_div_2 = Number::Approx(
+    Float::with_val_round(
+      payload.config.precision,
+      Constant::Pi,
+      payload.config.rounding_mode,
+    )
+    .0,
+  )
+  .div(&Number::from(2_i64), payload.config);
 
   Ok(Value::Number(
     pi_div_2.sub(&argument.atan(payload.config), payload.config),
@@ -251,7 +259,7 @@ fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument.abs() < Number::from_i64(1) {
+  if argument.abs() < Number::from(1_i64) {
     return Err(Error::new(
       payload.span,
       "acsc argument must have absolute value at least 1",
@@ -314,7 +322,7 @@ fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument.abs() < Number::from_i64(1) {
+  if argument.abs() < Number::from(1_i64) {
     return Err(Error::new(
       payload.span,
       "asec argument must have absolute value at least 1",
@@ -339,7 +347,7 @@ fn asin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument < Number::from_i64(-1) || argument > Number::from_i64(1) {
+  if argument < Number::from(-1_i64) || argument > Number::from(1_i64) {
     return Err(Error::new(
       payload.span,
       "asin argument must be between -1 and 1",
@@ -402,7 +410,10 @@ fn constant_phi(config: Config) -> Value<'static> {
 }
 
 fn constant_pi(config: Config) -> Value<'static> {
-  Value::Number(Number::pi(config))
+  Value::Number(Number::Approx(
+    Float::with_val_round(config.precision, Constant::Pi, config.rounding_mode)
+      .0,
+  ))
 }
 
 fn constant_tau(config: Config) -> Value<'static> {
@@ -570,9 +581,9 @@ fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
       .ok_or_else(|| {
         Error::new(payload.span, format!("Cannot convert '{s}' to float"))
       }),
-    Value::Boolean(b) => Ok(Value::Number(
-      Number::from_bool(*b).to_approx(payload.config),
-    )),
+    Value::Boolean(b) => {
+      Ok(Value::Number(Number::from(*b).to_approx(payload.config)))
+    }
     _ => Err(Error::new(
       payload.span,
       format!("Cannot convert {} to float", value.type_name()),
@@ -624,7 +635,7 @@ fn gcd<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let a = a.abs();
   let b = b.abs();
 
-  Ok(Value::Number(Number::from_integer(a.gcd(&b))))
+  Ok(Value::Number(Number::from(a.gcd(&b))))
 }
 
 fn input<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -688,7 +699,7 @@ fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
       .ok_or_else(|| {
         Error::new(payload.span, format!("Cannot convert '{s}' to int"))
       }),
-    Value::Boolean(b) => Ok(Value::Number(Number::from_bool(*b))),
+    Value::Boolean(b) => Ok(Value::Number(Number::from(*b))),
     _ => Err(Error::new(
       payload.span,
       format!("Cannot convert {} to int", value.type_name()),
@@ -715,7 +726,7 @@ fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     .iter()
     .map(|value| match value {
       Value::String(s) => s.to_string(),
-      _ => value.to_string(),
+      _ => value.display_with_config(payload.config),
     })
     .collect::<Vec<_>>()
     .join(delimiter);
@@ -751,7 +762,7 @@ fn lcm<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let a = a.abs();
   let b = b.abs();
 
-  Ok(Value::Number(Number::from_integer(a.lcm(&b))))
+  Ok(Value::Number(Number::from(a.lcm(&b))))
 }
 
 fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -768,8 +779,8 @@ fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let value = &payload.arguments[0];
 
   match value {
-    Value::String(s) => Ok(Value::Number(Number::from_usize(s.len()))),
-    Value::List(items) => Ok(Value::Number(Number::from_usize(items.len()))),
+    Value::String(s) => Ok(Value::Number(Number::from(s.len()))),
+    Value::List(items) => Ok(Value::Number(Number::from(items.len()))),
     _ => Err(Error::new(
       payload.span,
       format!("Cannot get length of {}", value.type_name()),
@@ -876,7 +887,7 @@ fn print<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
-    output_strings.push(format!("{argument}"));
+    output_strings.push(argument.display_with_config(payload.config));
   }
 
   write!(std::io::stdout(), "{}", output_strings.join(" "))
@@ -893,7 +904,7 @@ fn println<'a>(
   let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
-    output_strings.push(format!("{argument}"));
+    output_strings.push(argument.display_with_config(payload.config));
   }
 
   writeln!(std::io::stdout(), "{}", output_strings.join(" "))
@@ -982,7 +993,7 @@ fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   } else {
     current > end
   } {
-    result.push(Value::Number(Number::from_i64(current)));
+    result.push(Value::Number(Number::from(current)));
 
     current = current
       .checked_add(step)
@@ -1117,7 +1128,7 @@ fn sum<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let list = payload.arguments[0].list(payload.span)?;
 
-  let mut sum = Number::zero();
+  let mut sum = Number::from(0_i64);
 
   for value in list {
     sum = sum.add(&value.number(payload.span)?, payload.config);

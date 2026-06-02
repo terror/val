@@ -12,25 +12,7 @@ pub enum Value<'src> {
 
 impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Value::Boolean(boolean) => write!(f, "{boolean}"),
-      Value::Function(function) => write!(f, "<function: {}>", function.name()),
-      Value::List(list) => write!(
-        f,
-        "[{}]",
-        list
-          .iter()
-          .map(|item| match item {
-            Value::String(string) => format!("\'{string}\'"),
-            _ => item.to_string(),
-          })
-          .collect::<Vec<_>>()
-          .join(", ")
-      ),
-      Value::Null => write!(f, "null"),
-      Value::Number(number) => write!(f, "{number}"),
-      Value::String(string) => write!(f, "{string}"),
-    }
+    f.write_str(&self.display_with_config(Config::default()))
   }
 }
 
@@ -59,6 +41,28 @@ impl<'a> Value<'a> {
         span,
         message: format!("'{self}' is not a boolean"),
       })
+    }
+  }
+
+  #[must_use]
+  pub fn display_with_config(&self, config: Config) -> String {
+    match self {
+      Value::Boolean(boolean) => boolean.to_string(),
+      Value::Function(function) => format!("<function: {}>", function.name()),
+      Value::List(list) => format!(
+        "[{}]",
+        list
+          .iter()
+          .map(|item| match item {
+            Value::String(string) => format!("\'{string}\'"),
+            _ => item.display_with_config(config),
+          })
+          .collect::<Vec<_>>()
+          .join(", ")
+      ),
+      Value::Null => "null".into(),
+      Value::Number(number) => number.display_with_config(config),
+      Value::String(string) => string.to_string(),
     }
   }
 

@@ -25,12 +25,10 @@ impl Number {
     if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
       Self::Exact((lhs + rhs).complete())
     } else {
-      let lhs = self.to_float(config);
-      let rhs = rhs.to_float(config);
       Self::Approx(
         Float::with_val_round(
           config.precision,
-          &lhs + &rhs,
+          &self.to_float(config) + &rhs.to_float(config),
           config.rounding_mode,
         )
         .0,
@@ -39,13 +37,10 @@ impl Number {
   }
 
   fn approx_pow(&self, rhs: &Self, config: Config) -> Self {
-    let lhs = self.to_float(config);
-    let rhs = rhs.to_float(config);
-
     Self::Approx(
       Float::with_val_round(
         config.precision,
-        lhs.pow(rhs),
+        self.to_float(config).pow(rhs.to_float(config)),
         config.rounding_mode,
       )
       .0,
@@ -55,7 +50,7 @@ impl Number {
   fn approx_unary(
     &self,
     config: Config,
-    f: impl FnOnce(&mut Float, Round) -> std::cmp::Ordering,
+    f: impl FnOnce(&mut Float, Round) -> Ordering,
   ) -> Self {
     let mut number = self.to_float(config);
     f(&mut number, config.rounding_mode);
@@ -92,26 +87,44 @@ impl Number {
 
   #[must_use]
   pub fn display(&self) -> String {
-    self.to_string()
+    self.display_with_config(Config::default())
   }
 
-  fn display_float(number: &Float) -> String {
-    let (negative, digits, point) =
-      number.to_sign_string_exp_round(10, None, Round::Nearest);
+  fn display_float(number: &Float, config: Config) -> String {
+    let (negative, digits, point) = number.to_sign_string_exp_round(
+      10,
+      Some(config.digits.max(1)),
+      Round::Nearest,
+    );
 
     match point {
-      Some(point) => {
-        Decimal::new(digits, negative, i64::from(point)).into_string()
-      }
+      Some(point) => Decimal::new(digits, negative, i64::from(point))
+        .into_string(config.digits),
       None if digits == "0" || digits == "NaN" => digits.to_lowercase(),
       None if negative => format!("-{digits}"),
       None => digits,
     }
   }
 
-  fn display_rational(number: &Rational) -> String {
-    Decimal::from_rational(number)
-      .map_or_else(|| number.to_string(), Decimal::into_string)
+  fn display_rational(number: &Rational, config: Config) -> String {
+    if number.is_integer() {
+      return number.numer().to_string();
+    }
+
+    Decimal::from_rational(number).map_or_else(
+      || {
+        Self::display_float(&Float::with_val(config.precision, number), config)
+      },
+      |decimal| decimal.into_string(config.digits),
+    )
+  }
+
+  #[must_use]
+  pub fn display_with_config(&self, config: Config) -> String {
+    match self {
+      Self::Approx(number) => Self::display_float(number, config),
+      Self::Exact(number) => Self::display_rational(number, config),
+    }
   }
 
   #[must_use]
@@ -119,12 +132,10 @@ impl Number {
     if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
       Self::Exact((lhs / rhs).complete())
     } else {
-      let lhs = self.to_float(config);
-      let rhs = rhs.to_float(config);
       Self::Approx(
         Float::with_val_round(
           config.precision,
-          &lhs / &rhs,
+          &self.to_float(config) / &rhs.to_float(config),
           config.rounding_mode,
         )
         .0,
@@ -134,7 +145,7 @@ impl Number {
 
   #[must_use]
   pub fn e(config: Config) -> Self {
-    Self::from_i64(1).exp(config)
+    Self::from(1_i64).exp(config)
   }
 
   #[must_use]
@@ -148,26 +159,6 @@ impl Number {
       Self::Approx(number) => Self::Approx(number.clone().floor()),
       Self::Exact(number) => Self::Exact(number.clone().floor()),
     }
-  }
-
-  #[must_use]
-  pub fn from_bool(value: bool) -> Self {
-    Self::from_i64(i64::from(value))
-  }
-
-  #[must_use]
-  pub fn from_i64(value: i64) -> Self {
-    Self::Exact(Rational::from(value))
-  }
-
-  #[must_use]
-  pub fn from_integer(value: Integer) -> Self {
-    Self::Exact(Rational::from(value))
-  }
-
-  #[must_use]
-  pub fn from_usize(value: usize) -> Self {
-    Self::from_integer(Integer::from(value))
   }
 
   #[must_use]
@@ -208,12 +199,10 @@ impl Number {
     if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
       Self::Exact((lhs * rhs).complete())
     } else {
-      let lhs = self.to_float(config);
-      let rhs = rhs.to_float(config);
       Self::Approx(
         Float::with_val_round(
           config.precision,
-          &lhs * &rhs,
+          &self.to_float(config) * &rhs.to_float(config),
           config.rounding_mode,
         )
         .0,
@@ -231,12 +220,13 @@ impl Number {
 
   #[must_use]
   pub fn one() -> Self {
-    Self::from_i64(1)
+    Self::from(1_i64)
   }
 
   #[must_use]
   pub fn parse_decimal(s: &str) -> Option<Self> {
     let s = s.trim();
+
     let (negative, s) = if let Some(s) = s.strip_prefix('-') {
       (true, s)
     } else if let Some(s) = s.strip_prefix('+') {
@@ -280,20 +270,8 @@ impl Number {
   #[must_use]
   pub fn phi(config: Config) -> Self {
     Self::one()
-      .add(&Self::from_i64(5).sqrt(config), config)
-      .div(&Self::from_i64(2), config)
-  }
-
-  #[must_use]
-  pub fn pi(config: Config) -> Self {
-    Self::Approx(
-      Float::with_val_round(
-        config.precision,
-        Constant::Pi,
-        config.rounding_mode,
-      )
-      .0,
-    )
+      .add(&Self::from(5_i64).sqrt(config), config)
+      .div(&Self::from(2_i64), config)
   }
 
   #[must_use]
@@ -351,12 +329,10 @@ impl Number {
     if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
       Self::Exact((lhs - rhs).complete())
     } else {
-      let lhs = self.to_float(config);
-      let rhs = rhs.to_float(config);
       Self::Approx(
         Float::with_val_round(
           config.precision,
-          &lhs - &rhs,
+          &self.to_float(config) - &rhs.to_float(config),
           config.rounding_mode,
         )
         .0,
@@ -376,7 +352,15 @@ impl Number {
 
   #[must_use]
   pub fn tau(config: Config) -> Self {
-    Self::pi(config).mul(&Self::from_i64(2), config)
+    Self::Approx(
+      Float::with_val_round(
+        config.precision,
+        Constant::Pi,
+        config.rounding_mode,
+      )
+      .0,
+    )
+    .mul(&Self::from(2_i64), config)
   }
 
   #[must_use]
@@ -431,19 +415,35 @@ impl Number {
       number.to_usize()
     }
   }
-
-  #[must_use]
-  pub fn zero() -> Self {
-    Self::from_i64(0)
-  }
 }
 
 impl Display for Number {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::Approx(number) => f.write_str(&Self::display_float(number)),
-      Self::Exact(number) => f.write_str(&Self::display_rational(number)),
-    }
+    f.write_str(&self.display())
+  }
+}
+
+impl From<bool> for Number {
+  fn from(value: bool) -> Self {
+    Self::from(i64::from(value))
+  }
+}
+
+impl From<i64> for Number {
+  fn from(value: i64) -> Self {
+    Self::Exact(Rational::from(value))
+  }
+}
+
+impl From<Integer> for Number {
+  fn from(value: Integer) -> Self {
+    Self::Exact(Rational::from(value))
+  }
+}
+
+impl From<usize> for Number {
+  fn from(value: usize) -> Self {
+    Self::from(Integer::from(value))
   }
 }
 
@@ -473,43 +473,99 @@ mod tests {
   use {super::*, pretty_assertions::assert_eq, rug::float::Special};
 
   #[test]
-  fn display_approx() {
-    #[track_caller]
-    fn case(number: Float, expected: &str) {
-      let number = Number::Approx(number);
+  fn display_approx_configured_digits() {
+    let number = Number::from(2_i64)
+      .to_approx(Config::default())
+      .div(&Number::from(5_555_222_222_222_i64), Config::default());
 
-      assert_eq!(number.to_string(), expected);
-      assert_eq!(number.display(), expected);
-    }
+    let config = Config {
+      digits: 4,
+      ..Config::default()
+    };
 
-    case(Float::with_val(8, 23), "23");
-    case(Float::with_val(8, -0.0625), "-0.0625");
-    case(Float::with_val(8, 4.8e4), "48130");
-    case(Float::with_val(8, Special::Infinity), "inf");
-    case(Float::with_val(8, Special::NegInfinity), "-inf");
-    case(Float::with_val(8, Special::Nan), "nan");
+    assert_eq!(number.display_with_config(config), "3.6e-13");
   }
 
   #[test]
-  fn list_indexes() {
+  fn display_approx_infinity() {
+    let number = Number::Approx(Float::with_val(8, Special::Infinity));
+
+    assert_eq!(number.to_string(), "inf");
+    assert_eq!(number.display(), "inf");
+  }
+
+  #[test]
+  fn display_approx_nan() {
+    let number = Number::Approx(Float::with_val(8, Special::Nan));
+
+    assert_eq!(number.to_string(), "nan");
+    assert_eq!(number.display(), "nan");
+  }
+
+  #[test]
+  fn display_approx_negative_decimal() {
+    let number = Number::Approx(Float::with_val(8, -0.0625));
+
+    assert_eq!(number.to_string(), "-0.0625");
+    assert_eq!(number.display(), "-0.0625");
+  }
+
+  #[test]
+  fn display_approx_negative_infinity() {
+    let number = Number::Approx(Float::with_val(8, Special::NegInfinity));
+
+    assert_eq!(number.to_string(), "-inf");
+    assert_eq!(number.display(), "-inf");
+  }
+
+  #[test]
+  fn display_approx_positive_integer() {
+    let number = Number::Approx(Float::with_val(8, 23));
+
+    assert_eq!(number.to_string(), "23");
+    assert_eq!(number.display(), "23");
+  }
+
+  #[test]
+  fn display_approx_rounded_large_integer() {
+    let number = Number::Approx(Float::with_val(8, 4.8e4));
+
+    assert_eq!(number.to_string(), "48128");
+    assert_eq!(number.display(), "48128");
+  }
+
+  #[test]
+  fn display_approx_small_scientific() {
+    let number = Number::from(2_i64)
+      .to_approx(Config::default())
+      .div(&Number::from(5_555_222_222_222_i64), Config::default());
+
+    assert_eq!(number.to_string(), "3.600216012960922e-13");
+    assert_eq!(number.display(), "3.600216012960922e-13");
+  }
+
+  #[test]
+  fn list_indexes_integer() {
     assert_eq!(
       Number::parse_decimal("1").unwrap().to_non_negative_usize(),
       Some(1)
     );
+  }
+
+  #[test]
+  fn list_indexes_negative_integer() {
     assert_eq!(
-      Number::parse_decimal("1.0")
-        .unwrap()
-        .to_non_negative_usize(),
-      Some(1)
+      Number::parse_decimal("-1").unwrap().to_non_negative_usize(),
+      None
     );
+  }
+
+  #[test]
+  fn list_indexes_non_integer() {
     assert_eq!(
       Number::parse_decimal("1.5")
         .unwrap()
         .to_non_negative_usize(),
-      None
-    );
-    assert_eq!(
-      Number::parse_decimal("-1").unwrap().to_non_negative_usize(),
       None
     );
   }

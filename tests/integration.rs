@@ -550,7 +550,7 @@ fn builtin_variables_and_functions_can_coexist() -> Result {
     .argument("53")
     .program("println(e * e(20))")
     .expected_status(0)
-    .expected_stdout(Contains("1318815734.483214"))
+    .expected_stdout(Contains("1318815734.483215"))
     .run()
 }
 
@@ -821,7 +821,7 @@ fn cotangent() -> Result {
   Test::new()?
     .program("println(cot(pi/4))")
     .expected_status(0)
-    .expected_stdout(Contains("1.0000"))
+    .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
@@ -903,7 +903,7 @@ fn exact_rational_arithmetic() -> Result {
   Test::new()?
     .program("println(1 / 3)")
     .expected_status(0)
-    .expected_stdout(Exact("1/3\n"))
+    .expected_stdout(Exact("0.3333333333333333\n"))
     .run()?;
 
   Test::new()?
@@ -1071,6 +1071,23 @@ fn float_literals() -> Result {
     .program("println(3.5 * 2.0)")
     .expected_status(0)
     .expected_stdout(Exact("7\n"))
+    .run()
+}
+
+#[test]
+fn configured_digits() -> Result {
+  Test::new()?
+    .program("println(2 / 5555222222222)")
+    .expected_status(0)
+    .expected_stdout(Exact("3.600216012960922e-13\n"))
+    .run()?;
+
+  Test::new()?
+    .argument("--digits")
+    .argument("4")
+    .program("println(2 / 5555222222222)")
+    .expected_status(0)
+    .expected_stdout(Exact("3.6e-13\n"))
     .run()
 }
 
@@ -2298,7 +2315,7 @@ fn natural_logarithm() -> Result {
     .argument("53")
     .program("println(ln(10))")
     .expected_status(0)
-    .expected_stdout(Contains("2.302585092994045"))
+    .expected_stdout(Contains("2.302585092994046"))
     .run()?;
 
   Test::new()?
@@ -2980,7 +2997,7 @@ fn tangent() -> Result {
   Test::new()?
     .program("println(tan(pi/4))")
     .expected_status(0)
-    .expected_stdout(Contains("0.99"))
+    .expected_stdout(Exact("1\n"))
     .run()
 }
 

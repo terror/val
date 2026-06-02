@@ -47,6 +47,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
   match val::parse(input) {
     Ok(ast) => {
       let mut evaluator = Evaluator::from(Environment::new(val::Config {
+        digits: 16,
         precision: 53,
         rounding_mode: RoundingMode::FromZero.into(),
       }));

@@ -11,6 +11,7 @@ use {
     ops::Pow,
   },
   std::{
+    cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},
     ops::Range,
