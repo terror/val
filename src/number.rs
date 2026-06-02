@@ -91,7 +91,7 @@ impl Number {
       Self::Approx(number) => {
         let (negative, digits, point) = number.to_sign_string_exp_round(
           10,
-          Some(config.digits.max(1)),
+          Some(config.digits.get()),
           Round::Nearest,
         );
 
@@ -456,7 +456,7 @@ mod tests {
       .div(&Number::from(5_555_222_222_222_i64), Config::default());
 
     let config = Config {
-      digits: 4,
+      digits: NonZeroUsize::new(4).unwrap(),
       ..Config::default()
     };
 

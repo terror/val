@@ -21,6 +21,7 @@ use {
     borrow::{Cow, Cow::Owned},
     fmt::{self, Display, Formatter},
     fs,
+    num::NonZeroUsize,
     path::PathBuf,
     process,
     str::FromStr,

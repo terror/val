@@ -65,7 +65,7 @@ arguments/options we support:
 
 ```present cargo run -- --help
 val 0.3.6
-Liam <liam@scalzulli.com>
+
 An arbitrary precision calculator language
 
 Usage: val [OPTIONS] [FILENAME]

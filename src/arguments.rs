@@ -1,15 +1,5 @@
 use super::*;
 
-fn parse_digits(value: &str) -> std::result::Result<usize, String> {
-  let digits = value.parse::<usize>().map_err(|error| error.to_string())?;
-
-  if digits == 0 {
-    Err("digits must be greater than zero".into())
-  } else {
-    Ok(digits)
-  }
-}
-
 #[derive(Debug, Parser)]
 #[clap(
   about,
@@ -17,7 +7,7 @@ fn parse_digits(value: &str) -> std::result::Result<usize, String> {
   version,
   help_template = "\
 {before-help}{name} {version}
-{author}
+
 {about}
 
 \x1b[1;4mUsage\x1b[0m: {usage}
@@ -28,11 +18,11 @@ fn parse_digits(value: &str) -> std::result::Result<usize, String> {
 pub(crate) struct Arguments {
   #[clap(
     long,
-    value_parser = parse_digits,
+    value_parser = clap::value_parser!(NonZeroUsize),
     default_value = "16",
     help = "Decimal digits to display for approximate numbers"
   )]
-  digits: usize,
+  digits: NonZeroUsize,
   #[clap(
     short,
     long,
@@ -287,7 +277,7 @@ mod tests {
   fn digits() {
     let arguments = Arguments::parse_from(vec!["program", "--digits", "4"]);
 
-    assert_eq!(arguments.digits, 4);
+    assert_eq!(arguments.digits, NonZeroUsize::new(4).unwrap());
   }
 
   #[test]

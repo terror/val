@@ -14,6 +14,7 @@ use {
     cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},
+    num::NonZeroUsize,
     ops::Range,
     process,
     str::FromStr,

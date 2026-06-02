@@ -6,6 +6,7 @@ use {
   },
   serde::Serialize,
   serde_wasm_bindgen::to_value,
+  std::num::NonZeroUsize,
   val::{
     Environment, Evaluator, RoundingMode, Span,
     ast::{AssignmentTarget, Expression, Program, Statement},
@@ -47,7 +48,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
   match val::parse(input) {
     Ok(ast) => {
       let mut evaluator = Evaluator::from(Environment::new(val::Config {
-        digits: 16,
+        digits: NonZeroUsize::new(16).unwrap(),
         precision: 53,
         rounding_mode: RoundingMode::FromZero.into(),
       }));

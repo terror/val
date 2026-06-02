@@ -30,15 +30,14 @@ impl Decimal {
   ///   use scientific notation;
   /// * all other numbers use fixed-point notation.
   ///
-  /// `significant_digits` is clamped to at least `1`.
-  pub(crate) fn display(self, significant_digits: usize) -> String {
+  pub(crate) fn display(self, significant_digits: NonZeroUsize) -> String {
     if self.is_zero() {
       return "0".into();
     }
 
     let exponent = self.point - 1;
 
-    let significant_digits = i64::try_from(significant_digits.max(1)).unwrap();
+    let significant_digits = i64::try_from(significant_digits.get()).unwrap();
 
     if exponent < -4 || exponent >= significant_digits {
       self.scientific_string(exponent)
@@ -235,10 +234,14 @@ impl Decimal {
 mod tests {
   use {super::*, pretty_assertions::assert_eq};
 
+  fn digits(value: usize) -> NonZeroUsize {
+    NonZeroUsize::new(value).unwrap()
+  }
+
   #[test]
   fn configured_digits_exponent_when_point_exceeds_digits() {
     assert_eq!(
-      Decimal::new("1234567890".to_owned(), false, 11).display(10),
+      Decimal::new("1234567890".to_owned(), false, 11).display(digits(10)),
       "1.23456789e+10"
     );
   }
@@ -246,7 +249,7 @@ mod tests {
   #[test]
   fn configured_digits_fixed_when_exponent_within_digits() {
     assert_eq!(
-      Decimal::new("1234567890".to_owned(), false, 10).display(10),
+      Decimal::new("1234567890".to_owned(), false, 10).display(digits(10)),
       "1234567890"
     );
   }
@@ -254,7 +257,7 @@ mod tests {
   #[test]
   fn display_adds_trailing_zeros() {
     assert_eq!(
-      Decimal::new("123".to_owned(), false, 5).display(16),
+      Decimal::new("123".to_owned(), false, 5).display(digits(16)),
       "12300"
     );
   }
@@ -262,7 +265,7 @@ mod tests {
   #[test]
   fn display_fraction_with_leading_zero() {
     assert_eq!(
-      Decimal::new("123".to_owned(), false, 0).display(16),
+      Decimal::new("123".to_owned(), false, 0).display(digits(16)),
       "0.123"
     );
   }
@@ -270,25 +273,32 @@ mod tests {
   #[test]
   fn display_large_fixed_boundary() {
     assert_eq!(
-      Decimal::new("1".to_owned(), false, 16).display(16),
+      Decimal::new("1".to_owned(), false, 16).display(digits(16)),
       "1000000000000000"
     );
   }
 
   #[test]
   fn display_large_scientific() {
-    assert_eq!(Decimal::new("1".to_owned(), false, 17).display(16), "1e+16");
+    assert_eq!(
+      Decimal::new("1".to_owned(), false, 17).display(digits(16)),
+      "1e+16"
+    );
   }
 
   #[test]
   fn display_positive_integer() {
-    assert_eq!(Decimal::new("123".to_owned(), false, 3).display(16), "123");
+    assert_eq!(
+      Decimal::new("123".to_owned(), false, 3).display(digits(16)),
+      "123"
+    );
   }
 
   #[test]
   fn display_scientific_large_digits() {
     assert_eq!(
-      Decimal::new("1234567890123456".to_owned(), false, 17).display(16),
+      Decimal::new("1234567890123456".to_owned(), false, 17)
+        .display(digits(16)),
       "1.234567890123456e+16"
     );
   }
@@ -296,7 +306,8 @@ mod tests {
   #[test]
   fn display_scientific_small_digits() {
     assert_eq!(
-      Decimal::new("3600216012960922".to_owned(), false, -12).display(16),
+      Decimal::new("3600216012960922".to_owned(), false, -12)
+        .display(digits(16)),
       "3.600216012960922e-13"
     );
   }
@@ -304,7 +315,7 @@ mod tests {
   #[test]
   fn display_small_fixed_fraction() {
     assert_eq!(
-      Decimal::new("123".to_owned(), false, -3).display(16),
+      Decimal::new("123".to_owned(), false, -3).display(digits(16)),
       "0.000123"
     );
   }
@@ -312,35 +323,47 @@ mod tests {
   #[test]
   fn display_small_scientific_fraction() {
     assert_eq!(
-      Decimal::new("123".to_owned(), false, -4).display(16),
+      Decimal::new("123".to_owned(), false, -4).display(digits(16)),
       "1.23e-05"
     );
   }
 
   #[test]
   fn display_trims_fractional_zeros() {
-    assert_eq!(Decimal::new("2300".to_owned(), false, 2).display(16), "23");
+    assert_eq!(
+      Decimal::new("2300".to_owned(), false, 2).display(digits(16)),
+      "23"
+    );
   }
 
   #[test]
   fn display_with_decimal_point() {
-    assert_eq!(Decimal::new("123".to_owned(), false, 1).display(16), "1.23");
+    assert_eq!(
+      Decimal::new("123".to_owned(), false, 1).display(digits(16)),
+      "1.23"
+    );
   }
 
   #[test]
   fn display_zero() {
-    assert_eq!(Decimal::new("0".to_owned(), false, 1).display(16), "0");
+    assert_eq!(
+      Decimal::new("0".to_owned(), false, 1).display(digits(16)),
+      "0"
+    );
   }
 
   #[test]
   fn display_zero_ignores_negative_sign() {
-    assert_eq!(Decimal::new("0".to_owned(), true, 1).display(16), "0");
+    assert_eq!(
+      Decimal::new("0".to_owned(), true, 1).display(digits(16)),
+      "0"
+    );
   }
 
   #[test]
   fn from_rational_decimal_fraction() {
     let actual = Decimal::from_rational(&Rational::from((1234, 100)))
-      .map(|decimal| decimal.display(16));
+      .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), Some("12.34"));
   }
@@ -348,7 +371,7 @@ mod tests {
   #[test]
   fn from_rational_integer() {
     let actual = Decimal::from_rational(&Rational::from(123))
-      .map(|decimal| decimal.display(16));
+      .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), Some("123"));
   }
@@ -356,7 +379,7 @@ mod tests {
   #[test]
   fn from_rational_negative_fraction() {
     let actual = Decimal::from_rational(&Rational::from((-1, 40)))
-      .map(|decimal| decimal.display(16));
+      .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), Some("-0.025"));
   }
@@ -364,7 +387,7 @@ mod tests {
   #[test]
   fn from_rational_non_terminating() {
     let actual = Decimal::from_rational(&Rational::from((1, 3)))
-      .map(|decimal| decimal.display(16));
+      .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), None);
   }
@@ -372,7 +395,7 @@ mod tests {
   #[test]
   fn from_rational_small_fraction() {
     let actual = Decimal::from_rational(&Rational::from((1, 1000)))
-      .map(|decimal| decimal.display(16));
+      .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), Some("0.001"));
   }
@@ -380,7 +403,7 @@ mod tests {
   #[test]
   fn from_rational_small_scientific() {
     let actual = Decimal::from_rational(&Rational::from((1, 100_000)))
-      .map(|decimal| decimal.display(16));
+      .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), Some("1e-05"));
   }
@@ -388,7 +411,7 @@ mod tests {
   #[test]
   fn from_rational_twentieth() {
     let actual = Decimal::from_rational(&Rational::from((1, 20)))
-      .map(|decimal| decimal.display(16));
+      .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), Some("0.05"));
   }
