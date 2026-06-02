@@ -215,9 +215,6 @@ calculations with `--rounding-mode` and `--precision`. `--precision` controls
 binary precision, measured in bits. Use `--digits` to control how many decimal
 digits are displayed for approximate numbers.
 
-The `rug` backend uses GMP and MPFR through `gmp-mpfr-sys`, so browser WASM
-builds need separate handling from the native CLI build.
-
 #### Boolean
 
 Boolean values represent truth values:
