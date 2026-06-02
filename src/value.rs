@@ -12,7 +12,7 @@ pub enum Value<'src> {
 
 impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    f.write_str(&self.display_with_config(Config::default()))
+    f.write_str(&self.display(Config::default()))
   }
 }
 
@@ -45,7 +45,7 @@ impl<'a> Value<'a> {
   }
 
   #[must_use]
-  pub fn display_with_config(&self, config: Config) -> String {
+  pub fn display(&self, config: Config) -> String {
     match self {
       Value::Boolean(boolean) => boolean.to_string(),
       Value::Function(function) => format!("<function: {}>", function.name()),
@@ -55,7 +55,7 @@ impl<'a> Value<'a> {
           .iter()
           .map(|item| match item {
             Value::String(string) => format!("\'{string}\'"),
-            _ => item.display_with_config(config),
+            _ => item.display(config),
           })
           .collect::<Vec<_>>()
           .join(", ")

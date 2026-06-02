@@ -730,7 +730,7 @@ fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     .iter()
     .map(|value| match value {
       Value::String(s) => s.to_string(),
-      _ => value.display_with_config(payload.config),
+      _ => value.display(payload.config),
     })
     .collect::<Vec<_>>()
     .join(delimiter);
@@ -891,7 +891,7 @@ fn print<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
-    output_strings.push(argument.display_with_config(payload.config));
+    output_strings.push(argument.display(payload.config));
   }
 
   write!(std::io::stdout(), "{}", output_strings.join(" "))
@@ -908,7 +908,7 @@ fn println<'a>(
   let mut output_strings = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
-    output_strings.push(argument.display_with_config(payload.config));
+    output_strings.push(argument.display(payload.config));
   }
 
   writeln!(std::io::stdout(), "{}", output_strings.join(" "))

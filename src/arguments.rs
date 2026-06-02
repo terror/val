@@ -115,7 +115,7 @@ impl Arguments {
             return Ok(());
           }
 
-          println!("{}", value.display_with_config(Into::<Config>::into(self)));
+          println!("{}", value.display(Into::<Config>::into(self)));
 
           Ok(())
         }
@@ -202,10 +202,7 @@ impl Arguments {
       match parse(line) {
         Ok(ast) => match evaluator.evaluate(&ast) {
           Ok(value) if !matches!(value, Value::Null) => {
-            println!(
-              "{}",
-              value.display_with_config(Into::<Config>::into(self))
-            );
+            println!("{}", value.display(Into::<Config>::into(self)));
           }
           Ok(_) => {}
           Err(error) => error
