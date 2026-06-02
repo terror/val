@@ -465,53 +465,58 @@ mod tests {
 
   #[test]
   fn display_approx_infinity() {
-    let number = Number::Approx(Float::with_val(8, Special::Infinity));
-
-    assert_eq!(number.to_string(), "inf");
+    assert_eq!(
+      Number::Approx(Float::with_val(8, Special::Infinity)).to_string(),
+      "inf"
+    );
   }
 
   #[test]
   fn display_approx_nan() {
-    let number = Number::Approx(Float::with_val(8, Special::Nan));
-
-    assert_eq!(number.to_string(), "nan");
+    assert_eq!(
+      Number::Approx(Float::with_val(8, Special::Nan)).to_string(),
+      "nan"
+    );
   }
 
   #[test]
   fn display_approx_negative_decimal() {
-    let number = Number::Approx(Float::with_val(8, -0.0625));
-
-    assert_eq!(number.to_string(), "-0.0625");
+    assert_eq!(
+      Number::Approx(Float::with_val(8, -0.0625)).to_string(),
+      "-0.0625"
+    );
   }
 
   #[test]
   fn display_approx_negative_infinity() {
-    let number = Number::Approx(Float::with_val(8, Special::NegInfinity));
-
-    assert_eq!(number.to_string(), "-inf");
+    assert_eq!(
+      Number::Approx(Float::with_val(8, Special::NegInfinity)).to_string(),
+      "-inf"
+    );
   }
 
   #[test]
   fn display_approx_positive_integer() {
-    let number = Number::Approx(Float::with_val(8, 23));
-
-    assert_eq!(number.to_string(), "23");
+    assert_eq!(Number::Approx(Float::with_val(8, 23)).to_string(), "23");
   }
 
   #[test]
   fn display_approx_rounded_large_integer() {
-    let number = Number::Approx(Float::with_val(8, 4.8e4));
-
-    assert_eq!(number.to_string(), "48128");
+    assert_eq!(
+      Number::Approx(Float::with_val(8, 4.8e4)).to_string(),
+      "48128"
+    );
   }
 
   #[test]
   fn display_approx_small_scientific() {
-    let number = Number::from(2_i64)
-      .to_approx(Config::default())
-      .div(&Number::from(5_555_222_222_222_i64), Config::default());
-
-    assert_eq!(number.to_string(), "3.600216012960922e-13");
+    assert_eq!(
+      Number::from(2_i64)
+        .to_approx(Config::default())
+        .div(&Number::from(5_555_222_222_222_i64), Config::default())
+        .to_string(),
+      "3.600216012960922e-13"
+    );
   }
 
   #[test]
