@@ -266,7 +266,7 @@ fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let reciprocal = Number::one().div(&argument, payload.config);
+  let reciprocal = Number::from(1_i64).div(&argument, payload.config);
 
   Ok(Value::Number(reciprocal.asin(payload.config)))
 }
@@ -329,7 +329,7 @@ fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let reciprocal = Number::one().div(&argument, payload.config);
+  let reciprocal = Number::from(1_i64).div(&argument, payload.config);
 
   Ok(Value::Number(reciprocal.acos(payload.config)))
 }
@@ -406,7 +406,11 @@ fn constant_e(config: Config) -> Value<'static> {
 }
 
 fn constant_phi(config: Config) -> Value<'static> {
-  Value::Number(Number::phi(config))
+  Value::Number(
+    Number::from(1_i64)
+      .add(&Number::from(5_i64).sqrt(config), config)
+      .div(&Number::from(2_i64), config),
+  )
 }
 
 fn constant_pi(config: Config) -> Value<'static> {
@@ -478,7 +482,7 @@ fn cot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  Ok(Value::Number(Number::one().div(&tan, payload.config)))
+  Ok(Value::Number(Number::from(1_i64).div(&tan, payload.config)))
 }
 
 fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -503,7 +507,7 @@ fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  Ok(Value::Number(Number::one().div(&sin, payload.config)))
+  Ok(Value::Number(Number::from(1_i64).div(&sin, payload.config)))
 }
 
 fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -1022,7 +1026,7 @@ fn sec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     return Err(Error::new(payload.span, "Cannot compute sec of π/2 + nπ"));
   }
 
-  Ok(Value::Number(Number::one().div(&cos, payload.config)))
+  Ok(Value::Number(Number::from(1_i64).div(&cos, payload.config)))
 }
 
 fn sin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {

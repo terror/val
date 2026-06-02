@@ -86,44 +86,32 @@ impl Number {
   }
 
   #[must_use]
-  pub fn display(&self) -> String {
-    self.display_with_config(Config::default())
-  }
-
-  fn display_float(number: &Float, config: Config) -> String {
-    let (negative, digits, point) = number.to_sign_string_exp_round(
-      10,
-      Some(config.digits.max(1)),
-      Round::Nearest,
-    );
-
-    match point {
-      Some(point) => Decimal::new(digits, negative, i64::from(point))
-        .into_string(config.digits),
-      None if digits == "0" || digits == "NaN" => digits.to_lowercase(),
-      None if negative => format!("-{digits}"),
-      None => digits,
-    }
-  }
-
-  fn display_rational(number: &Rational, config: Config) -> String {
-    if number.is_integer() {
-      return number.numer().to_string();
-    }
-
-    Decimal::from_rational(number).map_or_else(
-      || {
-        Self::display_float(&Float::with_val(config.precision, number), config)
-      },
-      |decimal| decimal.into_string(config.digits),
-    )
-  }
-
-  #[must_use]
-  pub fn display_with_config(&self, config: Config) -> String {
+  pub fn display(&self, config: Config) -> String {
     match self {
-      Self::Approx(number) => Self::display_float(number, config),
-      Self::Exact(number) => Self::display_rational(number, config),
+      Self::Approx(number) => {
+        let (negative, digits, point) = number.to_sign_string_exp_round(
+          10,
+          Some(config.digits.max(1)),
+          Round::Nearest,
+        );
+
+        match point {
+          Some(point) => Decimal::new(digits, negative, i64::from(point))
+            .display(config.digits),
+          None if digits == "0" || digits == "NaN" => digits.to_lowercase(),
+          None if negative => format!("-{digits}"),
+          None => digits,
+        }
+      }
+      Self::Exact(number) if number.is_integer() => number.numer().to_string(),
+      Self::Exact(number) => {
+        if let Some(decimal) = Decimal::from_rational(number) {
+          decimal.display(config.digits)
+        } else {
+          Self::Approx(Float::with_val(config.precision, number))
+            .display(config)
+        }
+      }
     }
   }
 
@@ -219,11 +207,6 @@ impl Number {
   }
 
   #[must_use]
-  pub fn one() -> Self {
-    Self::from(1_i64)
-  }
-
-  #[must_use]
   pub fn parse_decimal(s: &str) -> Option<Self> {
     let s = s.trim();
 
@@ -252,6 +235,7 @@ impl Number {
 
     let digits = format!("{integer}{fraction}");
     let digits = if digits.is_empty() { "0" } else { &digits };
+
     let mut numerator = Integer::from_str_radix(digits, 10).ok()?;
 
     if negative {
@@ -265,13 +249,6 @@ impl Number {
     }
 
     Some(Self::Exact(Rational::from((numerator, denominator))))
-  }
-
-  #[must_use]
-  pub fn phi(config: Config) -> Self {
-    Self::one()
-      .add(&Self::from(5_i64).sqrt(config), config)
-      .div(&Self::from(2_i64), config)
   }
 
   #[must_use]
@@ -419,7 +396,7 @@ impl Number {
 
 impl Display for Number {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    f.write_str(&self.display())
+    f.write_str(&self.display(Config::default()))
   }
 }
 
@@ -483,7 +460,7 @@ mod tests {
       ..Config::default()
     };
 
-    assert_eq!(number.display_with_config(config), "3.6e-13");
+    assert_eq!(number.display(config), "3.6e-13");
   }
 
   #[test]
@@ -491,7 +468,6 @@ mod tests {
     let number = Number::Approx(Float::with_val(8, Special::Infinity));
 
     assert_eq!(number.to_string(), "inf");
-    assert_eq!(number.display(), "inf");
   }
 
   #[test]
@@ -499,7 +475,6 @@ mod tests {
     let number = Number::Approx(Float::with_val(8, Special::Nan));
 
     assert_eq!(number.to_string(), "nan");
-    assert_eq!(number.display(), "nan");
   }
 
   #[test]
@@ -507,7 +482,6 @@ mod tests {
     let number = Number::Approx(Float::with_val(8, -0.0625));
 
     assert_eq!(number.to_string(), "-0.0625");
-    assert_eq!(number.display(), "-0.0625");
   }
 
   #[test]
@@ -515,7 +489,6 @@ mod tests {
     let number = Number::Approx(Float::with_val(8, Special::NegInfinity));
 
     assert_eq!(number.to_string(), "-inf");
-    assert_eq!(number.display(), "-inf");
   }
 
   #[test]
@@ -523,7 +496,6 @@ mod tests {
     let number = Number::Approx(Float::with_val(8, 23));
 
     assert_eq!(number.to_string(), "23");
-    assert_eq!(number.display(), "23");
   }
 
   #[test]
@@ -531,7 +503,6 @@ mod tests {
     let number = Number::Approx(Float::with_val(8, 4.8e4));
 
     assert_eq!(number.to_string(), "48128");
-    assert_eq!(number.display(), "48128");
   }
 
   #[test]
@@ -541,7 +512,6 @@ mod tests {
       .div(&Number::from(5_555_222_222_222_i64), Config::default());
 
     assert_eq!(number.to_string(), "3.600216012960922e-13");
-    assert_eq!(number.display(), "3.600216012960922e-13");
   }
 
   #[test]

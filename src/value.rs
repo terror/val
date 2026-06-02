@@ -61,7 +61,7 @@ impl<'a> Value<'a> {
           .join(", ")
       ),
       Value::Null => "null".into(),
-      Value::Number(number) => number.display_with_config(config),
+      Value::Number(number) => number.display(config),
       Value::String(string) => string.to_string(),
     }
   }
