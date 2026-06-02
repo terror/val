@@ -20,16 +20,12 @@ pub(crate) struct Decimal {
 }
 
 impl Decimal {
-  /// Formats this decimal as either fixed-point or scientific notation.
+  /// Formats this decimal using fixed-point or scientific notation.
   ///
-  /// This follows the same broad shape as JSON-style number formatting:
-  ///
-  /// * zero is always formatted as `0`;
-  /// * numbers with exponents less than `-4` use scientific notation;
-  /// * numbers with exponents greater than or equal to `significant_digits`
-  ///   use scientific notation;
-  /// * all other numbers use fixed-point notation.
-  ///
+  /// The notation is chosen using JSON-style number formatting rules. Zero is
+  /// always formatted as `0`. Scientific notation is used when the decimal
+  /// exponent is less than `-4`, or when it is greater than or equal to
+  /// `significant_digits`. Fixed-point notation is used otherwise.
   pub(crate) fn display(self, significant_digits: NonZeroUsize) -> String {
     if self.is_zero() {
       return "0".into();

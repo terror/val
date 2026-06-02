@@ -38,8 +38,7 @@ jobs:
         - arm-unknown-linux-musleabihf
         - armv7-unknown-linux-musleabihf
         - x86_64-apple-darwin
-        - x86_64-pc-windows-msvc
-        - aarch64-pc-windows-msvc
+        - x86_64-pc-windows-gnu
         - x86_64-unknown-linux-musl
         include:
         - target: aarch64-apple-darwin
@@ -57,11 +56,8 @@ jobs:
         - target: x86_64-apple-darwin
           os: macos-latest
           target_rustflags: ''
-        - target: x86_64-pc-windows-msvc
+        - target: x86_64-pc-windows-gnu
           os: windows-latest
-        - target: aarch64-pc-windows-msvc
-          os: windows-latest
-          target_rustflags: ''
         - target: x86_64-unknown-linux-musl
           os: ubuntu-latest
           target_rustflags: ''
@@ -72,6 +68,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Remove Broken WSL bash executable
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: cmd
+      run: |
+        takeown /F C:\Windows\System32\bash.exe
+        icacls C:\Windows\System32\bash.exe /grant administrators:F
+        del C:\Windows\System32\bash.exe
 
     - name: Install AArch64 Toolchain
       if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
@@ -91,10 +95,13 @@ jobs:
         sudo apt-get update
         sudo apt-get install gcc-arm-linux-gnueabihf
 
-    - name: Install AArch64 Toolchain (Windows)
-      if: ${{ matrix.target == 'aarch64-pc-windows-msvc' }}
-      run: |
-        rustup target add aarch64-pc-windows-msvc
+    - uses: msys2/setup-msys2@v2
+      if: ${{ matrix.target == 'x86_64-pc-windows-gnu' }}
+      with:
+        install: diffutils m4 make mingw-w64-x86_64-gcc
+        msystem: MINGW64
+        path-type: inherit
+        update: true
 
     - name: Configure compiler for musl targets
       if: ${{ contains(matrix.target, 'musl') }}

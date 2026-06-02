@@ -10,7 +10,17 @@ echo "Packaging val $VERSION for $TARGET..."
 test -f Cargo.lock || cargo generate-lockfile
 
 echo "Installing rust toolchain for $TARGET..."
-rustup target add "$TARGET"
+
+CARGO=(cargo)
+
+if [[ $TARGET == x86_64-pc-windows-gnu ]]; then
+  TOOLCHAIN=stable-x86_64-pc-windows-gnu
+  rustup toolchain install "$TOOLCHAIN"
+  rustup target add "$TARGET" --toolchain "$TOOLCHAIN"
+  CARGO=(cargo +"$TOOLCHAIN")
+else
+  rustup target add "$TARGET"
+fi
 
 if [[ $TARGET == aarch64-unknown-linux-musl ]]; then
   export CC=aarch64-linux-gnu-gcc
@@ -19,7 +29,7 @@ fi
 echo "Building val..."
 
 RUSTFLAGS="--deny warnings --codegen target-feature=+crt-static $TARGET_RUSTFLAGS" \
-  cargo build --bin val --target "$TARGET" --release
+  "${CARGO[@]}" build --bin val --target "$TARGET" --release
 
 EXECUTABLE=target/$TARGET/release/val
 
