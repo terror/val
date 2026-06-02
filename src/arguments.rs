@@ -33,7 +33,6 @@ pub(crate) struct Arguments {
     help = "Decimal digits to display for approximate numbers"
   )]
   digits: usize,
-
   #[clap(
     short,
     long,
@@ -41,10 +40,8 @@ pub(crate) struct Arguments {
     help = "Expression to evaluate"
   )]
   expression: Option<String>,
-
   #[clap(conflicts_with = "expression", help = "File to evaluate")]
   filename: Option<PathBuf>,
-
   #[clap(
     short,
     long,
@@ -52,7 +49,6 @@ pub(crate) struct Arguments {
     help = "Load files before entering the REPL"
   )]
   load: Option<Vec<PathBuf>>,
-
   #[clap(
     short,
     long,
@@ -60,7 +56,6 @@ pub(crate) struct Arguments {
     help = "Binary precision (bits) to use for calculations"
   )]
   precision: u32,
-
   #[clap(
     short,
     long,
@@ -69,7 +64,6 @@ pub(crate) struct Arguments {
     help = "Rounding mode to use for calculations",
   )]
   rounding_mode: RoundingMode,
-
   #[clap(
     long,
     default_value = "128",
@@ -79,20 +73,13 @@ pub(crate) struct Arguments {
 }
 
 impl Arguments {
-  fn config(&self) -> Config {
-    Config {
-      digits: self.digits,
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }
-  }
-
   fn eval(&self, filename: &PathBuf) -> Result {
     let content = fs::read_to_string(filename)?;
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator = Evaluator::from(Environment::new(self.config()));
+    let mut evaluator =
+      Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
     match parse(&content) {
       Ok(ast) => match evaluator.evaluate(&ast) {
@@ -118,8 +105,8 @@ impl Arguments {
   }
 
   fn evaluate_expression(&self, value: String) -> Result {
-    let config = self.config();
-    let mut evaluator = Evaluator::from(Environment::new(config));
+    let mut evaluator =
+      Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
     match parse(&value) {
       Ok(ast) => match evaluator.evaluate(&ast) {
@@ -128,7 +115,7 @@ impl Arguments {
             return Ok(());
           }
 
-          println!("{}", value.display_with_config(config));
+          println!("{}", value.display_with_config(Into::<Config>::into(self)));
 
           Ok(())
         }
@@ -170,8 +157,8 @@ impl Arguments {
     editor.set_helper(Some(Highlighter::new()));
     editor.load_history(&history).ok();
 
-    let config = self.config();
-    let mut evaluator = Evaluator::from(Environment::new(config));
+    let mut evaluator =
+      Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
@@ -215,7 +202,10 @@ impl Arguments {
       match parse(line) {
         Ok(ast) => match evaluator.evaluate(&ast) {
           Ok(value) if !matches!(value, Value::Null) => {
-            println!("{}", value.display_with_config(config));
+            println!(
+              "{}",
+              value.display_with_config(Into::<Config>::into(self))
+            );
           }
           Ok(_) => {}
           Err(error) => error
@@ -247,6 +237,16 @@ impl Arguments {
           Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
         }
       }
+    }
+  }
+}
+
+impl From<&Arguments> for Config {
+  fn from(arguments: &Arguments) -> Self {
+    Config {
+      digits: arguments.digits,
+      precision: arguments.precision,
+      rounding_mode: arguments.rounding_mode.into(),
     }
   }
 }
