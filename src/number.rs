@@ -1,5 +1,8 @@
 use super::*;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ParseDecimalError;
+
 #[derive(Clone, Debug)]
 pub enum Number {
   Approx(Float),
@@ -207,51 +210,6 @@ impl Number {
   }
 
   #[must_use]
-  pub fn parse_decimal(s: &str) -> Option<Self> {
-    let s = s.trim();
-
-    let (negative, s) = if let Some(s) = s.strip_prefix('-') {
-      (true, s)
-    } else if let Some(s) = s.strip_prefix('+') {
-      (false, s)
-    } else {
-      (false, s)
-    };
-
-    let (integer, fraction) = match s.split_once('.') {
-      Some((integer, fraction)) => (integer, fraction),
-      None => (s, ""),
-    };
-
-    if integer.is_empty() && fraction.is_empty() {
-      return None;
-    }
-
-    if !integer.chars().all(|c| c.is_ascii_digit())
-      || !fraction.chars().all(|c| c.is_ascii_digit())
-    {
-      return None;
-    }
-
-    let digits = format!("{integer}{fraction}");
-    let digits = if digits.is_empty() { "0" } else { &digits };
-
-    let mut numerator = Integer::from_str_radix(digits, 10).ok()?;
-
-    if negative {
-      numerator = -numerator;
-    }
-
-    let mut denominator = Integer::from(1);
-
-    for _ in 0..fraction.len() {
-      denominator *= 10;
-    }
-
-    Some(Self::Exact(Rational::from((numerator, denominator))))
-  }
-
-  #[must_use]
   pub fn pow(&self, rhs: &Self, config: Config) -> Self {
     match (self, rhs) {
       (Self::Exact(lhs), Self::Exact(exponent)) => {
@@ -445,6 +403,49 @@ impl PartialOrd for Number {
   }
 }
 
+impl TryFrom<&str> for Number {
+  type Error = ParseDecimalError;
+
+  fn try_from(s: &str) -> std::result::Result<Self, Self::Error> {
+    let s = s.trim();
+
+    let (negative, s) = s
+      .strip_prefix('-')
+      .map(|s| (true, s))
+      .or_else(|| s.strip_prefix('+').map(|s| (false, s)))
+      .unwrap_or((false, s));
+
+    let (integer, fraction) = s.split_once('.').unwrap_or((s, ""));
+
+    if integer.is_empty() && fraction.is_empty() {
+      return Err(ParseDecimalError);
+    }
+
+    let mut numerator = Integer::from(0);
+
+    for b in integer.bytes().chain(fraction.bytes()) {
+      if !b.is_ascii_digit() {
+        return Err(ParseDecimalError);
+      }
+
+      numerator *= 10;
+      numerator += b - b'0';
+    }
+
+    if negative {
+      numerator = -numerator;
+    }
+
+    let exponent =
+      u32::try_from(fraction.len()).map_err(|_| ParseDecimalError)?;
+
+    Ok(Self::Exact(Rational::from((
+      numerator,
+      Integer::from(10).pow(exponent),
+    ))))
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use {super::*, pretty_assertions::assert_eq, rug::float::Special};
@@ -522,7 +523,7 @@ mod tests {
   #[test]
   fn list_indexes_integer() {
     assert_eq!(
-      Number::parse_decimal("1").unwrap().to_non_negative_usize(),
+      Number::try_from("1").unwrap().to_non_negative_usize(),
       Some(1)
     );
   }
@@ -530,7 +531,7 @@ mod tests {
   #[test]
   fn list_indexes_negative_integer() {
     assert_eq!(
-      Number::parse_decimal("-1").unwrap().to_non_negative_usize(),
+      Number::try_from("-1").unwrap().to_non_negative_usize(),
       None
     );
   }
@@ -538,9 +539,7 @@ mod tests {
   #[test]
   fn list_indexes_non_integer() {
     assert_eq!(
-      Number::parse_decimal("1.5")
-        .unwrap()
-        .to_non_negative_usize(),
+      Number::try_from("1.5").unwrap().to_non_negative_usize(),
       None
     );
   }

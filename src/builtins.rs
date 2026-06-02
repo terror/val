@@ -580,9 +580,9 @@ fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     Value::Number(number) => {
       Ok(Value::Number(number.to_approx(payload.config)))
     }
-    Value::String(s) => Number::parse_decimal(s)
+    Value::String(s) => Number::try_from(*s)
       .map(|number| Value::Number(number.to_approx(payload.config)))
-      .ok_or_else(|| {
+      .map_err(|_| {
         Error::new(payload.span, format!("Cannot convert '{s}' to float"))
       }),
     Value::Boolean(b) => {
@@ -698,9 +698,9 @@ fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   match value {
     Value::Number(number) => Ok(Value::Number(number.floor())),
-    Value::String(s) => Number::parse_decimal(s)
+    Value::String(s) => Number::try_from(*s)
       .map(|number| Value::Number(number.floor()))
-      .ok_or_else(|| {
+      .map_err(|_| {
         Error::new(payload.span, format!("Cannot convert '{s}' to int"))
       }),
     Value::Boolean(b) => Ok(Value::Number(Number::from(*b))),

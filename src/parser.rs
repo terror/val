@@ -199,7 +199,7 @@ fn expression_parser<'a>()
     let number = text::int(10)
       .then(just('.').then(text::digits(10)).or_not())
       .to_slice()
-      .map(|number| Number::parse_decimal(number).unwrap())
+      .map(|number| Number::try_from(number).unwrap())
       .map(Expression::Number)
       .map_with(|ast, error| (ast, error.span()));
 

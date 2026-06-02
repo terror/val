@@ -30,7 +30,7 @@ pub use crate::{
   error::Error,
   evaluator::Evaluator,
   function::Function,
-  number::Number,
+  number::{Number, ParseDecimalError},
   parser::parse,
   rounding_mode::RoundingMode,
   value::Value,
