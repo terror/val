@@ -44,6 +44,16 @@ impl<'a> Value<'a> {
     }
   }
 
+  pub(crate) fn into_list(self, span: Span) -> Result<Vec<Value<'a>>, Error> {
+    match self {
+      Value::List(x) => Ok(x),
+      value => Err(Error {
+        span,
+        message: format!("'{value}' is not a list"),
+      }),
+    }
+  }
+
   pub(crate) fn list(&self, span: Span) -> Result<Vec<Value<'a>>, Error> {
     if let Value::List(x) = self {
       Ok(x.clone())
