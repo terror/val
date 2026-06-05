@@ -305,17 +305,7 @@ impl<'a> Evaluator<'a> {
         Ok(Value::List(evaluated_list))
       }
       Expression::ListAccess(list, index) => {
-        let list_value = self.evaluate_expression(list)?;
-
-        let list = match &list_value {
-          Value::List(items) => items.clone(),
-          _ => {
-            return Err(Error::new(
-              list.1,
-              format!("'{list_value}' is not a list"),
-            ));
-          }
-        };
+        let list = self.evaluate_expression(list)?.into_list(list.1)?;
 
         let index = self.evaluate_list_index(index)?;
 
@@ -330,7 +320,7 @@ impl<'a> Evaluator<'a> {
           ));
         }
 
-        Ok(list[index].clone())
+        Ok(list.into_iter().nth(index).unwrap())
       }
       Expression::Null => Ok(Value::Null),
       Expression::Number(number) => Ok(Value::Number(number.clone())),
@@ -396,7 +386,7 @@ impl<'a> Evaluator<'a> {
         Ok(Completion::Value(self.evaluate_expression(expression)?))
       }
       Statement::For(name, iterable, body) => {
-        let list = self.evaluate_expression(iterable)?.list(iterable.1)?;
+        let list = self.evaluate_expression(iterable)?.into_list(iterable.1)?;
 
         let mut result = Value::Null;
 
