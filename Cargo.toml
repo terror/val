@@ -39,6 +39,7 @@ anyhow = "1.0.100"
 ariadne = "0.5.1"
 chumsky = { version = "0.10.1", features = ["pratt"] }
 clap = { version = "4.5.51", features = ["derive"] }
+gmp-mpfr-sys = { version = "~1.7", default-features = false, optional = true }
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
@@ -53,3 +54,6 @@ indoc = "2.0.7"
 pretty_assertions = "1.4.1"
 tempfile = "3.23.0"
 unindent = "0.2.4"
+
+[features]
+force-cross = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/force-cross"]

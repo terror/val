@@ -1062,6 +1062,7 @@ dependencies = [
  "criterion",
  "dirs",
  "executable-path",
+ "gmp-mpfr-sys",
  "indoc",
  "pretty_assertions",
  "regex",
