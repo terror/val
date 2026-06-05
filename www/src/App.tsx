@@ -24,18 +24,19 @@ import { examples } from './lib/examples';
 
 const STORAGE_KEY_CODE = 'val-editor-code';
 const STORAGE_KEY_EXAMPLE = 'val-editor-example';
+const DEFAULT_EXAMPLE = 'factorial';
 
 function App() {
   const [ast, setAst] = useState<AstNodeType | null>(null);
 
   const [code, setCode] = useState(() => {
     const savedCode = localStorage.getItem(STORAGE_KEY_CODE);
-    return savedCode || examples.factorial;
+    return savedCode || examples[DEFAULT_EXAMPLE];
   });
 
   const [currentExample, setCurrentExample] = useState(() => {
     const savedExample = localStorage.getItem(STORAGE_KEY_EXAMPLE);
-    return savedExample || 'factorial';
+    return savedExample || DEFAULT_EXAMPLE;
   });
 
   const [editorView, setEditorView] = useState<EditorView | null>(null);
@@ -84,7 +85,7 @@ function App() {
 
   const handleExampleChange = (value: string) => {
     setCurrentExample(value);
-    setCode(examples[value as keyof typeof examples]);
+    setCode(examples[value]);
   };
 
   if (!wasmLoaded) return null;
