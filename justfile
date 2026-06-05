@@ -61,8 +61,6 @@ install:
 
 [group: 'dev']
 install-dev-deps:
-  rustup install nightly
-  rustup update nightly
   cargo install cargo-watch
   cargo install wasm-bindgen-cli
   curl -fsSL https://bun.sh/install | bash
