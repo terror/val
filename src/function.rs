@@ -54,19 +54,13 @@ impl<'src> Function<'src> {
         }
 
         Evaluator::from(call_environment).enter_function(|evaluator| {
-          if body.is_empty() {
-            return Ok(Value::Null);
+          if let Completion::Return(value) =
+            evaluator.evaluate_statements(body)?
+          {
+            Ok(value)
+          } else {
+            Ok(Value::Null)
           }
-
-          for statement in body {
-            let result = evaluator.evaluate_statement(statement)?;
-
-            if matches!(&result, Completion::Return(_)) {
-              return Ok(result.unwrap());
-            }
-          }
-
-          Ok(Value::Null)
         })
       }
     }
