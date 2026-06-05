@@ -110,22 +110,7 @@ impl<'a> Evaluator<'a> {
 
     match node {
       Program::Statements(statements) => {
-        let mut result = Value::Null;
-
-        for statement in statements {
-          let completion = self.evaluate_statement(statement)?;
-
-          result = completion.unwrap();
-
-          if matches!(
-            &completion,
-            Completion::Return(_) | Completion::Break | Completion::Continue
-          ) {
-            break;
-          }
-        }
-
-        Ok(result)
+        Ok(self.evaluate_statements(statements)?.unwrap())
       }
     }
   }
@@ -386,24 +371,7 @@ impl<'a> Evaluator<'a> {
 
         Ok(Completion::Value(value))
       }
-      Statement::Block(statements) => {
-        let mut result = Value::Null;
-
-        for statement in statements {
-          let completion = self.evaluate_statement(statement)?;
-
-          result = completion.unwrap();
-
-          if matches!(
-            &completion,
-            Completion::Return(_) | Completion::Break | Completion::Continue
-          ) {
-            return Ok(completion);
-          }
-        }
-
-        Ok(Completion::Value(result))
-      }
+      Statement::Block(statements) => self.evaluate_statements(statements),
       Statement::Break => {
         if !self.context.inside_loop() {
           return Err(Error::new(
@@ -467,39 +435,9 @@ impl<'a> Evaluator<'a> {
       }
       Statement::If(condition, then_branch, else_branch) => {
         if self.evaluate_expression(condition)?.boolean(condition.1)? {
-          let mut result = Value::Null;
-
-          for statement in then_branch {
-            let completion = self.evaluate_statement(statement)?;
-
-            result = completion.unwrap();
-
-            if matches!(
-              &completion,
-              Completion::Return(_) | Completion::Break | Completion::Continue
-            ) {
-              return Ok(completion);
-            }
-          }
-
-          Ok(Completion::Value(result))
+          self.evaluate_statements(then_branch)
         } else if let Some(else_statements) = else_branch {
-          let mut result = Value::Null;
-
-          for statement in else_statements {
-            let completion = self.evaluate_statement(statement)?;
-
-            result = completion.unwrap();
-
-            if matches!(
-              &completion,
-              Completion::Return(_) | Completion::Break | Completion::Continue
-            ) {
-              return Ok(completion);
-            }
-          }
-
-          Ok(Completion::Value(result))
+          self.evaluate_statements(else_statements)
         } else {
           Ok(Completion::Value(Value::Null))
         }
@@ -556,6 +494,28 @@ impl<'a> Evaluator<'a> {
         })
       }
     }
+  }
+
+  pub(crate) fn evaluate_statements(
+    &mut self,
+    statements: &[Spanned<Statement<'a>>],
+  ) -> Result<Completion<'a>, Error> {
+    let mut result = Value::Null;
+
+    for statement in statements {
+      let completion = self.evaluate_statement(statement)?;
+
+      result = completion.unwrap();
+
+      if matches!(
+        &completion,
+        Completion::Return(_) | Completion::Break | Completion::Continue
+      ) {
+        return Ok(completion);
+      }
+    }
+
+    Ok(Completion::Value(result))
   }
 }
 
