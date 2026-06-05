@@ -580,7 +580,7 @@ fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     Value::Number(number) => {
       Ok(Value::Number(number.to_approx(payload.config)))
     }
-    Value::String(s) => Number::try_from(*s)
+    Value::String(s) => Number::try_from(s.as_ref())
       .map(|number| Value::Number(number.to_approx(payload.config)))
       .map_err(|_| {
         Error::new(payload.span, format!("Cannot convert '{s}' to float"))
@@ -674,7 +674,7 @@ fn input<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
         }
       }
 
-      Ok(Value::String(Box::leak(input.into_boxed_str())))
+      Ok(Value::String(Cow::Owned(input)))
     }
     Err(e) => Err(Error::new(
       payload.span,
@@ -698,7 +698,7 @@ fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   match value {
     Value::Number(number) => Ok(Value::Number(number.floor())),
-    Value::String(s) => Number::try_from(*s)
+    Value::String(s) => Number::try_from(s.as_ref())
       .map(|number| Value::Number(number.floor()))
       .map_err(|_| {
         Error::new(payload.span, format!("Cannot convert '{s}' to int"))
@@ -735,7 +735,7 @@ fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     .collect::<Vec<_>>()
     .join(delimiter);
 
-  Ok(Value::String(Box::leak(joined_string.into_boxed_str())))
+  Ok(Value::String(Cow::Owned(joined_string)))
 }
 
 fn lcm<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -809,7 +809,7 @@ fn list<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     Value::List(items) => Ok(Value::List(items.clone())),
     Value::String(s) => Ok(Value::List(
       s.chars()
-        .map(|c| Value::String(Box::leak(c.to_string().into_boxed_str())))
+        .map(|c| Value::String(Cow::Owned(c.to_string())))
         .collect(),
     )),
     _ => Ok(Value::List(vec![value.clone()])),
@@ -1084,7 +1084,7 @@ fn split<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     string
       .split(delimiter)
       .filter(|part| !part.is_empty())
-      .map(|part| Value::String(Box::leak(part.to_string().into_boxed_str())))
+      .map(|part| Value::String(Cow::Owned(part.to_string())))
       .collect(),
   ))
 }
