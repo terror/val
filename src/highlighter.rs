@@ -10,11 +10,11 @@ const COLOR_OPERATOR: &str = "\x1b[36m"; // Cyan
 const COLOR_RESET: &str = "\x1b[0m";
 const COLOR_STRING: &str = "\x1b[32m"; // Green
 
-pub(crate) struct TreeHighlighter<'src> {
+pub(crate) struct Highlighter<'src> {
   content: &'src str,
 }
 
-impl<'src> TreeHighlighter<'src> {
+impl<'src> Highlighter<'src> {
   fn apply_color_spans(
     &self,
     spans: &[(usize, usize, &str)],
@@ -534,55 +534,3 @@ impl<'src> TreeHighlighter<'src> {
     Self { content }
   }
 }
-
-pub(crate) struct Highlighter {
-  completer: FilenameCompleter,
-  hinter: HistoryHinter,
-}
-
-impl Highlighter {
-  pub(crate) fn new() -> Self {
-    Self {
-      completer: FilenameCompleter::new(),
-      hinter: HistoryHinter::new(),
-    }
-  }
-}
-
-impl Completer for Highlighter {
-  type Candidate = Pair;
-  fn complete(
-    &self,
-    line: &str,
-    pos: usize,
-    ctx: &Context<'_>,
-  ) -> Result<(usize, Vec<Pair>), ReadlineError> {
-    self.completer.complete(line, pos, ctx)
-  }
-}
-
-impl Helper for Highlighter {}
-
-impl Hinter for Highlighter {
-  type Hint = String;
-
-  fn hint(&self, line: &str, a: usize, b: &Context) -> Option<Self::Hint> {
-    self.hinter.hint(line, a, b)
-  }
-}
-
-impl RustylineHighlighter for Highlighter {
-  fn highlight<'l>(&self, line: &'l str, _pos: usize) -> Cow<'l, str> {
-    TreeHighlighter::new(line).highlight()
-  }
-
-  fn highlight_char(&self, _: &str, _: usize, _: CmdKind) -> bool {
-    true
-  }
-
-  fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-    Owned(format!("\x1b[90m{hint}\x1b[0m"))
-  }
-}
-
-impl Validator for Highlighter {}

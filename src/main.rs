@@ -3,6 +3,7 @@ use {
   ariadne::Source,
   clap::Parser,
   highlighter::Highlighter,
+  prompt::Prompt,
   regex::Regex,
   rounding_mode::RoundingMode,
   rug::float::Round,
@@ -36,6 +37,7 @@ use {
 
 mod arguments;
 mod highlighter;
+mod prompt;
 mod rounding_mode;
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
