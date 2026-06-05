@@ -38,7 +38,7 @@ harness = false
 anyhow = "1.0.100"
 ariadne = "0.5.1"
 chumsky = { version = "0.10.1", features = ["pratt"] }
-clap = { version = "4.5.51", features = ["derive"] }
+clap = { version = "4.5.60", features = ["derive"] }
 gmp-mpfr-sys = { version = "~1.7", default-features = false, optional = true }
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
 
