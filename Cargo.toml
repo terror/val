@@ -1,25 +1,29 @@
 [package]
 name = "val"
 version = "0.3.6"
-authors = ["Liam <liam@scalzulli.com>"]
-categories = ["science", "parser-implementations", "command-line-interface"]
-description = "An arbitrary precision calculator language"
 edition = "2024"
-homepage = "https://github.com/terror/val"
-keywords = ["productivity", "compilers"]
+authors = ["Liam <liam@scalzulli.com>"]
+description = "An arbitrary precision calculator language"
 license = "CC0-1.0"
 repository = "https://github.com/terror/val"
-resolver = "2"
+homepage = "https://github.com/terror/val"
+categories = ["science", "parser-implementations", "command-line-interface"]
+keywords = ["productivity", "compilers"]
+
+[[bench]]
+name = "main"
+harness = false
+
+[lints]
+workspace = true
 
 [profile.release]
 lto = true
 codegen-units = 1
 
-[lints]
-workspace = true
-
 [workspace]
 members = [".", "crates/*"]
+resolver = "2"
 
 [workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
@@ -30,9 +34,8 @@ wildcard_imports = "allow"
 [workspace.lints.rust]
 unreachable_pub = "deny"
 
-[[bench]]
-name = "main"
-harness = false
+[features]
+force-cross = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/force-cross"]
 
 [dependencies]
 anyhow = "1.0.102"
@@ -54,6 +57,3 @@ indoc = "2.0.7"
 pretty_assertions = "1.4.1"
 tempfile = "3.27.0"
 unindent = "0.2.4"
-
-[features]
-force-cross = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/force-cross"]
