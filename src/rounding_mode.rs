@@ -25,6 +25,18 @@ impl Display for RoundingMode {
   }
 }
 
+impl From<RoundingMode> for Round {
+  fn from(mode: RoundingMode) -> Self {
+    match mode {
+      RoundingMode::Down => Round::Down,
+      RoundingMode::FromZero => Round::AwayZero,
+      RoundingMode::ToEven => Round::Nearest,
+      RoundingMode::ToZero => Round::Zero,
+      RoundingMode::Up => Round::Up,
+    }
+  }
+}
+
 impl FromStr for RoundingMode {
   type Err = String;
 
@@ -41,18 +53,6 @@ impl FromStr for RoundingMode {
       }
       "up" => Ok(RoundingMode::Up),
       _ => Err(format!("Unknown rounding mode: {s}")),
-    }
-  }
-}
-
-impl From<RoundingMode> for Round {
-  fn from(mode: RoundingMode) -> Self {
-    match mode {
-      RoundingMode::Down => Round::Down,
-      RoundingMode::FromZero => Round::AwayZero,
-      RoundingMode::ToEven => Round::Nearest,
-      RoundingMode::ToZero => Round::Zero,
-      RoundingMode::Up => Round::Up,
     }
   }
 }
