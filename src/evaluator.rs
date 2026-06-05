@@ -13,7 +13,7 @@ impl<'a> Evaluator<'a> {
   ) -> Result<(), Error> {
     match &target.0 {
       AssignmentTarget::Identifier(name) => {
-        self.environment.add_symbol(name, value);
+        self.environment.assign_symbol(name, value);
         Ok(())
       }
       AssignmentTarget::ListAccess(_, _) => {
@@ -31,7 +31,7 @@ impl<'a> Evaluator<'a> {
         let root =
           self.assign_indices(name, root, &indices, value, target.1)?;
 
-        self.environment.add_symbol(name, root);
+        self.environment.assign_symbol(name, root);
 
         Ok(())
       }

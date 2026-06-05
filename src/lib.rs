@@ -5,18 +5,21 @@ use {
   chumsky::prelude::*,
   context::Context,
   decimal::Decimal,
+  frame::Frame,
   rug::{
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
     ops::Pow,
   },
   std::{
+    cell::RefCell,
     cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},
     num::NonZeroUsize,
     ops::Range,
     process,
+    rc::Rc,
     str::FromStr,
   },
   symbol::Symbol,
@@ -51,6 +54,7 @@ mod decimal;
 mod environment;
 mod error;
 mod evaluator;
+mod frame;
 mod function;
 mod number;
 mod parser;

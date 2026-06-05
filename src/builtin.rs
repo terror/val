@@ -13,7 +13,7 @@ pub struct BuiltinFunctionPayload<'src> {
 pub enum Builtin {
   Constant {
     name: &'static str,
-    value: fn(Config) -> Value<'static>,
+    value: fn(Config) -> Number,
   },
   Function {
     function: BuiltinFunction,
