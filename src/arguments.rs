@@ -142,9 +142,9 @@ impl Arguments {
       .build();
 
     let mut editor =
-      Editor::<Highlighter, DefaultHistory>::with_config(editor_config)?;
+      Editor::<Prompt, DefaultHistory>::with_config(editor_config)?;
 
-    editor.set_helper(Some(Highlighter::new()));
+    editor.set_helper(Some(Prompt::new()));
     editor.load_history(&history).ok();
 
     let mut evaluator =
