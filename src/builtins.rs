@@ -401,27 +401,25 @@ fn ceil<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   ))
 }
 
-fn constant_e(config: Config) -> Value<'static> {
-  Value::Number(Number::e(config))
+fn constant_e(config: Config) -> Number {
+  Number::e(config)
 }
 
-fn constant_phi(config: Config) -> Value<'static> {
-  Value::Number(
-    Number::from(1_i64)
-      .add(&Number::from(5_i64).sqrt(config), config)
-      .div(&Number::from(2_i64), config),
+fn constant_phi(config: Config) -> Number {
+  Number::from(1_i64)
+    .add(&Number::from(5_i64).sqrt(config), config)
+    .div(&Number::from(2_i64), config)
+}
+
+fn constant_pi(config: Config) -> Number {
+  Number::Approx(
+    Float::with_val_round(config.precision, Constant::Pi, config.rounding_mode)
+      .0,
   )
 }
 
-fn constant_pi(config: Config) -> Value<'static> {
-  Value::Number(Number::Approx(
-    Float::with_val_round(config.precision, Constant::Pi, config.rounding_mode)
-      .0,
-  ))
-}
-
-fn constant_tau(config: Config) -> Value<'static> {
-  Value::Number(Number::tau(config))
+fn constant_tau(config: Config) -> Number {
+  Number::tau(config)
 }
 
 fn cos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {

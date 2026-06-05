@@ -45,8 +45,7 @@ impl<'src> Function<'src> {
           ));
         }
 
-        let mut call_environment =
-          Environment::with_parent(environment.clone());
+        let call_environment = Environment::with_parent(environment.clone());
 
         call_environment.add_function(name, self.clone());
 

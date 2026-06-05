@@ -1246,7 +1246,6 @@ fn function_calling_builtin() -> Result {
 }
 
 #[test]
-#[ignore = "captures current unsupported function scope behavior"]
 fn function_modifying_outer_scope() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1265,6 +1264,52 @@ fn function_modifying_outer_scope() -> Result {
     })
     .expected_status(0)
     .expected_stdout(Exact("1\n2\n2\n"))
+    .run()
+}
+
+#[test]
+fn function_observes_outer_scope_changes() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      value = 1
+
+      fn read_value() {
+        return value
+      }
+
+      println(read_value())
+      value = 2
+      println(read_value())
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n2\n"))
+    .run()
+}
+
+#[test]
+fn function_returned_closure_keeps_scope() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn make_counter(count) {
+        fn increment(amount) {
+          count = count + amount
+          return count
+        }
+
+        return increment
+      }
+
+      counter = make_counter(0)
+
+      println(counter(1))
+      println(counter(2))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n3\n"))
     .run()
 }
 
