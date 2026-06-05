@@ -454,8 +454,8 @@ mod tests {
     Test::new()
       .program("2 +* 3")
       .errors(vec![Error::new(
-        SimpleSpan::from(2..3),
-        "found '+' expected identifier, '(', '[', '\"', ''', or end of input",
+        SimpleSpan::from(3..4),
+        "found '*' expected '-', '!', int, '\"true\"', '\"false\"', '\"null\"', '(', identifier, '[', '\"', or '''",
       )])
       .run();
   }
