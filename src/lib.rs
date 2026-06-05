@@ -12,6 +12,7 @@ use {
     ops::Pow,
   },
   std::{
+    borrow::Cow,
     cell::RefCell,
     cmp::Ordering,
     collections::HashMap,

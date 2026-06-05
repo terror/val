@@ -147,15 +147,17 @@ impl<'a> Evaluator<'a> {
           (Value::Number(a), Value::Number(b)) => {
             Ok(Value::Number(a.add(b, self.environment.config)))
           }
-          (Value::String(a), Value::String(b)) => {
-            Ok(Value::String(Box::leak(format!("{a}{b}").into_boxed_str())))
-          }
-          (Value::String(a), _) => Ok(Value::String(Box::leak(
-            format!("{a}{rhs_val}").into_boxed_str(),
-          ))),
-          (_, Value::String(b)) => Ok(Value::String(Box::leak(
-            format!("{lhs_val}{b}").into_boxed_str(),
-          ))),
+          (Value::String(a), Value::String(b)) => Ok(Value::String(
+            Cow::Owned(format!("{}{}", a.as_ref(), b.as_ref())),
+          )),
+          (Value::String(a), _) => Ok(Value::String(Cow::Owned(format!(
+            "{}{rhs_val}",
+            a.as_ref()
+          )))),
+          (_, Value::String(b)) => Ok(Value::String(Cow::Owned(format!(
+            "{lhs_val}{}",
+            b.as_ref()
+          )))),
           (Value::List(a), Value::List(b)) => {
             let mut result = a.clone();
             result.extend(b.clone());
@@ -347,7 +349,7 @@ impl<'a> Evaluator<'a> {
       }
       Expression::Null => Ok(Value::Null),
       Expression::Number(number) => Ok(Value::Number(number.clone())),
-      Expression::String(string) => Ok(Value::String(string)),
+      Expression::String(string) => Ok(Value::String(Cow::Borrowed(string))),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => Ok(Value::Number(
         self.evaluate_expression(rhs)?.number(rhs.1)?.neg(),
       )),
