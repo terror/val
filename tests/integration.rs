@@ -2162,6 +2162,12 @@ fn logical_and_operator() -> Result {
     .program("println(false && false)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(false && (1 / 0 == 0))")
+    .expected_status(0)
+    .expected_stdout(Exact("false\n"))
     .run()
 }
 
@@ -2189,6 +2195,12 @@ fn logical_or_operator() -> Result {
     .program("println(false || false)")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(true || (1 / 0 == 0))")
+    .expected_status(0)
+    .expected_stdout(Exact("true\n"))
     .run()
 }
 
