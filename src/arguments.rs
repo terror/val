@@ -7,7 +7,7 @@ use super::*;
   version,
   help_template = "\
 {before-help}{name} {version}
-{author}
+
 {about}
 
 \x1b[1;4mUsage\x1b[0m: {usage}
@@ -17,16 +17,21 @@ use super::*;
 )]
 pub(crate) struct Arguments {
   #[clap(
+    long,
+    value_parser = clap::value_parser!(NonZeroUsize),
+    default_value = "16",
+    help = "Decimal digits to display for approximate numbers"
+  )]
+  digits: NonZeroUsize,
+  #[clap(
     short,
     long,
     conflicts_with = "filename",
     help = "Expression to evaluate"
   )]
   expression: Option<String>,
-
   #[clap(conflicts_with = "expression", help = "File to evaluate")]
   filename: Option<PathBuf>,
-
   #[clap(
     short,
     long,
@@ -34,15 +39,13 @@ pub(crate) struct Arguments {
     help = "Load files before entering the REPL"
   )]
   load: Option<Vec<PathBuf>>,
-
   #[clap(
     short,
     long,
     default_value = "1024",
     help = "Binary precision (bits) to use for calculations"
   )]
-  precision: usize,
-
+  precision: u32,
   #[clap(
     short,
     long,
@@ -51,7 +54,6 @@ pub(crate) struct Arguments {
     help = "Rounding mode to use for calculations",
   )]
   rounding_mode: RoundingMode,
-
   #[clap(
     long,
     default_value = "128",
@@ -66,10 +68,8 @@ impl Arguments {
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator = Evaluator::from(Environment::new(Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }));
+    let mut evaluator =
+      Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
     match parse(&content) {
       Ok(ast) => match evaluator.evaluate(&ast) {
@@ -95,10 +95,8 @@ impl Arguments {
   }
 
   fn evaluate_expression(&self, value: String) -> Result {
-    let mut evaluator = Evaluator::from(Environment::new(Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }));
+    let mut evaluator =
+      Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
     match parse(&value) {
       Ok(ast) => match evaluator.evaluate(&ast) {
@@ -107,7 +105,7 @@ impl Arguments {
             return Ok(());
           }
 
-          println!("{value}");
+          println!("{}", value.display(Into::<Config>::into(self)));
 
           Ok(())
         }
@@ -149,10 +147,8 @@ impl Arguments {
     editor.set_helper(Some(Highlighter::new()));
     editor.load_history(&history).ok();
 
-    let mut evaluator = Evaluator::from(Environment::new(Config {
-      precision: self.precision,
-      rounding_mode: self.rounding_mode.into(),
-    }));
+    let mut evaluator =
+      Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
@@ -195,7 +191,9 @@ impl Arguments {
 
       match parse(line) {
         Ok(ast) => match evaluator.evaluate(&ast) {
-          Ok(value) if !matches!(value, Value::Null) => println!("{value}"),
+          Ok(value) if !matches!(value, Value::Null) => {
+            println!("{}", value.display(Into::<Config>::into(self)));
+          }
           Ok(_) => {}
           Err(error) => error
             .report("<input>")
@@ -226,6 +224,16 @@ impl Arguments {
           Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
         }
       }
+    }
+  }
+}
+
+impl From<&Arguments> for Config {
+  fn from(arguments: &Arguments) -> Self {
+    Config {
+      digits: arguments.digits,
+      precision: arguments.precision,
+      rounding_mode: arguments.rounding_mode.into(),
     }
   }
 }
@@ -263,6 +271,20 @@ mod tests {
     assert!(arguments.expression.is_some());
 
     assert_eq!(arguments.expression.unwrap(), "1 + 2");
+  }
+
+  #[test]
+  fn digits() {
+    let arguments = Arguments::parse_from(vec!["program", "--digits", "4"]);
+
+    assert_eq!(arguments.digits, NonZeroUsize::new(4).unwrap());
+  }
+
+  #[test]
+  fn digits_rejects_zero() {
+    let result = Arguments::try_parse_from(vec!["program", "--digits", "0"]);
+
+    assert!(result.is_err());
   }
 
   #[test]

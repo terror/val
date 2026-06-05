@@ -6,31 +6,13 @@ pub enum Value<'src> {
   Function(Function<'src>),
   List(Vec<Self>),
   Null,
-  Number(Float),
+  Number(Number),
   String(&'src str),
 }
 
 impl Display for Value<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    match self {
-      Value::Boolean(boolean) => write!(f, "{boolean}"),
-      Value::Function(function) => write!(f, "<function: {}>", function.name()),
-      Value::List(list) => write!(
-        f,
-        "[{}]",
-        list
-          .iter()
-          .map(|item| match item {
-            Value::String(string) => format!("\'{string}\'"),
-            _ => item.to_string(),
-          })
-          .collect::<Vec<_>>()
-          .join(", ")
-      ),
-      Value::Null => write!(f, "null"),
-      Value::Number(number) => write!(f, "{}", number.display()),
-      Value::String(string) => write!(f, "{string}"),
-    }
+    f.write_str(&self.display(Config::default()))
   }
 }
 
@@ -62,6 +44,28 @@ impl<'a> Value<'a> {
     }
   }
 
+  #[must_use]
+  pub fn display(&self, config: Config) -> String {
+    match self {
+      Value::Boolean(boolean) => boolean.to_string(),
+      Value::Function(function) => format!("<function: {}>", function.name()),
+      Value::List(list) => format!(
+        "[{}]",
+        list
+          .iter()
+          .map(|item| match item {
+            Value::String(string) => format!("\'{string}\'"),
+            _ => item.display(config),
+          })
+          .collect::<Vec<_>>()
+          .join(", ")
+      ),
+      Value::Null => "null".into(),
+      Value::Number(number) => number.display(config),
+      Value::String(string) => string.to_string(),
+    }
+  }
+
   pub(crate) fn list(&self, span: Span) -> Result<Vec<Value<'a>>, Error> {
     if let Value::List(x) = self {
       Ok(x.clone())
@@ -73,7 +77,7 @@ impl<'a> Value<'a> {
     }
   }
 
-  pub(crate) fn number(&self, span: Span) -> Result<Float, Error> {
+  pub(crate) fn number(&self, span: Span) -> Result<Number, Error> {
     if let Value::Number(x) = self {
       Ok(x.clone())
     } else {

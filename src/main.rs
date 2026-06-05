@@ -5,6 +5,7 @@ use {
   highlighter::Highlighter,
   regex::Regex,
   rounding_mode::RoundingMode,
+  rug::float::Round,
   rustyline::{
     Context, Editor, Helper,
     completion::{Completer, FilenameCompleter, Pair},
@@ -20,6 +21,7 @@ use {
     borrow::{Cow, Cow::Owned},
     fmt::{self, Display, Formatter},
     fs,
+    num::NonZeroUsize,
     path::PathBuf,
     process,
     str::FromStr,

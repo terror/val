@@ -1,4 +1,4 @@
-use {super::*, crate::context::Context};
+use super::*;
 
 pub struct Evaluator<'a> {
   pub(crate) context: Context,
@@ -69,21 +69,7 @@ impl<'a> Evaluator<'a> {
       }
     };
 
-    let index = self
-      .evaluate_expression(index)?
-      .number(index.1)?
-      .to_f64(self.environment.config.rounding_mode)
-      .and_then(|number| {
-        if number.is_finite() && number >= 0.0 {
-          let number = number.trunc();
-          format!("{number:.0}").parse::<usize>().ok()
-        } else {
-          None
-        }
-      })
-      .ok_or_else(|| {
-        Error::new(index.1, "List index must be a non-negative finite number")
-      })?;
+    let index = self.evaluate_list_index(index)?;
 
     if index >= list.len() {
       return Err(Error::new(
@@ -167,11 +153,9 @@ impl<'a> Evaluator<'a> {
         );
 
         match (&lhs_val, &rhs_val) {
-          (Value::Number(a), Value::Number(b)) => Ok(Value::Number(a.add(
-            b,
-            self.environment.config.precision,
-            self.environment.config.rounding_mode,
-          ))),
+          (Value::Number(a), Value::Number(b)) => {
+            Ok(Value::Number(a.add(b, self.environment.config)))
+          }
           (Value::String(a), Value::String(b)) => {
             Ok(Value::String(Box::leak(format!("{a}{b}").into_boxed_str())))
           }
@@ -186,11 +170,11 @@ impl<'a> Evaluator<'a> {
             result.extend(b.clone());
             Ok(Value::List(result))
           }
-          _ => Ok(Value::Number(lhs_val.number(lhs.1)?.add(
-            &rhs_val.number(rhs.1)?,
-            self.environment.config.precision,
-            self.environment.config.rounding_mode,
-          ))),
+          _ => Ok(Value::Number(
+            lhs_val
+              .number(lhs.1)?
+              .add(&rhs_val.number(rhs.1)?, self.environment.config),
+          )),
         }
       }
       Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
@@ -206,11 +190,9 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(rhs.1, "Division by zero"));
         }
 
-        Ok(Value::Number(lhs_num.div(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        )))
+        Ok(Value::Number(
+          lhs_num.div(&rhs_num, self.environment.config),
+        ))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.evaluate_expression(lhs)? == self.evaluate_expression(rhs)?,
@@ -283,33 +265,14 @@ impl<'a> Evaluator<'a> {
           return Err(Error::new(rhs.1, "Modulo by zero"));
         }
 
-        let quotient = lhs_num.div(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        );
-
-        let floored_quotient = quotient.floor();
-
-        let product = floored_quotient.mul(
-          &rhs_num,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        );
-
-        let remainder = lhs_num.sub(
-          &product,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
-        );
-
-        Ok(Value::Number(remainder))
+        Ok(Value::Number(
+          lhs_num.rem(&rhs_num, self.environment.config),
+        ))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
           &self.evaluate_expression(rhs)?.number(rhs.1)?,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
+          self.environment.config,
         ),
       )),
       Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
@@ -324,22 +287,14 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        let result = with_consts(|consts| {
-          lhs_num.pow(
-            &rhs_num,
-            self.environment.config.precision,
-            self.environment.config.rounding_mode,
-            consts,
-          )
-        });
-
-        Ok(Value::Number(result))
+        Ok(Value::Number(
+          lhs_num.pow(&rhs_num, self.environment.config),
+        ))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
           &self.evaluate_expression(rhs)?.number(rhs.1)?,
-          self.environment.config.precision,
-          self.environment.config.rounding_mode,
+          self.environment.config,
         ),
       )),
       Expression::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
@@ -384,24 +339,7 @@ impl<'a> Evaluator<'a> {
           }
         };
 
-        let Some(index) = self
-          .evaluate_expression(index)?
-          .number(index.1)?
-          .to_f64(self.environment.config.rounding_mode)
-          .and_then(|number| {
-            if number.is_finite() && number >= 0.0 {
-              let number = number.trunc();
-              format!("{number:.0}").parse::<usize>().ok()
-            } else {
-              None
-            }
-          })
-        else {
-          return Err(Error::new(
-            index.1,
-            "List index must be a non-negative finite number",
-          ));
-        };
+        let index = self.evaluate_list_index(index)?;
 
         if index >= list.len() {
           return Err(Error::new(
@@ -420,12 +358,25 @@ impl<'a> Evaluator<'a> {
       Expression::Number(number) => Ok(Value::Number(number.clone())),
       Expression::String(string) => Ok(Value::String(string)),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => Ok(Value::Number(
-        -self.evaluate_expression(rhs)?.number(rhs.1)?,
+        self.evaluate_expression(rhs)?.number(rhs.1)?.neg(),
       )),
       Expression::UnaryOp(UnaryOp::Not, rhs) => Ok(Value::Boolean(
         !self.evaluate_expression(rhs)?.boolean(rhs.1)?,
       )),
     }
+  }
+
+  fn evaluate_list_index(
+    &mut self,
+    index: &Spanned<Expression<'a>>,
+  ) -> Result<usize, Error> {
+    self
+      .evaluate_expression(index)?
+      .number(index.1)?
+      .to_non_negative_usize()
+      .ok_or_else(|| {
+        Error::new(index.1, "List index must be a non-negative finite number")
+      })
   }
 
   pub(crate) fn evaluate_statement(

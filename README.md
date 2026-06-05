@@ -65,7 +65,7 @@ arguments/options we support:
 
 ```present cargo run -- --help
 val 0.3.6
-Liam <liam@scalzulli.com>
+
 An arbitrary precision calculator language
 
 Usage: val [OPTIONS] [FILENAME]
@@ -74,6 +74,7 @@ Arguments:
   [FILENAME]  File to evaluate
 
 Options:
+      --digits <DIGITS>                Decimal digits to display for approximate numbers [default: 16]
   -e, --expression <EXPRESSION>        Expression to evaluate
   -l, --load <LOAD>                    Load files before entering the REPL
   -p, --precision <PRECISION>          Binary precision (bits) to use for calculations [default: 1024]
@@ -194,25 +195,25 @@ complex operations:
 
 #### Number
 
-Numeric values are represented as arbitrary precision floating point numbers (using
-[astro_float](https://docs.rs/astro-float/latest/astro_float/index.html) under
-the hood):
+Numeric values are represented exactly as rational numbers where possible, using
+[`rug::Rational`](https://docs.rs/rug/latest/rug/struct.Rational.html).
+Approximate math, such as trigonometric functions, logarithms, exponentials, and
+constants like `pi`, uses [`rug::Float`](https://docs.rs/rug/latest/rug/struct.Float.html):
 
 ```rust
 > pi
-3.141592653589793115997963468544185161590576171875
+3.141592653589793
 > e
-2.718281828459045090795598298427648842334747314453125
+2.718281828459045
 > sin(2) * e ^ pi * cos(sum([1, 2, 3]))
-16.4814557939128835908118223753548409318930600432600320575175542910885566534716862696709583557263450637540094805515971245058657340687939442764118452427864231041058959960049996970569867866035825048029794926250103816423751837050040821914044725396611746570949840536443560831710407959633707222226883928822125018007
+16.48145579391288
 >
 ```
 
-You can specify the rounding mode, and what sort of precision you'd like to see
-in the output by using the `--rounding-mode` and `--precision` options (note
-that `--precision` controls binary precision, measured in bits, not decimal
-digits).
-respectively.
+You can specify the rounding mode and binary precision used for approximate
+calculations with `--rounding-mode` and `--precision`. `--precision` controls
+binary precision, measured in bits. Use `--digits` to control how many decimal
+digits are displayed for approximate numbers.
 
 #### Boolean
 

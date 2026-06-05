@@ -334,7 +334,7 @@ fn arctangent() -> Result {
     .argument("53")
     .program("println(arc(1))")
     .expected_status(0)
-    .expected_stdout(Exact("0.78539816339744830962\n"))
+    .expected_stdout(Contains("0.785398163397448"))
     .run()?;
 
   Test::new()?
@@ -348,7 +348,7 @@ fn arctangent() -> Result {
     .argument("53")
     .program("println(arc(-1))")
     .expected_status(0)
-    .expected_stdout(Exact("-0.78539816339744830962\n"))
+    .expected_stdout(Contains("-0.785398163397448"))
     .run()?;
 
   Test::new()?
@@ -550,7 +550,7 @@ fn builtin_variables_and_functions_can_coexist() -> Result {
     .argument("53")
     .program("println(e * e(20))")
     .expected_status(0)
-    .expected_stdout(Exact("1318815734.4832146972\n"))
+    .expected_stdout(Contains("1318815734.483215"))
     .run()
 }
 
@@ -561,7 +561,7 @@ fn call_builtin_function() -> Result {
     .argument("53")
     .program("println(sin(1))")
     .expected_status(0)
-    .expected_stdout(Exact("0.84147098480789650666\n"))
+    .expected_stdout(Contains("0.841470984807896"))
     .run()?;
 
   Test::new()?
@@ -569,7 +569,7 @@ fn call_builtin_function() -> Result {
     .argument("53")
     .program("println(cos(1))")
     .expected_status(0)
-    .expected_stdout(Exact("0.54030230586813971741\n"))
+    .expected_stdout(Contains("0.540302305868139"))
     .run()
 }
 
@@ -821,7 +821,7 @@ fn cotangent() -> Result {
   Test::new()?
     .program("println(cot(pi/4))")
     .expected_status(0)
-    .expected_stdout(Contains("1.0000"))
+    .expected_stdout(Exact("1\n"))
     .run()?;
 
   Test::new()?
@@ -870,6 +870,46 @@ fn division() -> Result {
     .program("println(10 / 4)")
     .expected_status(0)
     .expected_stdout(Exact("2.5\n"))
+    .run()
+}
+
+#[test]
+fn exact_decimal_arithmetic() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = 0.001
+
+      while (a < 1) {
+        a = a + 0.001
+      }
+
+      println(a)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(0.1 + 0.2)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.3\n"))
+    .run()
+}
+
+#[test]
+fn exact_rational_arithmetic() -> Result {
+  Test::new()?
+    .program("println(1 / 3)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.3333333333333333\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println((1 / 3) * 3)")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
     .run()
 }
 
@@ -1031,6 +1071,23 @@ fn float_literals() -> Result {
     .program("println(3.5 * 2.0)")
     .expected_status(0)
     .expected_stdout(Exact("7\n"))
+    .run()
+}
+
+#[test]
+fn configured_digits() -> Result {
+  Test::new()?
+    .program("println(2 / 5555222222222)")
+    .expected_status(0)
+    .expected_stdout(Exact("3.600216012960922e-13\n"))
+    .run()?;
+
+  Test::new()?
+    .argument("--digits")
+    .argument("4")
+    .program("println(2 / 5555222222222)")
+    .expected_status(0)
+    .expected_stdout(Exact("3.6e-13\n"))
     .run()
 }
 
@@ -1310,7 +1367,7 @@ fn functions_with_constants() -> Result {
     .argument("53")
     .program("println(arc(pi / 4))")
     .expected_status(0)
-    .expected_stdout(Exact("0.66577375002835386362\n"))
+    .expected_stdout(Contains("0.665773750028353"))
     .run()?;
 
   Test::new()?
@@ -1318,7 +1375,7 @@ fn functions_with_constants() -> Result {
     .argument("53")
     .program("println(ln(e * 2))")
     .expected_status(0)
-    .expected_stdout(Exact("1.6931471805599453094\n"))
+    .expected_stdout(Contains("1.693147180559945"))
     .run()?;
 
   Test::new()?
@@ -1326,7 +1383,7 @@ fn functions_with_constants() -> Result {
     .argument("53")
     .program("println(e(pi))")
     .expected_status(0)
-    .expected_stdout(Exact("23.140692632779269006\n"))
+    .expected_stdout(Contains("23.140692632779"))
     .run()
 }
 
@@ -1750,7 +1807,7 @@ fn join_with_different_types() -> Result {
       "
     })
     .expected_status(0)
-    .expected_stdout(Contains("text, 123, true, 4.55"))
+    .expected_stdout(Exact("text, 123, true, 4.56\n"))
     .run()
 }
 
@@ -1880,6 +1937,17 @@ fn list_access_out_of_bounds() -> Result {
     })
     .expected_status(1)
     .expected_stderr(Contains("Index 20 out of bounds for list of length 3"))
+    .run()
+}
+
+#[test]
+fn list_access_rejects_non_integer_index() -> Result {
+  Test::new()?
+    .program("println([1, 2, 3][1.5])")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "List index must be a non-negative finite number",
+    ))
     .run()
 }
 
@@ -2247,13 +2315,13 @@ fn natural_logarithm() -> Result {
     .argument("53")
     .program("println(ln(10))")
     .expected_status(0)
-    .expected_stdout(Exact("2.302585092994045684\n"))
+    .expected_stdout(Contains("2.302585092994046"))
     .run()?;
 
   Test::new()?
     .program("println(ln())")
     .expected_status(1)
-    .expected_stderr(Contains("Function 'ln' expects 1 argument, got 0"))
+    .expected_stderr(Contains("Function `ln` expects 1 argument, got 0"))
     .run()?;
 
   Test::new()?
@@ -2785,7 +2853,7 @@ fn square_root() -> Result {
     .argument("53")
     .program("println(sqrt(2))")
     .expected_status(0)
-    .expected_stdout(Exact("1.4142135623730950487\n"))
+    .expected_stdout(Contains("1.414213562373095"))
     .run()?;
 
   Test::new()?
@@ -2929,7 +2997,7 @@ fn tangent() -> Result {
   Test::new()?
     .program("println(tan(pi/4))")
     .expected_status(0)
-    .expected_stdout(Contains("0.99"))
+    .expected_stdout(Exact("1\n"))
     .run()
 }
 

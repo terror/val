@@ -1,14 +1,20 @@
 use {
   ariadne::{Color, Label, Report, ReportKind},
   ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
-  astro_float::{BigFloat as Float, Consts, Radix, Sign},
   builtins::BUILTINS,
   chumsky::prelude::*,
-  consts::with_consts,
+  context::Context,
+  decimal::Decimal,
+  rug::{
+    Complete, Float, Integer, Rational,
+    float::{Constant, Round},
+    ops::Pow,
+  },
   std::{
-    cell::RefCell,
+    cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},
+    num::NonZeroUsize,
     ops::Range,
     process,
     str::FromStr,
@@ -23,8 +29,8 @@ pub use crate::{
   environment::Environment,
   error::Error,
   evaluator::Evaluator,
-  float_ext::FloatExt,
   function::Function,
+  number::{Number, ParseDecimalError},
   parser::parse,
   rounding_mode::RoundingMode,
   value::Value,
@@ -40,13 +46,13 @@ mod builtin;
 mod builtins;
 mod completion;
 mod config;
-mod consts;
 mod context;
+mod decimal;
 mod environment;
 mod error;
 mod evaluator;
-mod float_ext;
 mod function;
+mod number;
 mod parser;
 mod rounding_mode;
 mod symbol;
