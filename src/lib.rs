@@ -11,6 +11,7 @@ use {
     ops::Pow,
   },
   std::{
+    borrow::Cow,
     cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},

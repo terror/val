@@ -7,7 +7,7 @@ pub enum Value<'src> {
   List(Vec<Self>),
   Null,
   Number(Number),
-  String(&'src str),
+  String(Cow<'src, str>),
 }
 
 impl<'a> Value<'a> {
@@ -68,7 +68,7 @@ impl<'a> Value<'a> {
 
   pub(crate) fn string(&self, span: Span) -> Result<&str, Error> {
     if let Value::String(x) = self {
-      Ok(*x)
+      Ok(x.as_ref())
     } else {
       Err(Error {
         span,
