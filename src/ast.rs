@@ -5,6 +5,15 @@ pub enum Program<'a> {
   Statements(Vec<Spanned<Statement<'a>>>),
 }
 
+impl Program<'_> {
+  #[must_use]
+  pub fn kind(&self) -> String {
+    String::from(match self {
+      Program::Statements(_) => "statements",
+    })
+  }
+}
+
 impl Display for Program<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
@@ -20,15 +29,6 @@ impl Display for Program<'_> {
         )
       }
     }
-  }
-}
-
-impl Program<'_> {
-  #[must_use]
-  pub fn kind(&self) -> String {
-    String::from(match self {
-      Program::Statements(_) => "statements",
-    })
   }
 }
 
@@ -53,6 +53,25 @@ pub enum Statement<'a> {
   Loop(Vec<Spanned<Statement<'a>>>),
   Return(Option<Spanned<Expression<'a>>>),
   While(Spanned<Expression<'a>>, Vec<Spanned<Statement<'a>>>),
+}
+
+impl Statement<'_> {
+  #[must_use]
+  pub fn kind(&self) -> String {
+    String::from(match self {
+      Statement::Assignment(_, _) => "assignment",
+      Statement::Block(_) => "block",
+      Statement::Break => "break",
+      Statement::Continue => "continue",
+      Statement::Expression(_) => "expression",
+      Statement::For(_, _, _) => "for",
+      Statement::Function(_, _, _) => "function",
+      Statement::If(_, _, _) => "if",
+      Statement::Loop(_) => "loop",
+      Statement::Return(_) => "return",
+      Statement::While(_, _) => "while",
+    })
+  }
 }
 
 impl Display for Statement<'_> {
@@ -160,42 +179,10 @@ impl Display for Statement<'_> {
   }
 }
 
-impl Statement<'_> {
-  #[must_use]
-  pub fn kind(&self) -> String {
-    String::from(match self {
-      Statement::Assignment(_, _) => "assignment",
-      Statement::Block(_) => "block",
-      Statement::Break => "break",
-      Statement::Continue => "continue",
-      Statement::Expression(_) => "expression",
-      Statement::For(_, _, _) => "for",
-      Statement::Function(_, _, _) => "function",
-      Statement::If(_, _, _) => "if",
-      Statement::Loop(_) => "loop",
-      Statement::Return(_) => "return",
-      Statement::While(_, _) => "while",
-    })
-  }
-}
-
 #[derive(Debug, Clone)]
 pub enum AssignmentTarget<'a> {
   Identifier(&'a str),
   ListAccess(Box<Spanned<Self>>, Box<Spanned<Expression<'a>>>),
-}
-
-impl Display for AssignmentTarget<'_> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    match self {
-      AssignmentTarget::Identifier(identifier) => {
-        write!(f, "identifier({identifier})")
-      }
-      AssignmentTarget::ListAccess(list, index) => {
-        write!(f, "list_access({}, {})", list.0, index.0)
-      }
-    }
-  }
 }
 
 impl AssignmentTarget<'_> {
@@ -224,6 +211,19 @@ impl<'a> AssignmentTarget<'a> {
     match self {
       AssignmentTarget::Identifier(name) => (name, span),
       AssignmentTarget::ListAccess(base, _) => base.0.root(base.1),
+    }
+  }
+}
+
+impl Display for AssignmentTarget<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      AssignmentTarget::Identifier(identifier) => {
+        write!(f, "identifier({identifier})")
+      }
+      AssignmentTarget::ListAccess(list, index) => {
+        write!(f, "list_access({}, {})", list.0, index.0)
+      }
     }
   }
 }
@@ -296,6 +296,24 @@ pub enum Expression<'a> {
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
 }
 
+impl Expression<'_> {
+  #[must_use]
+  pub fn kind(&self) -> String {
+    String::from(match self {
+      Expression::BinaryOp(_, _, _) => "binary_op",
+      Expression::Boolean(_) => "boolean",
+      Expression::FunctionCall(_, _) => "function_call",
+      Expression::Identifier(_) => "identifier",
+      Expression::List(_) => "list",
+      Expression::ListAccess(_, _) => "list_access",
+      Expression::Null => "null",
+      Expression::Number(_) => "number",
+      Expression::String(_) => "string",
+      Expression::UnaryOp(_, _) => "unary_op",
+    })
+  }
+}
+
 impl Display for Expression<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
@@ -339,23 +357,5 @@ impl Display for Expression<'_> {
         write!(f, "unary_op({}, {})", op, expr.0)
       }
     }
-  }
-}
-
-impl Expression<'_> {
-  #[must_use]
-  pub fn kind(&self) -> String {
-    String::from(match self {
-      Expression::BinaryOp(_, _, _) => "binary_op",
-      Expression::Boolean(_) => "boolean",
-      Expression::FunctionCall(_, _) => "function_call",
-      Expression::Identifier(_) => "identifier",
-      Expression::List(_) => "list",
-      Expression::ListAccess(_, _) => "list_access",
-      Expression::Null => "null",
-      Expression::Number(_) => "number",
-      Expression::String(_) => "string",
-      Expression::UnaryOp(_, _) => "unary_op",
-    })
   }
 }
