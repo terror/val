@@ -2,9 +2,10 @@ use {
   arguments::Arguments,
   ariadne::Source,
   clap::Parser,
+  highlight_kind::HighlightKind,
+  highlight_span::HighlightSpan,
   highlighter::Highlighter,
   prompt::Prompt,
-  regex::Regex,
   rounding_mode::RoundingMode,
   rug::float::Round,
   rustyline::{
@@ -28,14 +29,12 @@ use {
     str::FromStr,
     thread,
   },
-  val::{
-    Config, Environment, Evaluator, Spanned, Value,
-    ast::{AssignmentTarget, Expression, Program, Statement},
-    parse,
-  },
+  val::{Config, Environment, Evaluator, Value, parse},
 };
 
 mod arguments;
+mod highlight_kind;
+mod highlight_span;
 mod highlighter;
 mod prompt;
 mod rounding_mode;

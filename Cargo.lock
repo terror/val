@@ -1031,7 +1031,6 @@ dependencies = [
  "gmp-mpfr-sys",
  "indoc",
  "pretty_assertions",
- "regex",
  "rug",
  "rustyline",
  "tempfile",
