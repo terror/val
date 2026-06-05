@@ -12,7 +12,6 @@ all: build test clippy fmt-check
 [group: 'dev']
 bench:
   cargo bench
-  open target/criterion/report/index.html
 
 [group: 'dev']
 build:
