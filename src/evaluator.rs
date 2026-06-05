@@ -5,15 +5,6 @@ pub struct Evaluator<'a> {
   pub(crate) environment: Environment<'a>,
 }
 
-impl<'a> From<Environment<'a>> for Evaluator<'a> {
-  fn from(environment: Environment<'a>) -> Self {
-    Self {
-      environment,
-      context: Context::default(),
-    }
-  }
-}
-
 impl<'a> Evaluator<'a> {
   fn assign(
     &mut self,
@@ -562,6 +553,15 @@ impl<'a> Evaluator<'a> {
           Ok(Completion::Value(result))
         })
       }
+    }
+  }
+}
+
+impl<'a> From<Environment<'a>> for Evaluator<'a> {
+  fn from(environment: Environment<'a>) -> Self {
+    Self {
+      environment,
+      context: Context::default(),
     }
   }
 }

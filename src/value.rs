@@ -10,28 +10,6 @@ pub enum Value<'src> {
   String(&'src str),
 }
 
-impl Display for Value<'_> {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    f.write_str(&self.display(Config::default()))
-  }
-}
-
-impl PartialEq for Value<'_> {
-  fn eq(&self, other: &Self) -> bool {
-    match (self, other) {
-      (Value::Boolean(a), Value::Boolean(b)) => a == b,
-      (Value::Function(a), Value::Function(b)) => a.name() == b.name(),
-      (Value::List(a), Value::List(b)) => {
-        a.len() == b.len() && a.iter().zip(b.iter()).all(|(a, b)| a == b)
-      }
-      (Value::Null, Value::Null) => true,
-      (Value::Number(a), Value::Number(b)) => a == b,
-      (Value::String(a), Value::String(b)) => a == b,
-      _ => false,
-    }
-  }
-}
-
 impl<'a> Value<'a> {
   pub(crate) fn boolean(&self, span: Span) -> Result<bool, Error> {
     if let Value::Boolean(x) = self {
@@ -107,6 +85,28 @@ impl<'a> Value<'a> {
       Value::Null => "null",
       Value::Number(_) => "number",
       Value::String(_) => "string",
+    }
+  }
+}
+
+impl Display for Value<'_> {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    f.write_str(&self.display(Config::default()))
+  }
+}
+
+impl PartialEq for Value<'_> {
+  fn eq(&self, other: &Self) -> bool {
+    match (self, other) {
+      (Value::Boolean(a), Value::Boolean(b)) => a == b,
+      (Value::Function(a), Value::Function(b)) => a.name() == b.name(),
+      (Value::List(a), Value::List(b)) => {
+        a.len() == b.len() && a.iter().zip(b.iter()).all(|(a, b)| a == b)
+      }
+      (Value::Null, Value::Null) => true,
+      (Value::Number(a), Value::Number(b)) => a == b,
+      (Value::String(a), Value::String(b)) => a == b,
+      _ => false,
     }
   }
 }
