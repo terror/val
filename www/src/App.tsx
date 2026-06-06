@@ -1,163 +1,126 @@
-import { AstNode } from '@/components/ast-node';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import type { AstNode as AstNodeType, ValError } from '@/lib/types';
-import { EditorView } from '@codemirror/view';
-import { Radius } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
-import init, { parse } from 'val-wasm';
-
-import { Editor, EditorRef } from './components/editor';
-import { EditorSettingsDialog } from './components/editor-settings-dialog';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from './components/ui/resizable';
+} from '@/components/ui/resizable';
+import type { Range } from '@/lib/types';
+import { Loader2, Radius } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+
+import { AstPane } from './components/ast-pane';
+import { EditorPane } from './components/editor-pane';
+import { useEditorExtensions } from './hooks/use-editor-extensions';
+import { useMediaQuery } from './hooks/use-media-query';
+import { usePersistedDoc } from './hooks/use-persisted-doc';
+import { useValAst } from './hooks/use-val-ast';
+import { useValWasm } from './hooks/use-val-wasm';
 import { examples } from './lib/examples';
 
 const STORAGE_KEY_CODE = 'val-editor-code';
 const STORAGE_KEY_EXAMPLE = 'val-editor-example';
+const PANEL_LAYOUT_STORAGE_KEY = 'val-panel-layout';
 const DEFAULT_EXAMPLE = 'factorial';
+const STACKED_LAYOUT_QUERY = '(max-width: 767px)';
 
 function App() {
-  const [ast, setAst] = useState<AstNodeType | null>(null);
-
-  const [code, setCode] = useState(() => {
-    const savedCode = localStorage.getItem(STORAGE_KEY_CODE);
-    return savedCode || examples[DEFAULT_EXAMPLE];
-  });
+  const [code, setCode] = usePersistedDoc(
+    STORAGE_KEY_CODE,
+    examples[DEFAULT_EXAMPLE]
+  );
 
   const [currentExample, setCurrentExample] = useState(() => {
     const savedExample = localStorage.getItem(STORAGE_KEY_EXAMPLE);
-    return savedExample || DEFAULT_EXAMPLE;
+
+    return savedExample && savedExample in examples
+      ? savedExample
+      : DEFAULT_EXAMPLE;
   });
 
-  const [editorView, setEditorView] = useState<EditorView | null>(null);
-  const [errors, setErrors] = useState<ValError[]>([]);
-  const [wasmLoaded, setWasmLoaded] = useState(false);
+  const { error, loaded, loading } = useValWasm();
 
-  const editorRef = useRef<EditorRef>(null);
+  const { root, errors, expandedNodes, toggleExpand } = useValAst({
+    code,
+    loaded,
+  });
 
-  const handleEditorReady = (view: EditorView) => {
-    setEditorView(view);
-  };
+  const [highlight, setHighlight] = useState<Range | undefined>(undefined);
 
-  useEffect(() => {
-    init()
-      .then(() => {
-        setWasmLoaded(true);
-      })
-      .catch((error) => {
-        toast.error(error);
-      });
+  const stackedLayout = useMediaQuery(STACKED_LAYOUT_QUERY);
+  const panelDirection = stackedLayout ? 'vertical' : 'horizontal';
+
+  const extensions = useEditorExtensions({
+    errors,
+    highlight,
+  });
+
+  const handleHighlightChange = useCallback((range: Range | undefined) => {
+    setHighlight(range);
   }, []);
-
-  useEffect(() => {
-    if (!wasmLoaded) return;
-
-    try {
-      setAst(parse(code));
-    } catch (error) {
-      setErrors(error as ValError[]);
-    }
-  }, [code, wasmLoaded]);
-
-  useEffect(() => {
-    if (editorRef.current?.view && !editorView) {
-      setEditorView(editorRef.current.view);
-    }
-  }, [editorRef.current?.view, editorView]);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_CODE, code);
-  }, [code]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
   }, [currentExample]);
 
   const handleExampleChange = (value: string) => {
+    if (!(value in examples)) {
+      return;
+    }
+
     setCurrentExample(value);
     setCode(examples[value]);
   };
 
-  if (!wasmLoaded) return null;
+  if (error) {
+    return <div className='p-4'>error: {error}</div>;
+  }
+
+  if (loading || !loaded) {
+    return (
+      <div className='flex h-screen items-center justify-center'>
+        <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
+      </div>
+    );
+  }
 
   return (
-    <div className='flex h-screen flex-col p-4'>
-      <div className='mb-4 flex items-center'>
+    <div className='flex h-screen max-w-full flex-col'>
+      <div className='flex items-center gap-x-2 px-4 py-4'>
+        <Radius className='h-4 w-4' />
         <a href='/val' className='font-semibold'>
-          <div className='flex items-center gap-x-1'>
-            <Radius className='h-4 w-4' />
-            <p>val</p>
-          </div>
+          val
         </a>
       </div>
-      <ResizablePanelGroup
-        direction='horizontal'
-        className='min-h-0 flex-grow overflow-hidden rounded border'
-      >
-        <ResizablePanel
-          defaultSize={50}
-          minSize={30}
-          className='flex min-h-0 flex-col overflow-hidden'
+
+      <div className='flex-1 overflow-hidden p-4 pt-0'>
+        <ResizablePanelGroup
+          key={panelDirection}
+          autoSaveId={`${PANEL_LAYOUT_STORAGE_KEY}:${panelDirection}`}
+          direction={panelDirection}
+          className='h-full rounded border'
         >
-          <div className='flex h-full flex-col overflow-hidden'>
-            <div className='flex h-full min-h-0 flex-col overflow-hidden'>
-              <div className='flex items-center justify-between border-b bg-gray-50 px-2 py-1'>
-                <div className='flex items-center'>
-                  <Select
-                    value={currentExample}
-                    onValueChange={handleExampleChange}
-                  >
-                    <SelectTrigger className='h-7 w-36 bg-white text-sm'>
-                      <SelectValue placeholder='Select example' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(examples).map((key) => (
-                        <SelectItem key={key} value={key}>
-                          {key}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <EditorSettingsDialog />
-              </div>
-              <div className='h-full min-h-0 flex-grow overflow-hidden'>
-                <Editor
-                  errors={errors}
-                  onChange={setCode}
-                  onEditorReady={handleEditorReady}
-                  ref={editorRef}
-                  value={code}
-                />
-              </div>
-            </div>
-          </div>
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel
-          defaultSize={50}
-          minSize={30}
-          className='min-h-0 overflow-hidden'
-        >
-          <div className='h-full overflow-auto p-2'>
-            {ast ? (
-              <AstNode node={ast} editorView={editorView} />
-            ) : (
-              <div className='text-muted-foreground p-2'>No AST available</div>
-            )}
-          </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          <ResizablePanel id='editor-panel' defaultSize={50} minSize={30}>
+            <EditorPane
+              value={code}
+              onChange={setCode}
+              currentExample={currentExample}
+              examples={examples}
+              onExampleChange={handleExampleChange}
+              extensions={extensions}
+            />
+          </ResizablePanel>
+
+          <ResizableHandle withHandle />
+
+          <ResizablePanel id='ast-panel' defaultSize={50} minSize={30}>
+            <AstPane
+              root={root}
+              expandedNodes={expandedNodes}
+              toggleExpand={toggleExpand}
+              onHighlightChange={handleHighlightChange}
+            />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
     </div>
   );
 }
