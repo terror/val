@@ -1,68 +1,63 @@
-import { StateEffect, Transaction } from '@codemirror/state';
-import {
-  Decoration,
-  DecorationSet,
-  ViewPlugin,
-  ViewUpdate,
-} from '@codemirror/view';
+import type { Range } from '@/lib/types';
+import type { Extension } from '@codemirror/state';
+import { Decoration, EditorView, ViewPlugin } from '@codemirror/view';
 
 const highlightMark = Decoration.mark({ class: 'cm-highlighted-node' });
 
-export const addHighlightEffect = StateEffect.define<{
-  from: number;
-  to: number;
-}>();
+export const highlightExtension = (range: Range | undefined): Extension => {
+  if (!range || range.start >= range.end) {
+    return [];
+  }
 
-export const removeHighlightEffect = StateEffect.define<null>();
+  const currentRange = range;
 
-export const highlightExtension = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
+  return [
+    EditorView.decorations.of((view) => {
+      const from = clamp(currentRange.start, 0, view.state.doc.length);
+      const to = trimTrailingWhitespace(
+        from,
+        clamp(currentRange.end, from, view.state.doc.length),
+        view
+      );
 
-    constructor() {
-      this.decorations = Decoration.none;
-    }
+      if (to <= from) {
+        return Decoration.none;
+      }
 
-    update(update: ViewUpdate) {
-      const effects = update.transactions
-        .flatMap((tr: Transaction) => tr.effects)
-        .filter((e: StateEffect<unknown>) =>
-          e.is(addHighlightEffect) || e.is(removeHighlightEffect)
-        );
+      return Decoration.set([highlightMark.range(from, to)]);
+    }),
+    ViewPlugin.fromClass(
+      class {
+        constructor(view: EditorView) {
+          const from = clamp(currentRange.start, 0, view.state.doc.length);
 
-      if (!effects.length) return;
-
-      for (const effect of effects) {
-        if (effect.is(addHighlightEffect)) {
-          const { from, to } = effect.value;
-
-          const doc = update.state.doc;
-
-          let effectiveTo = to;
-
-          for (let pos = to - 1; pos >= from; pos--) {
-            const char = doc.sliceString(pos, pos + 1);
-
-            if (!/\s/.test(char)) {
-              effectiveTo = pos + 1;
-              break;
-            }
-          }
-
-          if (effectiveTo > from) {
-            this.decorations = Decoration.set([
-              highlightMark.range(from, effectiveTo),
-            ]);
-          } else {
-            this.decorations = Decoration.none;
-          }
-        } else if (effect.is(removeHighlightEffect)) {
-          this.decorations = Decoration.none;
+          queueMicrotask(() => {
+            view.dispatch({
+              effects: EditorView.scrollIntoView(from, { y: 'center' }),
+            });
+          });
         }
       }
+    ),
+  ];
+};
+
+function trimTrailingWhitespace(
+  from: number,
+  to: number,
+  view: EditorView
+): number {
+  for (let pos = to - 1; pos >= from; pos--) {
+    const char = view.state.doc.sliceString(pos, pos + 1);
+
+    if (!/\s/.test(char)) {
+      return pos + 1;
     }
-  },
-  {
-    decorations: (v: { decorations: DecorationSet }) => v.decorations,
   }
-);
+
+  return from;
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(value, max));
+}
