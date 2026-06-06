@@ -1,0 +1,2245 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Internals.html#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a href="constant.Language_Bindings.html#start" accesskey="p" rel="prev">Language Bindings</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Algorithms-1"><span>15 Algorithms<a class="copiable-link" href="#Algorithms-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Algorithms"></a>
+<p>This chapter is an introduction to some of the algorithms used for various GMP
+operations.  The code is likely to be hard to understand without knowing
+something about the algorithms.
+</p>
+<p>Some GMP internals are mentioned, but applications that expect to be
+compatible with future GMP releases should take care to use only the
+documented functions.
+</p>
+<ul class="mini-toc">
+<li><a href="#Multiplication-Algorithms" accesskey="1">Multiplication</a></li>
+<li><a href="#Division-Algorithms" accesskey="2">Division Algorithms</a></li>
+<li><a href="#Greatest-Common-Divisor-Algorithms" accesskey="3">Greatest Common Divisor</a></li>
+<li><a href="#Powering-Algorithms" accesskey="4">Powering Algorithms</a></li>
+<li><a href="#Root-Extraction-Algorithms" accesskey="5">Root Extraction Algorithms</a></li>
+<li><a href="#Radix-Conversion-Algorithms" accesskey="6">Radix Conversion</a></li>
+<li><a href="#Other-Algorithms" accesskey="7">Other Algorithms</a></li>
+<li><a href="#Assembly-Coding" accesskey="8">Assembly Coding</a></li>
+</ul>
+<hr>
+<div class="section-level-extent" id="Multiplication-Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="#Division-Algorithms" accesskey="n" rel="next">Division Algorithms</a>, Previous: <a href="#Algorithms" accesskey="p" rel="prev">Algorithms</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Multiplication"><span>15.1 Multiplication<a class="copiable-link" href="#Multiplication"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Multiplication-algorithms"></a>
+<p>NxN limb multiplications and squares are done using one of seven
+algorithms, as the size N increases.
+</p>
+<blockquote class="quotation">
+<table class="multitable">
+<tbody><tr><td>Algorithm</td><td>Threshold</td></tr>
+<tr><td>Basecase</td><td>(none)</td></tr>
+<tr><td>Karatsuba</td><td><code class="code">MUL_TOOM22_THRESHOLD</code></td></tr>
+<tr><td>Toom-3</td><td><code class="code">MUL_TOOM33_THRESHOLD</code></td></tr>
+<tr><td>Toom-4</td><td><code class="code">MUL_TOOM44_THRESHOLD</code></td></tr>
+<tr><td>Toom-6.5</td><td><code class="code">MUL_TOOM6H_THRESHOLD</code></td></tr>
+<tr><td>Toom-8.5</td><td><code class="code">MUL_TOOM8H_THRESHOLD</code></td></tr>
+<tr><td>FFT</td><td><code class="code">MUL_FFT_THRESHOLD</code></td></tr>
+</tbody>
+</table>
+</blockquote>
+<p>Similarly for squaring, with the <code class="code">SQR</code> thresholds.
+</p>
+<p>NxM multiplications of operands with different sizes above
+<code class="code">MUL_TOOM22_THRESHOLD</code> are currently done by special Toom-inspired
+algorithms or directly with FFT, depending on operand size (see <a class="pxref" href="#Unbalanced-Multiplication">Unbalanced Multiplication</a>).
+</p>
+<ul class="mini-toc">
+<li><a href="#Basecase-Multiplication" accesskey="1">Basecase Multiplication</a></li>
+<li><a href="#Karatsuba-Multiplication" accesskey="2">Karatsuba Multiplication</a></li>
+<li><a href="#Toom-3_002dWay-Multiplication" accesskey="3">Toom 3-Way Multiplication</a></li>
+<li><a href="#Toom-4_002dWay-Multiplication" accesskey="4">Toom 4-Way Multiplication</a></li>
+<li><a href="#Higher-degree-Toom_0027n_0027half" accesskey="5">Higher degree Toom&rsquo;n&rsquo;half</a></li>
+<li><a href="#FFT-Multiplication" accesskey="6">FFT Multiplication</a></li>
+<li><a href="#Other-Multiplication" accesskey="7">Other Multiplication</a></li>
+<li><a href="#Unbalanced-Multiplication" accesskey="8">Unbalanced Multiplication</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Basecase-Multiplication">
+<div class="nav-panel">
+<p>
+Next: <a href="#Karatsuba-Multiplication" accesskey="n" rel="next">Karatsuba Multiplication</a>, Previous: <a href="#Multiplication-Algorithms" accesskey="p" rel="prev">Multiplication</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Basecase-Multiplication-1"><span>15.1.1 Basecase Multiplication<a class="copiable-link" href="#Basecase-Multiplication-1"> &para;</a></span></h4>
+<p>Basecase NxM multiplication is a straightforward rectangular set of
+cross-products, the same as long multiplication done by hand and for that
+reason sometimes known as the schoolbook or grammar school method.  This is an
+<em class="math">O(N*M)</em> algorithm.  See Knuth section 4.3.1 algorithm M
+(see <a class="pxref" href="constant.References.html#start">References</a>), and the <samp class="file">mpn/generic/mul_basecase.c</samp> code.
+</p>
+<p>Assembly implementations of <code class="code">mpn_mul_basecase</code> are essentially the same
+as the generic C code, but have all the usual assembly tricks and
+obscurities introduced for speed.
+</p>
+<p>A square can be done in roughly half the time of a multiply, by using the fact
+that the cross products above and below the diagonal are the same.  A triangle
+of products below the diagonal is formed, doubled (left shift by one bit), and
+then the products on the diagonal added.  This can be seen in
+<samp class="file">mpn/generic/sqr_basecase.c</samp>.  Again the assembly implementations take
+essentially the same approach.
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted">     u0  u1  u2  u3  u4
+   +---+---+---+---+---+
+u0 | d |   |   |   |   |
+   +---+---+---+---+---+
+u1 |   | d |   |   |   |
+   +---+---+---+---+---+
+u2 |   |   | d |   |   |
+   +---+---+---+---+---+
+u3 |   |   |   | d |   |
+   +---+---+---+---+---+
+u4 |   |   |   |   | d |
+   +---+---+---+---+---+
+</pre></div></div>
+<p>In practice squaring isn&rsquo;t a full 2x faster than multiplying, it&rsquo;s
+usually around 1.5x.  Less than 1.5x probably indicates
+<code class="code">mpn_sqr_basecase</code> wants improving on that CPU.
+</p>
+<p>On some CPUs <code class="code">mpn_mul_basecase</code> can be faster than the generic C
+<code class="code">mpn_sqr_basecase</code> on some small sizes.  <code class="code">SQR_BASECASE_THRESHOLD</code> is
+the size at which to use <code class="code">mpn_sqr_basecase</code>, this will be zero if that
+routine should be used always.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Karatsuba-Multiplication">
+<div class="nav-panel">
+<p>
+Next: <a href="#Toom-3_002dWay-Multiplication" accesskey="n" rel="next">Toom 3-Way Multiplication</a>, Previous: <a href="#Basecase-Multiplication" accesskey="p" rel="prev">Basecase Multiplication</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Karatsuba-Multiplication-1"><span>15.1.2 Karatsuba Multiplication<a class="copiable-link" href="#Karatsuba-Multiplication-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Karatsuba-multiplication"></a>
+<p>The Karatsuba multiplication algorithm is described in Knuth section 4.3.3
+part A, and various other textbooks.  A brief description is given here.
+</p>
+<p>The inputs <em class="math">x</em> and <em class="math">y</em> are treated as each split into two parts of
+equal length (or the most significant part one limb shorter if N is odd).
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted"> high              low
++----------+----------+
+|    x1    |    x0    |
++----------+----------+
++----------+----------+
+|    y1    |    y0    |
++----------+----------+
+</pre></div></div>
+<p>Let <em class="math">b</em> be the power of 2 where the split occurs, i.e. if x0 is
+<em class="math">k</em> limbs (y0 the same) then
+<em class="math">b=2^(k*mp_bits_per_limb)</em>.
+With that <em class="math">x=x1*b+x0</em> and <em class="math">y=y1*b+y0</em>, and the
+following holds,
+</p>
+<div class="display">
+<pre class="display-preformatted"><em class="math">x*y = (b^2+b)*x1*y1 - b*(x1-x0)*(y1-y0) + (b+1)*x0*y0</em>
+</pre></div>
+<p>This formula means doing only three multiplies of (N/2)x(N/2) limbs,
+whereas a basecase multiply of NxN limbs is equivalent to four
+multiplies of (N/2)x(N/2).  The factors <em class="math">(b^2+b)</em> etc represent
+the positions where the three products must be added.
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted"> high                              low
++--------+--------+ +--------+--------+
+|      x1*y1      | |      x0*y0      |
++--------+--------+ +--------+--------+
+          +--------+--------+
+      add |      x1*y1      |
+          +--------+--------+
+          +--------+--------+
+      add |      x0*y0      |
+          +--------+--------+
+          +--------+--------+
+      sub | (x1-x0)*(y1-y0) |
+          +--------+--------+
+</pre></div></div>
+<p>The term <em class="math">(x1-x0)*(y1-y0)</em> is best calculated as an
+absolute value, and the sign used to choose to add or subtract.  Notice the
+sum <em class="math">high(x0*y0)+low(x1*y1)</em> occurs twice, so it&rsquo;s possible to do <em class="math">5*k</em> limb
+additions, rather than <em class="math">6*k</em>, but in GMP extra function call overheads
+outweigh the saving.
+</p>
+<p>Squaring is similar to multiplying, but with <em class="math">x=y</em> the formula reduces to
+an equivalent with three squares,
+</p>
+<div class="display">
+<pre class="display-preformatted"><em class="math">x^2 = (b^2+b)*x1^2 - b*(x1-x0)^2 + (b+1)*x0^2</em>
+</pre></div>
+<p>The final result is accumulated from those three squares the same way as for
+the three multiplies above.  The middle term <em class="math">(x1-x0)^2</em> is now
+always positive.
+</p>
+<p>A similar formula for both multiplying and squaring can be constructed with a
+middle term <em class="math">(x1+x0)*(y1+y0)</em>.  But those sums can exceed
+<em class="math">k</em> limbs, leading to more carry handling and additions than the form
+above.
+</p>
+<p>Karatsuba multiplication is asymptotically an <em class="math">O(N^1.585<!-- /@w -->)</em> algorithm,
+the exponent being <em class="math">log(3)/log(2)</em>, representing 3 multiplies
+each <em class="math">1/2</em> the size of the inputs.  This is a big improvement over the
+basecase multiply at <em class="math">O(N^2)</em> and the advantage soon overcomes the extra
+additions Karatsuba performs.  <code class="code">MUL_TOOM22_THRESHOLD</code> can be as little
+as 10 limbs.  The <code class="code">SQR</code> threshold is usually about twice the <code class="code">MUL</code>.
+</p>
+<p>The basecase algorithm will take a time of the form <em class="math">M(N) = a*N^2 + b*N + c</em> and the Karatsuba algorithm <em class="math">K(N) = 3*M(N/2) + d*N + e</em>, which expands to <em class="math">K(N) = 3/4*a*N^2 + 3/2*b*N + 3*c + d*N + e</em>.  The
+factor <em class="math">3/4</em> for <em class="math">a</em> means per-crossproduct speedups in the
+basecase code will increase the threshold since they benefit <em class="math">M(N)</em> more
+than <em class="math">K(N)</em>.  And conversely the <em class="math">3/2</em> for <em class="math">b</em> means
+linear style speedups of <em class="math">b</em> will increase the threshold since they
+benefit <em class="math">K(N)</em> more than <em class="math">M(N)</em>.  The latter can be seen for
+instance when adding an optimized <code class="code">mpn_sqr_diagonal</code> to
+<code class="code">mpn_sqr_basecase</code>.  Of course all speedups reduce total time, and in
+that sense the algorithm thresholds are merely of academic interest.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Toom-3_002dWay-Multiplication">
+<div class="nav-panel">
+<p>
+Next: <a href="#Toom-4_002dWay-Multiplication" accesskey="n" rel="next">Toom 4-Way Multiplication</a>, Previous: <a href="#Karatsuba-Multiplication" accesskey="p" rel="prev">Karatsuba Multiplication</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Toom-3_002dWay-Multiplication-1"><span>15.1.3 Toom 3-Way Multiplication<a class="copiable-link" href="#Toom-3_002dWay-Multiplication-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Toom-multiplication"></a>
+<p>The Karatsuba formula is the simplest case of a general approach to splitting
+inputs that leads to both Toom and FFT algorithms.  A description of
+Toom can be found in Knuth section 4.3.3, with an example 3-way
+calculation after Theorem A.  The 3-way form used in GMP is described here.
+</p>
+<p>The operands are each considered split into 3 pieces of equal length (or the
+most significant part 1 or 2 limbs shorter than the other two).
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted"> high                         low
++----------+----------+----------+
+|    x2    |    x1    |    x0    |
++----------+----------+----------+
++----------+----------+----------+
+|    y2    |    y1    |    y0    |
++----------+----------+----------+
+</pre></div></div>
+<p>These parts are treated as the coefficients of two polynomials
+</p>
+<div class="display">
+<div class="group"><pre class="display-preformatted"><em class="math">X(t) = x2*t^2 + x1*t + x0</em>
+<em class="math">Y(t) = y2*t^2 + y1*t + y0</em>
+</pre></div></div>
+<p>Let <em class="math">b</em> equal the power of 2 which is the size of the x0, x1,
+y0 and y1 pieces, i.e. if they&rsquo;re <em class="math">k</em> limbs each then
+<em class="math">b=2^(k*mp_bits_per_limb)</em>.
+With this <em class="math">x=X(b)</em> and <em class="math">y=Y(b)</em>.
+</p>
+<p>Let a polynomial <em class="math">W(t)=X(t)*Y(t)</em> and suppose its coefficients
+are
+</p>
+<div class="display">
+<pre class="display-preformatted"><em class="math">W(t) = w4*t^4 + w3*t^3 + w2*t^2 + w1*t + w0</em>
+</pre></div>
+<p>The <em class="math">w[i]</em> are going to be determined, and when they are they&rsquo;ll give
+the final result using <em class="math">w=W(b)</em>, since
+<em class="math">x*y=X(b)*Y(b)=W(b)</em>.  The coefficients will be roughly
+<em class="math">b^2</em> each, and the final <em class="math">W(b)</em> will be an addition like this:
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted"> high                                        low
++-------+-------+
+|       w4      |
++-------+-------+
+       +--------+-------+
+       |        w3      |
+       +--------+-------+
+               +--------+-------+
+               |        w2      |
+               +--------+-------+
+                       +--------+-------+
+                       |        w1      |
+                       +--------+-------+
+                                +-------+-------+
+                                |       w0      |
+                                +-------+-------+
+</pre></div></div>
+<p>The <em class="math">w[i]</em> coefficients could be formed by a simple set of cross
+products, like <em class="math">w4=x2*y2</em>, <em class="math">w3=x2*y1+x1*y2</em>,
+<em class="math">w2=x2*y0+x1*y1+x0*y2</em> etc, but this would need all
+nine <em class="math">x[i]*y[j]</em> for <em class="math">i,j=0,1,2</em>, and would be equivalent merely
+to a basecase multiply.  Instead the following approach is used.
+</p>
+<p><em class="math">X(t)</em> and <em class="math">Y(t)</em> are evaluated and multiplied at 5 points, giving
+values of <em class="math">W(t)</em> at those points.  In GMP the following points are used:
+</p>
+<blockquote class="quotation">
+<table class="multitable">
+<tbody><tr><td>Point</td><td>Value</td></tr>
+<tr><td><em class="math">t=0</em></td><td><em class="math">x0 * y0</em>, which gives w0 immediately</td></tr>
+<tr><td><em class="math">t=1</em></td><td><em class="math">(x2+x1+x0) * (y2+y1+y0)</em></td></tr>
+<tr><td><em class="math">t=-1</em></td><td><em class="math">(x2-x1+x0) * (y2-y1+y0)</em></td></tr>
+<tr><td><em class="math">t=2</em></td><td><em class="math">(4*x2+2*x1+x0) * (4*y2+2*y1+y0)</em></td></tr>
+<tr><td><em class="math">t=inf</em></td><td><em class="math">x2 * y2</em>, which gives w4 immediately</td></tr>
+</tbody>
+</table>
+</blockquote>
+<p>At <em class="math">t=-1</em> the values can be negative and that&rsquo;s handled using the
+absolute values and tracking the sign separately.  At <em class="math">t=inf</em> the
+value is actually <em class="math">X(t)*Y(t)/t^4 in
+the limit as t approaches infinity</em>, but it&rsquo;s much easier to think of as
+simply <em class="math">x2*y2</em> giving w4 immediately (much like
+<em class="math">x0*y0</em> at <em class="math">t=0</em> gives w0 immediately).
+</p>
+<p>Each of the points substituted into
+<em class="math">W(t)=w4*t^4+...+w0</em> gives a linear combination
+of the <em class="math">w[i]</em> coefficients, and the value of those combinations has just
+been calculated.
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted">W(0)   =                              w0
+W(1)   =    w4 +   w3 +   w2 +   w1 + w0
+W(-1)  =    w4 -   w3 +   w2 -   w1 + w0
+W(2)   = 16*w4 + 8*w3 + 4*w2 + 2*w1 + w0
+W(inf) =    w4
+</pre></div></div>
+<p>This is a set of five equations in five unknowns, and some elementary linear
+algebra quickly isolates each <em class="math">w[i]</em>.  This involves adding or
+subtracting one <em class="math">W(t)</em> value from another, and a couple of divisions by
+powers of 2 and one division by 3, the latter using the special
+<code class="code">mpn_divexact_by3</code> (see <a class="pxref" href="#Exact-Division">Exact Division</a>).
+</p>
+<p>The conversion of <em class="math">W(t)</em> values to the coefficients is interpolation.  A
+polynomial of degree 4 like <em class="math">W(t)</em> is uniquely determined by values known
+at 5 different points.  The points are arbitrary and can be chosen to make the
+linear equations come out with a convenient set of steps for quickly isolating
+the <em class="math">w[i]</em>.
+</p>
+<p>Squaring follows the same procedure as multiplication, but there&rsquo;s only one
+<em class="math">X(t)</em> and it&rsquo;s evaluated at the 5 points, and those values squared to
+give values of <em class="math">W(t)</em>.  The interpolation is then identical, and in fact
+the same <code class="code">toom_interpolate_5pts</code> subroutine is used for both squaring and
+multiplying.
+</p>
+<p>Toom-3 is asymptotically <em class="math">O(N^1.465<!-- /@w -->)</em>, the exponent being
+<em class="math">log(5)/log(3)</em>, representing 5 recursive multiplies of 1/3 the
+original size each.  This is an improvement over Karatsuba at
+<em class="math">O(N^1.585<!-- /@w -->)</em>, though Toom does more work in the evaluation and
+interpolation and so it only realizes its advantage above a certain size.
+</p>
+<p>Near the crossover between Toom-3 and Karatsuba there&rsquo;s generally a range of
+sizes where the difference between the two is small.
+<code class="code">MUL_TOOM33_THRESHOLD</code> is a somewhat arbitrary point in that range and
+successive runs of the tune program can give different values due to small
+variations in measuring.  A graph of time versus size for the two shows the
+effect, see <samp class="file">tune/README</samp>.
+</p>
+<p>At the fairly small sizes where the Toom-3 thresholds occur it&rsquo;s worth
+remembering that the asymptotic behaviour for Karatsuba and Toom-3 can&rsquo;t be
+expected to make accurate predictions, due of course to the big influence of
+all sorts of overheads, and the fact that only a few recursions of each are
+being performed.  Even at large sizes there&rsquo;s a good chance machine dependent
+effects like cache architecture will mean actual performance deviates from
+what might be predicted.
+</p>
+<p>The formula given for the Karatsuba algorithm (see <a class="pxref" href="#Karatsuba-Multiplication">Karatsuba Multiplication</a>) has an equivalent for Toom-3 involving only five multiplies,
+but this would be complicated and unenlightening.
+</p>
+<p>An alternate view of Toom-3 can be found in Zuras (see <a class="pxref" href="constant.References.html#start">References</a>), using
+a vector to represent the <em class="math">x</em> and <em class="math">y</em> splits and a matrix
+multiplication for the evaluation and interpolation stages.  The matrix
+inverses are not meant to be actually used, and they have elements with values
+much greater than in fact arise in the interpolation steps.  The diagram shown
+for the 3-way is attractive, but again doesn&rsquo;t have to be implemented that way
+and for example with a bit of rearrangement just one division by 6 can be
+done.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Toom-4_002dWay-Multiplication">
+<div class="nav-panel">
+<p>
+Next: <a href="#Higher-degree-Toom_0027n_0027half" accesskey="n" rel="next">Higher degree Toom&rsquo;n&rsquo;half</a>, Previous: <a href="#Toom-3_002dWay-Multiplication" accesskey="p" rel="prev">Toom 3-Way Multiplication</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Toom-4_002dWay-Multiplication-1"><span>15.1.4 Toom 4-Way Multiplication<a class="copiable-link" href="#Toom-4_002dWay-Multiplication-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Toom-multiplication-1"></a>
+<p>Karatsuba and Toom-3 split the operands into 2 and 3 coefficients,
+respectively.  Toom-4 analogously splits the operands into 4 coefficients.
+Using the notation from the section on Toom-3 multiplication, we form two
+polynomials:
+</p>
+<div class="display">
+<div class="group"><pre class="display-preformatted"><em class="math">X(t) = x3*t^3 + x2*t^2 + x1*t + x0</em>
+<em class="math">Y(t) = y3*t^3 + y2*t^2 + y1*t + y0</em>
+</pre></div></div>
+<p><em class="math">X(t)</em> and <em class="math">Y(t)</em> are evaluated and multiplied at 7 points, giving
+values of <em class="math">W(t)</em> at those points.  In GMP the following points are used,
+</p>
+<blockquote class="quotation">
+<table class="multitable">
+<tbody><tr><td>Point</td><td>Value</td></tr>
+<tr><td><em class="math">t=0</em></td><td><em class="math">x0 * y0</em>, which gives w0 immediately</td></tr>
+<tr><td><em class="math">t=1/2</em></td><td><em class="math">(x3+2*x2+4*x1+8*x0) * (y3+2*y2+4*y1+8*y0)</em></td></tr>
+<tr><td><em class="math">t=-1/2</em></td><td><em class="math">(-x3+2*x2-4*x1+8*x0) * (-y3+2*y2-4*y1+8*y0)</em></td></tr>
+<tr><td><em class="math">t=1</em></td><td><em class="math">(x3+x2+x1+x0) * (y3+y2+y1+y0)</em></td></tr>
+<tr><td><em class="math">t=-1</em></td><td><em class="math">(-x3+x2-x1+x0) * (-y3+y2-y1+y0)</em></td></tr>
+<tr><td><em class="math">t=2</em></td><td><em class="math">(8*x3+4*x2+2*x1+x0) * (8*y3+4*y2+2*y1+y0)</em></td></tr>
+<tr><td><em class="math">t=inf</em></td><td><em class="math">x3 * y3</em>, which gives w6 immediately</td></tr>
+</tbody>
+</table>
+</blockquote>
+<p>The number of additions and subtractions for Toom-4 is much larger than for Toom-3.
+But several subexpressions occur multiple times, for example <em class="math">x2+x0</em> occurs
+for both <em class="math">t=1</em> and <em class="math">t=-1</em>.
+</p>
+<p>Toom-4 is asymptotically <em class="math">O(N^1.404<!-- /@w -->)</em>, the exponent being
+<em class="math">log(7)/log(4)</em>, representing 7 recursive multiplies of 1/4 the
+original size each.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Higher-degree-Toom_0027n_0027half">
+<div class="nav-panel">
+<p>
+Next: <a href="#FFT-Multiplication" accesskey="n" rel="next">FFT Multiplication</a>, Previous: <a href="#Toom-4_002dWay-Multiplication" accesskey="p" rel="prev">Toom 4-Way Multiplication</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Higher-degree-Toom_0027n_0027half-1"><span>15.1.5 Higher degree Toom&rsquo;n&rsquo;half<a class="copiable-link" href="#Higher-degree-Toom_0027n_0027half-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Toom-multiplication-2"></a>
+<p>The Toom algorithms described above (see <a class="pxref" href="#Toom-3_002dWay-Multiplication">Toom 3-Way Multiplication</a>,
+see <a class="pxref" href="#Toom-4_002dWay-Multiplication">Toom 4-Way Multiplication</a>) generalize to split into an arbitrary
+number of pieces. In general a split of two equally long operands into
+<em class="math">r</em> pieces leads to evaluations and pointwise multiplications done at
+<em class="math">2*r-1</em> points. To fully exploit symmetries it would be better to have
+a multiple of 4 points, that&rsquo;s why for higher degree Toom&rsquo;n&rsquo;half is used.
+</p>
+<p>Toom&rsquo;n&rsquo;half means that the existence of one more piece is considered for a
+single operand. It can be virtual, i.e. zero, or real, when the two operands
+are not exactly balanced. By choosing an even <em class="math">r</em>,
+Toom-<em class="math">r+1/2</em> requires <em class="math">2r</em> points, a multiple of four.
+</p>
+<p>The quadruplets of points include 0, <em class="math">inf</em>, +1,  and
+<em class="math">+-2^i</em>, <em class="math">+-2^-i</em>. Each of them giving shortcuts for the
+evaluation phase and for some steps in the interpolation phase. Further tricks
+are used to reduce the memory footprint of the whole multiplication algorithm
+to a memory buffer equal in size to the result of the product.
+</p>
+<p>Current GMP uses both Toom-6&rsquo;n&rsquo;half and Toom-8&rsquo;n&rsquo;half.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="FFT-Multiplication">
+<div class="nav-panel">
+<p>
+Next: <a href="#Other-Multiplication" accesskey="n" rel="next">Other Multiplication</a>, Previous: <a href="#Higher-degree-Toom_0027n_0027half" accesskey="p" rel="prev">Higher degree Toom&rsquo;n&rsquo;half</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="FFT-Multiplication-1"><span>15.1.6 FFT Multiplication<a class="copiable-link" href="#FFT-Multiplication-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-FFT-multiplication-1"></a>
+<a class="index-entry-id" id="index-Fast-Fourier-Transform"></a>
+<p>At large to very large sizes a Fermat style FFT multiplication is used,
+following Sch&ouml;nhage and Strassen (see <a class="pxref" href="constant.References.html#start">References</a>).  Descriptions of FFTs
+in various forms can be found in many textbooks, for instance Knuth section
+4.3.3 part C or Lipson chapter IX.  A brief description of the form used in
+GMP is given here.
+</p>
+<p>The multiplication done is <em class="math">x*y mod 2^N+1</em>, for a given
+<em class="math">N</em>.  A full product <em class="math">x*y</em> is obtained by choosing <em class="math">N&gt;=bits(x)+bits(y)</em> and padding
+<em class="math">x</em> and <em class="math">y</em> with high zero limbs.  The modular product is the native
+form for the algorithm, so padding to get a full product is unavoidable.
+</p>
+<p>The algorithm follows a split, evaluate, pointwise multiply, interpolate and
+combine similar to that described above for Karatsuba and Toom-3.  A <em class="math">k</em>
+parameter controls the split, with an FFT-<em class="math">k</em> splitting into <em class="math">2^k</em>
+pieces of <em class="math">M=N/2^k</em> bits each.  <em class="math">N</em> must be a multiple of
+<em class="math">(2^k)*<code class="code">mp_bits_per_limb</code></em> so
+the split falls on limb boundaries, avoiding bit shifts in the split and
+combine stages.
+</p>
+<p>The evaluations, pointwise multiplications, and interpolation are all done
+modulo <em class="math">2^N'+1</em> where <em class="math">N'</em> is <em class="math">2M+k+3</em> rounded up to a
+multiple of <em class="math">2^k</em> and of <code class="code">mp_bits_per_limb</code>.  The results of
+interpolation will be the following negacyclic convolution of the input
+pieces, and the choice of <em class="math">N'</em> ensures these sums aren&rsquo;t truncated.
+</p>
+<div class="example">
+<pre class="example-preformatted">           ---
+           \         b
+w[n] =     /     (-1) * x[i] * y[j]
+           ---
+       i+j==b*2^k+n
+          b=0,1
+</pre></div>
+<p>The points used for the evaluation are <em class="math">g^i</em> for <em class="math">i=0</em> to
+<em class="math">2^k-1</em> where <em class="math">g=2^(2N'/2^k)</em>.  <em class="math">g</em> is a
+<em class="math">2^k'</em>th root of unity mod <em class="math">2^N'+1</em>, which produces necessary
+cancellations at the interpolation stage, and it&rsquo;s also a power of 2 so the
+fast Fourier transforms used for the evaluation and interpolation do only
+shifts, adds and negations.
+</p>
+<p>The pointwise multiplications are done modulo <em class="math">2^N'+1</em> and either
+recurse into a further FFT or use a plain multiplication (Toom-3, Karatsuba or
+basecase), whichever is optimal at the size <em class="math">N'</em>.  The interpolation is
+an inverse fast Fourier transform.  The resulting set of sums of <em class="math">x[i]*y[j]</em> are added at appropriate offsets to give the final result.
+</p>
+<p>Squaring is the same, but <em class="math">x</em> is the only input so it&rsquo;s one transform at
+the evaluate stage and the pointwise multiplies are squares.  The
+interpolation is the same.
+</p>
+<p>For a mod <em class="math">2^N+1</em> product, an FFT-<em class="math">k</em> is an <em class="math">O(N^(k/(k-1)))</em> algorithm, the exponent representing <em class="math">2^k</em> recursed
+modular multiplies each <em class="math">1/2^(k-1)</em> the size of the original.
+Each successive <em class="math">k</em> is an asymptotic improvement, but overheads mean each
+is only faster at bigger and bigger sizes.  In the code, <code class="code">MUL_FFT_TABLE</code>
+and <code class="code">SQR_FFT_TABLE</code> are the thresholds where each <em class="math">k</em> is used.  Each
+new <em class="math">k</em> effectively swaps some multiplying for some shifts, adds and
+overheads.
+</p>
+<p>A mod <em class="math">2^N+1</em> product can be formed with a normal
+<em class="math">NxN-&gt;2N</em> bit multiply plus a subtraction, so an FFT
+and Toom-3 etc can be compared directly.  A <em class="math">k=4</em> FFT at
+<em class="math">O(N^1.333<!-- /@w -->)</em> can be expected to be the first faster than Toom-3 at
+<em class="math">O(N^1.465<!-- /@w -->)</em>.  In practice this is what&rsquo;s found, with
+<code class="code">MUL_FFT_MODF_THRESHOLD</code> and <code class="code">SQR_FFT_MODF_THRESHOLD</code> being between
+300 and 1000 limbs, depending on the CPU.  So far it&rsquo;s been found that only
+very large FFTs recurse into pointwise multiplies above these sizes.
+</p>
+<p>When an FFT is to give a full product, the change of <em class="math">N</em> to <em class="math">2N</em>
+doesn&rsquo;t alter the theoretical complexity for a given <em class="math">k</em>, but for the
+purposes of considering where an FFT might be first used it can be assumed
+that the FFT is recursing into a normal multiply and that on that basis it&rsquo;s
+doing <em class="math">2^k</em> recursed multiplies each <em class="math">1/2^(k-2)</em> the size of
+the inputs, making it <em class="math">O(N^(k/(k-2)))</em>.  This would mean
+<em class="math">k=7</em> at <em class="math">O(N^1.4<!-- /@w -->)</em> would be the first FFT faster than Toom-3.
+In practice <code class="code">MUL_FFT_THRESHOLD</code> and <code class="code">SQR_FFT_THRESHOLD</code> have been
+found to be in the <em class="math">k=8</em> range, somewhere between 3000 and 10000 limbs.
+</p>
+<p>The way <em class="math">N</em> is split into <em class="math">2^k</em> pieces and then <em class="math">2M+k+3</em> is
+rounded up to a multiple of <em class="math">2^k</em> and <code class="code">mp_bits_per_limb</code> means that
+when <em class="math">2^k&gt;=<code class="code">mp_bits_per_limb</code></em> the effective <em class="math">N</em> is a
+multiple of <em class="math">2^(2k-1)</em> bits.  The <em class="math">+k+3</em> means some values of
+<em class="math">N</em> just under such a multiple will be rounded to the next.  The
+complexity calculations above assume that a favourable size is used, meaning
+one which isn&rsquo;t padded through rounding, and it&rsquo;s also assumed that the extra
+<em class="math">+k+3</em> bits are negligible at typical FFT sizes.
+</p>
+<p>The practical effect of the <em class="math">2^(2k-1)</em> constraint is to introduce a
+step-effect into measured speeds.  For example <em class="math">k=8</em> will round <em class="math">N</em>
+up to a multiple of 32768 bits, so for a 32-bit limb there&rsquo;ll be 512 limb
+groups of sizes for which <code class="code">mpn_mul_n</code> runs at the same speed.  Or for
+<em class="math">k=9</em> groups of 2048 limbs, <em class="math">k=10</em> groups of 8192 limbs, etc.  In
+practice it&rsquo;s been found each <em class="math">k</em> is used at quite small multiples of its
+size constraint and so the step effect is quite noticeable in a time versus
+size graph.
+</p>
+<p>The threshold determinations currently measure at the mid-points of size
+steps, but this is sub-optimal since at the start of a new step it can happen
+that it&rsquo;s better to go back to the previous <em class="math">k</em> for a while.  Something
+more sophisticated for <code class="code">MUL_FFT_TABLE</code> and <code class="code">SQR_FFT_TABLE</code> will be
+needed.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Other-Multiplication">
+<div class="nav-panel">
+<p>
+Next: <a href="#Unbalanced-Multiplication" accesskey="n" rel="next">Unbalanced Multiplication</a>, Previous: <a href="#FFT-Multiplication" accesskey="p" rel="prev">FFT Multiplication</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Other-Multiplication-1"><span>15.1.7 Other Multiplication<a class="copiable-link" href="#Other-Multiplication-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Toom-multiplication-3"></a>
+<p>The Toom algorithms described above (see <a class="pxref" href="#Toom-3_002dWay-Multiplication">Toom 3-Way Multiplication</a>,
+see <a class="pxref" href="#Toom-4_002dWay-Multiplication">Toom 4-Way Multiplication</a>) generalizes to split into an arbitrary
+number of pieces, as per Knuth section 4.3.3 algorithm C.  This is not
+currently used.  The notes here are merely for interest.
+</p>
+<p>In general a split into <em class="math">r+1</em> pieces is made, and evaluations and
+pointwise multiplications done at <em class="math">2*r+1</em> points.  A 4-way split does 7
+pointwise multiplies, 5-way does 9, etc.  Asymptotically an <em class="math">(r+1)</em>-way
+algorithm is <em class="math">O(N^(log(2*r+1)/log(r+1)))</em>.  Only
+the pointwise multiplications count towards big-<em class="math">O</em> complexity, but the
+time spent in the evaluate and interpolate stages grows with <em class="math">r</em> and has
+a significant practical impact, with the asymptotic advantage of each <em class="math">r</em>
+realized only at bigger and bigger sizes.  The overheads grow as
+<em class="math">O(N*r)</em>, whereas in an <em class="math">r=2^k</em> FFT they grow only as <em class="math">O(N*log(r))</em>.
+</p>
+<p>Knuth algorithm C evaluates at points 0,1,2,&hellip;,<em class="math">2*r</em>, but exercise 4
+uses <em class="math">-r</em>,&hellip;,0,&hellip;,<em class="math">r</em> and the latter saves some small
+multiplies in the evaluate stage (or rather trades them for additions), and
+has a further saving of nearly half the interpolate steps.  The idea is to
+separate odd and even final coefficients and then perform algorithm C steps C7
+and C8 on them separately.  The divisors at step C7 become <em class="math">j^2</em> and the
+multipliers at C8 become <em class="math">2*t*j-j^2</em>.
+</p>
+<p>Splitting odd and even parts through positive and negative points can be
+thought of as using <em class="math">-1</em> as a square root of unity.  If a 4th root of
+unity was available then a further split and speedup would be possible, but no
+such root exists for plain integers.  Going to complex integers with
+<em class="math">i=sqrt(-1)</em> doesn&rsquo;t help, essentially because in Cartesian
+form it takes three real multiplies to do a complex multiply.  The existence
+of <em class="math">2^k'</em>th roots of unity in a suitable ring or field lets the fast
+Fourier transform keep splitting and get to <em class="math">O(N*log(r))</em>.
+</p>
+<p>Floating point FFTs use complex numbers approximating Nth roots of unity.
+Some processors have special support for such FFTs.  But these are not used in
+GMP since it&rsquo;s very difficult to guarantee an exact result (to some number of
+bits).  An occasional difference of 1 in the last bit might not matter to a
+typical signal processing algorithm, but is of course of vital importance to
+GMP.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Unbalanced-Multiplication">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Other-Multiplication" accesskey="p" rel="prev">Other Multiplication</a>, Up: <a href="#Multiplication-Algorithms" accesskey="u" rel="up">Multiplication</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Unbalanced-Multiplication-1"><span>15.1.8 Unbalanced Multiplication<a class="copiable-link" href="#Unbalanced-Multiplication-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Unbalanced-multiplication"></a>
+<p>Multiplication of operands with different sizes, both below
+<code class="code">MUL_TOOM22_THRESHOLD</code> are done with plain schoolbook multiplication
+(see <a class="pxref" href="#Basecase-Multiplication">Basecase Multiplication</a>).
+</p>
+<p>For really large operands, we invoke FFT directly.
+</p>
+<p>For operands between these sizes, we use Toom inspired algorithms suggested by
+Alberto Zanoni and Marco Bodrato.  The idea is to split the operands into
+polynomials of different degree.  GMP currently splits the smaller operand
+into 2 coefficients, i.e., a polynomial of degree 1, but the larger operand
+can be split into 2, 3, or 4 coefficients, i.e., a polynomial of degree 1 to
+3.
+</p>
+<hr>
+</div>
+</div>
+<div class="section-level-extent" id="Division-Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="n" rel="next">Greatest Common Divisor</a>, Previous: <a href="#Multiplication-Algorithms" accesskey="p" rel="prev">Multiplication</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Division-Algorithms-1"><span>15.2 Division Algorithms<a class="copiable-link" href="#Division-Algorithms-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Division-algorithms"></a>
+<ul class="mini-toc">
+<li><a href="#Single-Limb-Division" accesskey="1">Single Limb Division</a></li>
+<li><a href="#Basecase-Division" accesskey="2">Basecase Division</a></li>
+<li><a href="#Divide-and-Conquer-Division" accesskey="3">Divide and Conquer Division</a></li>
+<li><a href="#Block_002dWise-Barrett-Division" accesskey="4">Block-Wise Barrett Division</a></li>
+<li><a href="#Exact-Division" accesskey="5">Exact Division</a></li>
+<li><a href="#Exact-Remainder" accesskey="6">Exact Remainder</a></li>
+<li><a href="#Small-Quotient-Division" accesskey="7">Small Quotient Division</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Single-Limb-Division">
+<div class="nav-panel">
+<p>
+Next: <a href="#Basecase-Division" accesskey="n" rel="next">Basecase Division</a>, Previous: <a href="#Division-Algorithms" accesskey="p" rel="prev">Division Algorithms</a>, Up: <a href="#Division-Algorithms" accesskey="u" rel="up">Division Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Single-Limb-Division-1"><span>15.2.1 Single Limb Division<a class="copiable-link" href="#Single-Limb-Division-1"> &para;</a></span></h4>
+<p>Nx1 division is implemented using repeated 2x1 divisions from
+high to low, either with a hardware divide instruction or a multiplication by
+inverse, whichever is best on a given CPU.
+</p>
+<p>The multiply by inverse follows &ldquo;Improved division by invariant integers&rdquo; by
+M&ouml;ller and Granlund (see <a class="pxref" href="constant.References.html#start">References</a>) and is implemented as
+<code class="code">udiv_qrnnd_preinv</code> in <samp class="file">gmp-impl.h</samp>.  The idea is to have a
+fixed-point approximation to <em class="math">1/d</em> (see <code class="code">invert_limb</code>) and then
+multiply by the high limb (plus one bit) of the dividend to get a quotient
+<em class="math">q</em>.  With <em class="math">d</em> normalized (high bit set), <em class="math">q</em> is no more than 1
+too small.  Subtracting <em class="math">q*d</em> from the dividend gives a remainder, and
+reveals whether <em class="math">q</em> or <em class="math">q-1</em> is correct.
+</p>
+<p>The result is a division done with two multiplications and four or five
+arithmetic operations.  On CPUs with low latency multipliers this can be much
+faster than a hardware divide, though the cost of calculating the inverse at
+the start may mean it&rsquo;s only better on inputs bigger than say 4 or 5 limbs.
+</p>
+<p>When a divisor must be normalized, either for the generic C
+<code class="code">__udiv_qrnnd_c</code> or the multiply by inverse, the division performed is
+actually <em class="math">a*2^k</em> by <em class="math">d*2^k</em> where <em class="math">a</em> is the dividend and
+<em class="math">k</em> is the power necessary to have the high bit of <em class="math">d*2^k</em> set.
+The bit shifts for the dividend are usually accomplished &ldquo;on the fly&rdquo;
+meaning by extracting the appropriate bits at each step.  Done this way the
+quotient limbs come out aligned ready to store.  When only the remainder is
+wanted, an alternative is to take the dividend limbs unshifted and calculate
+<em class="math">r = a mod d*2^k</em> followed by an extra final step <em class="math">r*2^k mod d*2^k</em>.  This can help on CPUs with poor bit shifts or
+few registers.
+</p>
+<p>The multiply by inverse can be done two limbs at a time.  The calculation is
+basically the same, but the inverse is two limbs and the divisor treated as if
+padded with a low zero limb.  This means more work, since the inverse will
+need a 2x2 multiply, but the four 1x1s to do that are
+independent and can therefore be done partly or wholly in parallel.  Likewise
+for a 2x1 calculating <em class="math">q*d</em>.  The net effect is to process two
+limbs with roughly the same two multiplies worth of latency that one limb at a
+time gives.  This extends to 3 or 4 limbs at a time, though the extra work to
+apply the inverse will almost certainly soon reach the limits of multiplier
+throughput.
+</p>
+<p>A similar approach in reverse can be taken to process just half a limb at a
+time if the divisor is only a half limb.  In this case the 1x1 multiply
+for the inverse effectively becomes two <em class="math">(1/2)x1</em> for each
+limb, which can be a saving on CPUs with a fast half limb multiply, or in fact
+if the only multiply is a half limb, and especially if it&rsquo;s not pipelined.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Basecase-Division">
+<div class="nav-panel">
+<p>
+Next: <a href="#Divide-and-Conquer-Division" accesskey="n" rel="next">Divide and Conquer Division</a>, Previous: <a href="#Single-Limb-Division" accesskey="p" rel="prev">Single Limb Division</a>, Up: <a href="#Division-Algorithms" accesskey="u" rel="up">Division Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Basecase-Division-1"><span>15.2.2 Basecase Division<a class="copiable-link" href="#Basecase-Division-1"> &para;</a></span></h4>
+<p>Basecase NxM division is like long division done by hand, but in base
+<em class="math">2^mp_bits_per_limb</em>.  See Knuth
+section 4.3.1 algorithm D, and <samp class="file">mpn/generic/sb_divrem_mn.c</samp>.
+</p>
+<p>Briefly stated, while the dividend remains larger than the divisor, a high
+quotient limb is formed and the Nx1 product <em class="math">q*d</em> subtracted at
+the top end of the dividend.  With a normalized divisor (most significant bit
+set), each quotient limb can be formed with a 2x1 division and a
+1x1 multiplication plus some subtractions.  The 2x1 division is
+by the high limb of the divisor and is done either with a hardware divide or a
+multiply by inverse (the same as in <a class="ref" href="#Single-Limb-Division">Single Limb Division</a>) whichever is
+faster.  Such a quotient is sometimes one too big, requiring an addback of the
+divisor, but that happens rarely.
+</p>
+<p>With Q=N&minus;M being the number of quotient limbs, this is an
+<em class="math">O(Q*M)</em> algorithm and will run at a speed similar to a basecase
+QxM multiplication, differing in fact only in the extra multiply and
+divide for each of the Q quotient limbs.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Divide-and-Conquer-Division">
+<div class="nav-panel">
+<p>
+Next: <a href="#Block_002dWise-Barrett-Division" accesskey="n" rel="next">Block-Wise Barrett Division</a>, Previous: <a href="#Basecase-Division" accesskey="p" rel="prev">Basecase Division</a>, Up: <a href="#Division-Algorithms" accesskey="u" rel="up">Division Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Divide-and-Conquer-Division-1"><span>15.2.3 Divide and Conquer Division<a class="copiable-link" href="#Divide-and-Conquer-Division-1"> &para;</a></span></h4>
+<p>For divisors larger than <code class="code">DC_DIV_QR_THRESHOLD</code>, division is done by dividing.
+Or to be precise by a recursive divide and conquer algorithm based on work by
+Moenck and Borodin, Jebelean, and Burnikel and Ziegler (see <a class="pxref" href="constant.References.html#start">References</a>).
+</p>
+<p>The algorithm consists essentially of recognising that a 2NxN division
+can be done with the basecase division algorithm (see <a class="pxref" href="#Basecase-Division">Basecase Division</a>),
+but using N/2 limbs as a base, not just a single limb.  This way the
+multiplications that arise are (N/2)x(N/2) and can take advantage of
+Karatsuba and higher multiplication algorithms (see <a class="pxref" href="#Multiplication-Algorithms">Multiplication</a>).  The two &ldquo;digits&rdquo; of the quotient are formed by recursive
+Nx(N/2) divisions.
+</p>
+<p>If the (N/2)x(N/2) multiplies are done with a basecase multiplication
+then the work is about the same as a basecase division, but with more function
+call overheads and with some subtractions separated from the multiplies.
+These overheads mean that it&rsquo;s only when N/2 is above
+<code class="code">MUL_TOOM22_THRESHOLD</code> that divide and conquer is of use.
+</p>
+<p><code class="code">DC_DIV_QR_THRESHOLD</code> is based on the divisor size N, so it will be somewhere
+above twice <code class="code">MUL_TOOM22_THRESHOLD</code>, but how much above depends on the
+CPU.  An optimized <code class="code">mpn_mul_basecase</code> can lower <code class="code">DC_DIV_QR_THRESHOLD</code> a
+little by offering a ready-made advantage over repeated <code class="code">mpn_submul_1</code>
+calls.
+</p>
+<p>Divide and conquer is asymptotically <em class="math">O(M(N)*log(N))</em> where
+<em class="math">M(N)</em> is the time for an NxN multiplication done with FFTs.  The
+actual time is a sum over multiplications of the recursed sizes, as can be
+seen near the end of section 2.2 of Burnikel and Ziegler.  For example, within
+the Toom-3 range, divide and conquer is <em class="math">2.63*M(N)</em>.  With higher
+algorithms the <em class="math">M(N)</em> term improves and the multiplier tends to <em class="math">log(N)</em>.  In practice, at moderate to large sizes, a 2NxN division
+is about 2 to 4 times slower than an NxN multiplication.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Block_002dWise-Barrett-Division">
+<div class="nav-panel">
+<p>
+Next: <a href="#Exact-Division" accesskey="n" rel="next">Exact Division</a>, Previous: <a href="#Divide-and-Conquer-Division" accesskey="p" rel="prev">Divide and Conquer Division</a>, Up: <a href="#Division-Algorithms" accesskey="u" rel="up">Division Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Block_002dWise-Barrett-Division-1"><span>15.2.4 Block-Wise Barrett Division<a class="copiable-link" href="#Block_002dWise-Barrett-Division-1"> &para;</a></span></h4>
+<p>For the largest divisions, a block-wise Barrett division algorithm is used.
+Here, the divisor is inverted to a precision determined by the relative size of
+the dividend and divisor.  Blocks of quotient limbs are then generated by
+multiplying blocks from the dividend by the inverse.
+</p>
+<p>Our block-wise algorithm computes a smaller inverse than in the plain Barrett
+algorithm.  For a <em class="math">2n/n</em> division, the inverse will be just <em class="math">ceil(n/2)</em> limbs.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Exact-Division">
+<div class="nav-panel">
+<p>
+Next: <a href="#Exact-Remainder" accesskey="n" rel="next">Exact Remainder</a>, Previous: <a href="#Block_002dWise-Barrett-Division" accesskey="p" rel="prev">Block-Wise Barrett Division</a>, Up: <a href="#Division-Algorithms" accesskey="u" rel="up">Division Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Exact-Division-1"><span>15.2.5 Exact Division<a class="copiable-link" href="#Exact-Division-1"> &para;</a></span></h4>
+<p>A so-called exact division is when the dividend is known to be an exact
+multiple of the divisor.  Jebelean&rsquo;s exact division algorithm uses this
+knowledge to make some significant optimizations (see <a class="pxref" href="constant.References.html#start">References</a>).
+</p>
+<p>The idea can be illustrated in decimal for example with 368154 divided by
+543.  Because the low digit of the dividend is 4, the low digit of the
+quotient must be 8.  This is arrived at from <em class="math">4*7 mod 10</em>, using the fact 7 is the modular inverse of 3 (the low digit of
+the divisor), since <em class="math">3*7
+&equiv; 1 mod 10</em>.  So <em class="math">8*543=4344</em> can be
+subtracted from the dividend leaving 363810.  Notice the low digit has become
+zero.
+</p>
+<p>The procedure is repeated at the second digit, with the next quotient digit 7
+(<em class="math">7 &equiv; 1*7 mod 10</em>), subtracting
+<em class="math">7*543=3801</em>, leaving 325800.  And finally at
+the third digit with quotient digit 6 (<em class="math">8*7
+mod 10</em>), subtracting <em class="math">6*543=3258</em> leaving 0.
+So the quotient is 678.
+</p>
+<p>Notice however that the multiplies and subtractions don&rsquo;t need to extend past
+the low three digits of the dividend, since that&rsquo;s enough to determine the
+three quotient digits.  For the last quotient digit no subtraction is needed
+at all.  On a 2NxN division like this one, only about half the work of
+a normal basecase division is necessary.
+</p>
+<p>For an NxM exact division producing Q=N&minus;M quotient limbs, the
+saving over a normal basecase division is in two parts.  Firstly, each of the
+Q quotient limbs needs only one multiply, not a 2x1 divide and
+multiply.  Secondly, the crossproducts are reduced when <em class="math">Q&gt;M</em> to
+<em class="math">Q*M-M*(M+1)/2</em>, or when <em class="math">Q&lt;=M</em> to <em class="math">Q*(Q-1)/2</em>.  Notice the savings are complementary.  If Q is big then many
+divisions are saved, or if Q is small then the crossproducts reduce to a small
+number.
+</p>
+<p>The modular inverse used is calculated efficiently by <code class="code">binvert_limb</code> in
+<samp class="file">gmp-impl.h</samp>.  This does four multiplies for a 32-bit limb, or six for a
+64-bit limb.  <samp class="file">tune/modlinv.c</samp> has some alternate implementations that
+might suit processors better at bit twiddling than multiplying.
+</p>
+<p>The sub-quadratic exact division described by Jebelean in &ldquo;Exact Division
+with Karatsuba Complexity&rdquo; is not currently implemented.  It uses a
+rearrangement similar to the divide and conquer for normal division
+(see <a class="pxref" href="#Divide-and-Conquer-Division">Divide and Conquer Division</a>), but operating from low to high.  A
+further possibility not currently implemented is &ldquo;Bidirectional Exact Integer
+Division&rdquo; by Krandick and Jebelean which forms quotient limbs from both the
+high and low ends of the dividend, and can halve once more the number of
+crossproducts needed in a 2NxN division.
+</p>
+<p>A special case exact division by 3 exists in <code class="code">mpn_divexact_by3</code>,
+supporting Toom-3 multiplication and <code class="code">mpq</code> canonicalizations.  It forms
+quotient digits with a multiply by the modular inverse of 3 (which is
+<code class="code">0xAA..AAB</code>) and uses two comparisons to determine a borrow for the next
+limb.  The multiplications don&rsquo;t need to be on the dependent chain, as long as
+the effect of the borrows is applied, which can help chips with pipelined
+multipliers.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Exact-Remainder">
+<div class="nav-panel">
+<p>
+Next: <a href="#Small-Quotient-Division" accesskey="n" rel="next">Small Quotient Division</a>, Previous: <a href="#Exact-Division" accesskey="p" rel="prev">Exact Division</a>, Up: <a href="#Division-Algorithms" accesskey="u" rel="up">Division Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Exact-Remainder-1"><span>15.2.6 Exact Remainder<a class="copiable-link" href="#Exact-Remainder-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Exact-remainder"></a>
+<p>If the exact division algorithm is done with a full subtraction at each stage
+and the dividend isn&rsquo;t a multiple of the divisor, then low zero limbs are
+produced but with a remainder in the high limbs.  For dividend <em class="math">a</em>,
+divisor <em class="math">d</em>, quotient <em class="math">q</em>, and <em class="math">b = 2^mp_bits_per_limb</em>, this remainder
+<em class="math">r</em> is of the form
+</p>
+<div class="example">
+<pre class="example-preformatted">a = q*d + r*b^n
+</pre></div>
+<p><em class="math">n</em> represents the number of zero limbs produced by the subtractions,
+that being the number of limbs produced for <em class="math">q</em>.  <em class="math">r</em> will be in the
+range <em class="math">0&lt;=r&lt;d</em> and can be viewed as a remainder, but one shifted up by
+a factor of <em class="math">b^n</em>.
+</p>
+<p>Carrying out full subtractions at each stage means the same number of cross
+products must be done as a normal division, but there&rsquo;s still some single limb
+divisions saved.  When <em class="math">d</em> is a single limb some simplifications arise,
+providing good speedups on a number of processors.
+</p>
+<p>The functions <code class="code">mpn_divexact_by3</code>, <code class="code">mpn_modexact_1_odd</code> and the
+internal <code class="code">mpn_redc_X</code> functions differ subtly in how they return <em class="math">r</em>,
+leading to some negations in the above formula, but all are essentially the
+same.
+</p>
+<a class="index-entry-id" id="index-Divisibility-algorithm"></a>
+<a class="index-entry-id" id="index-Congruence-algorithm"></a>
+<p>Clearly <em class="math">r</em> is zero when <em class="math">a</em> is a multiple of <em class="math">d</em>, and this
+leads to divisibility or congruence tests which are potentially more efficient
+than a normal division.
+</p>
+<p>The factor of <em class="math">b^n</em> on <em class="math">r</em> can be ignored in a GCD when <em class="math">d</em> is
+odd, hence the use of <code class="code">mpn_modexact_1_odd</code> by <code class="code">mpn_gcd_1</code> and
+<code class="code">mpz_kronecker_ui</code> etc (see <a class="pxref" href="#Greatest-Common-Divisor-Algorithms">Greatest Common Divisor</a>).
+</p>
+<p>Montgomery&rsquo;s REDC method for modular multiplications uses operands of the form
+of <em class="math">x*b^-n</em> and <em class="math">y*b^-n</em> and on calculating <em class="math">(x*b^-n)*(y*b^-n)</em> uses the factor of <em class="math">b^n</em> in the exact
+remainder to reach a product in the same form <em class="math">(x*y)*b^-n</em>
+(see <a class="pxref" href="#Modular-Powering-Algorithm">Modular Powering</a>).
+</p>
+<p>Notice that <em class="math">r</em> generally gives no useful information about the ordinary
+remainder <em class="math">a mod d</em> since <em class="math">b^n mod d</em> could be anything.  If
+however <em class="math">b^n &equiv; 1 mod d</em>, then <em class="math">r</em> is the negative of the
+ordinary remainder.  This occurs whenever <em class="math">d</em> is a factor of
+<em class="math">b^n-1</em>, as for example with 3 in <code class="code">mpn_divexact_by3</code>.  For a 32 or
+64 bit limb other such factors include 5, 17 and 257, but no particular use
+has been found for this.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Small-Quotient-Division">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Exact-Remainder" accesskey="p" rel="prev">Exact Remainder</a>, Up: <a href="#Division-Algorithms" accesskey="u" rel="up">Division Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Small-Quotient-Division-1"><span>15.2.7 Small Quotient Division<a class="copiable-link" href="#Small-Quotient-Division-1"> &para;</a></span></h4>
+<p>An NxM division where the number of quotient limbs Q=N&minus;M is
+small can be optimized somewhat.
+</p>
+<p>An ordinary basecase division normalizes the divisor by shifting it to make
+the high bit set, shifting the dividend accordingly, and shifting the
+remainder back down at the end of the calculation.  This is wasteful if only a
+few quotient limbs are to be formed.  Instead a division of just the top
+<em class="math">2*Q</em> limbs of the dividend by the top Q limbs of the divisor can be
+used to form a trial quotient.  This requires only those limbs normalized, not
+the whole of the divisor and dividend.
+</p>
+<p>A multiply and subtract then applies the trial quotient to the M&minus;Q
+unused limbs of the divisor and N&minus;Q dividend limbs (which includes Q
+limbs remaining from the trial quotient division).  The starting trial
+quotient can be 1 or 2 too big, but all cases of 2 too big and most cases of 1
+too big are detected by first comparing the most significant limbs that will
+arise from the subtraction.  An addback is done if the quotient still turns
+out to be 1 too big.
+</p>
+<p>This whole procedure is essentially the same as one step of the basecase
+algorithm done in a Q limb base, though with the trial quotient test done only
+with the high limbs, not an entire Q limb &ldquo;digit&rdquo; product.  The correctness
+of this weaker test can be established by following the argument of Knuth
+section 4.3.1 exercise 20 but with the <em class="math">v2*q&gt;b*r+u2</em> condition appropriately relaxed.
+</p>
+<hr>
+</div>
+</div>
+<div class="section-level-extent" id="Greatest-Common-Divisor-Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="#Powering-Algorithms" accesskey="n" rel="next">Powering Algorithms</a>, Previous: <a href="#Division-Algorithms" accesskey="p" rel="prev">Division Algorithms</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Greatest-Common-Divisor"><span>15.3 Greatest Common Divisor<a class="copiable-link" href="#Greatest-Common-Divisor"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Greatest-common-divisor-algorithms"></a>
+<a class="index-entry-id" id="index-GCD-algorithms"></a>
+<ul class="mini-toc">
+<li><a href="#Binary-GCD" accesskey="1">Binary GCD</a></li>
+<li><a href="#Lehmer_0027s-Algorithm" accesskey="2">Lehmer&rsquo;s algorithm</a></li>
+<li><a href="#Subquadratic-GCD" accesskey="3">Subquadratic GCD</a></li>
+<li><a href="#Extended-GCD" accesskey="4">Extended GCD</a></li>
+<li><a href="#Jacobi-Symbol" accesskey="5">Jacobi Symbol</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Binary-GCD">
+<div class="nav-panel">
+<p>
+Next: <a href="#Lehmer_0027s-Algorithm" accesskey="n" rel="next">Lehmer&rsquo;s algorithm</a>, Previous: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="p" rel="prev">Greatest Common Divisor</a>, Up: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="u" rel="up">Greatest Common Divisor</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Binary-GCD-1"><span>15.3.1 Binary GCD<a class="copiable-link" href="#Binary-GCD-1"> &para;</a></span></h4>
+<p>At small sizes GMP uses an <em class="math">O(N^2)</em> binary style GCD.  This is described
+in many textbooks, for example Knuth section 4.5.2 algorithm B.  It simply
+consists of successively reducing odd operands <em class="math">a</em> and <em class="math">b</em> using
+</p>
+<blockquote class="quotation">
+<p><em class="math">a,b = abs(a-b),min(a,b)</em> <br>
+strip factors of 2 from <em class="math">a</em>
+</p></blockquote>
+<p>The Euclidean GCD algorithm, as per Knuth algorithms E and A, repeatedly
+computes the quotient <em class="math">q = floor(a/b)</em> and replaces
+<em class="math">a,b</em> by <em class="math">v, u - q v</em>. The binary algorithm has so far been found to
+be faster than the Euclidean algorithm everywhere.  One reason the binary
+method does well is that the implied quotient at each step is usually small,
+so often only one or two subtractions are needed to get the same effect as a
+division.  Quotients 1, 2 and 3 for example occur 67.7% of the time, see Knuth
+section 4.5.3 Theorem E.
+</p>
+<p>When the implied quotient is large, meaning <em class="math">b</em> is much smaller than
+<em class="math">a</em>, then a division is worthwhile.  This is the basis for the initial
+<em class="math">a mod b</em> reductions in <code class="code">mpn_gcd</code> and <code class="code">mpn_gcd_1</code> (the latter
+for both Nx1 and 1x1 cases).  But after that initial reduction,
+big quotients occur too rarely to make it worth checking for them.
+</p>
+<br>
+<p>The final <em class="math">1x1</em> GCD in <code class="code">mpn_gcd_1</code> is done in the generic C
+code as described above.  For two N-bit operands, the algorithm takes about
+0.68 iterations per bit.  For optimum performance some attention needs to be
+paid to the way the factors of 2 are stripped from <em class="math">a</em>.
+</p>
+<p>Firstly it may be noted that in two&rsquo;s complement the number of low zero bits on
+<em class="math">a-b</em> is the same as <em class="math">b-a</em>, so counting or testing can begin on
+<em class="math">a-b</em> without waiting for <em class="math">abs(a-b)</em> to be determined.
+</p>
+<p>A loop stripping low zero bits tends not to branch predict well, since the
+condition is data dependent.  But on average there&rsquo;s only a few low zeros, so
+an option is to strip one or two bits arithmetically then loop for more (as
+done for AMD K6).  Or use a lookup table to get a count for several bits then
+loop for more (as done for AMD K7).  An alternative approach is to keep just
+one of <em class="math">a</em> and <em class="math">b</em> odd and iterate
+</p>
+<blockquote class="quotation">
+<p><em class="math">a,b = abs(a-b), min(a,b)</em> <br>
+<em class="math">a = a/2</em> if even <br>
+<em class="math">b = b/2</em> if even
+</p></blockquote>
+<p>This requires about 1.25 iterations per bit, but stripping of a single bit at
+each step avoids any branching.  Repeating the bit strip reduces to about 0.9
+iterations per bit, which may be a worthwhile tradeoff.
+</p>
+<p>Generally with the above approaches a speed of perhaps 6 cycles per bit can be
+achieved, which is still not terribly fast with for instance a 64-bit GCD
+taking nearly 400 cycles.  It&rsquo;s this sort of time which means it&rsquo;s not usually
+advantageous to combine a set of divisibility tests into a GCD.
+</p>
+<p>Currently, the binary algorithm is used for GCD only when <em class="math">N &lt; 3</em>.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Lehmer_0027s-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Subquadratic-GCD" accesskey="n" rel="next">Subquadratic GCD</a>, Previous: <a href="#Binary-GCD" accesskey="p" rel="prev">Binary GCD</a>, Up: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="u" rel="up">Greatest Common Divisor</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Lehmer_0027s-algorithm"><span>15.3.2 Lehmer&rsquo;s algorithm<a class="copiable-link" href="#Lehmer_0027s-algorithm"> &para;</a></span></h4>
+<p>Lehmer&rsquo;s improvement of the Euclidean algorithms is based on the observation
+that the initial part of the quotient sequence depends only on the most
+significant parts of the inputs. The variant of Lehmer&rsquo;s algorithm used in GMP
+splits off the most significant two limbs, as suggested, e.g., in &ldquo;A
+Double-Digit Lehmer-Euclid Algorithm&rdquo; by Jebelean (see <a class="pxref" href="constant.References.html#start">References</a>). The
+quotients of two double-limb inputs are collected as a 2 by 2 matrix with
+single-limb elements. This is done by the function <code class="code">mpn_hgcd2</code>. The
+resulting matrix is applied to the inputs using <code class="code">mpn_mul_1</code> and
+<code class="code">mpn_submul_1</code>. Each iteration usually reduces the inputs by almost one
+limb. In the rare case of a large quotient, no progress can be made by
+examining just the most significant two limbs, and the quotient is computed
+using plain division.
+</p>
+<p>The resulting algorithm is asymptotically <em class="math">O(N^2)</em>, just as the Euclidean
+algorithm and the binary algorithm. The quadratic part of the work are
+the calls to <code class="code">mpn_mul_1</code> and <code class="code">mpn_submul_1</code>. For small sizes, the
+linear work is also significant. There are roughly <em class="math">N</em> calls to the
+<code class="code">mpn_hgcd2</code> function. This function uses a couple of important
+optimizations:
+</p>
+<ul class="itemize mark-bullet">
+<li>It uses the same relaxed notion of correctness as <code class="code">mpn_hgcd</code> (see next
+section). This means that when called with the most significant two limbs of
+two large numbers, the returned matrix does not always correspond exactly to
+the initial quotient sequence for the two large numbers; the final quotient
+may sometimes be one off.
+</li><li>It takes advantage of the fact that the quotients are usually small. The division
+operator is not used, since the corresponding assembler instruction is very
+slow on most architectures. (This code could probably be improved further, it
+uses many branches that are unfriendly to prediction.)
+</li><li>It switches from double-limb calculations to single-limb calculations half-way
+through, when the input numbers have been reduced in size from two limbs to
+one and a half.
+</li></ul>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Subquadratic-GCD">
+<div class="nav-panel">
+<p>
+Next: <a href="#Extended-GCD" accesskey="n" rel="next">Extended GCD</a>, Previous: <a href="#Lehmer_0027s-Algorithm" accesskey="p" rel="prev">Lehmer&rsquo;s algorithm</a>, Up: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="u" rel="up">Greatest Common Divisor</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Subquadratic-GCD-1"><span>15.3.3 Subquadratic GCD<a class="copiable-link" href="#Subquadratic-GCD-1"> &para;</a></span></h4>
+<p>For inputs larger than <code class="code">GCD_DC_THRESHOLD</code>, GCD is computed via the HGCD
+(Half GCD) function, as a generalization to Lehmer&rsquo;s algorithm.
+</p>
+<p>Let the inputs <em class="math">a,b</em> be of size <em class="math">N</em> limbs each. Put <em class="math">S = floor(N/2) + 1</em>. Then HGCD(a,b) returns a transformation
+matrix <em class="math">T</em> with non-negative elements, and reduced numbers <em class="math">(c;d) =
+T^{-1} (a;b)</em>. The reduced numbers <em class="math">c,d</em> must be larger than <em class="math">S</em>
+limbs, while their difference <em class="math">abs(c-d)</em> must fit in <em class="math">S</em> limbs. The
+matrix elements will also be of size roughly <em class="math">N/2</em>.
+</p>
+<p>The HGCD base case uses Lehmer&rsquo;s algorithm, but with the above stop condition
+that returns reduced numbers and the corresponding transformation matrix
+half-way through. For inputs larger than <code class="code">HGCD_THRESHOLD</code>, HGCD is
+computed recursively, using the divide and conquer algorithm in &ldquo;On
+Sch&ouml;nhage&rsquo;s algorithm and subquadratic integer GCD computation&rdquo; by M&ouml;ller
+(see <a class="pxref" href="constant.References.html#start">References</a>). The recursive algorithm consists of these main
+steps.
+</p>
+<ul class="itemize mark-bullet">
+<li>Call HGCD recursively, on the most significant <em class="math">N/2</em> limbs. Apply the
+resulting matrix <em class="math">T_1</em> to the full numbers, reducing them to a size just
+above <em class="math">3N/2</em>.
+</li><li>Perform a small number of division or subtraction steps to reduce the numbers
+to size below <em class="math">3N/2</em>. This is essential mainly for the unlikely case of
+large quotients.
+</li><li>Call HGCD recursively, on the most significant <em class="math">N/2</em> limbs of the reduced
+numbers. Apply the resulting matrix <em class="math">T_2</em> to the full numbers, reducing
+them to a size just above <em class="math">N/2</em>.
+</li><li>Compute <em class="math">T = T_1 T_2</em>.
+</li><li>Perform a small number of division and subtraction steps to satisfy the
+requirements, and return.
+</li></ul>
+<p>GCD is then implemented as a loop around HGCD, similarly to Lehmer&rsquo;s
+algorithm. Where Lehmer repeatedly chops off the top two limbs, calls
+<code class="code">mpn_hgcd2</code>, and applies the resulting matrix to the full numbers, the
+sub-quadratic GCD chops off the most significant third of the limbs (the
+proportion is a tuning parameter, and <em class="math">1/3</em> seems to be more efficient
+than, e.g., <em class="math">1/2</em>), calls <code class="code">mpn_hgcd</code>, and applies the resulting
+matrix. Once the input numbers are reduced to size below
+<code class="code">GCD_DC_THRESHOLD</code>, Lehmer&rsquo;s algorithm is used for the rest of the work.
+</p>
+<p>The asymptotic running time of both HGCD and GCD is <em class="math">O(M(N)*log(N))</em>,
+where <em class="math">M(N)</em> is the time for multiplying two <em class="math">N</em>-limb numbers.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Extended-GCD">
+<div class="nav-panel">
+<p>
+Next: <a href="#Jacobi-Symbol" accesskey="n" rel="next">Jacobi Symbol</a>, Previous: <a href="#Subquadratic-GCD" accesskey="p" rel="prev">Subquadratic GCD</a>, Up: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="u" rel="up">Greatest Common Divisor</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Extended-GCD-1"><span>15.3.4 Extended GCD<a class="copiable-link" href="#Extended-GCD-1"> &para;</a></span></h4>
+<p>The extended GCD function, or GCDEXT, calculates <em class="math">gcd(a,b)</em> and also
+cofactors <em class="math">x</em> and <em class="math">y</em> satisfying <em class="math">a*x+b*y=gcd(a,b)</em>. All the algorithms used for plain GCD are extended to
+handle this case. The binary algorithm is used only for single-limb GCDEXT.
+Lehmer&rsquo;s algorithm is used for sizes up to <code class="code">GCDEXT_DC_THRESHOLD</code>. Above
+this threshold, GCDEXT is implemented as a loop around HGCD, but with more
+book-keeping to keep track of the cofactors. This gives the same asymptotic
+running time as for GCD and HGCD, <em class="math">O(M(N)*log(N))</em>.
+</p>
+<p>One difference to plain GCD is that while the inputs <em class="math">a</em> and <em class="math">b</em> are
+reduced as the algorithm proceeds, the cofactors <em class="math">x</em> and <em class="math">y</em> grow in
+size. This makes the tuning of the chopping-point more difficult. The current
+code chops off the most significant half of the inputs for the call to HGCD in
+the first iteration, and the most significant two thirds for the remaining
+calls. This strategy could surely be improved. Also the stop condition for the
+loop, where Lehmer&rsquo;s algorithm is invoked once the inputs are reduced below
+<code class="code">GCDEXT_DC_THRESHOLD</code>, could maybe be improved by taking into account the
+current size of the cofactors.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Jacobi-Symbol">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Extended-GCD" accesskey="p" rel="prev">Extended GCD</a>, Up: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="u" rel="up">Greatest Common Divisor</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Jacobi-Symbol-1"><span>15.3.5 Jacobi Symbol<a class="copiable-link" href="#Jacobi-Symbol-1"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Jacobi-symbol-algorithm"></a>
+<p>Jacobi symbol <em class="math">(<var class="var">a</var>/<var class="var">b</var>)</em>
+</p>
+<p>Initially if either operand fits in a single limb, a reduction is done with
+either <code class="code">mpn_mod_1</code> or <code class="code">mpn_modexact_1_odd</code>, followed by the binary
+algorithm on a single limb.  The binary algorithm is well suited to a single limb,
+and the whole calculation in this case is quite efficient.
+</p>
+<p>For inputs larger than <code class="code">GCD_DC_THRESHOLD</code>, <code class="code">mpz_jacobi</code>,
+<code class="code">mpz_legendre</code> and <code class="code">mpz_kronecker</code> are computed via the HGCD (Half
+GCD) function, as a generalization to Lehmer&rsquo;s algorithm.
+</p>
+<p>Most GCD algorithms reduce <em class="math">a</em> and <em class="math">b</em> by repeatedly computing the
+quotient <em class="math">q = floor(a/b)</em> and iteratively replacing
+</p>
+<p><em class="math">a, b = b, a - q * b</em>
+</p>
+<p>Different algorithms use different methods for calculating q, but the core
+algorithm is the same if we use <a class="ref" href="#Lehmer_0027s-Algorithm">Lehmer&rsquo;s algorithm</a> or
+<a class="ref" href="#Subquadratic-GCD">HGCD</a>.
+</p>
+<p>At each step it is possible to compute if the reduction inverts the Jacobi
+symbol based on the two least significant bits of <var class="var">a</var> and <var class="var">b</var>.  For
+more details see &ldquo;Efficient computation of the Jacobi symbol&rdquo; by
+M&ouml;ller (see <a class="pxref" href="constant.References.html#start">References</a>).
+</p>
+<p>A small set of bits is thus used to track state
+</p><ul class="itemize mark-bullet">
+<li>current sign of result (1 bit)
+</li><li>two least significant bits of <var class="var">a</var> and <var class="var">b</var> (4 bits)
+</li><li>a pointer to which input is currently the denominator (1 bit)
+</li></ul>
+<p>In all the routines sign changes for the result are accumulated using fast bit
+twiddling which avoids conditional jumps.
+</p>
+<p>The final result is calculated after verifying the inputs are coprime (GCD = 1)
+by raising <em class="math">(-1)^e</em>.
+</p>
+<p>Much of the HGCD code is shared directly with the HGCD implementations, such
+as the 2x2 matrix calculation, See <a class="xref" href="#Lehmer_0027s-Algorithm">Lehmer&rsquo;s algorithm</a> basecase and
+<code class="code">GCD_DC_THRESHOLD</code>.
+</p>
+<p>The asymptotic running time is <em class="math">O(M(N)*log(N))</em>, where
+<em class="math">M(N)</em> is the time for multiplying two <em class="math">N</em>-limb numbers.
+</p>
+<hr>
+</div>
+</div>
+<div class="section-level-extent" id="Powering-Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="#Root-Extraction-Algorithms" accesskey="n" rel="next">Root Extraction Algorithms</a>, Previous: <a href="#Greatest-Common-Divisor-Algorithms" accesskey="p" rel="prev">Greatest Common Divisor</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Powering-Algorithms-1"><span>15.4 Powering Algorithms<a class="copiable-link" href="#Powering-Algorithms-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Powering-algorithms"></a>
+<ul class="mini-toc">
+<li><a href="#Normal-Powering-Algorithm" accesskey="1">Normal Powering</a></li>
+<li><a href="#Modular-Powering-Algorithm" accesskey="2">Modular Powering</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Normal-Powering-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Modular-Powering-Algorithm" accesskey="n" rel="next">Modular Powering</a>, Previous: <a href="#Powering-Algorithms" accesskey="p" rel="prev">Powering Algorithms</a>, Up: <a href="#Powering-Algorithms" accesskey="u" rel="up">Powering Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Normal-Powering"><span>15.4.1 Normal Powering<a class="copiable-link" href="#Normal-Powering"> &para;</a></span></h4>
+<p>Normal <code class="code">mpz</code> or <code class="code">mpf</code> powering uses a simple binary algorithm,
+successively squaring and then multiplying by the base when a 1 bit is seen in
+the exponent, as per Knuth section 4.6.3.  The &ldquo;left to right&rdquo;
+variant described there is used rather than algorithm A, since it&rsquo;s just as
+easy and can be done with somewhat less temporary memory.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Modular-Powering-Algorithm">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Normal-Powering-Algorithm" accesskey="p" rel="prev">Normal Powering</a>, Up: <a href="#Powering-Algorithms" accesskey="u" rel="up">Powering Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Modular-Powering"><span>15.4.2 Modular Powering<a class="copiable-link" href="#Modular-Powering"> &para;</a></span></h4>
+<p>Modular powering is implemented using a <em class="math">2^k</em>-ary sliding window
+algorithm, as per &ldquo;Handbook of Applied Cryptography&rdquo; algorithm 14.85
+(see <a class="pxref" href="constant.References.html#start">References</a>).  <em class="math">k</em> is chosen according to the size of the
+exponent.  Larger exponents use larger values of <em class="math">k</em>, the choice being
+made to minimize the average number of multiplications that must supplement
+the squaring.
+</p>
+<p>The modular multiplies and squarings use either a simple division or the REDC
+method by Montgomery (see <a class="pxref" href="constant.References.html#start">References</a>).  REDC is a little faster,
+essentially saving N single limb divisions in a fashion similar to an exact
+remainder (see <a class="pxref" href="#Exact-Remainder">Exact Remainder</a>).
+</p>
+<hr>
+</div>
+</div>
+<div class="section-level-extent" id="Root-Extraction-Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="#Radix-Conversion-Algorithms" accesskey="n" rel="next">Radix Conversion</a>, Previous: <a href="#Powering-Algorithms" accesskey="p" rel="prev">Powering Algorithms</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Root-Extraction-Algorithms-1"><span>15.5 Root Extraction Algorithms<a class="copiable-link" href="#Root-Extraction-Algorithms-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Root-extraction-algorithms"></a>
+<ul class="mini-toc">
+<li><a href="#Square-Root-Algorithm" accesskey="1">Square Root</a></li>
+<li><a href="#Nth-Root-Algorithm" accesskey="2">Nth Root</a></li>
+<li><a href="#Perfect-Square-Algorithm" accesskey="3">Perfect Square</a></li>
+<li><a href="#Perfect-Power-Algorithm" accesskey="4">Perfect Power</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Square-Root-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Nth-Root-Algorithm" accesskey="n" rel="next">Nth Root</a>, Previous: <a href="#Root-Extraction-Algorithms" accesskey="p" rel="prev">Root Extraction Algorithms</a>, Up: <a href="#Root-Extraction-Algorithms" accesskey="u" rel="up">Root Extraction Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Square-Root"><span>15.5.1 Square Root<a class="copiable-link" href="#Square-Root"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Square-root-algorithm"></a>
+<a class="index-entry-id" id="index-Karatsuba-square-root-algorithm"></a>
+<p>Square roots are taken using the &ldquo;Karatsuba Square Root&rdquo; algorithm by Paul
+Zimmermann (see <a class="pxref" href="constant.References.html#start">References</a>).
+</p>
+<p>An input <em class="math">n</em> is split into four parts of <em class="math">k</em> bits each, so with
+<em class="math">b=2^k</em> we have <em class="math">n = a3*b^3 + a2*b^2
++ a1*b + a0</em>.  Part a3 must be &ldquo;normalized&rdquo; so that either the high or
+second highest bit is set.  In GMP, <em class="math">k</em> is kept on a limb boundary and
+the input is left shifted (by an even number of bits) to normalize.
+</p>
+<p>The square root of the high two parts is taken, by recursive application of
+the algorithm (bottoming out in a one-limb Newton&rsquo;s method),
+</p>
+<div class="example">
+<pre class="example-preformatted">s1,r1 = sqrtrem (a3*b + a2)
+</pre></div>
+<p>This is an approximation to the desired root and is extended by a division to
+give <em class="math">s</em>,<em class="math">r</em>,
+</p>
+<div class="example">
+<pre class="example-preformatted">q,u = divrem (r1*b + a1, 2*s1)
+s = s1*b + q
+r = u*b + a0 - q^2
+</pre></div>
+<p>The normalization requirement on a3 means at this point <em class="math">s</em> is
+either correct or 1 too big.  <em class="math">r</em> is negative in the latter case, so
+</p>
+<div class="example">
+<pre class="example-preformatted">if r &lt; 0 then
+  r = r + 2*s - 1
+  s = s - 1
+</pre></div>
+<p>The algorithm is expressed in a divide and conquer form, but as noted in the
+paper it can also be viewed as a discrete variant of Newton&rsquo;s method, or as a
+variation on the schoolboy method (no longer taught) for square roots two
+digits at a time.
+</p>
+<p>If the remainder <em class="math">r</em> is not required then usually only a few high limbs
+of <em class="math">r</em> and <em class="math">u</em> need to be calculated to determine whether an
+adjustment to <em class="math">s</em> is required.  This optimization is not currently
+implemented.
+</p>
+<p>In the Karatsuba multiplication range this algorithm is <em class="math">O(1.5*M(N/2))</em>, where <em class="math">M(n)</em> is the time to multiply two numbers
+of <em class="math">n</em> limbs.  In the FFT multiplication range this grows to a bound of
+<em class="math">O(6*M(N/2))</em>.  In practice a factor of about 1.5 to 1.8 is
+found in the Karatsuba and Toom-3 ranges, growing to 2 or 3 in the FFT range.
+</p>
+<p>The algorithm does all its calculations in integers and the resulting
+<code class="code">mpn_sqrtrem</code> is used for both <code class="code">mpz_sqrt</code> and <code class="code">mpf_sqrt</code>.
+The extended precision given by <code class="code">mpf_sqrt_ui</code> is obtained by
+padding with zero limbs.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Nth-Root-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Perfect-Square-Algorithm" accesskey="n" rel="next">Perfect Square</a>, Previous: <a href="#Square-Root-Algorithm" accesskey="p" rel="prev">Square Root</a>, Up: <a href="#Root-Extraction-Algorithms" accesskey="u" rel="up">Root Extraction Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Nth-Root"><span>15.5.2 Nth Root<a class="copiable-link" href="#Nth-Root"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Root-extraction-algorithm"></a>
+<a class="index-entry-id" id="index-Nth-root-algorithm"></a>
+<p>Integer Nth roots are taken using Newton&rsquo;s method with the following
+iteration, where <em class="math">A</em> is the input and <em class="math">n</em> is the root to be taken.
+</p>
+<div class="example">
+<pre class="example-preformatted">         1         A
+a[i+1] = - * ( --------- + (n-1)*a[i] )
+         n     a[i]^(n-1)
+</pre></div>
+<p>The initial approximation <em class="math">a[1]</em> is generated bitwise by successively
+powering a trial root with or without new 1 bits, aiming to be just above the
+true root.  The iteration converges quadratically when started from a good
+approximation.  When <em class="math">n</em> is large more initial bits are needed to get
+good convergence.  The current implementation is not particularly well
+optimized.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Perfect-Square-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Perfect-Power-Algorithm" accesskey="n" rel="next">Perfect Power</a>, Previous: <a href="#Nth-Root-Algorithm" accesskey="p" rel="prev">Nth Root</a>, Up: <a href="#Root-Extraction-Algorithms" accesskey="u" rel="up">Root Extraction Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Perfect-Square"><span>15.5.3 Perfect Square<a class="copiable-link" href="#Perfect-Square"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Perfect-square-algorithm"></a>
+<p>A significant fraction of non-squares can be quickly identified by checking
+whether the input is a quadratic residue modulo small integers.
+</p>
+<p><code class="code">mpz_perfect_square_p</code> first tests the input mod 256, which means just
+examining the low byte.  Only 44 different values occur for squares mod 256,
+so 82.8% of inputs can be immediately identified as non-squares.
+</p>
+<p>On a 32-bit system similar tests are done mod 9, 5, 7, 13 and 17, for a total
+99.25% of inputs identified as non-squares.  On a 64-bit system 97 is tested
+too, for a total 99.62%.
+</p>
+<p>These moduli are chosen because they&rsquo;re factors of <em class="math">2^24<!-- /@w -->-1</em> (or
+<em class="math">2^48<!-- /@w -->-1</em> for 64-bits), and such a remainder can be quickly taken just
+using additions (see <code class="code">mpn_mod_34lsub1</code>).
+</p>
+<p>When nails are in use moduli are instead selected by the <samp class="file">gen-psqr.c</samp>
+program and applied with an <code class="code">mpn_mod_1</code>.  The same <em class="math">2^24<!-- /@w -->-1</em> or
+<em class="math">2^48<!-- /@w -->-1</em> could be done with nails using some extra bit shifts, but
+this is not currently implemented.
+</p>
+<p>In any case each modulus is applied to the <code class="code">mpn_mod_34lsub1</code> or
+<code class="code">mpn_mod_1</code> remainder and a table lookup identifies non-squares.  By
+using a &ldquo;modexact&rdquo; style calculation, and suitably permuted tables, just one
+multiply each is required, see the code for details.  Moduli are also combined
+to save operations, so long as the lookup tables don&rsquo;t become too big.
+<samp class="file">gen-psqr.c</samp> does all the pre-calculations.
+</p>
+<p>A square root must still be taken for any value that passes these tests, to
+verify it&rsquo;s really a square and not one of the small fraction of non-squares
+that get through (i.e. a pseudo-square to all the tested bases).
+</p>
+<p>Clearly more residue tests could be done, <code class="code">mpz_perfect_square_p</code> only
+uses a compact and efficient set.  Big inputs would probably benefit from more
+residue testing, small inputs might be better off with less.  The assumed
+distribution of squares versus non-squares in the input would affect such
+considerations.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Perfect-Power-Algorithm">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Perfect-Square-Algorithm" accesskey="p" rel="prev">Perfect Square</a>, Up: <a href="#Root-Extraction-Algorithms" accesskey="u" rel="up">Root Extraction Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Perfect-Power"><span>15.5.4 Perfect Power<a class="copiable-link" href="#Perfect-Power"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Perfect-power-algorithm"></a>
+<p>Detecting perfect powers is required by some factorization algorithms.
+Currently <code class="code">mpz_perfect_power_p</code> is implemented using repeated Nth root
+extractions, though naturally only prime roots need to be considered.
+(See <a class="xref" href="#Nth-Root-Algorithm">Nth Root</a>.)
+</p>
+<p>If a prime divisor <em class="math">p</em> with multiplicity <em class="math">e</em> can be found, then only
+roots which are divisors of <em class="math">e</em> need to be considered, much reducing the
+work necessary.  To this end divisibility by a set of small primes is checked.
+</p>
+<hr>
+</div>
+</div>
+<div class="section-level-extent" id="Radix-Conversion-Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="#Other-Algorithms" accesskey="n" rel="next">Other Algorithms</a>, Previous: <a href="#Root-Extraction-Algorithms" accesskey="p" rel="prev">Root Extraction Algorithms</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Radix-Conversion"><span>15.6 Radix Conversion<a class="copiable-link" href="#Radix-Conversion"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Radix-conversion-algorithms"></a>
+<p>Radix conversions are less important than other algorithms.  A program
+dominated by conversions should probably use a different data representation.
+</p>
+<ul class="mini-toc">
+<li><a href="#Binary-to-Radix" accesskey="1">Binary to Radix</a></li>
+<li><a href="#Radix-to-Binary" accesskey="2">Radix to Binary</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Binary-to-Radix">
+<div class="nav-panel">
+<p>
+Next: <a href="#Radix-to-Binary" accesskey="n" rel="next">Radix to Binary</a>, Previous: <a href="#Radix-Conversion-Algorithms" accesskey="p" rel="prev">Radix Conversion</a>, Up: <a href="#Radix-Conversion-Algorithms" accesskey="u" rel="up">Radix Conversion</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Binary-to-Radix-1"><span>15.6.1 Binary to Radix<a class="copiable-link" href="#Binary-to-Radix-1"> &para;</a></span></h4>
+<p>Conversions from binary to a power-of-2 radix use a simple and fast
+<em class="math">O(N)</em> bit extraction algorithm.
+</p>
+<p>Conversions from binary to other radices use one of two algorithms.  Sizes
+below <code class="code">GET_STR_PRECOMPUTE_THRESHOLD</code> use a basic <em class="math">O(N^2)</em> method.
+Repeated divisions by <em class="math">b^n</em> are made, where <em class="math">b</em> is the radix and
+<em class="math">n</em> is the biggest power that fits in a limb.  But instead of simply
+using the remainder <em class="math">r</em> from such divisions, an extra divide step is done
+to give a fractional limb representing <em class="math">r/b^n</em>.  The digits of <em class="math">r</em>
+can then be extracted using multiplications by <em class="math">b</em> rather than divisions.
+Special case code is provided for decimal, allowing multiplications by 10 to
+optimize to shifts and adds.
+</p>
+<p>Above <code class="code">GET_STR_PRECOMPUTE_THRESHOLD</code> a sub-quadratic algorithm is used.
+For an input <em class="math">t</em>, powers <em class="math">b^(n*2^i)</em> of the radix are
+calculated, until a power between <em class="math">t</em> and <em class="math">sqrt(t)</em> is
+reached.  <em class="math">t</em> is then divided by that largest power, giving a quotient
+which is the digits above that power, and a remainder which is those below.
+These two parts are in turn divided by the second highest power, and so on
+recursively.  When a piece has been divided down to less than
+<code class="code">GET_STR_DC_THRESHOLD</code> limbs, the basecase algorithm described above is
+used.
+</p>
+<p>The advantage of this algorithm is that big divisions can make use of the
+sub-quadratic divide and conquer division (see <a class="pxref" href="#Divide-and-Conquer-Division">Divide and Conquer Division</a>), and big divisions tend to have less overheads than lots of
+separate single limb divisions anyway.  But in any case the cost of
+calculating the powers <em class="math">b^(n*2^i)</em> must first be overcome.
+</p>
+<p><code class="code">GET_STR_PRECOMPUTE_THRESHOLD</code> and <code class="code">GET_STR_DC_THRESHOLD</code> represent
+the same basic thing, the point where it becomes worth doing a big division to
+cut the input in half.  <code class="code">GET_STR_PRECOMPUTE_THRESHOLD</code> includes the cost
+of calculating the radix power required, whereas <code class="code">GET_STR_DC_THRESHOLD</code>
+assumes that&rsquo;s already available, which is the case when recursing.
+</p>
+<p>Since the base case produces digits from least to most significant but they
+want to be stored from most to least, it&rsquo;s necessary to calculate in advance
+how many digits there will be, or at least be sure not to underestimate that.
+For GMP the number of input bits is multiplied by <code class="code">chars_per_bit_exactly</code>
+from <code class="code">mp_bases</code>, rounding up.  The result is either correct or one too
+big.
+</p>
+<p>Examining some of the high bits of the input could increase the chance of
+getting the exact number of digits, but an exact result every time would not
+be practical, since in general the difference between numbers 100&hellip; and
+99&hellip; is only in the last few bits and the work to identify 99&hellip;
+might well be almost as much as a full conversion.
+</p>
+<p>The <em class="math">r/b^n</em> scheme described above for using multiplications to bring out
+digits might be useful for more than a single limb.  Some brief experiments
+with it on the base case when recursing didn&rsquo;t give a noticeable improvement,
+but perhaps that was only due to the implementation.  Something similar would
+work for the sub-quadratic divisions too, though there would be the cost of
+calculating a bigger radix power.
+</p>
+<p>Another possible improvement for the sub-quadratic part would be to arrange
+for radix powers that balanced the sizes of quotient and remainder produced,
+i.e. the highest power would be an <em class="math">b^(n*k)</em> approximately equal to
+<em class="math">sqrt(t)</em>, not restricted to a <em class="math">2^i</em> factor.  That ought to
+smooth out a graph of times against sizes, but may or may not be a net
+speedup.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Radix-to-Binary">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Binary-to-Radix" accesskey="p" rel="prev">Binary to Radix</a>, Up: <a href="#Radix-Conversion-Algorithms" accesskey="u" rel="up">Radix Conversion</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Radix-to-Binary-1"><span>15.6.2 Radix to Binary<a class="copiable-link" href="#Radix-to-Binary-1"> &para;</a></span></h4>
+<p><strong class="strong">This section needs to be rewritten, it currently describes the
+algorithms used before GMP 4.3.</strong>
+</p>
+<p>Conversions from a power-of-2 radix into binary use a simple and fast
+<em class="math">O(N)</em> bitwise concatenation algorithm.
+</p>
+<p>Conversions from other radices use one of two algorithms.  Sizes below
+<code class="code">SET_STR_PRECOMPUTE_THRESHOLD</code> use a basic <em class="math">O(N^2)</em> method.  Groups
+of <em class="math">n</em> digits are converted to limbs, where <em class="math">n</em> is the biggest
+power of the base <em class="math">b</em> which will fit in a limb, then those groups are
+accumulated into the result by multiplying by <em class="math">b^n</em> and adding.  This
+saves multi-precision operations, as per Knuth section 4.4 part E
+(see <a class="pxref" href="constant.References.html#start">References</a>).  Some special case code is provided for decimal, giving
+the compiler a chance to optimize multiplications by 10.
+</p>
+<p>Above <code class="code">SET_STR_PRECOMPUTE_THRESHOLD</code> a sub-quadratic algorithm is used.
+First groups of <em class="math">n</em> digits are converted into limbs.  Then adjacent
+limbs are combined into limb pairs with <em class="math">x*b^n+y</em>, where <em class="math">x</em>
+and <em class="math">y</em> are the limbs.  Adjacent limb pairs are combined into quads
+similarly with <em class="math">x*b^(2n)+y</em>.  This continues until a single block
+remains, that being the result.
+</p>
+<p>The advantage of this method is that the multiplications for each <em class="math">x</em> are
+big blocks, allowing Karatsuba and higher algorithms to be used.  But the cost
+of calculating the powers <em class="math">b^(n*2^i)</em> must be overcome.
+<code class="code">SET_STR_PRECOMPUTE_THRESHOLD</code> usually ends up quite big, around 5000 digits, and on
+some processors much bigger still.
+</p>
+<p><code class="code">SET_STR_PRECOMPUTE_THRESHOLD</code> is based on the input digits (and tuned
+for decimal), though it might be better based on a limb count, so as to be
+independent of the base.  But that sort of count isn&rsquo;t used by the base case
+and so would need some sort of initial calculation or estimate.
+</p>
+<p>The main reason <code class="code">SET_STR_PRECOMPUTE_THRESHOLD</code> is so much bigger than the
+corresponding <code class="code">GET_STR_PRECOMPUTE_THRESHOLD</code> is that <code class="code">mpn_mul_1</code> is
+much faster than <code class="code">mpn_divrem_1</code> (often by a factor of 5, or more).
+</p>
+<hr>
+</div>
+</div>
+<div class="section-level-extent" id="Other-Algorithms">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Coding" accesskey="n" rel="next">Assembly Coding</a>, Previous: <a href="#Radix-Conversion-Algorithms" accesskey="p" rel="prev">Radix Conversion</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Other-Algorithms-1"><span>15.7 Other Algorithms<a class="copiable-link" href="#Other-Algorithms-1"> &para;</a></span></h3>
+<ul class="mini-toc">
+<li><a href="#Prime-Testing-Algorithm" accesskey="1">Prime Testing</a></li>
+<li><a href="#Factorial-Algorithm" accesskey="2">Factorial</a></li>
+<li><a href="#Binomial-Coefficients-Algorithm" accesskey="3">Binomial Coefficients</a></li>
+<li><a href="#Fibonacci-Numbers-Algorithm" accesskey="4">Fibonacci Numbers</a></li>
+<li><a href="#Lucas-Numbers-Algorithm" accesskey="5">Lucas Numbers</a></li>
+<li><a href="#Random-Number-Algorithms" accesskey="6">Random Numbers</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Prime-Testing-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Factorial-Algorithm" accesskey="n" rel="next">Factorial</a>, Previous: <a href="#Other-Algorithms" accesskey="p" rel="prev">Other Algorithms</a>, Up: <a href="#Other-Algorithms" accesskey="u" rel="up">Other Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Prime-Testing"><span>15.7.1 Prime Testing<a class="copiable-link" href="#Prime-Testing"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Prime-testing-algorithms"></a>
+<p>The primality testing in <code class="code">mpz_probab_prime_p</code> (see <a class="pxref" href="constant.Integer_Functions.html#Number-Theoretic-Functions">Number Theoretic Functions</a>) first does some trial division by small factors and then uses the
+Miller-Rabin probabilistic primality testing algorithm, as described in Knuth
+section 4.5.4 algorithm P (see <a class="pxref" href="constant.References.html#start">References</a>).
+</p>
+<p>For an odd input <em class="math">n</em>, and with <em class="math">n = q*2^k+1</em> where
+<em class="math">q</em> is odd, this algorithm selects a random base <em class="math">x</em> and tests
+whether <em class="math">x^q mod n</em> is 1 or <em class="math">-1</em>, or an <em class="math">x^(q*2^j) mod n</em> is <em class="math">1</em>, for <em class="math">1&lt;=j&lt;=k</em>.  If so then <em class="math">n</em>
+is probably prime, if not then <em class="math">n</em> is definitely composite.
+</p>
+<p>Any prime <em class="math">n</em> will pass the test, but some composites do too.  Such
+composites are known as strong pseudoprimes to base <em class="math">x</em>.  No <em class="math">n</em> is
+a strong pseudoprime to more than <em class="math">1/4</em> of all bases (see Knuth exercise
+22), hence with <em class="math">x</em> chosen at random there&rsquo;s no more than a <em class="math">1/4</em>
+chance a &ldquo;probable prime&rdquo; will in fact be composite.
+</p>
+<p>In fact strong pseudoprimes are quite rare, making the test much more
+powerful than this analysis would suggest, but <em class="math">1/4</em> is all that&rsquo;s proven
+for an arbitrary <em class="math">n</em>.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Factorial-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Binomial-Coefficients-Algorithm" accesskey="n" rel="next">Binomial Coefficients</a>, Previous: <a href="#Prime-Testing-Algorithm" accesskey="p" rel="prev">Prime Testing</a>, Up: <a href="#Other-Algorithms" accesskey="u" rel="up">Other Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Factorial"><span>15.7.2 Factorial<a class="copiable-link" href="#Factorial"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Factorial-algorithm"></a>
+<p>Factorials are calculated by a combination of two algorithms. An idea is
+shared among them: to compute the odd part of the factorial; a final step
+takes account of the power of <em class="math">2</em> term, by shifting.
+</p>
+<p>For small <em class="math">n</em>, the odd factor of <em class="math">n!</em> is computed with the simple
+observation that it is equal to the product of all positive odd numbers
+smaller than <em class="math">n</em> times the odd factor of <em class="math">[n/2]!</em>,
+where <em class="math">[x]</em> is the integer part of <em class="math">x</em>, and so on
+recursively. The procedure can be best illustrated with an example,
+</p>
+<blockquote class="quotation">
+<p><em class="math">23! = (23.21.19.17.15.13.11.9.7.5.3)(11.9.7.5.3)(5.3)2^{19}</em>
+</p></blockquote>
+<p>Current code collects all the factors in a single list, with a loop and no
+recursion, and computes the product, with no special care for repeated chunks.
+</p>
+<p>When <em class="math">n</em> is larger, computations pass through prime sieving. A helper
+function is used, as suggested by Peter Luschny:
+</p>
+<div class="example">
+<pre class="example-preformatted">                            n
+                          -----
+               n!          | |   L(p,n)
+msf(n) = -------------- =  | |  p
+          [n/2]!^2.2^k     p=3
+</pre></div>
+<p>Where <em class="math">p</em> ranges on odd prime numbers. The exponent <em class="math">k</em> is chosen to
+obtain an odd integer number: <em class="math">k</em> is the number of 1 bits in the binary
+representation of <em class="math">[n/2]</em>. The function L<em class="math">(p,n)</em>
+can be defined as zero when <em class="math">p</em> is composite, and, for any prime
+<em class="math">p</em>, it is computed with:
+</p>
+<div class="example">
+<pre class="example-preformatted">          ---
+           \    n
+L(p,n) =   /  [---] mod 2   &lt;=  log (n) .
+          ---  p^i                p
+          i&gt;0
+</pre></div>
+<p>With this helper function, we are able to compute the odd part of <em class="math">n!</em>
+using the recursion implied by <em class="math">n!=[n/2]!^2*msf(n)*2^k</em>. The recursion stops using the
+small-<em class="math">n</em> algorithm on some <em class="math">[n/2^i]</em>.
+</p>
+<p>Both the above algorithms use binary splitting to compute the product of many
+small factors. At first as many products as possible are accumulated in a
+single register, generating a list of factors that fit in a machine word. This
+list is then split into halves, and the product is computed recursively.
+</p>
+<p>Such splitting is more efficient than repeated Nx1 multiplies since it
+forms big multiplies, allowing Karatsuba and higher algorithms to be used.
+And even below the Karatsuba threshold a big block of work can be more
+efficient for the basecase algorithm.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Binomial-Coefficients-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Fibonacci-Numbers-Algorithm" accesskey="n" rel="next">Fibonacci Numbers</a>, Previous: <a href="#Factorial-Algorithm" accesskey="p" rel="prev">Factorial</a>, Up: <a href="#Other-Algorithms" accesskey="u" rel="up">Other Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Binomial-Coefficients"><span>15.7.3 Binomial Coefficients<a class="copiable-link" href="#Binomial-Coefficients"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Binomial-coefficient-algorithm"></a>
+<p>Binomial coefficients <em class="math">C(n,k)</em> are calculated
+by first arranging <em class="math">k &lt;= n/2</em> using <em class="math">C(n,k) = C(n,n-k)</em> if necessary, and then
+evaluating the following product simply from <em class="math">i=2</em> to <em class="math">i=k</em>.
+</p>
+<div class="example">
+<pre class="example-preformatted">                      k  (n-k+i)
+C(n,k) =  (n-k+1) * prod -------
+                     i=2    i
+</pre></div>
+<p>It&rsquo;s easy to show that each denominator <em class="math">i</em> will divide the product so
+far, so the exact division algorithm is used (see <a class="pxref" href="#Exact-Division">Exact Division</a>).
+</p>
+<p>The numerators <em class="math">n-k+i</em> and denominators <em class="math">i</em> are first accumulated
+into as many fit a limb, to save multi-precision operations, though for
+<code class="code">mpz_bin_ui</code> this applies only to the divisors, since <em class="math">n</em> is an
+<code class="code">mpz_t</code> and <em class="math">n-k+i</em> in general won&rsquo;t fit in a limb at all.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Fibonacci-Numbers-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Lucas-Numbers-Algorithm" accesskey="n" rel="next">Lucas Numbers</a>, Previous: <a href="#Binomial-Coefficients-Algorithm" accesskey="p" rel="prev">Binomial Coefficients</a>, Up: <a href="#Other-Algorithms" accesskey="u" rel="up">Other Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Fibonacci-Numbers"><span>15.7.4 Fibonacci Numbers<a class="copiable-link" href="#Fibonacci-Numbers"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Fibonacci-number-algorithm"></a>
+<p>The Fibonacci functions <code class="code">mpz_fib_ui</code> and <code class="code">mpz_fib2_ui</code> are designed
+for calculating isolated <em class="math">F[n]</em> or <em class="math">F[n]</em>,<em class="math">F[n-1]</em>
+values efficiently.
+</p>
+<p>For small <em class="math">n</em>, a table of single limb values in <code class="code">__gmp_fib_table</code> is
+used.  On a 32-bit limb this goes up to <em class="math">F[47]</em>, or on a 64-bit limb
+up to <em class="math">F[93]</em>.  For convenience the table starts at <em class="math">F[-1]</em>.
+</p>
+<p>Beyond the table, values are generated with a binary powering algorithm,
+calculating a pair <em class="math">F[n]</em> and <em class="math">F[n-1]</em> working from high to
+low across the bits of <em class="math">n</em>.  The formulas used are
+</p>
+<div class="example">
+<pre class="example-preformatted">F[2k+1] = 4*F[k]^2 - F[k-1]^2 + 2*(-1)^k
+F[2k-1] =   F[k]^2 + F[k-1]^2
+F[2k] = F[2k+1] - F[2k-1]
+</pre></div>
+<p>At each step, <em class="math">k</em> is the high <em class="math">b</em> bits of <em class="math">n</em>.  If the next bit
+of <em class="math">n</em> is 0 then <em class="math">F[2k]</em>,<em class="math">F[2k-1]</em> is used, or if
+it&rsquo;s a 1 then <em class="math">F[2k+1]</em>,<em class="math">F[2k]</em> is used, and the process
+repeated until all bits of <em class="math">n</em> are incorporated.  Notice these formulas
+require just two squares per bit of <em class="math">n</em>.
+</p>
+<p>It&rsquo;d be possible to handle the first few <em class="math">n</em> above the single limb table
+with simple additions, using the defining Fibonacci recurrence <em class="math">F[k+1]=F[k]+F[k-1]</em>, but this is not done since it usually
+turns out to be faster for only about 10 or 20 values of <em class="math">n</em>, and
+including a block of code for just those doesn&rsquo;t seem worthwhile.  If they
+really mattered it&rsquo;d be better to extend the data table.
+</p>
+<p>Using a table avoids lots of calculations on small numbers, and makes small
+<em class="math">n</em> go fast.  A bigger table would make more small <em class="math">n</em> go fast, it&rsquo;s
+just a question of balancing size against desired speed.  For GMP the code is
+kept compact, with the emphasis primarily on a good powering algorithm.
+</p>
+<p><code class="code">mpz_fib2_ui</code> returns both <em class="math">F[n]</em> and <em class="math">F[n-1]</em>, but
+<code class="code">mpz_fib_ui</code> is only interested in <em class="math">F[n]</em>.  In this case the last
+step of the algorithm can become one multiply instead of two squares.  One of
+the following two formulas is used, according as <em class="math">n</em> is odd or even.
+</p>
+<div class="example">
+<pre class="example-preformatted">F[2k]   = F[k]*(F[k]+2F[k-1])
+F[2k+1] = (2F[k]+F[k-1])*(2F[k]-F[k-1]) + 2*(-1)^k
+</pre></div>
+<p><em class="math">F[2k+1]</em> here is the same as above, just rearranged to be a
+multiply.  For interest, the <em class="math">2*(-1)^k</em> term both here and above
+can be applied just to the low limb of the calculation, without a carry or
+borrow into further limbs, which saves some code size.  See comments with
+<code class="code">mpz_fib_ui</code> and the internal <code class="code">mpn_fib2_ui</code> for how this is done.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Lucas-Numbers-Algorithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Random-Number-Algorithms" accesskey="n" rel="next">Random Numbers</a>, Previous: <a href="#Fibonacci-Numbers-Algorithm" accesskey="p" rel="prev">Fibonacci Numbers</a>, Up: <a href="#Other-Algorithms" accesskey="u" rel="up">Other Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Lucas-Numbers"><span>15.7.5 Lucas Numbers<a class="copiable-link" href="#Lucas-Numbers"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Lucas-number-algorithm"></a>
+<p><code class="code">mpz_lucnum2_ui</code> derives a pair of Lucas numbers from a pair of Fibonacci
+numbers with the following simple formulas.
+</p>
+<div class="example">
+<pre class="example-preformatted">L[k]   =   F[k] + 2*F[k-1]
+L[k-1] = 2*F[k] -   F[k-1]
+</pre></div>
+<p><code class="code">mpz_lucnum_ui</code> is only interested in <em class="math">L[n]</em>, and some work can be
+saved.  Trailing zero bits on <em class="math">n</em> can be handled with a single square
+each.
+</p>
+<div class="example">
+<pre class="example-preformatted">L[2k] = L[k]^2 - 2*(-1)^k
+</pre></div>
+<p>And the lowest 1 bit can be handled with one multiply of a pair of Fibonacci
+numbers, similar to what <code class="code">mpz_fib_ui</code> does.
+</p>
+<div class="example">
+<pre class="example-preformatted">L[2k+1] = 5*F[k-1]*(2*F[k]+F[k-1]) - 4*(-1)^k
+</pre></div>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Random-Number-Algorithms">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Lucas-Numbers-Algorithm" accesskey="p" rel="prev">Lucas Numbers</a>, Up: <a href="#Other-Algorithms" accesskey="u" rel="up">Other Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Random-Numbers"><span>15.7.6 Random Numbers<a class="copiable-link" href="#Random-Numbers"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Random-number-algorithms"></a>
+<p>For the <code class="code">urandomb</code> functions, random numbers are generated simply by
+concatenating bits produced by the generator.  As long as the generator has
+good randomness properties this will produce well-distributed <em class="math">N</em> bit
+numbers.
+</p>
+<p>For the <code class="code">urandomm</code> functions, random numbers in a range <em class="math">0&lt;=R&lt;N</em>
+are generated by taking values <em class="math">R</em> of <em class="math">ceil(log2(N))</em> bits each until one satisfies <em class="math">R&lt;N</em>.  This will normally
+require only one or two attempts, but the attempts are limited in case the
+generator is somehow degenerate and produces only 1 bits or similar.
+</p>
+<a class="index-entry-id" id="index-Mersenne-twister-algorithm"></a>
+<p>The Mersenne Twister generator is by Matsumoto and Nishimura
+(see <a class="pxref" href="constant.References.html#start">References</a>).  It has a non-repeating period of <em class="math">2^19937<!-- /@w -->-1</em>,
+which is a Mersenne prime, hence the name of the generator.  The state is 624
+words of 32-bits each, which is iterated with one XOR and shift for each
+32-bit word generated, making the algorithm very fast.  Randomness properties
+are also very good and this is the default algorithm used by GMP.
+</p>
+<a class="index-entry-id" id="index-Linear-congruential-algorithm"></a>
+<p>Linear congruential generators are described in many text books, for instance
+Knuth volume 2 (see <a class="pxref" href="constant.References.html#start">References</a>).  With a modulus <em class="math">M</em> and parameters
+<em class="math">A</em> and <em class="math">C</em>, an integer state <em class="math">S</em> is iterated by the formula
+<em class="math">S &lt;- A*S+C mod M</em>.  At each step the new
+state is a linear function of the previous, mod <em class="math">M</em>, hence the name of
+the generator.
+</p>
+<p>In GMP only moduli of the form <em class="math">2^N</em> are supported, and the current
+implementation is not as well optimized as it could be.  Overheads are
+significant when <em class="math">N</em> is small, and when <em class="math">N</em> is large clearly the
+multiply at each step will become slow.  This is not a big concern, since the
+Mersenne Twister generator is better in every respect and is therefore
+recommended for all normal applications.
+</p>
+<p>For both generators the current state can be deduced by observing enough
+output and applying some linear algebra (over GF(2) in the case of the
+Mersenne Twister).  This generally means raw output is unsuitable for
+cryptographic applications without further hashing or the like.
+</p>
+<hr>
+</div>
+</div>
+<div class="section-level-extent" id="Assembly-Coding">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Other-Algorithms" accesskey="p" rel="prev">Other Algorithms</a>, Up: <a href="#Algorithms" accesskey="u" rel="up">Algorithms</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Assembly-Coding-1"><span>15.8 Assembly Coding<a class="copiable-link" href="#Assembly-Coding-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Assembly-coding"></a>
+<p>The assembly subroutines in GMP are the most significant source of speed at
+small to moderate sizes.  At larger sizes algorithm selection becomes more
+important, but of course speedups in low level routines will still speed up
+everything proportionally.
+</p>
+<p>Carry handling and widening multiplies that are important for GMP can&rsquo;t be
+easily expressed in C.  GCC <code class="code">asm</code> blocks help a lot and are provided in
+<samp class="file">longlong.h</samp>, but hand coding low level routines invariably offers a
+speedup over generic C by a factor of anything from 2 to 10.
+</p>
+<ul class="mini-toc">
+<li><a href="#Assembly-Code-Organisation" accesskey="1">Code Organisation</a></li>
+<li><a href="#Assembly-Basics" accesskey="2">Assembly Basics</a></li>
+<li><a href="#Assembly-Carry-Propagation" accesskey="3">Carry Propagation</a></li>
+<li><a href="#Assembly-Cache-Handling" accesskey="4">Cache Handling</a></li>
+<li><a href="#Assembly-Functional-Units" accesskey="5">Functional Units</a></li>
+<li><a href="#Assembly-Floating-Point" accesskey="6">Floating Point</a></li>
+<li><a href="#Assembly-SIMD-Instructions" accesskey="7">SIMD Instructions</a></li>
+<li><a href="#Assembly-Software-Pipelining" accesskey="8">Software Pipelining</a></li>
+<li><a href="#Assembly-Loop-Unrolling" accesskey="9">Loop Unrolling</a></li>
+<li><a href="#Assembly-Writing-Guide">Writing Guide</a></li>
+</ul>
+<hr>
+<div class="subsection-level-extent" id="Assembly-Code-Organisation">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Basics" accesskey="n" rel="next">Assembly Basics</a>, Previous: <a href="#Assembly-Coding" accesskey="p" rel="prev">Assembly Coding</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Code-Organisation"><span>15.8.1 Code Organisation<a class="copiable-link" href="#Code-Organisation"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-code-organisation"></a>
+<a class="index-entry-id" id="index-Code-organisation"></a>
+<p>The various <samp class="file">mpn</samp> subdirectories contain machine-dependent code, written
+in C or assembly.  The <samp class="file">mpn/generic</samp> subdirectory contains default code,
+used when there&rsquo;s no machine-specific version of a particular file.
+</p>
+<p>Each <samp class="file">mpn</samp> subdirectory is for an ISA family.  Generally 32-bit and
+64-bit variants in a family cannot share code and have separate directories.
+Within a family further subdirectories may exist for CPU variants.
+</p>
+<p>In each directory a <samp class="file">nails</samp> subdirectory may exist, holding code with
+nails support for that CPU variant.  A <code class="code">NAILS_SUPPORT</code> directive in each
+file indicates the nails values the code handles.  Nails code only exists
+where it&rsquo;s faster, or promises to be faster, than plain code.  There&rsquo;s no
+effort put into nails if they&rsquo;re not going to enhance a given CPU.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Basics">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Carry-Propagation" accesskey="n" rel="next">Carry Propagation</a>, Previous: <a href="#Assembly-Code-Organisation" accesskey="p" rel="prev">Code Organisation</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Assembly-Basics-1"><span>15.8.2 Assembly Basics<a class="copiable-link" href="#Assembly-Basics-1"> &para;</a></span></h4>
+<p><code class="code">mpn_addmul_1</code> and <code class="code">mpn_submul_1</code> are the most important routines
+for overall GMP performance.  All multiplications and divisions come down to
+repeated calls to these.  <code class="code">mpn_add_n</code>, <code class="code">mpn_sub_n</code>,
+<code class="code">mpn_lshift</code> and <code class="code">mpn_rshift</code> are next most important.
+</p>
+<p>On some CPUs assembly versions of the internal functions
+<code class="code">mpn_mul_basecase</code> and <code class="code">mpn_sqr_basecase</code> give significant speedups,
+mainly through avoiding function call overheads.  They can also potentially
+make better use of a wide superscalar processor, as can bigger primitives like
+<code class="code">mpn_addmul_2</code> or <code class="code">mpn_addmul_4</code>.
+</p>
+<p>The restrictions on overlaps between sources and destinations
+(see <a class="pxref" href="constant.Low_level_Functions.html#start">Low-level Functions</a>) are designed to facilitate a variety of
+implementations.  For example, knowing <code class="code">mpn_add_n</code> won&rsquo;t have partly
+overlapping sources and destination means reading can be done far ahead of
+writing on superscalar processors, and loops can be vectorized on a vector
+processor, depending on the carry handling.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Carry-Propagation">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Cache-Handling" accesskey="n" rel="next">Cache Handling</a>, Previous: <a href="#Assembly-Basics" accesskey="p" rel="prev">Assembly Basics</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Carry-Propagation"><span>15.8.3 Carry Propagation<a class="copiable-link" href="#Carry-Propagation"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-carry-propagation"></a>
+<p>The problem that presents most challenges in GMP is propagating carries from
+one limb to the next.  In functions like <code class="code">mpn_addmul_1</code> and
+<code class="code">mpn_add_n</code>, carries are the only dependencies between limb operations.
+</p>
+<p>On processors with carry flags, a straightforward CISC style <code class="code">adc</code> is
+generally best.  AMD K6 <code class="code">mpn_addmul_1</code> however is an example of an
+unusual set of circumstances where a branch works out better.
+</p>
+<p>On RISC processors generally an add and compare for overflow is used.  This
+sort of thing can be seen in <samp class="file">mpn/generic/aors_n.c</samp>.  Some carry
+propagation schemes require 4 instructions, meaning at least 4 cycles per
+limb, but other schemes may use just 1 or 2.  On wide superscalar processors
+performance may be completely determined by the number of dependent
+instructions between carry-in and carry-out for each limb.
+</p>
+<p>On vector processors good use can be made of the fact that a carry bit only
+very rarely propagates more than one limb.  When adding a single bit to a
+limb, there&rsquo;s only a carry out if that limb was <code class="code">0xFF&hellip;FF</code> which on
+random data will be only 1 in <em class="math">2^mp_bits_per_limb</em>.  <samp class="file">mpn/cray/add_n.c</samp> is an example of this, it adds
+all limbs in parallel, adds one set of carry bits in parallel and then only
+rarely needs to fall through to a loop propagating further carries.
+</p>
+<p>On the x86s, GCC (as of version 2.95.2) doesn&rsquo;t generate particularly good code
+for the RISC style idioms that are necessary to handle carry bits in
+C.  Often conditional jumps are generated where <code class="code">adc</code> or <code class="code">sbb</code> forms
+would be better.  And so unfortunately almost any loop involving carry bits
+needs to be coded in assembly for best results.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Cache-Handling">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Functional-Units" accesskey="n" rel="next">Functional Units</a>, Previous: <a href="#Assembly-Carry-Propagation" accesskey="p" rel="prev">Carry Propagation</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Cache-Handling"><span>15.8.4 Cache Handling<a class="copiable-link" href="#Cache-Handling"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-cache-handling"></a>
+<p>GMP aims to perform well both on operands that fit entirely in L1 cache and
+those which don&rsquo;t.
+</p>
+<p>Basic routines like <code class="code">mpn_add_n</code> or <code class="code">mpn_lshift</code> are often used on
+large operands, so L2 and main memory performance is important for them.
+<code class="code">mpn_mul_1</code> and <code class="code">mpn_addmul_1</code> are mostly used for multiply and
+square basecases, so L1 performance matters most for them, unless assembly
+versions of <code class="code">mpn_mul_basecase</code> and <code class="code">mpn_sqr_basecase</code> exist, in
+which case the remaining uses are mostly for larger operands.
+</p>
+<p>For L2 or main memory operands, memory access times will almost certainly be
+more than the calculation time.  The aim therefore is to maximize memory
+throughput, by starting a load of the next cache line while processing the
+contents of the previous one.  Clearly this is only possible if the chip has a
+lock-up free cache or some sort of prefetch instruction.  Most current chips
+have both these features.
+</p>
+<p>Prefetching sources combines well with loop unrolling, since a prefetch can be
+initiated once per unrolled loop (or more than once if the loop covers more
+than one cache line).
+</p>
+<p>On CPUs without write-allocate caches, prefetching destinations will ensure
+individual stores don&rsquo;t go further down the cache hierarchy, limiting
+bandwidth.  Of course for calculations which are slow anyway, like
+<code class="code">mpn_divrem_1</code>, write-throughs might be fine.
+</p>
+<p>The distance ahead to prefetch will be determined by memory latency versus
+throughput.  The aim of course is to have data arriving continuously, at peak
+throughput.  Some CPUs have limits on the number of fetches or prefetches in
+progress.
+</p>
+<p>If a special prefetch instruction doesn&rsquo;t exist then a plain load can be used,
+but in that case care must be taken not to attempt to read past the end of an
+operand, since that might produce a segmentation violation.
+</p>
+<p>Some CPUs or systems have hardware that detects sequential memory accesses and
+initiates suitable cache movements automatically, making life easy.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Functional-Units">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Floating-Point" accesskey="n" rel="next">Floating Point</a>, Previous: <a href="#Assembly-Cache-Handling" accesskey="p" rel="prev">Cache Handling</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Functional-Units"><span>15.8.5 Functional Units<a class="copiable-link" href="#Functional-Units"> &para;</a></span></h4>
+<p>When choosing an approach for an assembly loop, consideration is given to
+what operations can execute simultaneously and what throughput can thereby be
+achieved.  In some cases an algorithm can be tweaked to accommodate available
+resources.
+</p>
+<p>Loop control will generally require a counter and pointer updates, costing as
+much as 5 instructions, plus any delays a branch introduces.  CPU addressing
+modes might reduce pointer updates, perhaps by allowing just one updating
+pointer and others expressed as offsets from it, or on CISC chips with all
+addressing done with the loop counter as a scaled index.
+</p>
+<p>The final loop control cost can be amortised by processing several limbs in
+each iteration (see <a class="pxref" href="#Assembly-Loop-Unrolling">Loop Unrolling</a>).  This at least ensures loop
+control isn&rsquo;t a big fraction of the work done.
+</p>
+<p>Memory throughput is always a limit.  If perhaps only one load or one store
+can be done per cycle then 3 cycles/limb will be the top speed for &ldquo;binary&rdquo;
+operations like <code class="code">mpn_add_n</code>, and any code achieving that is optimal.
+</p>
+<p>Integer resources can be freed up by having the loop counter in a float
+register, or by pressing the float units into use for some multiplying,
+perhaps doing every second limb on the float side (see <a class="pxref" href="#Assembly-Floating-Point">Floating Point</a>).
+</p>
+<p>Float resources can be freed up by doing carry propagation on the integer
+side, or even by doing integer to float conversions in integers using bit
+twiddling.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Floating-Point">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-SIMD-Instructions" accesskey="n" rel="next">SIMD Instructions</a>, Previous: <a href="#Assembly-Functional-Units" accesskey="p" rel="prev">Functional Units</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Floating-Point"><span>15.8.6 Floating Point<a class="copiable-link" href="#Floating-Point"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-floating-point"></a>
+<p>Floating point arithmetic is used in GMP for multiplications on CPUs with poor
+integer multipliers.  It&rsquo;s mostly useful for <code class="code">mpn_mul_1</code>,
+<code class="code">mpn_addmul_1</code> and <code class="code">mpn_submul_1</code> on 64-bit machines, and
+<code class="code">mpn_mul_basecase</code> on both 32-bit and 64-bit machines.
+</p>
+<p>With IEEE 53-bit double precision floats, integer multiplications producing up
+to 53 bits will give exact results.  Breaking a 64x64 multiplication
+into eight 16x<em class="math">32-&gt;48</em> bit pieces is convenient.  With
+some care though six 21x<em class="math">32-&gt;53</em> bit products can be
+used, if one of the lower two 21-bit pieces also uses the sign bit.
+</p>
+<p>For the <code class="code">mpn_mul_1</code> family of functions on a 64-bit machine, the
+invariant single limb is split at the start, into 3 or 4 pieces.  Inside the
+loop, the bignum operand is split into 32-bit pieces.  Fast conversion of
+these unsigned 32-bit pieces to floating point is highly machine-dependent.
+In some cases, reading the data into the integer unit, zero-extending to
+64-bits, then transferring to the floating point unit back via memory is the
+only option.
+</p>
+<p>Converting partial products back to 64-bit limbs is usually best done as a
+signed conversion.  Since all values are smaller than <em class="math">2^53</em>, signed
+and unsigned are the same, but most processors lack unsigned conversions.
+</p>
+<br>
+<br>
+<p>Here is a diagram showing 16x32 bit products for an <code class="code">mpn_mul_1</code> or
+<code class="code">mpn_addmul_1</code> with a 64-bit limb.  The single limb operand V is split
+into four 16-bit parts.  The multi-limb operand U is split in the loop into
+two 32-bit parts.
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted">                +---+---+---+---+
+                |v48|v32|v16|v00|    V operand
+                +---+---+---+---+
+                +-------+---+---+
+            x   |  u32  |  u00  |    U operand (one limb)
+                +---------------+
+---------------------------------
+                    +-----------+
+                    | u00 x v00 |    p00    48-bit products
+                    +-----------+
+                +-----------+
+                | u00 x v16 |        p16
+                +-----------+
+            +-----------+
+            | u00 x v32 |            p32
+            +-----------+
+        +-----------+
+        | u00 x v48 |                p48
+        +-----------+
+            +-----------+
+            | u32 x v00 |            r32
+            +-----------+
+        +-----------+
+        | u32 x v16 |                r48
+        +-----------+
+    +-----------+
+    | u32 x v32 |                    r64
+    +-----------+
++-----------+
+| u32 x v48 |                        r80
++-----------+
+</pre></div></div>
+<p><em class="math">p32</em> and <em class="math">r32</em> can be summed using floating-point addition, and
+likewise <em class="math">p48</em> and <em class="math">r48</em>.  <em class="math">p00</em> and <em class="math">p16</em> can be summed
+with <em class="math">r64</em> and <em class="math">r80</em> from the previous iteration.
+</p>
+<p>For each loop then, four 49-bit quantities are transferred to the integer unit,
+aligned as follows,
+</p>
+<div class="example">
+<div class="group"><pre class="example-preformatted">|-----64bits----|-----64bits----|
+                   +------------+
+                   | p00 + r64' |    i00
+                   +------------+
+               +------------+
+               | p16 + r80' |        i16
+               +------------+
+           +------------+
+           | p32 + r32  |            i32
+           +------------+
+       +------------+
+       | p48 + r48  |                i48
+       +------------+
+</pre></div></div>
+<p>The challenge then is to sum these efficiently and add in a carry limb,
+generating a low 64-bit result limb and a high 33-bit carry limb (<em class="math">i48</em>
+extends 33 bits into the high half).
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-SIMD-Instructions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Software-Pipelining" accesskey="n" rel="next">Software Pipelining</a>, Previous: <a href="#Assembly-Floating-Point" accesskey="p" rel="prev">Floating Point</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="SIMD-Instructions"><span>15.8.7 SIMD Instructions<a class="copiable-link" href="#SIMD-Instructions"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-SIMD"></a>
+<p>The single-instruction multiple-data support in current microprocessors is
+aimed at signal processing algorithms where each data point can be treated
+more or less independently.  There&rsquo;s generally not much support for
+propagating the sort of carries that arise in GMP.
+</p>
+<p>SIMD multiplications of say four 16x16 bit multiplies only do as much
+work as one 32x32 from GMP&rsquo;s point of view, and need some shifts and
+adds besides.  But of course if say the SIMD form is fully pipelined and uses
+less instruction decoding then it may still be worthwhile.
+</p>
+<p>On the x86 chips, MMX has so far found a use in <code class="code">mpn_rshift</code> and
+<code class="code">mpn_lshift</code>, and is used in a special case for 16-bit multipliers in the
+P55 <code class="code">mpn_mul_1</code>.  SSE2 is used for Pentium 4 <code class="code">mpn_mul_1</code>,
+<code class="code">mpn_addmul_1</code>, and <code class="code">mpn_submul_1</code>.
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Software-Pipelining">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Loop-Unrolling" accesskey="n" rel="next">Loop Unrolling</a>, Previous: <a href="#Assembly-SIMD-Instructions" accesskey="p" rel="prev">SIMD Instructions</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Software-Pipelining"><span>15.8.8 Software Pipelining<a class="copiable-link" href="#Software-Pipelining"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-software-pipelining"></a>
+<p>Software pipelining consists of scheduling instructions around the branch
+point in a loop.  For example a loop might issue a load not for use in the
+present iteration but the next, thereby allowing extra cycles for the data to
+arrive from memory.
+</p>
+<p>Naturally this is wanted only when doing things like loads or multiplies that
+take several cycles to complete, and only where a CPU has multiple functional
+units so that other work can be done in the meantime.
+</p>
+<p>A pipeline with several stages will have a data value in progress at each
+stage and each loop iteration moves them along one stage.  This is like
+juggling.
+</p>
+<p>If the latency of some instruction is greater than the loop time then it will
+be necessary to unroll, so one register has a result ready to use while
+another (or multiple others) are still in progress (see <a class="pxref" href="#Assembly-Loop-Unrolling">Loop Unrolling</a>).
+</p>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Loop-Unrolling">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assembly-Writing-Guide" accesskey="n" rel="next">Writing Guide</a>, Previous: <a href="#Assembly-Software-Pipelining" accesskey="p" rel="prev">Software Pipelining</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Loop-Unrolling"><span>15.8.9 Loop Unrolling<a class="copiable-link" href="#Loop-Unrolling"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-loop-unrolling"></a>
+<p>Loop unrolling consists of replicating code so that several limbs are
+processed in each loop.  At a minimum this reduces loop overheads by a
+corresponding factor, but it can also allow better register usage, for example
+alternately using one register combination and then another.  Judicious use of
+<code class="command">m4</code> macros can help avoid lots of duplication in the source code.
+</p>
+<p>Any amount of unrolling can be handled with a loop counter that&rsquo;s decremented
+by <em class="math">N</em> each time, stopping when the remaining count is less than the
+further <em class="math">N</em> the loop will process.  Or by subtracting <em class="math">N</em> at the
+start, the termination condition becomes when the counter <em class="math">C</em> is less
+than 0 (and the count of remaining limbs is <em class="math">C+N</em>).
+</p>
+<p>Alternately for a power of 2 unroll the loop count and remainder can be
+established with a shift and mask.  This is convenient if also making a
+computed jump into the middle of a large loop.
+</p>
+<p>The limbs not a multiple of the unrolling can be handled in various ways, for
+example
+</p>
+<ul class="itemize mark-bullet">
+<li>A simple loop at the end (or the start) to process the excess.  Care will be
+wanted that it isn&rsquo;t too much slower than the unrolled part.
+</li><li>A set of binary tests, for example after an 8-limb unrolling, test for 4 more
+limbs to process, then a further 2 more or not, and finally 1 more or not.
+This will probably take more code space than a simple loop.
+</li><li>A <code class="code">switch</code> statement, providing separate code for each possible excess,
+for example an 8-limb unrolling would have separate code for 0 remaining, 1
+remaining, etc, up to 7 remaining.  This might take a lot of code, but may be
+the best way to optimize all cases in combination with a deep pipelined loop.
+</li><li>A computed jump into the middle of the loop, thus making the first iteration
+handle the excess.  This should make times smoothly increase with size, which
+is attractive, but setups for the jump and adjustments for pointers can be
+tricky and could become quite difficult in combination with deep pipelining.
+</li></ul>
+<hr>
+</div>
+<div class="subsection-level-extent" id="Assembly-Writing-Guide">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Assembly-Loop-Unrolling" accesskey="p" rel="prev">Loop Unrolling</a>, Up: <a href="#Assembly-Coding" accesskey="u" rel="up">Assembly Coding</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h4 class="subsection" id="Writing-Guide"><span>15.8.10 Writing Guide<a class="copiable-link" href="#Writing-Guide"> &para;</a></span></h4>
+<a class="index-entry-id" id="index-Assembly-writing-guide"></a>
+<p>This is a guide to writing software pipelined loops for processing limb
+vectors in assembly.
+</p>
+<p>First determine the algorithm and which instructions are needed.  Code it
+without unrolling or scheduling, to make sure it works.  On a 3-operand CPU
+try to write each new value to a new register, this will greatly simplify later
+steps.
+</p>
+<p>Then note for each instruction the functional unit and/or issue port
+requirements.  If an instruction can use either of two units, like U0 or U1
+then make a category &ldquo;U0/U1&rdquo;.  Count the total using each unit (or combined
+unit), and count all instructions.
+</p>
+<p>Figure out from those counts the best possible loop time.  The goal will be to
+find a perfect schedule where instruction latencies are completely hidden.
+The total instruction count might be the limiting factor, or perhaps a
+particular functional unit.  It might be possible to tweak the instructions to
+help the limiting factor.
+</p>
+<p>Suppose the loop time is <em class="math">N</em>, then make <em class="math">N</em> issue buckets, with the
+final loop branch at the end of the last.  Now fill the buckets with dummy
+instructions using the functional units desired.  Run this to make sure the
+intended speed is reached.
+</p>
+<p>Now replace the dummy instructions with the real instructions from the slow
+but correct loop you started with.  The first will typically be a load
+instruction.  Then the instruction using that value is placed in a bucket an
+appropriate distance down.  Run the loop again, to check it still runs at
+target speed.
+</p>
+<p>Keep placing instructions, frequently measuring the loop.  After a few you
+will need to wrap around from the last bucket back to the top of the loop.  If
+you used the new-register for new-value strategy above then there will be no
+register conflicts.  If not then take care not to clobber something already in
+use.  Changing registers at this time is very error prone.
+</p>
+<p>The loop will overlap two or more of the original loop iterations, and the
+computation of one vector element result will be started in one iteration of
+the new loop, and completed one or several iterations later.
+</p>
+<p>The final step is to create feed-in and wind-down code for the loop.  A good
+way to do this is to make a copy (or copies) of the loop at the start and
+delete those instructions which don&rsquo;t have valid antecedents, and at the end
+replicate and delete those whose results are unwanted (including any further
+loads).
+</p>
+<p>The loop will have a minimum number of limbs loaded and processed, so the
+feed-in code must test if the request size is smaller and skip either to a
+suitable part of the wind-down or to special code for small sizes.
+</p>
+</div>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Internals.html#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a href="constant.Language_Bindings.html#start" accesskey="p" rel="prev">Language Bindings</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

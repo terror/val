@@ -1,0 +1,172 @@
+# Data test file for mpc_log2.
+#
+# Copyright (C) 2012, 2025 INRIA
+#
+# This file is part of GNU MPC.
+#
+# GNU MPC is free software; you can redistribute it and/or modify it under
+# the terms of the GNU Lesser General Public License as published by the
+# Free Software Foundation; either version 3 of the License, or (at your
+#o ption) any later version.
+#
+# GNU MPC is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+# more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program. If not, see http://www.gnu.org/licenses/ .
+
+# See file sin.dat for the format description.
+
+# Special values, following ISO C99 standard, Annex G,
+# more precisely Section 7.26 "Future library directions"
+
+# Rule [conj]: log2(conj(z)) = conj(log2(z))
+
+# log2(nan + i*inf) = +inf + i*nan
+0 0 2 +inf 2 nan                   2 nan 2 +inf  N N
+0 0 2 +inf 2 nan                   2 nan 2 -inf  N N
+
+# log2(nan + i*nan) = nan + i*nan
+0 0 2 nan 2 nan                    2 nan 2 nan   N N
+
+# log2(nan + i*y) = nan + i*nan for finite y
+0 0 2 nan 2 nan                    2 nan 2  1    N N
+0 0 2 nan 2 nan                    2 nan 2 +0    N N
+0 0 2 nan 2 nan                    2 nan 2 -0    N N
+0 0 2 nan 2 nan                    2 nan 2 -1    N N
+
+# log2(+/-inf + i*nan) = +inf + i*nan
+0 0 2 +inf 2 nan                   2 +inf 2 nan  N N
+0 0 2 +inf 2 nan                   2 -inf 2 nan  N N
+
+# log2(x + i*nan) = nan+i*nan for finite x
+0 0 2 nan 2 nan                    2  1 2 nan    N N
+0 0 2 nan 2 nan                    2 +0 2 nan    N N
+0 0 2 nan 2 nan                    2 -0 2 nan    N N
+0 0 2 nan 2 nan                    2 -1 2 nan    N N
+
+# log2(x + i*inf) = +inf + i*pi/2/log(2) for finite x
+0 + 2 +inf 53 0x1.22123045b5decp+1  2  1 2 +inf   N N
+0 + 2 +inf 53 0x1.22123045b5decp+1  2 +0 2 +inf   N N
+0 + 2 +inf 53 0x1.22123045b5decp+1  2 -0 2 +inf   N N
+0 + 2 +inf 53 0x1.22123045b5decp+1  2 -1 2 +inf   N N
+# by [conj]: log2(x - i*inf) = +inf - i*pi/2/log(2) for finite x
+0 - 2 +inf 53 -0x1.22123045b5decp+1  2  1 2 -inf  N N
+0 - 2 +inf 53 -0x1.22123045b5decp+1  2 +0 2 -inf  N N
+0 - 2 +inf 53 -0x1.22123045b5decp+1  2 -0 2 -inf  N N
+0 - 2 +inf 53 -0x1.22123045b5decp+1  2 -1 2 -inf  N N
+
+# log2(-inf + i*y) = +inf + i*pi/log(2) for finite positive-signed y
+0 + 2 +inf 53 0x1.22123045b5decp+2  2 -inf 2  1   N N
+0 + 2 +inf 53 0x1.22123045b5decp+2  2 -inf 2 +0   N N
+# by [conj]: log2(-inf+i*y) = +inf - i*pi/log(2) for finite negative-signed y
+0 - 2 +inf 53 -0x1.22123045b5decp+2  2 -inf 2 -1  N N
+0 - 2 +inf 53 -0x1.22123045b5decp+2  2 -inf 2 -0  N N
+
+# log2(+inf + i*y) = +inf + i*0 for finite positive-signed y
+0 0 2 +inf 2 +0                    2 +inf 2  1   N N
+0 0 2 +inf 2 +0                    2 +inf 2 +0   N N
+# by [conj]: log2(+inf + i*y) = +inf - i*0 for finite negative-signed y
+0 0 2 +inf 2 -0                    2 +inf 2 -1   N N
+0 0 2 +inf 2 -0                    2 +inf 2 -0   N N
+
+# log2(-inf + i*inf) = +inf + i*(3*pi/4)/log(2)
+0 - 2 +inf 53 0x1.b31b486890ce1p+1  2 -inf 2 +inf N N
+# by [conj]: log2(-inf - i*inf) = +inf - i*(3*pi/4)/log(2)
+0 + 2 +inf 53 -0x1.b31b486890ce1p+1 2 -inf 2 -inf N N
+
+# log2(+inf + i*inf) = +inf + i*(pi/4)/log(2)
+0 + 2 +inf 53 0x1.22123045b5decp+0  2 +inf 2 +inf N N
+# by [conj]: log2(+inf - i*inf) = +inf - i*(pi/4)/log(2)
+0 - 2 +inf 53 -0x1.22123045b5decp+0 2 +inf 2 -inf N N
+
+# log2(-0 + i*0) = -inf + i*pi/log(2)
+0 + 2 -inf 53 +0x1.22123045b5decp+2   2 -0 2 +0     N N
+0 - 2 -inf 53 -0x1.22123045b5decp+2   2 -0 2 -0     N N
+0 + 2 -inf 53 +0x1.22123045b5decp+2   2 -0 2 +0     N U
+0 + 2 -inf 53 -0x1.22123045b5debp+2   2 -0 2 -0     N U
+0 - 2 -inf 53 +0x1.22123045b5debp+2   2 -0 2 +0     N D
+0 - 2 -inf 53 -0x1.22123045b5decp+2   2 -0 2 -0     N D
+
+# log2(+0 + i*0) = -inf + i*0
+0 0 2 -inf 2 +0                      2 +0 2 +0    N N
+0 0 2 -inf 2 -0                      2 +0 2 -0    N N
+
+# log2(+1 +- i*0) = +0 +- i*0
+0 0 2 +0 2 +0                      2 1 2 +0    N N
+0 0 2 +0 2 -0                      2 1 2 -0    N N
+
+# log2(2 +- i*0) = 1 +- i*0
+0 0 2 1 2 +0                      4 2 2 +0    N N
+0 0 2 1 2 -0                      4 2 2 -0    N N
+
+# log2(4 +- i*0) = 2 +- i*0
+0 0 2 2 2 +0                      5 4 2 +0    N N
+0 0 2 2 2 -0                      5 4 2 -0    N N
+
+# log2(-1 +- i*0) = +0 +- i*pi/log(2)
+0 + 2 +0 53 +0x1.22123045b5decp+2   2 -1 2 +0     N N
+0 - 2 +0 53 -0x1.22123045b5decp+2   2 -1 2 -0     N N
+
+# log2(x + i*y) with either x or y zero and the other non-zero
+- 0 53 0x1.0598fdbeb244cp+2  2                   0     5  0x11 2     0 N N
+- + 53 0x1.0598fdbeb244cp+2 53  0x1.22123045b5decp+1   2     0 5  0x11 N N
+- + 53 0x1.0fde0b5c8134p+2  53  0x1.22123045b5decp+2   5 -0x13 2    +0 N N
+- - 53 0x1.0fde0b5c8134p+2  53 -0x1.22123045b5decp+2   5 -0x13 2    -0 N N
+- - 53 0x1.0fde0b5c8134p+2  53 -0x1.22123045b5decp+1   2     0 5 -0x13 N N
+
+- + 53 0x1.21820a01ac754p+2 53  0x1.22123045b5decp+2   5 -0x17 2    +0 Z U
++ - 53 0x1.21820a01ac755p+2 53 -0x1.22123045b5decp+2   5 -0x17 2    -0 N D
++ - 53 0x1.21820a01ac755p+2 53  0x1.22123045b5debp+2   5 -0x17 2    +0 U Z
+- - 53 0x1.21820a01ac754p+2 53 -0x1.22123045b5decp+2   5 -0x17 2    -0 D N
+- - 53 0x1.82d75a6eb1dfbp+2 53  0x1.22123045b5debp+2   7 -0x42 2    +0 Z D
+- + 53 0x1.82d75a6eb1dfbp+2 53 -0x1.22123045b5debp+2   7 -0x42 2    -0 N Z
++ + 53 0x1.82d75a6eb1dfcp+2 53  0x1.22123045b5decp+2   7 -0x42 2    +0 U N
+- + 53 0x1.82d75a6eb1dfbp+2 53 -0x1.22123045b5debp+2   7 -0x42 2    -0 D U
+
+# huge values
+0 0 53 0x1p+10 2   0                   2 0x1p1024 2    +0 U U
+0 0 53 0x1p+11 2   0                   2 0x1p2048 2    +0 U U
+0 0 53 0x1p+12 2   0                   2 0x1p4096 2    +0 U U
+0 0 53 0x1p+13 2   0                   2 0x1p8192 2    +0 U U
+0 0 53 0x1p+14 2   0                   2 0x1p16384 2   +0 U U
+0 0 53 0x1p+15 2   0                   2 0x1p32768 2   +0 U U
+0 0 53 0x1p+16 2   0                   2 0x1p65536 2   +0 U U
+0 0 53 0x1p+17 2   0                   2 0x1p131072 2  +0 U U
+0 0 53 0x1p+18 2   0                   2 0x1p262144 2  +0 U U
+0 0 53 0x1p+19 2   0                   2 0x1p524288 2  +0 U U
+0 0 53 0x1p+20 2   0                   2 0x1p1048576 2 +0 U U
+0 0 53 0x1p+21 2   0                   2 0x1p2097152 2 +0 U U
+0 0 53 0x1p+22 2   0                   2 0x1p4194304 2 +0 U U
+0 0 53 0x1p+23 2   0                   2 0x1p8388608 2 +0 U U
+0 0 53 0x1p+24 2   0                  2 0x1p16777216 2 +0 U U
+0 0 53 0x1p+25 2   0                  2 0x1p33554432 2 +0 U U
+0 0 53 0x1p+26 2   0                  2 0x1p67108864 2 +0 U U
+0 0 53 0x1p+27 2   0                 2 0x1p134217728 2 +0 U U
+0 0 53 0x1p+28 2   0                 2 0x1p268435456 2 +0 U U
+0 0 53 0x1p+29 2   0                 2 0x1p536870912 2 +0 U U
+0 + 53 0x1.002p+10 53 0x1.22123045b5decp+0 2 0x1p1024 2 0x1p1024 U U
+0 + 53 0x1.001p+11 53 0x1.22123045b5decp+0 2 0x1p2048 2 0x1p2048 U U
+0 + 53 0x1.0008p+12 53 0x1.22123045b5decp+0 2 0x1p4096 2 0x1p4096 U U
+0 + 53 0x1.0004p+13 53 0x1.22123045b5decp+0 2 0x1p8192 2 0x1p8192 U U
+0 + 53 0x1.0002p+14 53 0x1.22123045b5decp+0 2 0x1p16384 2 0x1p16384 U U
+0 + 53 0x1.0001p+15 53 0x1.22123045b5decp+0 2 0x1p32768 2 0x1p32768 U U
+0 + 53 0x1.00008p+16 53 0x1.22123045b5decp+0 2 0x1p65536 2 0x1p65536 U U
+0 + 53 0x1.00004p+17  2  0x1.8p+0  2 0x1p131072 2 0x1p131072 U U
+0 + 53 0x1.00002p+18  2  0x1.8p+0  2 0x1p262144 2 0x1p262144 U U
+0 + 53 0x1.00001p+19  2  0x1.8p+0  2 0x1p524288 2 0x1p524288 U U
+0 + 53 0x1.000008p+20 2  0x1.8p+0  2 0x1p1048576 2 0x1p1048576 U U
+0 + 53 0x1.000004p+21 2  0x1.8p+0  2 0x1p2097152 2 0x1p2097152 U U
+0 + 53 0x1.000002p+22 2  0x1.8p+0  2 0x1p4194304 2 0x1p4194304 U U
+0 + 53 0x1.000001p+23 2  0x1.8p+0  2 0x1p8388608 2 0x1p8388608 U U
+0 + 53 0x1.0000008p+24 2 0x1.8p+0  2 0x1p16777216 2 0x1p16777216 U U
+0 + 53 0x1.0000004p+25 2 0x1.8p+0  2 0x1p33554432 2 0x1p33554432 U U
+0 + 53 0x1.0000002p+26 2 0x1.8p+0  2 0x1p67108864 2 0x1p67108864 U U
+0 + 53 0x1.0000001p+27 2 0x1.8p+0  2 0x1p134217728 2 0x1p134217728 U U
+0 + 53 0x1.00000008p+28 2 0x1.8p+0 2 0x1p268435456 2 0x1p268435456 U U
+0 + 53 0x1.00000004p+29 2 0x1.8p+0 2 0x1p536870912 2 0x1p536870912 U U
+
+# log2(1+I) has an exact real part
+0 + 53 0.5 53 0x1.22123045b5decp+0 2 1 2 1 N N

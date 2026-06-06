@@ -1,0 +1,33 @@
+diff -ru gmp-6.3.0/acinclude.m4 gmp-6.3.0-p0-longlong/acinclude.m4
+--- gmp-6.3.0/acinclude.m4	2025-08-21 11:16:13.909552942 +0200
++++ gmp-6.3.0-p0-longlong/acinclude.m4	2025-08-21 11:17:51.251249305 +0200
+@@ -609,7 +609,7 @@
+ 
+ #if defined (__GNUC__) && ! defined (__cplusplus)
+ typedef unsigned long long t1;typedef t1*t2;
+-void g(){}
++void g(int a,t1 const* b,t1 c,t2 d,t1 const* e,int f){}
+ void h(){}
+ static __inline__ t1 e(t2 rp,t2 up,int n,t1 v0)
+ {t1 c,x,r;int i;if(v0){c=1;for(i=1;i<n;i++){x=up[i];r=x+1;rp[i]=r;}}return c;}
+diff -ru gmp-6.3.0/configure gmp-6.3.0-p0-longlong/configure
+--- gmp-6.3.0/configure	2025-08-21 11:16:13.920891360 +0200
++++ gmp-6.3.0-p0-longlong/configure	2025-08-21 11:18:05.213350598 +0200
+@@ -6568,7 +6568,7 @@
+ 
+ #if defined (__GNUC__) && ! defined (__cplusplus)
+ typedef unsigned long long t1;typedef t1*t2;
+-void g(){}
++void g(int a,t1 const* b,t1 c,t2 d,t1 const* e,int f){}
+ void h(){}
+ static __inline__ t1 e(t2 rp,t2 up,int n,t1 v0)
+ {t1 c,x,r;int i;if(v0){c=1;for(i=1;i<n;i++){x=up[i];r=x+1;rp[i]=r;}}return c;}
+@@ -8187,7 +8187,7 @@
+ 
+ #if defined (__GNUC__) && ! defined (__cplusplus)
+ typedef unsigned long long t1;typedef t1*t2;
+-void g(){}
++void g(int a,t1 const* b,t1 c,t2 d,t1 const* e,int f){}
+ void h(){}
+ static __inline__ t1 e(t2 rp,t2 up,int n,t1 v0)
+ {t1 c,x,r;int i;if(v0){c=1;for(i=1;i<n;i++){x=up[i];r=x+1;rp[i]=r;}}return c;}

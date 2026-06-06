@@ -1,0 +1,72 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="Reporting-Bugs">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Integer_Functions.html#Integer-Functions" accesskey="n" rel="next">Integer Functions</a>, Previous: <a href="constant.GMP_Basics.html#GMP-Basics" accesskey="p" rel="prev">GMP Basics</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Reporting-Bugs-1"><span>4 Reporting Bugs<a class="copiable-link" href="#Reporting-Bugs-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Reporting-bugs"></a>
+<a class="index-entry-id" id="index-Bug-reporting"></a>
+<p>If you think you have found a bug in the GMP library, please investigate it
+and report it.  We have made this library available to you, and it is not too
+much to ask you to report the bugs you find.
+</p>
+<p>Before you report a bug, check it&rsquo;s not already addressed in <a class="ref" href="constant.Installing_GMP.html#Known-Build-Problems">Known Build Problems</a>, or perhaps <a class="ref" href="constant.Installing_GMP.html#Notes-for-Particular-Systems">Notes for Particular Systems</a>.  You may also want
+to check <a class="uref" href="https://gmplib.org/">https://gmplib.org/</a> for patches for this release, or try a
+recent snapshot from <a class="uref" href="https://gmplib.org/download/snapshot/">https://gmplib.org/download/snapshot/</a>.
+</p>
+<p>Please include the following in any report:
+</p>
+<ul class="itemize mark-bullet">
+<li>The GMP version number, and if pre-packaged or patched then say so.
+</li><li>A test program that makes it possible for us to reproduce the bug.  Include
+instructions on how to run the program.
+</li><li>A description of what is wrong.  If the results are incorrect, in what way.
+If you get a crash, say so.
+</li><li>If you get a crash, include a stack backtrace from the debugger if it&rsquo;s
+informative (&lsquo;<samp class="samp">where</samp>&rsquo; in <code class="command">gdb</code>, or &lsquo;<samp class="samp">$C</samp>&rsquo; in <code class="command">adb</code>).
+</li><li>Please do not send core dumps, executables or <code class="command">strace</code>s.
+</li><li>The &lsquo;<samp class="samp">configure</samp>&rsquo; options you used when building GMP, if any.
+</li><li>The output from &lsquo;<samp class="samp">configure</samp>&rsquo;, as printed to stdout, with any options used.
+</li><li>The name of the compiler and its version.  For <code class="command">gcc</code>, get the version
+with &lsquo;<samp class="samp">gcc -v</samp>&rsquo;, otherwise perhaps &lsquo;<samp class="samp">what `which cc`</samp>&rsquo;, or similar.
+</li><li>The output from running &lsquo;<samp class="samp">uname -a</samp>&rsquo;.
+</li><li>The output from running &lsquo;<samp class="samp">./config.guess</samp>&rsquo;, and from running
+&lsquo;<samp class="samp">./configfsf.guess</samp>&rsquo; (might be the same).
+</li><li>If the bug is related to &lsquo;<samp class="samp">configure</samp>&rsquo;, then the compressed contents of
+<samp class="file">config.log</samp>.
+</li><li>If the bug is related to an <samp class="file">asm</samp> file not assembling, then the contents
+of <samp class="file">config.m4</samp> and the offending line or lines from the temporary
+<samp class="file">mpn/tmp-&lt;file&gt;.s</samp>.
+</li></ul>
+<p>Please make an effort to produce a self-contained report, with something
+definite that can be tested or debugged.  Vague queries or piecemeal messages
+are difficult to act on and don&rsquo;t help the development effort.
+</p>
+<p>It is not uncommon that an observed problem is actually due to a bug in the
+compiler; the GMP code tends to explore interesting corners in compilers.
+</p>
+<p>If your bug report is good, we will do our best to help you get a corrected
+version of the library; if the bug report is poor, we won&rsquo;t do anything about
+it (except maybe ask you to send a better report).
+</p>
+<p>Send your report to: <a class="email" href="mailto:gmp-bugs@gmplib.org">gmp-bugs@gmplib.org</a>.
+</p>
+<p>If you think something in this manual is unclear, or downright incorrect, or if
+the language needs to be improved, please send a note to the same address.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Integer_Functions.html#Integer-Functions" accesskey="n" rel="next">Integer Functions</a>, Previous: <a href="constant.GMP_Basics.html#GMP-Basics" accesskey="p" rel="prev">GMP Basics</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

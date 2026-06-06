@@ -1,0 +1,69 @@
+# Copyright © 2016–2026 Trevor Spiteri
+
+# Copying and distribution of this file, with or without modification, are
+# permitted in any medium without royalty provided the copyright notice and this
+# notice are preserved. This file is offered as-is, without any warranty.
+
+skip_tags: true
+
+branches:
+  except:
+    - www
+
+environment:
+  MSRV: 1.85.0
+  APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+  APPVEYOR_SAVE_CACHE_ON_ERROR: true
+  TARGET: x86_64-pc-windows-gnu
+  CC: gcc
+  CONFIG_SITE: C:/msys64/mingw64/etc/config.site
+  MINGW_CHOST: x86_64-w64-mingw32
+  MINGW_PACKAGE_PREFIX: mingw-w64-x86_64
+  MINGW_PREFIX: C:/msys64/mingw64
+  MSYSTEM: MINGW64
+  MSYSTEM_CARCH: x86_64
+  MSYSTEM_CHOST: x86_64-w64-mingw32
+  MSYSTEM_PREFIX: C:/msys64/mingw64
+
+cache:
+  - '%USERPROFILE%\.cargo\registry\cache'
+  - '%LOCALAPPDATA%\gmp-mpfr-sys'
+
+install:
+  - set PATH=C:\msys64\%MSYSTEM%\bin;C:\msys64\usr\bin;%USERPROFILE%\.cargo\bin;%PATH%
+  - curl -sSf -o rustup-init.exe https://win.rustup.rs
+  - rustup-init.exe -y --default-host %TARGET% --default-toolchain none --no-modify-path
+  - rustup --version
+  - rustup toolchain install --profile minimal beta-%TARGET% %MSRV%-%TARGET%
+  - rustup component add --toolchain beta-%TARGET% rustfmt clippy
+
+build: false
+
+before_test:
+  - bash -c "if cd ""$USERPROFILE/.cargo/registry"" && [ -d src ]; then rm -r src; fi"
+  - bash -c "if cd ""$USERPROFILE/.cargo/registry"" && [ -d cache ]; then find cache -name \*.crate | sort; fi"
+  - bash -c "if cd ""$LOCALAPPDATA"" && [ -d gmp-mpfr-sys ]; then find gmp-mpfr-sys -name \*.[ah] | sort; fi"
+  # Install required packages
+  - pacman -S --needed --noconfirm diffutils m4 make %MINGW_PACKAGE_PREFIX%-%CC%
+
+test_script:
+  - cargo +beta-%TARGET% test --features "fail-on-warnings num-complex num-traits serde borsh"
+  - cargo +beta-%TARGET% test --release --features "fail-on-warnings num-complex num-traits serde borsh"
+  - cargo +beta-%TARGET% fmt -- --check
+  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings num-complex num-traits serde borsh"
+  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings"
+  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings num-complex"
+  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings num-traits"
+  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings serde"
+  - cargo +beta-%TARGET% clippy --all-targets --features "fail-on-warnings borsh"
+  - rm Cargo.lock
+  - cargo +%MSRV%-%TARGET% check --features "fail-on-warnings num-complex num-traits serde borsh"
+
+after_test:
+  # ugh, appveyor can't handle percentage signs, so we need to use $(sed 's/\.crate$//' <<< $s)
+  - bash -c "cd ""$USERPROFILE/.cargo/registry""; for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e $(sed 's/\.crate$//' <<< $s) ]; then rm -v $c; fi; done; find cache -name \*.crate | sort"
+  # delete named stale versions
+  - bash -c "cd ""$LOCALAPPDATA"" && rm -rfv gmp-mpfr-sys/gmp-mpfr-sys-1.5.0-*"
+  - bash -c "cd ""$LOCALAPPDATA""; find gmp-mpfr-sys -name \*.[ah] | sort"
+  # cache updating bug workaround
+  - bash -c "cd ""$LOCALAPPDATA""; find gmp-mpfr-sys -name \*.[ah] | sort > gmp-mpfr-sys/list"

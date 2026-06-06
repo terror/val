@@ -1,0 +1,42 @@
+# Copyright © 2017–2026 Trevor Spiteri
+
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
+
+[package]
+name = "gmp-mpfr-sys"
+version = "1.7.1"
+build = "build.rs"
+categories = ["external-ffi-bindings", "mathematics", "no-std"]
+description = "Rust FFI bindings for GMP, MPFR and MPC."
+documentation = "https://docs.rs/gmp-mpfr-sys"
+edition = "2021"
+keywords = ["bignum", "ffi", "gmp", "math", "numerics"]
+license = "LGPL-3.0+"
+links = "gmp"
+readme = "README.md"
+repository = "https://gitlab.com/tspiteri/gmp-mpfr-sys"
+rust-version = "1.71"
+
+[dependencies]
+libc = { default-features = false, version = "0.2.127" }
+
+[features]
+default = ["mpc", "mpfr"]
+mpc = ["mpfr"]
+mpfr = []
+
+# experimental features
+c-no-tests = []
+force-cross = []
+use-system-libs = []
+
+# undocumented features
+cnodelete = []
+fail-on-warnings = []
+
+[target.'cfg(target_os = "windows")'.build-dependencies.windows-sys]
+features = ["Win32_Foundation", "Win32_Globalization", "Win32_System_Com", "Win32_UI_Shell"]
+version = "0.61"

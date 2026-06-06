@@ -1,20 +1,24 @@
 /* tslint:disable */
 /* eslint-disable */
-export function start(): void;
 export function parse(input: string): any;
+export function start(): void;
 export function evaluate(input: string): any;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly start: () => void;
-  readonly parse: (a: number, b: number) => [number, number, number];
   readonly evaluate: (a: number, b: number) => [number, number, number];
-  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly parse: (a: number, b: number) => [number, number, number];
+  readonly start: () => void;
+  readonly abort: () => void;
+  readonly free: (a: number) => void;
+  readonly malloc: (a: number) => number;
+  readonly realloc: (a: number, b: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
-  readonly __wbindgen_export_3: WebAssembly.Table;
+  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+  readonly __wbindgen_externrefs: WebAssembly.Table;
   readonly __externref_table_dealloc: (a: number) => void;
   readonly __wbindgen_start: () => void;
 }

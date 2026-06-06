@@ -1,0 +1,10 @@
+{
+   test_main_static
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:new<test::test_main::{closure_env#0}>
+   fun:_ZN4test9test_main*
+   fun:_ZN4test16test_main_static*
+   ...
+}

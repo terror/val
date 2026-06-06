@@ -1,0 +1,374 @@
+<!-- This manual is for GNU MPC, a library for multiple precision complex arithmetic,
+version 1.4.1 of April 2026.
+Copyright © 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, 2020, 2022, 2023, 2024, 2025, 2026 INRIA
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections. A copy of the license is included in the section
+entitled "GNU Free Documentation License." -->
+<div class="chapter-level-extent" id="Ball-Arithmetic">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.References.html#start" accesskey="n" rel="next">References</a>, Previous: <a href="constant.Complex_Functions.html#Complex-Functions" accesskey="p" rel="prev">Complex Functions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPC</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Ball-Arithmetic-1"><span>6 Ball Arithmetic<a class="copiable-link" href="#Ball-Arithmetic-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Ball-arithmetic"></a>
+<p>Since release 1.3.0, GNU MPC contains a simple and very limited
+implementation of complex balls (or rather, circles). This part is
+experimental, its interface may vary and it may be removed completely
+in future releases.
+</p>
+<a class="index-entry-id" id="index-mpcb_005ft"></a>
+<p>A complex ball of the new type <code class="code">mpcb_t</code> is defined by a non-zero centre
+<em class="math">c</em> of the type <code class="code">mpc_t</code> and a relative radius <em class="math">r</em> of
+the new type <code class="code">mpcr_t</code>, and it represents all complex numbers
+<em class="math">z = c (1 + ϑ)</em> with <em class="math">|ϑ| ≤ r</em>, or equivalently
+the closed circle with centre <em class="math">c</em> and radius <em class="math">r |c|</em>.
+The approach of using a relative error (or radius) instead of an absolute
+one simplifies error analyses for multiplicative operations (multiplication,
+division, square roots, and the AGM), at the expense of making them more
+complicated for additive operations. It has the major drawback of not being
+able to represent balls centred at 0; in floating-point arithmetic, however,
+0 is never reached by rounding, but only through operations with exact
+result, which could be handled at a higher, application level. For more
+discussion on these issues, see the file <code class="code">algorithms.tex</code>.
+</p>
+<ul class="mini-toc">
+<li><a href="#Radius-type-and-functions" accesskey="1">Radius type and functions</a></li>
+<li><a href="#Ball-type-and-functions" accesskey="2">Ball type and functions</a></li>
+</ul>
+<div class="section-level-extent" id="Radius-type-and-functions">
+<h3 class="section"><span>6.1 Radius type and functions<a class="copiable-link" href="#Radius-type-and-functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-mpcr_005ft"></a>
+<a class="index-entry-id" id="index-mpcr_005fptr"></a>
+<a class="index-entry-id" id="index-mpcr_005fsrcptr"></a>
+<p>The radius type is defined by
+</p><pre class="verbatim">struct {
+   int64_t mant;
+   int64_t exp;
+}
+</pre><p>with the usual trick in the GNU multiprecision libraries of defining the
+main type <code class="code">mpcr_t</code> as a 1-dimensional array of this struct, and
+variable and constant pointers <code class="code">mpcr_ptr</code> and <code class="code">mpcr_srcptr</code>.
+It can contain the special values infinity or zero, or floating-point
+numbers encoded as <em class="math">m⋅2<sup class="sup">e</sup></em> for a positive mantissa
+<em class="math">m</em> and an arbitrary (usually negative) exponent <em class="math">e</em>.
+Normalised finite radii use 31 bits for the mantissa, that is,
+<em class="math">2<sup class="sup">30</sup>≤m≤2<sup class="sup">31</sup> - 1</em>.
+The special values infinity and 0 are encoded through the sign of
+<em class="math">m</em>, but should be tested for and set using dedicated functions.
+</p>
+<p>Unless indicated otherwise, the following functions
+assume radius arguments to be normalised,
+they return normalised results, and they round their results up, not
+necessarily to the smallest representable number, although reasonable
+effort is made to get a tight upper bound: They only guarantee that
+their outputs are an upper bound on the true results.
+(There may be a trade-off between tightness of the result and speed of
+computation. For instance, when a 32-bit mantissa is normalised, an even
+mantissa should be divided by 2, an odd mantissa should be divided by 2
+and 1 should be added, and then in both cases the exponent must be
+increased by 1. It might be more efficient to add 1 all the time instead
+of testing the last bit of the mantissa.)
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005finf_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpcr_inf_p</strong> <code class="def-code-arguments">(mpcr_srcptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005finf_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fzero_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpcr_zero_p</strong> <code class="def-code-arguments">(mpcr_srcptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005fzero_005fp"> &para;</a></span></dt>
+<dd><p>Test whether <var class="var">r</var> is infinity or zero, respectively, and return a
+boolean.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005flt_005fhalf_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpcr_lt_half_p</strong> <code class="def-code-arguments">(mpcr_srcptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005flt_005fhalf_005fp"> &para;</a></span></dt>
+<dd><p>Return <code class="code">true</code> if <var class="var">r</var>&lt;1/2, and <code class="code">false</code> otherwise.
+(Everywhere in this document,
+<code class="code">true</code> means any non-zero value, and <code class="code">false</code> means zero.)
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fcmp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpcr_cmp</strong> <code class="def-code-arguments">(mpcr_srcptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>)</code><a class="copiable-link" href="#index-mpcr_005fcmp"> &para;</a></span></dt>
+<dd><p>Return +1, 0 or -1 depending on whether <var class="var">r</var> is larger than, equal to
+or less than <var class="var">s</var>, with the natural total order on the compactified
+non-negative real axis letting 0 be smaller and letting infinity be larger
+than any finite real number.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fset_005finf"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_set_inf</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005fset_005finf"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fset_005fzero"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_set_zero</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005fset_005fzero"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fset_005fone"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_set_one</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005fset_005fone"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fset"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_set</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>)</code><a class="copiable-link" href="#index-mpcr_005fset"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fset_005fui64_005f2si64"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_set_ui64_2si64</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, uint64_t <var class="var">mant</var>, int64_t <var class="var">exp</var>)</code><a class="copiable-link" href="#index-mpcr_005fset_005fui64_005f2si64"> &para;</a></span></dt>
+<dd><p>Set <var class="var">r</var> to infinity, zero, 1, <var class="var">s</var> or
+<var class="var">mant</var>⋅2<sup class="sup"><var class="var">exp</var></sup>, respectively.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fmax"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_max</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, mpcr_srcptr <var class="var">t</var>)</code><a class="copiable-link" href="#index-mpcr_005fmax"> &para;</a></span></dt>
+<dd><p>Set <var class="var">r</var> to the maximum of <var class="var">s</var> and <var class="var">t</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fget_005fexp"><span class="category-def">Function: </span><span><code class="def-type">int64_t</code> <strong class="def-name">mpcr_get_exp</strong> <code class="def-code-arguments">(mpcr_srcptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005fget_005fexp"> &para;</a></span></dt>
+<dd><p>Assuming that <var class="var">r</var> is neither infinity nor 0, return its exponent
+<em class="math">e</em> when writing <em class="math">r = m⋅2<sup class="sup">e</sup></em> with
+<em class="math">1/2 ≤ m &lt; 1</em>. (Notice that this is <em class="emph">not</em> the same as the
+field <code class="code">exp</code> in the struct representing a radius, but that instead it
+is independent of the implementation.)
+Otherwise the behaviour is undefined.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fout_005fstr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_out_str</strong> <code class="def-code-arguments">(FILE *<var class="var">f</var>, mpcr_srcptr <var class="var">r</var>)</code><a class="copiable-link" href="#index-mpcr_005fout_005fstr"> &para;</a></span></dt>
+<dd><p>Output <var class="var">r</var> on <var class="var">f</var>, which may be <code class="code">stdout</code>.
+The output is enclosed in square brackets; so <code class="code">[0]</code> stands for the
+radius zero and <code class="code">[@Inf@]</code> for the radius infinity. Other radii are
+printed in the format <code class="code">[mant exp]</code>, where <code class="code">mant</code> and <code class="code">exp</code>
+are the internal fields of the radius structure.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fadd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_add</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, mpcr_srcptr <var class="var">t</var>)</code><a class="copiable-link" href="#index-mpcr_005fadd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fsub"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_sub</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, mpcr_srcptr <var class="var">t</var>)</code><a class="copiable-link" href="#index-mpcr_005fsub"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fmul"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_mul</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, mpcr_srcptr <var class="var">t</var>)</code><a class="copiable-link" href="#index-mpcr_005fmul"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_div</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, mpcr_srcptr <var class="var">t</var>)</code><a class="copiable-link" href="#index-mpcr_005fdiv"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fmul_005f2ui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_mul_2ui</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, unsigned long int <var class="var">t</var>)</code><a class="copiable-link" href="#index-mpcr_005fmul_005f2ui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fdiv_005f2ui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_div_2ui</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, unsigned long int <var class="var">t</var>)</code><a class="copiable-link" href="#index-mpcr_005fdiv_005f2ui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fsqr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_sqr</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>)</code><a class="copiable-link" href="#index-mpcr_005fsqr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcr_005fsqrt"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_sqrt</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>)</code><a class="copiable-link" href="#index-mpcr_005fsqrt"> &para;</a></span></dt>
+<dd><p>Set <var class="var">r</var> to the sum, difference, product or quotient of <var class="var">s</var> and
+<var class="var">t</var>, or to the product of <var class="var">s</var> by 2<sup class="sup"><var class="var">t</var></sup> or to the
+quotient of <var class="var">s</var> by 2<sup class="sup"><var class="var">t</var></sup>,
+or to the square or the square root of <var class="var">s</var>.
+If any of the arguments is infinity, or if a difference is negative,
+the result is infinity.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fsub_005frnd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_sub_rnd</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpcr_srcptr <var class="var">s</var>, mpcr_srcptr <var class="var">t</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpcr_005fsub_005frnd"> &para;</a></span></dt>
+<dd><p>Set <var class="var">r</var> to the difference of <var class="var">s</var> and <var class="var">t</var>, rounded into
+direction <var class="var">rnd</var>, which can be one of <code class="code">MPFR_RNDU</code> or
+<code class="code">MPFR_RNDD</code>. If one of the arguments is infinity or the difference is
+negative, the result is infinity. Calling the function with <code class="code">MPFR_RNDU</code>
+is equivalent to calling <code class="code">mpcr_sub</code>.
+</p>
+<p>This is one out of several functions taking a rounding parameter. Rounding
+down may be useful to obtain an upper bound when dividing by the result.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fc_005fabs_005frnd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_c_abs_rnd</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpc_srcptr <var class="var">z</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpcr_005fc_005fabs_005frnd"> &para;</a></span></dt>
+<dd><p>Set <var class="var">r</var> to the absolute value of the complex number <var class="var">z</var>, rounded
+in direction <var class="var">rnd</var>, which may be one of <code class="code">MPFR_RNDU</code> or
+<code class="code">MPFR_RNDD</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcr_005fadd_005frounding_005ferror"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcr_add_rounding_error</strong> <code class="def-code-arguments">(mpcr_ptr <var class="var">r</var>, mpfr_prec_t <var class="var">p</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpcr_005fadd_005frounding_005ferror"> &para;</a></span></dt>
+<dd><p>Set <var class="var">r</var> to <em class="math">r + (1 + r) 2<sup class="sup">-p</sup></em> if <var class="var">rnd</var> equals
+<code class="code">MPFR_RNDN</code>, and to <em class="math">r + (1 + r) 2<sup class="sup">1-p</sup></em> otherwise.
+The idea is that if a (potentially not representable) centre of an ideal
+complex ball of radius <var class="var">r</var> is rounded to a representable complex
+number at precision <var class="var">p</var>, this shifts the centre by up to 1/2 ulp
+(for rounding to nearest) or 1 ulp (for directed rounding of at least one
+of the real or imaginary parts), which increases the radius accordingly.
+So this function is typically called internally at the end of each
+operation with complex balls to account for the error made by rounding
+the centre.
+</p></dd></dl>
+</div>
+<div class="section-level-extent" id="Ball-type-and-functions">
+<h3 class="section"><span>6.2 Ball type and functions<a class="copiable-link" href="#Ball-type-and-functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-mpcb_005ft-1"></a>
+<a class="index-entry-id" id="index-mpcb_005fptr"></a>
+<a class="index-entry-id" id="index-mpcb_005fsrcptr"></a>
+<p>The ball type is defined by
+</p><pre class="verbatim">typedef struct {
+  mpc_t  c;
+  mpcr_t r;
+}
+</pre><p>or, more precisely, <code class="code">mpcb_t</code> is again a 1-dimensional array of such
+a struct, and variable and constant pointer types are defined as
+<code class="code">mpcb_ptr</code> and <code class="code">mpcb_srcptr</code>, respectively.
+As usual, the components should only be accessed through corresponding
+functions.
+</p>
+<p>To understand functions on balls, one needs to consider the balls passed
+as arguments as sets of complex values, to which a mathematical function
+is applied; the C function &ldquo;rounds up&rdquo; in the sense that it returns a
+ball containing all possible values of the function in all the possible
+input values. Reasonable effort is made to return small balls, but again
+there is no guarantee that the result is the smallest possible one.
+In the current implementation, the centre of a ball returned as a value
+is obtained by applying the function to the centres of the balls passed
+as arguments, and rounding. While this is a natural approach, it is not
+the only possible one; however, it also simplifies the error analysis
+as already carried out for functions with regular complex arguments.
+Whenever the centre of a complex ball has a non-finite real or imaginary
+part (positive or negative infinity or NaN) the radius is set to infinity;
+this can be interpreted as the &ldquo;useless ball&rdquo;, representing the whole
+complex plane, whatever the value of the centre is.
+</p>
+<p>Unlike for variables of <code class="code">mpc_t</code> type, where the precision needs to
+be set explicitly at initialisation, variables of type <code class="code">mpcb_t</code>
+handle their precision dynamically. Ball centres always have the same
+precision for their real and their imaginary parts (again this is a
+choice of the implementation; if they are of very different sizes, one
+could theoretically reduce the precision of the part that is smaller
+in absolute value, which is more strongly affected by the common error
+coded in the radius).
+When setting a complex ball from a value of a different type, an
+additional precision parameter is passed, which determines the precision
+of the centre. Functions on complex balls set the precision of their
+result depending on the input. In the current implementation, this is the
+minimum of the argument precisions, so if all balls are initially set to
+the same precision, this is preserved throughout the computations.
+(Notice that the exponent of the radius encodes roughly the number of
+correct binary digits of the ball centre; so it would also make sense
+to reduce the precision if the radius becomes larger.)
+</p>
+<p>The following functions on complex balls are currently available; the
+eclectic collection is motivated by the desire to provide an implementation
+of the arithmetic-geometric mean of complex numbers through the use of
+ball arithmetic. As for functions taking complex arguments, there may
+be arbitrary overlaps between variables representing arguments and
+results; for instance
+<code class="code">mpcb_mul (z, z, z)</code> is an allowed way of replacing the ball <var class="var">z</var>
+by its square.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005finit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_init</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>)</code><a class="copiable-link" href="#index-mpcb_005finit"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fclear"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_clear</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>)</code><a class="copiable-link" href="#index-mpcb_005fclear"> &para;</a></span></dt>
+<dd><p>Initialise or free memory for <var class="var">z</var>; <code class="code">mpcb_init</code> must be called once
+before using a variable, and <code class="code">mpcb_clear</code> must be called once before
+stopping to use a variable. Unlike its <code class="code">mpc_t</code> counterpart,
+<code class="code">mpcb_init</code> does not fix the precision of <var class="var">z</var>, but it sets its
+radius to infinity, so that <var class="var">z</var> represents the whole complex plane.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fget_005fprec"><span class="category-def">Function: </span><span><code class="def-type">mpfr_prec_t</code> <strong class="def-name">mpcb_get_prec</strong> <code class="def-code-arguments">(mpcb_srcptr <var class="var">z</var>)</code><a class="copiable-link" href="#index-mpcb_005fget_005fprec"> &para;</a></span></dt>
+<dd><p>Return the (common) precision of the real and the complex parts of the
+centre of <var class="var">z</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fset"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_set</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>)</code><a class="copiable-link" href="#index-mpcb_005fset"> &para;</a></span></dt>
+<dd><p>Set <var class="var">z</var> to <var class="var">z1</var>, preserving the precision of the centre.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fset_005finf"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_set_inf</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>)</code><a class="copiable-link" href="#index-mpcb_005fset_005finf"> &para;</a></span></dt>
+<dd><p>Set <var class="var">z</var> to the whole complex plane. This is intended to be used much
+in the spirit of an assertion: When a precondition is not satisfied inside
+a function, it can set its result to this value, which will propagate
+through further computations.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fset_005fc"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_set_c</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpc_srcptr <var class="var">c</var>, mpfr_prec_t <var class="var">prec</var>, unsigned long int <var class="var">err_re</var>, unsigned long int <var class="var">err_im</var>)</code><a class="copiable-link" href="#index-mpcb_005fset_005fc"> &para;</a></span></dt>
+<dd><p>Set <var class="var">z</var> to a ball with centre <var class="var">c</var> at precision <var class="var">prec</var>.
+If <var class="var">prec</var> is at least the maximum of the precisions of the real and the
+imaginary parts of <var class="var">c</var> and <var class="var">err_re</var> and <var class="var">err_im</var> are 0, then
+the resulting ball is exact with radius zero. Using a larger value for
+<var class="var">prec</var> makes sense if <var class="var">c</var> is considered exact and a larger target
+precision for the result is desired, or some leeway for the working
+precision is to be taken into account.
+If <var class="var">prec</var> is less than the precision of <var class="var">c</var>, then usually some
+rounding error occurs when setting the centre, which is taken into account
+in the radius.
+</p>
+<p>If <var class="var">err_re</var> and <var class="var">err_im</var> are non-zero, the argument <var class="var">c</var> is
+considered as an inexact complex number, with a bound on the absolute error
+of its real part given in <var class="var">err_re</var> as a multiple of 1/2 ulp of the real
+part of <var class="var">c</var>, and a bound on the absolute error of its imaginary part
+given in <var class="var">err_im</var> as a multiple of 1/2 ulp of the imaginary part of
+<var class="var">c</var>. (Notice that if the parts of <var class="var">c</var> have different precisions or
+exponents, the absolute values of their ulp differ.)
+Then <var class="var">z</var> is created as a ball with centre <var class="var">c</var> and a radius taking
+these errors on <var class="var">c</var> as well as the potential additional rounding error
+for the centre into account.
+If the real part of <var class="var">c</var> is 0, then <var class="var">err_re</var> must be 0, since
+ulp of 0 makes no sense; otherwise the radius is set to infinity. The same
+remark holds for the imaginary part.
+</p>
+<p>Using <var class="var">err_re</var> and <var class="var">err_im</var> different from 0 is particularly
+useful in two settings: If <var class="var">c</var> is itself the result of a call to an
+<code class="code">mpc_</code> function with exact input and rounding mode <code class="code">MPC_RNDNN</code>
+of both parts to nearest, then its parts are known with errors of at most
+1/2 ulp, and setting <var class="var">err_re</var> and <var class="var">err_im</var> to 1 yields a ball
+which is known to contain the exact result (this motivates the strange
+unit of 1/2 ulp); if directed rounding was used, <var class="var">err_re</var> and
+<var class="var">err_im</var> can be set to 2 instead.
+</p>
+<p>And if <var class="var">c</var> is the result of a sequence of calls to <code class="code">mpc_</code>
+functions for which some error analysis has been carried out (as is
+frequently the case internally when implementing complex functions),
+again the resulting ball <var class="var">z</var> is known to contain the exact result
+when using appropriate values for <var class="var">err_re</var> and <var class="var">err_im</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fset_005fui_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_set_ui_ui</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, unsigned long int <var class="var">re</var>, unsigned long int <var class="var">im</var>, mpfr_prec_t <var class="var">prec</var>)</code><a class="copiable-link" href="#index-mpcb_005fset_005fui_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">z</var> to a ball with centre <var class="var">re</var>+I*<var class="var">im</var> at precision
+<var class="var">prec</var> or the size of an <code class="code">unsigned long int</code>, whatever is larger.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fout_005fstr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_out_str</strong> <code class="def-code-arguments">(FILE *<var class="var">f</var>, mpcb_srcptr <var class="var">z</var>)</code><a class="copiable-link" href="#index-mpcb_005fout_005fstr"> &para;</a></span></dt>
+<dd><p>Output <var class="var">z</var> on <var class="var">f</var>, which may be <code class="code">stdout</code>.
+The format is to output the centre (in round parentheses), followed
+by the radius (in square brackets).
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fneg"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_neg</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>)</code><a class="copiable-link" href="#index-mpcb_005fneg"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fadd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_add</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>, mpcb_srcptr <var class="var">z2</var>)</code><a class="copiable-link" href="#index-mpcb_005fadd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fmul"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_mul</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>, mpcb_srcptr <var class="var">z2</var>)</code><a class="copiable-link" href="#index-mpcb_005fmul"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fsqr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_sqr</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>)</code><a class="copiable-link" href="#index-mpcb_005fsqr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fpow_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_pow_ui</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>, unsigned long int <var class="var">e</var>)</code><a class="copiable-link" href="#index-mpcb_005fpow_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fsqrt"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_sqrt</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>)</code><a class="copiable-link" href="#index-mpcb_005fsqrt"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_div</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>, mpcb_srcptr <var class="var">z2</var>)</code><a class="copiable-link" href="#index-mpcb_005fdiv"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpcb_005fdiv_005f2ui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpcb_div_2ui</strong> <code class="def-code-arguments">(mpcb_ptr <var class="var">z</var>, mpcb_srcptr <var class="var">z1</var>, unsigned long int <var class="var">e</var>)</code><a class="copiable-link" href="#index-mpcb_005fdiv_005f2ui"> &para;</a></span></dt>
+<dd><p>These are the exact counterparts of the corresponding functions
+<code class="code">mpc_neg</code>, <code class="code">mpc_add</code> and so on, but on complex balls instead of
+complex numbers.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fcan_005fround"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpcb_can_round</strong> <code class="def-code-arguments">(mpcb_srcptr <var class="var">z</var>, mpfr_prec_t <var class="var">prec_re</var>, mpfr_prec_t <var class="var">prec_im</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpcb_005fcan_005fround"> &para;</a></span></dt>
+<dd><p>If the function returns <code class="code">true</code> (a non-zero number), then rounding
+any of the complex numbers in the ball to a complex number with precision
+<var class="var">prec_re</var> of its real and precision <var class="var">prec_im</var> of its imaginary
+part and rounding mode <var class="var">rnd</var> yields the same result and rounding
+direction value, cf. <a class="ref" href="constant.GNU_MPC_Basics.html#return_002dvalue">return-value</a>.
+If the function returns <code class="code">false</code> (that is, 0), then it could not
+conclude, or there are two numbers in the ball which would be rounded to
+a different complex number or in a different direction. Notice that the
+function works in a best effort mode and errs on the side of caution by
+potentially returning <code class="code">false</code> on a roundable ball; this is consistent
+with computational functions not necessarily returning the smallest
+enclosing ball.
+</p>
+<p>If <var class="var">z</var> contains the result of evaluating some mathematical function
+through a sequence of calls to <code class="code">mpcb</code> functions, starting with exact
+complex numbers, that is, balls of radius 0, then a return value of
+<code class="code">true</code> indicates that rounding any value in the ball (its centre is
+readily available) in direction <var class="var">rnd</var> yields the correct result of
+the function and the correct rounding direction value with the usual
+MPC semantics.
+</p>
+<p>Notice that when the precision of <var class="var">z</var> is larger than <var class="var">prec_re</var>
+or <var class="var">prec_im</var>, the centre need not be representable at the desired
+precision, and in fact the ball need not contain a representable number
+at all to be &ldquo;roundable&rdquo;. Even worse, when <var class="var">rnd</var> is a directed
+rounding mode for the real or the imaginary part and the ball of
+non-zero radius contains
+a representable number, the return value is necessarily <code class="code">false</code>.
+Even worse, when the rounding mode for one part is to nearest, the
+corresponding part of the centre of the ball is representable and the ball
+has a non-zero radius, then the return value is also necessarily
+<code class="code">false</code>, since even if rounding may be possible, the rounding
+direction value cannot be determined.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpcb_005fround"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpcb_round</strong> <code class="def-code-arguments">(mpc_ptr <var class="var">c</var>, mpcb_srcptr <var class="var">z</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpcb_005fround"> &para;</a></span></dt>
+<dd><p>Set <var class="var">c</var> to the centre of <var class="var">z</var>, rounded in direction <var class="var">rnd</var>,
+and return the corresponding rounding direction value.
+If <code class="code">mpcb_can_round</code>, called with <var class="var">z</var>, the precisions of <var class="var">c</var>
+and the rounding mode <var class="var">rnd</var> returns <code class="code">true</code>, then this function
+does what is expected, it &ldquo;correctly rounds the ball&rdquo; and returns a
+rounding direction value that is valid for all of the ball.
+As explained above, the result is then not necessarily (in the presence of
+directed rounding with radius different from 0, it is rather
+necessarily not) an element of the ball.
+</p></dd></dl>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.References.html#start" accesskey="n" rel="next">References</a>, Previous: <a href="constant.Complex_Functions.html#Complex-Functions" accesskey="p" rel="prev">Complex Functions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPC</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

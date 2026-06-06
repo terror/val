@@ -1,0 +1,7 @@
+{
+   doctest_secure_pow_mod
+   Memcheck:Cond
+   ...
+   fun:*doctest_secure_pow_mod*
+   ...
+}

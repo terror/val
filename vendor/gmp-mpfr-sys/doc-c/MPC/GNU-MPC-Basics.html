@@ -1,0 +1,313 @@
+<!-- This manual is for GNU MPC, a library for multiple precision complex arithmetic,
+version 1.4.1 of April 2026.
+Copyright © 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, 2020, 2022, 2023, 2024, 2025, 2026 INRIA
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections. A copy of the license is included in the section
+entitled "GNU Free Documentation License." -->
+<div class="chapter-level-extent" id="GNU-MPC-Basics">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Complex_Functions.html#Complex-Functions" accesskey="n" rel="next">Complex Functions</a>, Previous: <a href="constant.Reporting_Bugs.html#start" accesskey="p" rel="prev">Reporting Bugs</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPC</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="GNU-MPC-Basics-1"><span>4 GNU MPC Basics<a class="copiable-link" href="#GNU-MPC-Basics-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-mpc_002eh"></a>
+<p>All declarations needed to use GNU MPC are collected in the include file
+<samp class="file">mpc.h</samp>.  It is designed to work with both C and C++ compilers.
+You should include that file in any program using the GNU MPC library
+by adding the line
+</p><div class="example">
+<pre class="example-preformatted">   #include &quot;mpc.h&quot;
+</pre></div>
+<p>To use, for instance, input and output functions, this line should come
+after the inclusion of standard C headers such as <samp class="file">stdio.h</samp>.
+</p>
+<ul class="mini-toc">
+<li><a href="#Nomenclature-and-Types" accesskey="1">Nomenclature and Types</a></li>
+<li><a href="#Function-Classes" accesskey="2">Function Classes</a></li>
+<li><a href="#GNU-MPC-Variable-Conventions" accesskey="3">GNU MPC Variable Conventions</a></li>
+<li><a href="#Rounding-Modes" accesskey="4">Rounding Modes</a></li>
+<li><a href="#Semantics" accesskey="5">Semantics</a></li>
+<li><a href="#Return-Value" accesskey="6">Return Value</a></li>
+<li><a href="#Special-Values" accesskey="7">Special Values, Signed Zeroes and Branch Cuts</a></li>
+<li><a href="#Exceptions" accesskey="8">Exceptions</a></li>
+</ul>
+<div class="section-level-extent" id="Nomenclature-and-Types">
+<h3 class="section"><span>4.1 Nomenclature and Types<a class="copiable-link" href="#Nomenclature-and-Types"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Complex-number"></a>
+<a class="index-entry-id" id="index-mpc_005ft"></a>
+<a class="index-entry-id" id="index-mpc_005fptr"></a>
+<a class="index-entry-id" id="index-mpc_005fsrcptr"></a>
+<p>A <em class="dfn">complex number</em> is a pair of two arbitrary precision floating-point
+numbers of type <code class="code">mpfr_t</code> (for the real and imaginary parts).
+The C data type for such objects is <code class="code">mpc_t</code>.
+As for GNU MP and GNU MPFR, a variable of type <code class="code">mpc_t</code> is in fact
+an array with one <code class="code">struct</code> element, which is allocated on the stack
+(while the mantissas of its real and imaginary parts will eventually be
+allocated on the heap, usually by a call to
+<code class="code">mpc_init2</code>, see <a class="ref" href="constant.Complex_Functions.html#Initializing-Complex-Numbers">Initialization Functions</a>).
+The type <code class="code">mpc_ptr</code> represents a pointer to the corresponding
+<code class="code">struct</code>, while <code class="code">mpc_srcptr</code> represents a constant pointer.
+</p>
+<a class="index-entry-id" id="index-Precision"></a>
+<a class="index-entry-id" id="index-mpfr_005fprec_005ft"></a>
+<p>The <em class="dfn">precision</em> is the number of bits used to represent the mantissa
+of the real and imaginary parts;
+the corresponding C data type is <code class="code">mpfr_prec_t</code>.
+For more details on the allowed precision range,
+see Section &ldquo;Nomenclature and Types&rdquo; in <cite class="cite">GNU MPFR</cite>.
+While for most applications it should be appropriate to choose the same
+precision for the real and imaginary parts, it is possible to create
+numbers with different precisions for the two parts.
+</p>
+<a class="index-entry-id" id="index-Rounding-Mode"></a>
+<a class="index-entry-id" id="index-mpc_005frnd_005ft"></a>
+<p>The <em class="dfn">rounding mode</em> specifies the way to round the result of a
+complex operation, in case the exact result can not be represented
+exactly in the destination mantissa;
+the corresponding C data type is <code class="code">mpc_rnd_t</code>.
+A complex rounding mode is a pair of two rounding modes: one for the real
+part, one for the imaginary part.
+</p>
+</div>
+<div class="section-level-extent" id="Function-Classes">
+<h3 class="section"><span>4.2 Function Classes<a class="copiable-link" href="#Function-Classes"> &para;</a></span></h3>
+<p>The main class of functions in the GNU MPC library consists of functions
+for complex arithmetic. Their names begin with <code class="code">mpc_</code>, and they
+operate (mainly) on arguments of type <code class="code">mpc_t</code> (or <code class="code">mpc_ptr</code>
+and <code class="code">mpc_srcptr</code> to be more precise; for the sake of simplicity,
+we will use <code class="code">mpc_t</code> in the following, the interested reader may
+consult the include file <samp class="file">mpc.h</samp> for full details).
+</p>
+<p>A new class of experimental functions, prefixed with <code class="code">mpcb_</code>, operates
+on complex balls, and functions starting with <code class="code">mpcr_</code> operate on their
+corresponding radii, see <a class="ref" href="constant.Ball_Arithmetic.html#start">Ball Arithmetic</a>.
+</p>
+</div>
+<div class="section-level-extent" id="GNU-MPC-Variable-Conventions">
+<h3 class="section"><span>4.3 GNU MPC Variable Conventions<a class="copiable-link" href="#GNU-MPC-Variable-Conventions"> &para;</a></span></h3>
+<p>As a general rule, all GNU MPC functions expect output arguments before input
+arguments.  This notation is based on an analogy with the assignment operator.
+</p>
+<p>GNU MPC allows you to use the same variable for both input and output in the same
+expression.  For example, the main function for floating-point multiplication,
+<code class="code">mpc_mul</code>, can be used like this: <code class="code">mpc_mul (x, x, x, rnd_mode)</code>.
+This
+computes the square of <var class="var">x</var> with rounding mode <code class="code">rnd_mode</code>
+and puts the result back in <var class="var">x</var>.
+</p>
+<p>Before you can assign to an GNU MPC variable, you need to initialise it by calling
+one of the special initialization functions.  When you are done with a
+variable, you need to clear it out, using one of the functions for that
+purpose.
+</p>
+<p>A variable should only be initialised once, or at least cleared out between
+each initialization.  After a variable has been initialised, it may be
+assigned to any number of times.
+</p>
+<p>For efficiency reasons, avoid to initialise and clear out a variable in loops.
+Instead, initialise it before entering the loop, and clear it out after the
+loop has exited.
+</p>
+<p>You do not need to be concerned about allocating additional space for GNU MPC
+variables, since each of its real and imaginary part
+has a mantissa of fixed size.
+Hence unless you change its precision, or clear and reinitialise it,
+a complex variable will have the same allocated space during all its
+life.
+</p>
+</div>
+<div class="section-level-extent" id="Rounding-Modes">
+<h3 class="section"><span>4.4 Rounding Modes<a class="copiable-link" href="#Rounding-Modes"> &para;</a></span></h3>
+<p>A complex rounding mode is of the form <code class="code">MPC_RNDxy</code> where
+<code class="code">x</code> and <code class="code">y</code> are one of <code class="code">N</code> (to nearest), <code class="code">Z</code> (towards
+zero), <code class="code">U</code> (towards plus infinity), <code class="code">D</code> (towards minus infinity),
+<code class="code">A</code> (away from zero, that is, towards plus or minus infinity depending
+on the sign of the number to be rounded).
+The first letter refers to the rounding mode for the real part,
+and the second one for the imaginary part.
+For example <code class="code">MPC_RNDZU</code> indicates to round the real part towards zero,
+and the imaginary part towards plus infinity.
+</p>
+<p>The &lsquo;<samp class="samp">round to nearest</samp>&rsquo; mode works as in the IEEE 754 standard: in case
+the number to be rounded lies exactly in the middle of two representable
+numbers, it is rounded to the one with the least significant bit set to zero.
+For example, the number 5, which is represented by (101) in binary, is rounded
+to (100)=4 with a precision of two bits, and not to (110)=6.
+</p>
+<p>A useful macro is <code class="code">MPC_RND(r1,r2)</code>, which from two MPFR rounding
+modes <code class="code">r1</code> for the real part and <code class="code">r2</code> for the imaginary part,
+constructs the corresponding MPC rounding mode.
+Similarly, for an MPC rounding mode <code class="code">r</code>, <code class="code">MPC_RND_RE(r)</code> and
+<code class="code">MPC_RND_IM(r)</code> yield the corresponding MPFR rounding modes for the
+real and imaginary part, respectively.
+</p>
+</div>
+<div class="section-level-extent" id="Semantics">
+<h3 class="section"><span>4.5 Semantics<a class="copiable-link" href="#Semantics"> &para;</a></span></h3>
+<p>Finite precision complex floating-point numbers are in reality elements
+of Q<em class="math">(i)</em>; more precisely, their real and imaginary parts are rational
+numbers with denominator a power of 2 (such a rational number is also called
+a <em class="dfn">dyadic rational</em>, and we may call its complex counterpart a
+<em class="dfn">dyadic number</em>). All inputs to functions are thus considered exact,
+and results of function evaluations are mathematically defined as complex
+numbers. We consider their real and imaginary parts separately,
+that is, a function with <em class="math">n</em> complex inputs and one complex result
+is identified with a function with <em class="math">2n</em> real inputs and two real
+results.
+If such a result is itself a dyadic number representable at the
+precision of the output variable, then GNU MPC assigns this exact result;
+otherwise the mathematical result falls between two dyadic numbers that are
+representable in the target precision, and GNU MPC assigns one of these
+numbers to the output variable according to the rounding mode.
+Notice that this uniquely defines the expected output of any function.
+Since every variable carries its own precision (more precisely, two
+precisions, for the real and the imaginary part), function calls are made
+without an additional argument for the target precision; the rounding mode,
+however, needs in general to be given as an additional argument.
+Notice that in the case of an inexact output, there is a rounding error
+of at most the difference between two consecutive representable dyadic
+numbers. When such an output is used as an input to another function,
+it is again considered exact, and the GNU MPC library does not track how
+rounding errors propagate through successive function applications
+(unless ball arithmetic is used).
+</p>
+<p>This semantics is a generalization of the IEEE-754 standard (also included
+into recent C standards) for real floating-point numbers of fixed precision
+to complex floating-point numbers of arbitrary precision.
+The goal of the GNU MPC library is to provide operations with complex
+numbers that are well-defined with predictable results.
+</p>
+<p>Since the real and imaginary parts of complex numbers are <code class="code">mpfr_t</code>,
+besides <em class="dfn">finite</em> values, they may also contain <em class="dfn">special</em> values from
+the GNU MPFR library such as NaN and (signed) infinities; additionally
+zeroes also have signs.
+Since GNU MPFR does not distinguish between quiet and signaling NaN,
+this holds for GNU MPC too.
+These are handled analogously to GNU MPFR; for special cases,
+see <a class="ref" href="#Special-Values">Special Values, Signed Zeroes and Branch Cuts</a>.
+</p>
+<a class="anchor" id="return_002dvalue"></a></div>
+<div class="section-level-extent" id="Return-Value">
+<h3 class="section"><span>4.6 Return Value<a class="copiable-link" href="#Return-Value"> &para;</a></span></h3>
+<p>Most GNU MPC functions have a return value of type <code class="code">int</code>, which is used
+to indicate the position of the rounded real and imaginary parts with respect
+to the exact (infinite precision) values.
+If this integer is <code class="code">k</code>, the macros <code class="code">MPC_INEX_RE(k)</code> and
+<code class="code">MPC_INEX_IM(k)</code> give 0 if the corresponding rounded value is exact,
+a negative value if the rounded value is less than the exact one,
+and a positive value if it is greater than the exact one.
+Similarly, functions computing a result of type <code class="code">mpfr_t</code>
+return an integer that is 0, positive or negative depending on
+whether the rounded value is the same, larger or smaller then
+the exact result.
+</p>
+<p>Some functions, such as <code class="code">mpc_sin_cos</code>, compute two complex results;
+the macros <code class="code">MPC_INEX1(k)</code> and <code class="code">MPC_INEX2(k)</code>, applied to
+the return value <code class="code">k</code> of such a function, yield the exactness value
+corresponding to the first and the second computed value, respectively.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Special-Values">
+<div class="nav-panel">
+<p>
+Up: <a href="#GNU-MPC-Basics" accesskey="u" rel="up">GNU MPC Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Special-Values_002c-Signed-Zeroes-and-Branch-Cuts"><span>4.7 Special Values, Signed Zeroes and Branch Cuts<a class="copiable-link" href="#Special-Values_002c-Signed-Zeroes-and-Branch-Cuts"> &para;</a></span></h3>
+<p>When evaluating a function in an argument whose real or imaginary part is
+a special value (that is NaN or a (signed) infinity) or a (signed) zero,
+our goal is to compute the same result as specified for the corresponding
+function in the C standard.
+</p>
+<p>More precisely, we implement the following principles for real numbers
+(which appear to be consistent with the C standard).
+The value <em class="math">+Inf</em> is considered as the limit of sequences
+of positive numbers tending to infinity, <em class="math">-Inf</em> as the limit of
+sequences of negative numbers with absolute values tending to infinity.
+To handle division by infinities it is then natural to also consider
+signed zeroes as limits of sequences, namely <em class="math">+0</em> and <em class="math">-0</em> as the
+limits of sequences of positive resp. negative numbers with absolute value
+tending to zero, so that we obtain for the division of two real numbers
+that <em class="math">1/+Inf=+0</em>, <em class="math">1/-Inf=-0</em>, <em class="math">1/+0=+Inf</em> and
+<em class="math">1/-0=-Inf</em>.
+On the other hand, <em class="math">+0/+0=</em>NaN and <em class="math">+Inf/+Inf=</em>NaN,
+since any value is possible depending on how fast the dividend and
+divisor sequences, respectively, tend to zero or infinity.
+There is only one, unsigned, NaN value representing <em class="dfn">not a number</em>;
+and any formula involving a NaN results in a NaN.
+</p>
+<p>A peculiarity arises when adding signed zeroes; clearly,
+<em class="math">(+0)+(+0)=+0</em> and <em class="math">(-0)+(-0)=-0</em>, but what should
+the result of <em class="math">(+0)+(-0)</em> be? If each operand is replaced by
+a sequence of positive resp. negative real numbers tending to zero,
+then the sequence of their sums may or may not have a common sign
+(it could even be alternating between positive and negative).
+A logical result would be an unsigned zero, but this is not foreseen
+by the IEEE-754 standard since the binary format reserves one bit for
+the sign, so that every number has either a plus or a minus sign
+(which is ignored for NaN).
+So in case the sign of a resulting zero cannot be determined, the
+result is arbitrarily fixed to be <em class="math">+0</em>.
+One could imagine a fourth type of zero, the exact zero; such a number
+is also not foreseen by the standard, so that any zero input to a
+function is considered signed, and as for other numbers, &ldquo;inexact&rdquo;
+output (here, an arbitrarily assigned plus sign) is considered
+&ldquo;exact&rdquo; as an input to a subsequent function call.
+Beware that although <em class="math">+0</em> and <em class="math">-0</em> differ in sign, they
+nevertheless compare as equal; so equal function inputs may lead to
+differing results!
+</p>
+<p>Since complex numbers are given through their real and imaginary parts,
+there are in fact four different complex zeroes depending on the signs
+(all of which compare as equal).
+</p>
+<p>Signs in parts of complex numbers become meaningful when branch cuts come
+into play. The complex logarithm, for instance, is defined up to integer
+multiples of <em class="math">2 Pi i</em>, since exp<em class="math">(2 Pi i) = 1</em>. More precisely,
+when trying to define the logarithm as a continuous function, one walk
+on a circle around the origin leads to values that differ by
+<em class="math">2 Pi i</em>. So there is necessarily a discontinuity, which is placed
+along a <em class="dfn">branch cut</em>. In GNU MPC, the chosen branch cuts are the same
+as those specified for the corresponding functions in the C standard.
+For instance, the complex logarithm has a branch cut along the negative
+real axis (which in particular leads to results coinciding with GNU MPFR
+on the positive real axis). Since <em class="math">-1+0i</em> can be seen as above the
+branch cut, but <em class="math">-1-0i</em> can be seen as below the branch cut, we
+compute the exact results log<em class="math">(-1+0i)=+0+Pi i</em> and
+log<em class="math">(-1-0i)=+0-Pi i</em> (and round to a representable dyadic number),
+where the imaginary parts differ by <em class="math">2 Pi i</em> and the signs of the
+real parts cannot be determined and are thus set to plus.
+(In fact extending the preceding arguments, we can also consider the
+exact finite value -1 as the limit of a sequence tending to -1;
+then the real part of the result tends to zero and is positive
+when -1 is approached from below on the real axis and negative when
+-1 is approached from above on the real axis.)
+</p>
+<p>This semantics becomes fuzzy when mixed operations between complex
+and real numbers enter the game. Two different approaches stand out.
+First of all, a real value may first be promoted to a complex value,
+and then the previous rules apply. For instance, with this approach,
+<em class="math">(1-0i)+(+0)=(1-0i)+(+0+0i)=1+0i</em>, where the sign of the imaginary
+part of the result cannot be determined and is thus set to plus.
+Alternatively, the zero imaginary part of the real number may be
+interpreted as an exact zero; then <em class="math">(1-0i)+(+0)=1-0i</em>.
+The C standard appears to follow the second approach, which we thus also
+adopt in MPC.
+</p>
+</div>
+<div class="section-level-extent" id="Exceptions">
+<h3 class="section"><span>4.8 Exceptions<a class="copiable-link" href="#Exceptions"> &para;</a></span></h3>
+<p>This version of GNU MPC does not support exceptions (invalid, division by
+zero, overflow, underflow, inexact).
+A future version might support them, through the GNU MPFR mechanism for
+supporting exceptions.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Complex_Functions.html#Complex-Functions" accesskey="n" rel="next">Complex Functions</a>, Previous: <a href="constant.Reporting_Bugs.html#start" accesskey="p" rel="prev">Reporting Bugs</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPC</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
