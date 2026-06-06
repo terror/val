@@ -1,0 +1,429 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="Internals">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Contributors.html#start" accesskey="n" rel="next">Contributors</a>, Previous: <a href="constant.Algorithms.html#Algorithms" accesskey="p" rel="prev">Algorithms</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Internals-1"><span>16 Internals<a class="copiable-link" href="#Internals-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Internals"></a>
+<p><strong class="strong">This chapter is provided only for informational purposes and the
+various internals described here may change in future GMP releases.
+Applications expecting to be compatible with future releases should use only
+the documented interfaces described in previous chapters.</strong>
+</p>
+<ul class="mini-toc">
+<li><a href="#Integer-Internals" accesskey="1">Integer Internals</a></li>
+<li><a href="#Rational-Internals" accesskey="2">Rational Internals</a></li>
+<li><a href="#Float-Internals" accesskey="3">Float Internals</a></li>
+<li><a href="#Raw-Output-Internals" accesskey="4">Raw Output Internals</a></li>
+<li><a href="#C_002b_002b-Interface-Internals" accesskey="5">C++ Interface Internals</a></li>
+</ul>
+<hr>
+<div class="section-level-extent" id="Integer-Internals">
+<div class="nav-panel">
+<p>
+Next: <a href="#Rational-Internals" accesskey="n" rel="next">Rational Internals</a>, Previous: <a href="#Internals" accesskey="p" rel="prev">Internals</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Integer-Internals-1"><span>16.1 Integer Internals<a class="copiable-link" href="#Integer-Internals-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-internals"></a>
+<p><code class="code">mpz_t</code> variables represent integers using sign and magnitude, in space
+dynamically allocated and reallocated.  The fields are as follows.
+</p>
+<dl class="table">
+<dt><code class="code">_mp_size</code></dt>
+<dd><p>The number of limbs, or the negative of that when representing a negative
+integer.  Zero is represented by <code class="code">_mp_size</code> set to zero, in which case
+the <code class="code">_mp_d</code> data is undefined.
+</p>
+</dd>
+<dt><code class="code">_mp_d</code></dt>
+<dd><p>A pointer to an array of limbs which is the magnitude.  These are stored
+&ldquo;little endian&rdquo; as per the <code class="code">mpn</code> functions, so <code class="code">_mp_d[0]</code> is the
+least significant limb and <code class="code">_mp_d[ABS(_mp_size)-1]</code> is the most
+significant.  Whenever <code class="code">_mp_size</code> is non-zero, the most significant limb
+is non-zero.
+</p>
+<p>Currently there&rsquo;s always at least one readable limb, so for instance
+<code class="code">mpz_get_ui</code> can fetch <code class="code">_mp_d[0]</code> unconditionally (though its value
+is undefined if <code class="code">_mp_size</code> is zero).
+</p>
+</dd>
+<dt><code class="code">_mp_alloc</code></dt>
+<dd><p><code class="code">_mp_alloc</code> is the number of limbs currently allocated at <code class="code">_mp_d</code>,
+and normally <code class="code">_mp_alloc &gt;= ABS(_mp_size)</code>.  When an <code class="code">mpz</code> routine
+is about to (or might be about to) increase <code class="code">_mp_size</code>, it checks
+<code class="code">_mp_alloc</code> to see whether there&rsquo;s enough space, and reallocates if not.
+<code class="code">MPZ_REALLOC</code> is generally used for this.
+</p>
+<p><code class="code">mpz_t</code> variables initialised with the <code class="code">mpz_roinit_n</code> function or
+the <code class="code">MPZ_ROINIT_N</code> macro have <code class="code">_mp_alloc = 0</code> but can have a
+non-zero <code class="code">_mp_size</code>.  They can only be used as read-only constants. See
+<a class="ref" href="constant.Integer_Functions.html#Integer-Special-Functions">Special Functions</a> for details.
+</p></dd>
+</dl>
+<p>The various bitwise logical functions like <code class="code">mpz_and</code> behave as if
+negative values were two&rsquo;s complement.  But sign and magnitude is always used
+internally, and necessary adjustments are made during the calculations.
+Sometimes this isn&rsquo;t pretty, but sign and magnitude are best for other
+routines.
+</p>
+<p>Some internal temporary variables are set up with <code class="code">MPZ_TMP_INIT</code> and these
+have <code class="code">_mp_d</code> space obtained from <code class="code">TMP_ALLOC</code> rather than the memory
+allocation functions.  Care is taken to ensure that these are big enough that
+no reallocation is necessary (since it would have unpredictable consequences).
+</p>
+<p><code class="code">_mp_size</code> and <code class="code">_mp_alloc</code> are <code class="code">int</code>, although <code class="code">mp_size_t</code>
+is usually a <code class="code">long</code>.  This is done to make the fields just 32 bits on
+some 64 bits systems, thereby saving a few bytes of data space but still
+providing plenty of range.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Rational-Internals">
+<div class="nav-panel">
+<p>
+Next: <a href="#Float-Internals" accesskey="n" rel="next">Float Internals</a>, Previous: <a href="#Integer-Internals" accesskey="p" rel="prev">Integer Internals</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Rational-Internals-1"><span>16.2 Rational Internals<a class="copiable-link" href="#Rational-Internals-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Rational-internals"></a>
+<p><code class="code">mpq_t</code> variables represent rationals using an <code class="code">mpz_t</code> numerator and
+denominator (see <a class="pxref" href="#Integer-Internals">Integer Internals</a>).
+</p>
+<p>The canonical form adopted is denominator positive (and non-zero), no common
+factors between numerator and denominator, and zero uniquely represented as
+0/1.
+</p>
+<p>It&rsquo;s believed that casting out common factors at each stage of a calculation
+is best in general.  A GCD is an <em class="math">O(N^2)</em> operation so it&rsquo;s better to do
+a few small ones immediately than to delay and have to do a big one later.
+Knowing the numerator and denominator have no common factors can be used for
+example in <code class="code">mpq_mul</code> to make only two cross GCDs necessary, not four.
+</p>
+<p>This general approach to common factors is badly sub-optimal in the presence
+of simple factorizations or little prospect for cancellation, but GMP has no
+way to know when this will occur.  As per <a class="ref" href="constant.GMP_Basics.html#Efficiency">Efficiency</a>, that&rsquo;s left to
+applications.  The <code class="code">mpq_t</code> framework might still suit, with
+<code class="code">mpq_numref</code> and <code class="code">mpq_denref</code> for direct access to the numerator and
+denominator, or of course <code class="code">mpz_t</code> variables can be used directly.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Float-Internals">
+<div class="nav-panel">
+<p>
+Next: <a href="#Raw-Output-Internals" accesskey="n" rel="next">Raw Output Internals</a>, Previous: <a href="#Rational-Internals" accesskey="p" rel="prev">Rational Internals</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Float-Internals-1"><span>16.3 Float Internals<a class="copiable-link" href="#Float-Internals-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-internals"></a>
+<p>Efficient calculation is the primary aim of GMP floats and the use of whole
+limbs and simple rounding facilitates this.
+</p>
+<p><code class="code">mpf_t</code> floats have a variable precision mantissa and a single machine
+word signed exponent.  The mantissa is represented using sign and magnitude.
+</p>
+<div class="example">
+<pre class="example-preformatted">   most                   least
+significant            significant
+   limb                   limb
+                            _mp_d
+ |---- _mp_exp ---&gt;           |
+  _____ _____ _____ _____ _____
+ |_____|_____|_____|_____|_____|
+                   . &lt;------------ radix point
+  &lt;-------- _mp_size ---------&gt;
+</pre></div>
+<p>The fields are as follows.
+</p>
+<dl class="table">
+<dt><code class="code">_mp_size</code></dt>
+<dd><p>The number of limbs currently in use, or the negative of that when
+representing a negative value.  Zero is represented by <code class="code">_mp_size</code> and
+<code class="code">_mp_exp</code> both set to zero, and in that case the <code class="code">_mp_d</code> data is
+unused.  (In the future <code class="code">_mp_exp</code> might be undefined when representing
+zero.)
+</p>
+</dd>
+<dt><code class="code">_mp_prec</code></dt>
+<dd><p>The precision of the mantissa, in limbs.  In any calculation the aim is to
+produce <code class="code">_mp_prec</code> limbs of result (the most significant being non-zero).
+</p>
+</dd>
+<dt><code class="code">_mp_d</code></dt>
+<dd><p>A pointer to the array of limbs which is the absolute value of the mantissa.
+These are stored &ldquo;little endian&rdquo; as per the <code class="code">mpn</code> functions, so
+<code class="code">_mp_d[0]</code> is the least significant limb and
+<code class="code">_mp_d[ABS(_mp_size)-1]</code> the most significant.
+</p>
+<p>The most significant limb is always non-zero, but there are no other
+restrictions on its value, in particular the highest 1 bit can be anywhere
+within the limb.
+</p>
+<p><code class="code">_mp_prec+1</code> limbs are allocated to <code class="code">_mp_d</code>, the extra limb being
+for convenience (see below).  There are no reallocations during a calculation,
+only in a change of precision with <code class="code">mpf_set_prec</code>.
+</p>
+</dd>
+<dt><code class="code">_mp_exp</code></dt>
+<dd><p>The exponent, in limbs, determining the location of the implied radix point.
+Zero means the radix point is just above the most significant limb.  Positive
+values mean a radix point offset towards the lower limbs and hence a value
+<em class="math">&gt;= 1</em>, as for example in the diagram above.  Negative exponents mean
+a radix point further above the highest limb.
+</p>
+<p>Naturally the exponent can be any value, it doesn&rsquo;t have to fall within the
+limbs as the diagram shows, it can be a long way above or a long way below.
+Limbs other than those included in the <code class="code">{_mp_d,_mp_size}</code> data
+are treated as zero.
+</p></dd>
+</dl>
+<p>The <code class="code">_mp_size</code> and <code class="code">_mp_prec</code> fields are <code class="code">int</code>, although the
+<code class="code">mp_size_t</code> type is usually a <code class="code">long</code>.  The <code class="code">_mp_exp</code> field is
+usually <code class="code">long</code>.  This is done to make some fields just 32 bits on some 64
+bits systems, thereby saving a few bytes of data space but still providing
+plenty of precision and a very large range.
+</p>
+<br>
+<p>The following various points should be noted.
+</p>
+<dl class="table">
+<dt>Low Zeros</dt>
+<dd><p>The least significant limbs <code class="code">_mp_d[0]</code> etc can be zero, though such low
+zeros can always be ignored.  Routines likely to produce low zeros check and
+avoid them to save time in subsequent calculations, but for most routines
+they&rsquo;re quite unlikely and aren&rsquo;t checked.
+</p>
+</dd>
+<dt>Mantissa Size Range</dt>
+<dd><p>The <code class="code">_mp_size</code> count of limbs in use can be less than <code class="code">_mp_prec</code> if
+the value can be represented in less.  This means low precision values or
+small integers stored in a high precision <code class="code">mpf_t</code> can still be operated
+on efficiently.
+</p>
+<p><code class="code">_mp_size</code> can also be greater than <code class="code">_mp_prec</code>.  Firstly a value is
+allowed to use all of the <code class="code">_mp_prec+1</code> limbs available at <code class="code">_mp_d</code>,
+and secondly when <code class="code">mpf_set_prec_raw</code> lowers <code class="code">_mp_prec</code> it leaves
+<code class="code">_mp_size</code> unchanged and so the size can be arbitrarily bigger than
+<code class="code">_mp_prec</code>.
+</p>
+</dd>
+<dt>Rounding</dt>
+<dd><p>All rounding is done on limb boundaries.  Calculating <code class="code">_mp_prec</code> limbs
+with the high non-zero will ensure the application requested minimum precision
+is obtained.
+</p>
+<p>The use of simple &ldquo;trunc&rdquo; rounding towards zero is efficient, since there&rsquo;s
+no need to examine extra limbs and increment or decrement.
+</p>
+</dd>
+<dt>Bit Shifts</dt>
+<dd><p>Since the exponent is in limbs, there are no bit shifts in basic operations
+like <code class="code">mpf_add</code> and <code class="code">mpf_mul</code>.  When differing exponents are
+encountered all that&rsquo;s needed is to adjust pointers to line up the relevant
+limbs.
+</p>
+<p>Of course <code class="code">mpf_mul_2exp</code> and <code class="code">mpf_div_2exp</code> will require bit shifts,
+but the choice is between an exponent in limbs which requires shifts there, or
+one in bits which requires them almost everywhere else.
+</p>
+</dd>
+<dt>Use of <code class="code">_mp_prec+1</code> Limbs</dt>
+<dd><p>The extra limb on <code class="code">_mp_d</code> (<code class="code">_mp_prec+1</code> rather than just
+<code class="code">_mp_prec</code>) helps when an <code class="code">mpf</code> routine might get a carry from its
+operation.  <code class="code">mpf_add</code> for instance will do an <code class="code">mpn_add</code> of
+<code class="code">_mp_prec</code> limbs.  If there&rsquo;s no carry then that&rsquo;s the result, but if
+there is a carry then it&rsquo;s stored in the extra limb of space and
+<code class="code">_mp_size</code> becomes <code class="code">_mp_prec+1</code>.
+</p>
+<p>Whenever <code class="code">_mp_prec+1</code> limbs are held in a variable, the low limb is not
+needed for the intended precision, only the <code class="code">_mp_prec</code> high limbs.  But
+zeroing it out or moving the rest down is unnecessary.  Subsequent routines
+reading the value will simply take the high limbs they need, and this will be
+<code class="code">_mp_prec</code> if their target has that same precision.  This is no more than
+a pointer adjustment, and must be checked anyway since the destination
+precision can be different from the sources.
+</p>
+<p>Copy functions like <code class="code">mpf_set</code> will retain a full <code class="code">_mp_prec+1</code> limbs
+if available.  This ensures that a variable which has <code class="code">_mp_size</code> equal to
+<code class="code">_mp_prec+1</code> will get its full exact value copied.  Strictly speaking
+this is unnecessary since only <code class="code">_mp_prec</code> limbs are needed for the
+application&rsquo;s requested precision, but it&rsquo;s considered that an <code class="code">mpf_set</code>
+from one variable into another of the same precision ought to produce an exact
+copy.
+</p>
+</dd>
+<dt>Application Precisions</dt>
+<dd><p><code class="code">__GMPF_BITS_TO_PREC</code> converts an application requested precision to an
+<code class="code">_mp_prec</code>.  The value in bits is rounded up to a whole limb then an
+extra limb is added since the most significant limb of <code class="code">_mp_d</code> is only
+non-zero and therefore might contain only one bit.
+</p>
+<p><code class="code">__GMPF_PREC_TO_BITS</code> does the reverse conversion, and removes the extra
+limb from <code class="code">_mp_prec</code> before converting to bits.  The net effect of
+reading back with <code class="code">mpf_get_prec</code> is simply the precision rounded up to a
+multiple of <code class="code">mp_bits_per_limb</code>.
+</p>
+<p>Note that the extra limb added here for the high only being non-zero is in
+addition to the extra limb allocated to <code class="code">_mp_d</code>.  For example with a
+32-bit limb, an application request for 250 bits will be rounded up to 8
+limbs, then an extra added for the high being only non-zero, giving an
+<code class="code">_mp_prec</code> of 9.  <code class="code">_mp_d</code> then gets 10 limbs allocated.  Reading
+back with <code class="code">mpf_get_prec</code> will take <code class="code">_mp_prec</code> subtract 1 limb and
+multiply by 32, giving 256 bits.
+</p>
+<p>Strictly speaking, the fact that the high limb has at least one bit means that a
+float with, say, 3 limbs of 32-bits each will be holding at least 65 bits, but
+for the purposes of <code class="code">mpf_t</code> it&rsquo;s considered simply to be 64 bits, a nice
+multiple of the limb size.
+</p></dd>
+</dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Raw-Output-Internals">
+<div class="nav-panel">
+<p>
+Next: <a href="#C_002b_002b-Interface-Internals" accesskey="n" rel="next">C++ Interface Internals</a>, Previous: <a href="#Float-Internals" accesskey="p" rel="prev">Float Internals</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Raw-Output-Internals-1"><span>16.4 Raw Output Internals<a class="copiable-link" href="#Raw-Output-Internals-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Raw-output-internals"></a>
+<p><code class="code">mpz_out_raw</code> uses the following format.
+</p>
+<div class="example">
+<pre class="example-preformatted">+------+------------------------+
+| size |       data bytes       |
++------+------------------------+
+</pre></div>
+<p>The size is 4 bytes written most significant byte first, being the number of
+subsequent data bytes, or the two&rsquo;s complement negative of that when a negative
+integer is represented.  The data bytes are the absolute value of the integer,
+written most significant byte first.
+</p>
+<p>The most significant data byte is always non-zero, so the output is the same
+on all systems, irrespective of limb size.
+</p>
+<p>In GMP 1, leading zero bytes were written to pad the data bytes to a multiple
+of the limb size.  <code class="code">mpz_inp_raw</code> will still accept this, for
+compatibility.
+</p>
+<p>The use of &ldquo;big endian&rdquo; for both the size and data fields is deliberate, it
+makes the data easy to read in a hex dump of a file.  Unfortunately it also
+means that the limb data must be reversed when reading or writing, so neither
+a big endian nor little endian system can just read and write <code class="code">_mp_d</code>.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="C_002b_002b-Interface-Internals">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Raw-Output-Internals" accesskey="p" rel="prev">Raw Output Internals</a>, Up: <a href="#Internals" accesskey="u" rel="up">Internals</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="C_002b_002b-Interface-Internals-1"><span>16.5 C++ Interface Internals<a class="copiable-link" href="#C_002b_002b-Interface-Internals-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-C_002b_002b-interface-internals"></a>
+<p>A system of expression templates is used to ensure something like <code class="code">a=b+c</code>
+turns into a simple call to <code class="code">mpz_add</code> etc.  For <code class="code">mpf_class</code>
+the scheme also ensures the precision of the final
+destination is used for any temporaries within a statement like
+<code class="code">f=w*x+y*z</code>.  These are important features which a naive implementation
+cannot provide.
+</p>
+<p>A simplified description of the scheme follows.  The true scheme is
+complicated by the fact that expressions have different return types.  For
+detailed information, refer to the source code.
+</p>
+<p>To perform an operation, say, addition, we first define a &ldquo;function object&rdquo;
+evaluating it,
+</p>
+<div class="example">
+<pre class="example-preformatted">struct __gmp_binary_plus
+{
+  static void eval(mpf_t f, const mpf_t g, const mpf_t h)
+  {
+    mpf_add(f, g, h);
+  }
+};
+</pre></div>
+<p>And an &ldquo;additive expression&rdquo; object,
+</p>
+<div class="example">
+<pre class="example-preformatted">__gmp_expr&lt;__gmp_binary_expr&lt;mpf_class, mpf_class, __gmp_binary_plus&gt; &gt;
+operator+(const mpf_class &amp;f, const mpf_class &amp;g)
+{
+  return __gmp_expr
+    &lt;__gmp_binary_expr&lt;mpf_class, mpf_class, __gmp_binary_plus&gt; &gt;(f, g);
+}
+</pre></div>
+<p>The seemingly redundant <code class="code">__gmp_expr&lt;__gmp_binary_expr&lt;&hellip;&gt;&gt;</code> is used to
+encapsulate any possible kind of expression into a single template type.  In
+fact even <code class="code">mpf_class</code> etc are <code class="code">typedef</code> specializations of
+<code class="code">__gmp_expr</code>.
+</p>
+<p>Next we define assignment of <code class="code">__gmp_expr</code> to <code class="code">mpf_class</code>.
+</p>
+<div class="example">
+<pre class="example-preformatted">template &lt;class T&gt;
+mpf_class &amp; mpf_class::operator=(const __gmp_expr&lt;T&gt; &amp;expr)
+{
+  expr.eval(this-&gt;get_mpf_t(), this-&gt;precision());
+  return *this;
+}
+template &lt;class Op&gt;
+void __gmp_expr&lt;__gmp_binary_expr&lt;mpf_class, mpf_class, Op&gt; &gt;::eval
+(mpf_t f, mp_bitcnt_t precision)
+{
+  Op::eval(f, expr.val1.get_mpf_t(), expr.val2.get_mpf_t());
+}
+</pre></div>
+<p>where <code class="code">expr.val1</code> and <code class="code">expr.val2</code> are references to the expression&rsquo;s
+operands (here <code class="code">expr</code> is the <code class="code">__gmp_binary_expr</code> stored within the
+<code class="code">__gmp_expr</code>).
+</p>
+<p>This way, the expression is actually evaluated only at the time of assignment,
+when the required precision (that of <code class="code">f</code>) is known.  Furthermore the
+target <code class="code">mpf_t</code> is now available, thus we can call <code class="code">mpf_add</code> directly
+with <code class="code">f</code> as the output argument.
+</p>
+<p>Compound expressions are handled by defining operators taking subexpressions
+as their arguments, like this:
+</p>
+<div class="example">
+<pre class="example-preformatted">template &lt;class T, class U&gt;
+__gmp_expr
+&lt;__gmp_binary_expr&lt;__gmp_expr&lt;T&gt;, __gmp_expr&lt;U&gt;, __gmp_binary_plus&gt; &gt;
+operator+(const __gmp_expr&lt;T&gt; &amp;expr1, const __gmp_expr&lt;U&gt; &amp;expr2)
+{
+  return __gmp_expr
+    &lt;__gmp_binary_expr&lt;__gmp_expr&lt;T&gt;, __gmp_expr&lt;U&gt;, __gmp_binary_plus&gt; &gt;
+    (expr1, expr2);
+}
+</pre></div>
+<p>And the corresponding specializations of <code class="code">__gmp_expr::eval</code>:
+</p>
+<div class="example">
+<pre class="example-preformatted">template &lt;class T, class U, class Op&gt;
+void __gmp_expr
+&lt;__gmp_binary_expr&lt;__gmp_expr&lt;T&gt;, __gmp_expr&lt;U&gt;, Op&gt; &gt;::eval
+(mpf_t f, mp_bitcnt_t precision)
+{
+  // declare two temporaries
+  mpf_class temp1(expr.val1, precision), temp2(expr.val2, precision);
+  Op::eval(f, temp1.get_mpf_t(), temp2.get_mpf_t());
+}
+</pre></div>
+<p>The expression is thus recursively evaluated to any level of complexity and
+all subexpressions are evaluated to the precision of <code class="code">f</code>.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Contributors.html#start" accesskey="n" rel="next">Contributors</a>, Previous: <a href="constant.Algorithms.html#Algorithms" accesskey="p" rel="prev">Algorithms</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

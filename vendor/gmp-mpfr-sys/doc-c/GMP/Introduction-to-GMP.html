@@ -1,0 +1,96 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="Introduction-to-GMP">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Installing_GMP.html#Installing-GMP" accesskey="n" rel="next">Installing GMP</a>, Previous: <a href="constant.Copying.html#start" accesskey="p" rel="prev">GNU MP Copying Conditions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Introduction-to-GNU-MP"><span>1 Introduction to GNU MP<a class="copiable-link" href="#Introduction-to-GNU-MP"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Introduction"></a>
+<p>GNU MP is a portable library written in C for arbitrary precision arithmetic
+on integers, rational numbers, and floating-point numbers.  It aims to provide
+the fastest possible arithmetic for all applications that need higher
+precision than is directly supported by the basic C types.
+</p>
+<p>Many applications use just a few hundred bits of precision; but some
+applications may need thousands or even millions of bits.  GMP is designed to
+give good performance for both, by choosing algorithms based on the sizes of
+the operands, and by carefully keeping the overhead at a minimum.
+</p>
+<p>The speed of GMP is achieved by using fullwords as the basic arithmetic type,
+by using sophisticated algorithms, by including carefully optimized assembly
+code for the most common inner loops for many different CPUs, and by a general
+emphasis on speed (as opposed to simplicity or elegance).
+</p>
+<p>There is assembly code for these CPUs:
+<a class="index-entry-id" id="index-CPU-types"></a>
+ARM Cortex-A9, Cortex-A15, and generic ARM,
+DEC Alpha 21064, 21164, and 21264,
+AMD K8 and K10 (sold under many brands, e.g. Athlon64, Phenom, Opteron),
+Bulldozer, and Bobcat,
+Intel Pentium, Pentium Pro/II/III, Pentium 4, Core2, Nehalem, Sandy bridge, Haswell, generic x86,
+Intel IA-64,
+Motorola/IBM PowerPC 32 and 64 such as POWER970, POWER5, POWER6, and POWER7,
+MIPS 32-bit and 64-bit,
+SPARC 32-bit and 64-bit with special support for all UltraSPARC models.
+There is also assembly code for many obsolete CPUs.
+</p>
+<a class="index-entry-id" id="index-Home-page"></a>
+<a class="index-entry-id" id="index-Web-page"></a>
+<p>For up-to-date information on GMP, please see the GMP web pages at
+</p>
+<div class="display">
+<pre class="display-preformatted"><a class="uref" href="https://gmplib.org/">https://gmplib.org/</a>
+</pre></div>
+<a class="index-entry-id" id="index-Latest-version-of-GMP"></a>
+<a class="index-entry-id" id="index-Anonymous-FTP-of-latest-version"></a>
+<a class="index-entry-id" id="index-FTP-of-latest-version"></a>
+<p>The latest version of the library is available at
+</p>
+<div class="display">
+<pre class="display-preformatted"><a class="uref" href="https://ftp.gnu.org/gnu/gmp/">https://ftp.gnu.org/gnu/gmp/</a>
+</pre></div>
+<p>Many sites around the world mirror &lsquo;<samp class="samp">ftp.gnu.org</samp>&rsquo;, please use a mirror
+near you, see <a class="uref" href="https://www.gnu.org/order/ftp.html">https://www.gnu.org/order/ftp.html</a> for a full list.
+</p>
+<a class="index-entry-id" id="index-Mailing-lists"></a>
+<p>There are three public mailing lists of interest.  One for release
+announcements, one for general questions and discussions about usage of the GMP
+library and one for bug reports.  For more information, see
+</p>
+<div class="display">
+<pre class="display-preformatted"><a class="uref" href="https://gmplib.org/mailman/listinfo/">https://gmplib.org/mailman/listinfo/</a>.
+</pre></div>
+<p>The proper place for bug reports is <a class="email" href="mailto:gmp-bugs@gmplib.org">gmp-bugs@gmplib.org</a>.  See
+<a class="ref" href="constant.Reporting_Bugs.html#start">Reporting Bugs</a> for information about reporting bugs.
+</p>
+<br>
+<ul class="mini-toc">
+<li><a href="#How-to-use-this-Manual" accesskey="1">How to use this Manual</a></li>
+</ul>
+<div class="section-level-extent" id="How-to-use-this-Manual">
+<h3 class="section"><span>1.1 How to use this Manual<a class="copiable-link" href="#How-to-use-this-Manual"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-About-this-manual"></a>
+<p>Everyone should read <a class="ref" href="constant.GMP_Basics.html#GMP-Basics">GMP Basics</a>.  If you need to install the library
+yourself, then read <a class="ref" href="constant.Installing_GMP.html#Installing-GMP">Installing GMP</a>.  If you have a system with multiple
+ABIs, then read <a class="ref" href="constant.Installing_GMP.html#ABI-and-ISA">ABI and ISA</a>, for the compiler options that must be used
+on applications.
+</p>
+<p>The rest of the manual can be used for later reference, although it is
+probably a good idea to glance through it.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Installing_GMP.html#Installing-GMP" accesskey="n" rel="next">Installing GMP</a>, Previous: <a href="constant.Copying.html#start" accesskey="p" rel="prev">GNU MP Copying Conditions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

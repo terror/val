@@ -1,0 +1,612 @@
+<!-- This manual documents how to install and use the Multiple Precision
+Floating-Point Reliable Library, version 4.2.2.
+Copyright 1991, 1993-2025 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with no Front-Cover Texts, and with no Back-Cover Texts.  A copy of the
+license is included in GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="MPFR-Basics">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.MPFR_Interface.html#MPFR-Interface" accesskey="n" rel="next">MPFR Interface</a>, Previous: <a href="constant.Reporting_Bugs.html#start" accesskey="p" rel="prev">Reporting Bugs</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPFR</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="MPFR-Basics-1"><span>4 MPFR Basics<a class="copiable-link" href="#MPFR-Basics-1"> &para;</a></span></h2>
+<ul class="mini-toc">
+<li><a href="#Headers-and-Libraries" accesskey="1">Headers and Libraries</a></li>
+<li><a href="#Nomenclature-and-Types" accesskey="2">Nomenclature and Types</a></li>
+<li><a href="#MPFR-Variable-Conventions" accesskey="3">MPFR Variable Conventions</a></li>
+<li><a href="#Rounding" accesskey="4">Rounding</a></li>
+<li><a href="#Floating_002dPoint-Values-on-Special-Numbers" accesskey="5">Floating-Point Values on Special Numbers</a></li>
+<li><a href="#Exceptions" accesskey="6">Exceptions</a></li>
+<li><a href="#Memory-Handling" accesskey="7">Memory Handling</a></li>
+<li><a href="#Getting-the-Best-Efficiency-Out-of-MPFR" accesskey="8">Getting the Best Efficiency Out of MPFR</a></li>
+</ul>
+<hr>
+<div class="section-level-extent" id="Headers-and-Libraries">
+<div class="nav-panel">
+<p>
+Next: <a href="#Nomenclature-and-Types" accesskey="n" rel="next">Nomenclature and Types</a>, Previous: <a href="#MPFR-Basics" accesskey="p" rel="prev">MPFR Basics</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Headers-and-Libraries-1"><span>4.1 Headers and Libraries<a class="copiable-link" href="#Headers-and-Libraries-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-mpfr_002eh"></a>
+<p>All declarations needed to use MPFR are collected in the include file
+<samp class="file">mpfr.h</samp>.  It is designed to work with both C and C++ compilers.
+You should include that file in any program using the MPFR library:
+</p>
+<div class="example">
+<pre class="example-preformatted">#include &lt;mpfr.h&gt;
+</pre></div>
+<a class="index-entry-id" id="index-stdio_002eh"></a>
+<p>Note, however, that prototypes for MPFR functions with <code class="code">FILE *</code> parameters
+are provided only if <code class="code">&lt;stdio.h&gt;</code> is included too (before <samp class="file">mpfr.h</samp>):
+</p>
+<div class="example">
+<pre class="example-preformatted">#include &lt;stdio.h&gt;
+#include &lt;mpfr.h&gt;
+</pre></div>
+<a class="index-entry-id" id="index-stdarg_002eh"></a>
+<p>Likewise <code class="code">&lt;stdarg.h&gt;</code> (or <code class="code">&lt;varargs.h&gt;</code>) is required for prototypes
+with <code class="code">va_list</code> parameters, such as <code class="code">mpfr_vprintf</code>.
+</p>
+<a class="index-entry-id" id="index-stdint_002eh"></a>
+<a class="index-entry-id" id="index-inttypes_002eh"></a>
+<a class="index-entry-id" id="index-intmax_005ft"></a>
+<a class="index-entry-id" id="index-uintmax_005ft"></a>
+<p>And for any functions using <code class="code">intmax_t</code>, you must include
+<code class="code">&lt;stdint.h&gt;</code> or <code class="code">&lt;inttypes.h&gt;</code> before <samp class="file">mpfr.h</samp>, to
+allow <samp class="file">mpfr.h</samp> to define prototypes for these functions.
+Moreover, under some platforms (in particular with C++ compilers),
+users may need to define
+<code class="code">MPFR_USE_INTMAX_T</code> (and should do it for portability) before
+<samp class="file">mpfr.h</samp> has been included; of course, it is possible to do that
+on the command line, e.g., with <code class="code">-DMPFR_USE_INTMAX_T</code>.
+</p>
+<p>Note: If <samp class="file">mpfr.h</samp> and/or <samp class="file">gmp.h</samp> (used by <samp class="file">mpfr.h</samp>)
+are included several times (possibly from another header file),
+<code class="code">&lt;stdio.h&gt;</code> and/or <code class="code">&lt;stdarg.h&gt;</code> (or <code class="code">&lt;varargs.h&gt;</code>)
+should be included <strong class="strong">before the first inclusion</strong> of
+<samp class="file">mpfr.h</samp> or <samp class="file">gmp.h</samp>.  Alternatively, you can define
+<code class="code">MPFR_USE_FILE</code> (for MPFR I/O functions) and/or
+<code class="code">MPFR_USE_VA_LIST</code> (for MPFR functions with <code class="code">va_list</code>
+parameters) anywhere before the last inclusion of <samp class="file">mpfr.h</samp>.
+As a consequence, if your file is a public header that includes
+<samp class="file">mpfr.h</samp>, you need to use the latter method.
+</p>
+<p>When calling a MPFR macro, it is not allowed to have previously defined
+a macro with the same name as some keywords (currently <code class="code">do</code>,
+<code class="code">while</code> and <code class="code">sizeof</code>).
+</p>
+<p>You can avoid the use of MPFR macros encapsulating functions by defining
+the <code class="code">MPFR_USE_NO_MACRO</code> macro before <samp class="file">mpfr.h</samp> is included.  In
+general this should not be necessary, but this can be useful when debugging
+user code: with some macros, the compiler may emit spurious warnings with
+some warning options, and macros can prevent some prototype checking.
+</p>
+<a class="index-entry-id" id="index-Libraries"></a>
+<a class="index-entry-id" id="index-Linking"></a>
+<a class="index-entry-id" id="index-libmpfr"></a>
+<p>All programs using MPFR must link against both <samp class="file">libmpfr</samp> and
+<samp class="file">libgmp</samp> libraries.  On a typical Unix-like system this can be
+done with &lsquo;<samp class="samp">-lmpfr -lgmp</samp>&rsquo; (in that order), for example:
+</p>
+<div class="example">
+<pre class="example-preformatted">gcc myprogram.c -lmpfr -lgmp
+</pre></div>
+<a class="index-entry-id" id="index-Libtool"></a>
+<p>MPFR is built using Libtool and an application can use that to link if
+desired, see <cite class="cite">GNU Libtool</cite>.
+</p>
+<p>If MPFR has been installed to a non-standard location, then it may be
+necessary to set up environment variables such as &lsquo;<samp class="samp">C_INCLUDE_PATH</samp>&rsquo;
+and &lsquo;<samp class="samp">LIBRARY_PATH</samp>&rsquo;, or use &lsquo;<samp class="samp">-I</samp>&rsquo; and &lsquo;<samp class="samp">-L</samp>&rsquo; compiler options,
+in order to point to the right directories. For a shared library, it may
+also be necessary to set up some sort of run-time library path (e.g.,
+&lsquo;<samp class="samp">LD_LIBRARY_PATH</samp>&rsquo;) on some systems. Please read the <samp class="file">INSTALL</samp>
+file for additional information.
+</p>
+<p>Alternatively, it is possible to use &lsquo;<samp class="samp">pkg-config</samp>&rsquo; (a file
+&lsquo;<samp class="samp">mpfr.pc</samp>&rsquo; is provided as of MPFR&nbsp;4.0):
+</p>
+<div class="example">
+<pre class="example-preformatted">cc myprogram.c $(pkg-config --cflags --libs mpfr)
+</pre></div>
+<p>Note that the &lsquo;<samp class="samp">MPFR_</samp>&rsquo; and &lsquo;<samp class="samp">mpfr_</samp>&rsquo; prefixes are reserved for MPFR.
+As a general rule, in order to avoid clashes, software using MPFR (directly
+or indirectly) and system headers/libraries should not define macros and
+symbols using these prefixes.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Nomenclature-and-Types">
+<div class="nav-panel">
+<p>
+Next: <a href="#MPFR-Variable-Conventions" accesskey="n" rel="next">MPFR Variable Conventions</a>, Previous: <a href="#Headers-and-Libraries" accesskey="p" rel="prev">Headers and Libraries</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Nomenclature-and-Types-1"><span>4.2 Nomenclature and Types<a class="copiable-link" href="#Nomenclature-and-Types-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Floating_002dpoint-number"></a>
+<a class="index-entry-id" id="index-Regular-number"></a>
+<a class="index-entry-id" id="index-mpfr_005ft"></a>
+<a class="index-entry-id" id="index-mpfr_005fptr"></a>
+<a class="index-entry-id" id="index-mpfr_005fsrcptr"></a>
+<p>A <em class="dfn">floating-point number</em>, or <em class="dfn">float</em> for short, is an object
+representing a radix-2 floating-point number consisting of a sign,
+an arbitrary-precision normalized significand (also called mantissa),
+and an exponent (an integer in some given range); these are called
+<em class="dfn">regular numbers</em>. By convention, the radix point of the significand
+is just before the first digit (which is always 1 due to normalization),
+like in the C language, but unlike in IEEE&nbsp;754 (thus, for a given
+number, the exponent values in MPFR and in IEEE&nbsp;754 differ by 1).
+</p>
+<p>Like in the IEEE&nbsp;754 standard, a floating-point number can also
+have three kinds of special values: a signed zero (+0 or &minus;0),
+a signed infinity (+Inf or &minus;Inf), and Not-a-Number (NaN). NaN
+can represent the default value of a floating-point object and the
+result of some operations for which no other results would make sense,
+such as 0 divided by 0 or +Inf minus +Inf; unless
+documented otherwise, the sign bit of a NaN is unspecified.
+Note that contrary to IEEE&nbsp;754, MPFR has a single kind of NaN and
+does not have subnormals.
+Other than that, the behavior is very similar to IEEE&nbsp;754, but there
+are some minor differences.
+</p>
+<p>The C data type for such objects is <code class="code">mpfr_t</code>, internally defined
+as a one-element array of a structure (so that when passed as an
+argument to a function, it is the pointer that is actually passed),
+and <code class="code">mpfr_ptr</code> is the C data type representing a pointer to this
+structure; <code class="code">mpfr_srcptr</code> is like <code class="code">mpfr_ptr</code>, but the structure
+is read-only (i.e., const qualified).
+</p>
+<a class="index-entry-id" id="index-Precision"></a>
+<a class="index-entry-id" id="index-mpfr_005fprec_005ft"></a>
+<p>The <em class="dfn">precision</em> is the number of bits used to represent the significand
+of a floating-point number;
+the corresponding C data type is <code class="code">mpfr_prec_t</code>.
+The precision can be any integer between <code class="code">MPFR_PREC_MIN</code> and
+<code class="code">MPFR_PREC_MAX</code>. In the current implementation, <code class="code">MPFR_PREC_MIN</code>
+is equal to 1.
+</p>
+<p>Warning! MPFR needs to increase the precision internally, in order to
+provide accurate results (and in particular, correct rounding). Do not
+attempt to set the precision to any value near <code class="code">MPFR_PREC_MAX</code>,
+otherwise MPFR will abort due to an assertion failure. However, in practice,
+the real limitation will probably be the available memory on your platform,
+and in case of lack of memory, the program may abort, crash or have
+undefined behavior (depending on your C implementation).
+</p>
+<a class="index-entry-id" id="index-Exponent"></a>
+<a class="index-entry-id" id="index-mpfr_005fexp_005ft"></a>
+<p>An <em class="dfn">exponent</em> is a component of a regular floating-point number.
+Its C data type is <code class="code">mpfr_exp_t</code>. Valid exponents are restricted
+to a subset of this type, and the exponent range can be changed globally
+as described in <a class="ref" href="constant.MPFR_Interface.html#Exception-Related-Functions">Exception Related Functions</a>. Special values do not
+have an exponent.
+</p>
+<a class="index-entry-id" id="index-Rounding"></a>
+<a class="index-entry-id" id="index-mpfr_005frnd_005ft"></a>
+<p>The <em class="dfn">rounding mode</em> specifies the way to round the result of a
+floating-point operation, in case the exact result cannot be represented
+exactly in the destination (see <a class="pxref" href="#Rounding">Rounding</a>).
+The corresponding C data type is <code class="code">mpfr_rnd_t</code>.
+</p>
+<a class="index-entry-id" id="index-Group-of-flags"></a>
+<a class="index-entry-id" id="index-mpfr_005fflags_005ft"></a>
+<p>MPFR has a global (or per-thread) flag for each supported exception and
+provides operations on flags (<a class="ref" href="#Exceptions">Exceptions</a>). This C data type is used
+to represent a group of flags (or a mask).
+</p>
+<a class="index-entry-id" id="index-binary128"></a>
+<a class="index-entry-id" id="index-float128"></a>
+<a class="index-entry-id" id="index-_005fFloat128"></a>
+<a class="index-entry-id" id="index-_005f_005ffloat128"></a>
+<a class="index-entry-id" id="index-mpfr_005ffloat128"></a>
+<p>MPFR can be built with binary128 support (a.k.a. float128) for some
+conversion functions if the &lsquo;<samp class="samp">_Float128</samp>&rsquo; type (from ISO C23) or
+the &lsquo;<samp class="samp">__float128</samp>&rsquo; type (a common extension) is available. This is
+automatically detected, but the &lsquo;<samp class="samp">--enable-float128</samp>&rsquo; configure option
+can also be used to ensure this support.  For this support, MPFR uses a
+<code class="code">mpfr_float128</code> macro, which needs to be defined as a supported type
+for the binary128 format, typically &lsquo;<samp class="samp">_Float128</samp>&rsquo; or &lsquo;<samp class="samp">__float128</samp>&rsquo;,
+depending on the compiler and the system used to compile the user code.
+Before including <samp class="file">mpfr.h</samp>, the user needs to do the following (in
+any order): define the <code class="code">MPFR_WANT_FLOAT128</code> macro and define the
+<code class="code">mpfr_float128</code> macro as the actual float128 type; <samp class="file">mpfr.h</samp> will
+define <code class="code">mpfr_float128</code> as &lsquo;<samp class="samp">_Float128</samp>&rsquo; by default, but mainly for
+compatibility with software written for MPFR&nbsp;4.1.x and 4.2.0, where
+the prototypes used &lsquo;<samp class="samp">_Float128</samp>&rsquo;.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="MPFR-Variable-Conventions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Rounding" accesskey="n" rel="next">Rounding</a>, Previous: <a href="#Nomenclature-and-Types" accesskey="p" rel="prev">Nomenclature and Types</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="MPFR-Variable-Conventions-1"><span>4.3 MPFR Variable Conventions<a class="copiable-link" href="#MPFR-Variable-Conventions-1"> &para;</a></span></h3>
+<p>Before you can assign to a MPFR variable, you need to initialize it by calling
+one of the special initialization functions.  When you are done with a
+variable, you need to clear it out, using one of the functions for that
+purpose.
+A variable should only be initialized once, or at least cleared out between
+each initialization.  After a variable has been initialized, it may be
+assigned to any number of times.
+For efficiency reasons, avoid to initialize and clear out a variable in loops.
+Instead, initialize it before entering the loop, and clear it out after the
+loop has exited.
+You do not need to be concerned about allocating additional space for MPFR
+variables, since any variable has a significand of fixed size.
+Hence unless you change its precision, or clear and reinitialize it,
+a floating-point variable will have the same allocated space during all its
+life.
+</p>
+<p>As a general rule, all MPFR functions expect output arguments before input
+arguments.  This notation is based on an analogy with the assignment operator.
+MPFR allows you to use the same variable for both input and output in the same
+expression.  For example, the main function for floating-point multiplication,
+<code class="code">mpfr_mul</code>, can be used like this: <code class="code">mpfr_mul (x, x, x, rnd)</code>.
+This computes the square of <var class="var">x</var> with rounding mode <code class="code">rnd</code>
+and puts the result back in <var class="var">x</var>.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Rounding">
+<div class="nav-panel">
+<p>
+Next: <a href="#Floating_002dPoint-Values-on-Special-Numbers" accesskey="n" rel="next">Floating-Point Values on Special Numbers</a>, Previous: <a href="#MPFR-Variable-Conventions" accesskey="p" rel="prev">MPFR Variable Conventions</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Rounding-1"><span>4.4 Rounding<a class="copiable-link" href="#Rounding-1"> &para;</a></span></h3>
+<p>The following rounding modes are supported:
+</p>
+<ul class="itemize mark-bullet">
+<li><code class="code">MPFR_RNDN</code>: round to nearest, with the even rounding rule
+      (roundTiesToEven in IEEE&nbsp;754); see details below.
+</li><li><code class="code">MPFR_RNDD</code>: round toward negative infinity
+      (roundTowardNegative in IEEE&nbsp;754).
+</li><li><code class="code">MPFR_RNDU</code>: round toward positive infinity
+      (roundTowardPositive in IEEE&nbsp;754).
+</li><li><code class="code">MPFR_RNDZ</code>: round toward zero
+      (roundTowardZero in IEEE&nbsp;754).
+</li><li><code class="code">MPFR_RNDA</code>: round away from zero.
+</li><li><code class="code">MPFR_RNDF</code>: faithful rounding. This feature is currently
+experimental. Specific support for this rounding mode has been added
+to some functions, such as the basic operations (addition, subtraction,
+multiplication, square, division, square root) or when explicitly
+documented. It might also work with other functions, as it is possible that
+they do not need modification in their code; even though a correct behavior
+is not guaranteed yet (corrections were done when failures occurred in the
+test suite, but almost nothing has been checked manually), failures should
+be regarded as bugs and reported, so that they can be fixed.
+</li></ul>
+<p>Note that, in particular for a result equal to zero, the sign is preserved
+by the rounding operation.
+</p>
+<p>The <code class="code">MPFR_RNDN</code> mode works like roundTiesToEven from the
+IEEE&nbsp;754 standard: in case the number to be rounded lies exactly
+in the middle between two consecutive representable numbers, it is
+rounded to the one with an even significand; in radix 2, this means
+that the least significant bit is 0. For example, the number 2.5,
+which is represented by (10.1) in binary, is rounded to (10.0)&nbsp;=&nbsp;2<!-- /@w -->
+with a precision of two bits, and not to (11.0)&nbsp;=&nbsp;3<!-- /@w -->.
+This rule avoids the <em class="dfn">drift</em> phenomenon mentioned by Knuth in volume 2
+of The Art of Computer Programming (Section&nbsp;4.2.2).
+</p>
+<p>Note: In particular for a 1-digit precision (in radix 2 or other radices,
+as in conversions to a string of digits), one considers the significands
+associated with the exponent of the number to be rounded. For instance,
+to round the number 95 in radix 10 with a 1-digit precision, one considers
+its truncated 1-digit integer significand 9 and the following integer 10
+(since these are consecutive integers, exactly one of them is even).
+10 is the even significand, so that 95 will be rounded to 100, not to 90.
+</p>
+<p>For the <em class="dfn">directed rounding modes</em>, a number <var class="var">x</var> is rounded to
+the number <var class="var">y</var> that is the closest to <var class="var">x</var> such that
+</p><ul class="itemize mark-bullet">
+<li><code class="code">MPFR_RNDD</code>:
+      <var class="var">y</var> is less than or equal to <var class="var">x</var>;
+</li><li><code class="code">MPFR_RNDU</code>:
+      <var class="var">y</var> is greater than or equal to <var class="var">x</var>;
+</li><li><code class="code">MPFR_RNDZ</code>:
+      abs(<var class="var">y</var>) is less than or equal to abs(<var class="var">x</var>);
+</li><li><code class="code">MPFR_RNDA</code>:
+      abs(<var class="var">y</var>) is greater than or equal to abs(<var class="var">x</var>).
+</li></ul>
+<p>The <code class="code">MPFR_RNDF</code> mode works as follows: the computed value is either
+that corresponding to <code class="code">MPFR_RNDD</code> or that corresponding to
+<code class="code">MPFR_RNDU</code>.
+In particular when those values are identical,
+i.e., when the result of the corresponding operation is exactly
+representable, that exact result is returned.
+Thus, the computed result can take at most two possible values, and
+in absence of underflow/overflow, the corresponding error is strictly
+less than one ulp (unit in the last place) of that result and of the
+exact result.
+For <code class="code">MPFR_RNDF</code>, the ternary value (defined below) and the inexact flag
+(defined later, as with the other flags) are unspecified, the divide-by-zero
+flag is as with other roundings, and the underflow and overflow flags match
+what would be obtained in the case the computed value is the same as with
+<code class="code">MPFR_RNDD</code> or <code class="code">MPFR_RNDU</code>.
+The results may not be reproducible.
+</p>
+<a class="anchor" id="ternary-value"></a><a class="index-entry-id" id="index-Ternary-value"></a>
+<p>Most MPFR functions take as first argument the destination variable, as
+second and following arguments the input variables, as last argument a
+rounding mode, and have a return value of type <code class="code">int</code>, called the
+<em class="dfn">ternary value</em>. The value stored in the destination variable is
+correctly rounded, i.e., MPFR behaves as if it computed the result with
+an infinite precision, then rounded it to the precision of this variable.
+The input variables are regarded as exact (in particular, their precision
+does not affect the result).
+</p>
+<p>As a consequence, in case of a non-zero real rounded result, the error
+on the result is less than or equal to 1/2 ulp (unit in the last place) of
+that result in the rounding to nearest mode, and less than 1 ulp of that
+result in the directed rounding modes (a ulp is the weight of the least
+significant represented bit of the result after rounding).
+</p>
+<p>Unless documented otherwise, functions returning an <code class="code">int</code> return
+a ternary value.
+If the ternary value is zero, it means that the value stored in the
+destination variable is the exact result of the corresponding mathematical
+function. If the ternary value is positive (resp. negative), it means
+the value stored in the destination variable is greater (resp. lower)
+than the exact result. For example with the <code class="code">MPFR_RNDU</code> rounding mode,
+the ternary value is usually positive, except when the result is exact, in
+which case it is zero. In the case of an infinite result, it is considered
+as inexact when it was obtained by overflow, and exact otherwise. A NaN
+result (Not-a-Number) always corresponds to an exact return value.
+The opposite of a returned ternary value is guaranteed to be representable
+in an <code class="code">int</code>.
+</p>
+<p>Unless documented otherwise, functions returning as result the value <code class="code">1</code>
+(or any other value specified in this manual)
+for special cases (like <code class="code">acos(0)</code>) yield an overflow or
+an underflow if that value is not representable in the current exponent range.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Floating_002dPoint-Values-on-Special-Numbers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Exceptions" accesskey="n" rel="next">Exceptions</a>, Previous: <a href="#Rounding" accesskey="p" rel="prev">Rounding</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Floating_002dPoint-Values-on-Special-Numbers-1"><span>4.5 Floating-Point Values on Special Numbers<a class="copiable-link" href="#Floating_002dPoint-Values-on-Special-Numbers-1"> &para;</a></span></h3>
+<p>This section specifies the floating-point values (of type <code class="code">mpfr_t</code>)
+returned by MPFR functions (where by &ldquo;returned&rdquo; we mean here the modified
+value of the destination object, which should not be mixed with the ternary
+return value of type <code class="code">int</code> of those functions).
+For functions returning several values (like
+<code class="code">mpfr_sin_cos</code>), the rules apply to each result separately.
+</p>
+<p>Functions can have one or several input arguments. An input point is
+a mapping from these input arguments to the set of the MPFR numbers.
+When none of its components are NaN, an input point can also be seen
+as a tuple in the extended real numbers (the set of the real numbers
+with both infinities).
+</p>
+<p>When the input point is in the domain of the mathematical function, the
+result is rounded as described in <a class="ref" href="#Rounding">Rounding</a> (but see
+below for the specification of the sign of an exact zero). Otherwise
+the general rules from this section apply unless stated otherwise in
+the description of the MPFR function (<a class="ref" href="constant.MPFR_Interface.html#MPFR-Interface">MPFR Interface</a>).
+</p>
+<p>When the input point is not in the domain of the mathematical function
+but is in its closure in the extended real numbers and the function can
+be extended by continuity, the result is the obtained limit.
+Examples: <code class="code">mpfr_hypot</code> on (+Inf,0) gives +Inf. But
+<code class="code">mpfr_pow</code> cannot be defined on (1,+Inf) using this rule, as
+one can find sequences (<var class="var">x</var>_<var class="var">n</var>,<var class="var">y</var>_<var class="var">n</var>)
+such that <var class="var">x</var>_<var class="var">n</var> goes to 1, <var class="var">y</var>_<var class="var">n</var> goes
+to +Inf and <var class="var">x</var>_<var class="var">n</var> to the <var class="var">y</var>_<var class="var">n</var>
+goes to any positive value when <var class="var">n</var> goes to the infinity.
+</p>
+<p>When the input point is in the closure of the domain of the mathematical
+function and an input argument is +0 (resp. &minus;0), one considers
+the limit when the corresponding argument approaches 0 from above
+(resp. below), if possible. If the limit is not defined (e.g.,
+<code class="code">mpfr_sqrt</code> and <code class="code">mpfr_log</code> on &minus;0), the behavior is
+specified in the description of the MPFR function, but must be consistent
+with the rule from the above paragraph (e.g., <code class="code">mpfr_log</code> on ±0
+gives &minus;Inf).
+</p>
+<p>When the result is equal to 0, its sign is determined by considering the
+limit as if the input point were not in the domain: If one approaches 0
+from above (resp. below), the result is +0 (resp. &minus;0);
+for example, <code class="code">mpfr_sin</code> on &minus;0 gives &minus;0 and
+<code class="code">mpfr_acos</code> on 1 gives +0 (in all rounding modes).
+In the other cases, the sign is specified in the description of the MPFR
+function; for example <code class="code">mpfr_max</code> on &minus;0 and +0 gives +0.
+</p>
+<p>When the input point is not in the closure of the domain of the function,
+the result is NaN. Example: <code class="code">mpfr_sqrt</code> on &minus;17 gives NaN.
+</p>
+<p>When an input argument is NaN, the result is NaN, possibly except when
+a partial function is constant on the finite floating-point numbers;
+such a case is always explicitly specified in <a class="ref" href="constant.MPFR_Interface.html#MPFR-Interface">MPFR Interface</a>.
+Example: <code class="code">mpfr_hypot</code> on (NaN,0) gives NaN, but <code class="code">mpfr_hypot</code>
+on (NaN,+Inf) gives +Inf (as specified in
+<a class="ref" href="constant.MPFR_Interface.html#Transcendental-Functions">Transcendental Functions</a>), since for any finite or infinite
+input <var class="var">x</var>, <code class="code">mpfr_hypot</code> on (<var class="var">x</var>,+Inf) gives +Inf.
+</p>
+<p>MPFR also tries to follow the specifications of the IEEE&nbsp;754 standard
+on special values (IEEE&nbsp;754 agree with the above rules in most cases).
+Any difference with IEEE&nbsp;754 that is not explicitly mentioned, other
+than those due to the single NaN, is unintended and might be regarded as a
+bug. See also <a class="ref" href="constant.MPFR_and_the_IEEE_754_Standard.html#start">MPFR and the IEEE 754 Standard</a>.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Exceptions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Memory-Handling" accesskey="n" rel="next">Memory Handling</a>, Previous: <a href="#Floating_002dPoint-Values-on-Special-Numbers" accesskey="p" rel="prev">Floating-Point Values on Special Numbers</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Exceptions-1"><span>4.6 Exceptions<a class="copiable-link" href="#Exceptions-1"> &para;</a></span></h3>
+<p>MPFR defines a global (or per-thread) flag for each supported exception.
+A macro evaluating to a power of two is associated with each flag and
+exception, in order to be able to specify a group of flags (or a mask)
+by OR&rsquo;ing such macros.
+</p>
+<p>Flags can be cleared (lowered), set (raised), and tested by functions
+described in <a class="ref" href="constant.MPFR_Interface.html#Exception-Related-Functions">Exception Related Functions</a>.
+</p>
+<p>The supported exceptions are listed below. The macro associated with
+each exception is in parentheses.
+</p>
+<ul class="itemize mark-bullet">
+<li>Underflow (<code class="code">MPFR_FLAGS_UNDERFLOW</code>):
+An underflow occurs when the exact result of a function is a non-zero
+real number and the result obtained after the rounding, assuming an
+unbounded exponent range (for the rounding), has an exponent smaller
+than the minimum value of the current exponent range. (In the round-to-nearest
+mode, the halfway case is rounded toward zero.)
+<p>Note: This is not the single possible definition of the underflow. MPFR chooses
+to consider the underflow <em class="emph">after</em> rounding. The underflow before rounding
+can also be defined. For instance, consider a function that has the
+exact result 7 multiplied by two to the power
+<var class="var">e</var>&nbsp;&minus;&nbsp;4<!-- /@w -->, where <var class="var">e</var> is the smallest exponent
+(for a significand between 1/2 and 1),
+with a 2-bit target precision and rounding toward positive infinity.
+The exact result has the exponent <var class="var">e</var>&nbsp;&minus;&nbsp;1<!-- /@w -->. With the
+underflow before rounding, such a function call would yield an underflow, as
+<var class="var">e</var>&nbsp;&minus;&nbsp;1<!-- /@w --> is outside the current exponent range. However, MPFR
+first considers the rounded result assuming an unbounded exponent range.
+The exact result cannot be represented exactly in precision 2, and here,
+it is rounded to 0.5 times 2 to <var class="var">e</var>, which is
+representable in the current exponent range. As a consequence, this will
+not yield an underflow in MPFR.
+</p>
+</li><li>Overflow (<code class="code">MPFR_FLAGS_OVERFLOW</code>):
+An overflow occurs when the exact result of a function is a non-zero
+real number and the result obtained after the rounding, assuming an
+unbounded exponent range (for the rounding), has an exponent larger
+than the maximum value of the current exponent range. In the round-to-nearest
+mode, the result is infinite.
+Note: unlike the underflow case, there is only one possible definition of
+overflow here.
+</li><li>Divide-by-zero (<code class="code">MPFR_FLAGS_DIVBY0</code>):
+An exact infinite result is obtained from finite inputs.
+</li><li>NaN (<code class="code">MPFR_FLAGS_NAN</code>):
+A NaN exception occurs when the result of a function is NaN.
+</li><li>Inexact (<code class="code">MPFR_FLAGS_INEXACT</code>):
+An inexact exception occurs when the result of a function cannot be
+represented exactly and must be rounded.
+</li><li>Range error (<code class="code">MPFR_FLAGS_ERANGE</code>):
+A range exception occurs when a function that does not return a MPFR
+number (such as comparisons and conversions to an integer) has an
+invalid result (e.g., an argument is NaN in <code class="code">mpfr_cmp</code>, or a
+conversion to an integer cannot be represented in the target type).
+</li></ul>
+<p>Moreover, the group consisting of all the flags is represented by
+the <code class="code">MPFR_FLAGS_ALL</code> macro (if new flags are added in future
+MPFR versions, they will be added to this macro too).
+</p>
+<p>Differences with the ISO C99 standard:
+</p>
+<ul class="itemize mark-bullet">
+<li>In C, only quiet NaNs are specified, and a NaN propagation does not
+raise an invalid exception. Unless explicitly stated otherwise, MPFR sets
+the NaN flag whenever a NaN is generated, even when a NaN is propagated
+(e.g., in NaN + NaN), as if all NaNs were signaling.
+</li><li>An invalid exception in C corresponds to either a NaN exception or
+a range error in MPFR.
+</li></ul>
+<hr>
+</div>
+<div class="section-level-extent" id="Memory-Handling">
+<div class="nav-panel">
+<p>
+Next: <a href="#Getting-the-Best-Efficiency-Out-of-MPFR" accesskey="n" rel="next">Getting the Best Efficiency Out of MPFR</a>, Previous: <a href="#Exceptions" accesskey="p" rel="prev">Exceptions</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Memory-Handling-1"><span>4.7 Memory Handling<a class="copiable-link" href="#Memory-Handling-1"> &para;</a></span></h3>
+<p>MPFR functions may create caches, e.g., when computing constants such
+as Pi, either because the user has called a function like
+<code class="code">mpfr_const_pi</code> directly or because such a function was called
+internally by the MPFR library itself to compute some other function.
+When more precision is needed, the value is automatically recomputed;
+a minimum of 10% increase of the precision is guaranteed to avoid too
+many recomputations.
+</p>
+<p>MPFR functions may also create thread-local pools for internal use
+to avoid the cost of memory allocation. The pools can be freed with
+<code class="code">mpfr_free_pool</code> (but with a default MPFR build, they should not
+take much memory, as the allocation size is limited).
+</p>
+<p>At any time, the user can free various caches and pools with
+<code class="code">mpfr_free_cache</code> and <code class="code">mpfr_free_cache2</code>. It is strongly advised
+to free thread-local caches before terminating a thread, and all caches
+before exiting when using tools like &lsquo;<samp class="samp">valgrind</samp>&rsquo; (to avoid memory leaks
+being reported).
+</p>
+<p>MPFR allocates its memory either on the stack (for temporary memory only)
+or with the same allocator as the one configured for GMP:
+see Section &ldquo;Custom Allocation&rdquo; in <cite class="cite">GNU MP</cite>.
+This means that the application must make sure that data allocated with the
+current allocator will not be reallocated or freed with a new allocator.
+So, in practice, if an application needs to change the allocator with
+<code class="code">mp_set_memory_functions</code>, it should first free all data allocated
+with the current allocator: for its own data, with <code class="code">mpfr_clear</code>,
+etc.; for the caches and pools, with <code class="code">mpfr_mp_memory_cleanup</code> in
+all threads where MPFR is potentially used. This function is currently
+equivalent to <code class="code">mpfr_free_cache</code>, but <code class="code">mpfr_mp_memory_cleanup</code>
+is the recommended way in case the allocation method changes in the future
+(for instance, one may choose to allocate the caches for floating-point
+constants with <code class="code">malloc</code> to avoid freeing them if the allocator
+changes). Developers should also be aware that MPFR may also be used
+indirectly by libraries, so that libraries based on MPFR should provide
+a clean-up function calling <code class="code">mpfr_mp_memory_cleanup</code> and/or warn
+their users about this issue.
+</p>
+<p>Note: For multithreaded applications, the allocator must be valid in
+all threads where MPFR may be used; data allocated in one thread may
+be reallocated and/or freed in some other thread.
+</p>
+<p>MPFR internal data such as flags, the exponent range, the default precision,
+and the default rounding mode are either global (if MPFR has not been
+compiled as thread safe) or per-thread (thread-local storage, TLS).
+The initial values of TLS data after a thread is created entirely
+depend on the compiler and thread implementation (MPFR simply does
+a conventional variable initialization, the variables being declared
+with an implementation-defined TLS specifier).
+</p>
+<p>Writers of libraries using MPFR should be aware that the application and/or
+another library used by the application may also use MPFR, so that changing
+the exponent range, the default precision, or the default rounding mode may
+have an effect on this other use of MPFR since these data are not duplicated
+(unless they are in a different thread). Therefore any such value changed in
+a library function should be restored before the function returns (unless
+the purpose of the function is to do such a change). Writers of software
+using MPFR should also be careful when changing such a value if they use
+a library using MPFR (directly or indirectly), in order to make sure that
+such a change is compatible with the library.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="Getting-the-Best-Efficiency-Out-of-MPFR">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Memory-Handling" accesskey="p" rel="prev">Memory Handling</a>, Up: <a href="#MPFR-Basics" accesskey="u" rel="up">MPFR Basics</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Getting-the-Best-Efficiency-Out-of-MPFR-1"><span>4.8 Getting the Best Efficiency Out of MPFR<a class="copiable-link" href="#Getting-the-Best-Efficiency-Out-of-MPFR-1"> &para;</a></span></h3>
+<p>Here are a few hints to get the best efficiency out of MPFR:
+</p>
+<ul class="itemize mark-bullet">
+<li>you should avoid allocating and clearing variables. Reuse variables
+      whenever possible, allocate or clear outside of loops, pass
+      temporary variables to subroutines instead of allocating them inside
+      the subroutines;
+</li><li>use <code class="code">mpfr_swap</code> instead of <code class="code">mpfr_set</code> whenever possible.
+      This will avoid copying the significands;
+</li><li>avoid using MPFR from C++, or make sure your C++ interface does not
+      perform unnecessary allocations or copies. Slowdowns of up to a
+      factor 15 have been observed on some applications with a C++ interface;
+</li><li>MPFR functions work in-place: to compute <code class="code">a = a + b</code> you don&rsquo;t
+      need an auxiliary variable, you can directly write
+      <code class="code">mpfr_add (a, a, b, ...)</code>.
+</li></ul>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.MPFR_Interface.html#MPFR-Interface" accesskey="n" rel="next">MPFR Interface</a>, Previous: <a href="constant.Reporting_Bugs.html#start" accesskey="p" rel="prev">Reporting Bugs</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPFR</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

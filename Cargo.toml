@@ -25,6 +25,10 @@ codegen-units = 1
 members = [".", "crates/*"]
 resolver = "2"
 
+[patch.crates-io]
+gmp-mpfr-sys = { path = "vendor/gmp-mpfr-sys" }
+rug = { path = "vendor/rug" }
+
 [workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
 arbitrary-source-item-ordering = "deny"

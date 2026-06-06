@@ -1,0 +1,367 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="Rational-Number-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Floating_point_Functions.html#Floating_002dpoint-Functions" accesskey="n" rel="next">Floating-point Functions</a>, Previous: <a href="constant.Integer_Functions.html#Integer-Functions" accesskey="p" rel="prev">Integer Functions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Rational-Number-Functions-1"><span>6 Rational Number Functions<a class="copiable-link" href="#Rational-Number-Functions-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Rational-number-functions"></a>
+<p>This chapter describes the GMP functions for performing arithmetic on rational
+numbers.  These functions start with the prefix <code class="code">mpq_</code>.
+</p>
+<p>Rational numbers are stored in objects of type <code class="code">mpq_t</code>.
+</p>
+<p>All rational arithmetic functions assume operands have a canonical form, and
+canonicalize their result.  The canonical form means that the denominator and
+the numerator have no common factors, and that the denominator is positive.
+Zero has the unique representation 0/1.
+</p>
+<p>Pure assignment functions do not canonicalize the assigned variable.  It is
+the responsibility of the user to canonicalize the assigned variable before
+any arithmetic operations are performed on that variable.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fcanonicalize"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_canonicalize</strong> <code class="def-code-arguments">(mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fcanonicalize"> &para;</a></span></dt>
+<dd><p>Remove any factors that are common to the numerator and denominator of
+<var class="var">op</var>, and make the denominator positive.
+</p></dd></dl>
+<ul class="mini-toc">
+<li><a href="#Initializing-Rationals" accesskey="1">Initialization and Assignment Functions</a></li>
+<li><a href="#Rational-Conversions" accesskey="2">Conversion Functions</a></li>
+<li><a href="#Rational-Arithmetic" accesskey="3">Arithmetic Functions</a></li>
+<li><a href="#Comparing-Rationals" accesskey="4">Comparison Functions</a></li>
+<li><a href="#Applying-Integer-Functions" accesskey="5">Applying Integer Functions to Rationals</a></li>
+<li><a href="#I_002fO-of-Rationals" accesskey="6">Input and Output Functions</a></li>
+</ul>
+<hr>
+<div class="section-level-extent" id="Initializing-Rationals">
+<div class="nav-panel">
+<p>
+Next: <a href="#Rational-Conversions" accesskey="n" rel="next">Conversion Functions</a>, Previous: <a href="#Rational-Number-Functions" accesskey="p" rel="prev">Rational Number Functions</a>, Up: <a href="#Rational-Number-Functions" accesskey="u" rel="up">Rational Number Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Initialization-and-Assignment-Functions"><span>6.1 Initialization and Assignment Functions<a class="copiable-link" href="#Initialization-and-Assignment-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Rational-assignment-functions"></a>
+<a class="index-entry-id" id="index-Assignment-functions-2"></a>
+<a class="index-entry-id" id="index-Rational-initialization-functions"></a>
+<a class="index-entry-id" id="index-Initialization-functions-2"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005finit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_init</strong> <code class="def-code-arguments">(mpq_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpq_005finit"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">x</var> and set it to 0/1.  Each variable should normally only be
+initialized once, or at least cleared out (using the function <code class="code">mpq_clear</code>)
+between each initialization.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005finits"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_inits</strong> <code class="def-code-arguments">(mpq_t <var class="var">x</var>, ...)</code><a class="copiable-link" href="#index-mpq_005finits"> &para;</a></span></dt>
+<dd><p>Initialize a NULL-terminated list of <code class="code">mpq_t</code> variables, and set their
+values to 0/1.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fclear"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_clear</strong> <code class="def-code-arguments">(mpq_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpq_005fclear"> &para;</a></span></dt>
+<dd><p>Free the space occupied by <var class="var">x</var>.  Make sure to call this function for all
+<code class="code">mpq_t</code> variables when you are done with them.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fclears"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_clears</strong> <code class="def-code-arguments">(mpq_t <var class="var">x</var>, ...)</code><a class="copiable-link" href="#index-mpq_005fclears"> &para;</a></span></dt>
+<dd><p>Free the space occupied by a NULL-terminated list of <code class="code">mpq_t</code> variables.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fset"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fset"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fset_005fz"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set_z</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005fz"> &para;</a></span></dt>
+<dd><p>Assign <var class="var">rop</var> from <var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fset_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set_ui</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, unsigned long int <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fset_005fsi"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set_si</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, signed long int <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005fsi"> &para;</a></span></dt>
+<dd><p>Set the value of <var class="var">rop</var> to <var class="var">op1</var>/<var class="var">op2</var>.  Note that if <var class="var">op1</var> and
+<var class="var">op2</var> have common factors, <var class="var">rop</var> has to be passed to
+<code class="code">mpq_canonicalize</code> before any operations are performed on <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fset_005fstr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpq_set_str</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, const char *<var class="var">str</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005fstr"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> from a null-terminated string <var class="var">str</var> in the given <var class="var">base</var>.
+</p>
+<p>The string can be an integer like &ldquo;41&rdquo; or a fraction like &ldquo;41/152&rdquo;.  The
+fraction must be in canonical form (see <a class="pxref" href="#Rational-Number-Functions">Rational Number Functions</a>), or if
+not then <code class="code">mpq_canonicalize</code> must be called.
+</p>
+<p>The numerator and optional denominator are parsed the same as in
+<code class="code">mpz_set_str</code> (see <a class="pxref" href="constant.Integer_Functions.html#Assigning-Integers">Assignment Functions</a>).  White space is allowed in
+the string, and is simply ignored.  The <var class="var">base</var> can vary from 2 to 62, or
+if <var class="var">base</var> is 0 then the leading characters are used: <code class="code">0x</code> or <code class="code">0X</code> for hex,
+<code class="code">0b</code> or <code class="code">0B</code> for binary,
+<code class="code">0</code> for octal, or decimal otherwise.  Note that this is done separately
+for the numerator and denominator, so for instance <code class="code">0xEF/100</code> is 239/100,
+whereas <code class="code">0xEF/0x100</code> is 239/256.
+</p>
+<p>The return value is 0 if the entire string is a valid number, or &minus;1 if
+not.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fswap"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_swap</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop1</var>, mpq_t <var class="var">rop2</var>)</code><a class="copiable-link" href="#index-mpq_005fswap"> &para;</a></span></dt>
+<dd><p>Swap the values <var class="var">rop1</var> and <var class="var">rop2</var> efficiently.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Rational-Conversions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Rational-Arithmetic" accesskey="n" rel="next">Arithmetic Functions</a>, Previous: <a href="#Initializing-Rationals" accesskey="p" rel="prev">Initialization and Assignment Functions</a>, Up: <a href="#Rational-Number-Functions" accesskey="u" rel="up">Rational Number Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Conversion-Functions-1"><span>6.2 Conversion Functions<a class="copiable-link" href="#Conversion-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Rational-conversion-functions"></a>
+<a class="index-entry-id" id="index-Conversion-functions-1"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fget_005fd"><span class="category-def">Function: </span><span><code class="def-type">double</code> <strong class="def-name">mpq_get_d</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fget_005fd"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a <code class="code">double</code>, truncating if necessary (i.e. rounding
+towards zero).
+</p>
+<p>If the exponent from the conversion is too big or too small to fit a
+<code class="code">double</code> then the result is system dependent.  For too big an infinity is
+returned when available.  For too small <em class="math">0.0</em> is normally returned.
+Hardware overflow, underflow and denorm traps may or may not occur.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fset_005fd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set_d</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, double <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fset_005ff"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set_f</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005ff"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the value of <var class="var">op</var>.  There is no rounding, this conversion
+is exact.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fget_005fstr"><span class="category-def">Function: </span><span><code class="def-type">char *</code> <strong class="def-name">mpq_get_str</strong> <code class="def-code-arguments">(char *<var class="var">str</var>, int <var class="var">base</var>, const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fget_005fstr"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a string of digits in base <var class="var">base</var>.  The base argument
+may vary from 2 to 62 or from &minus;2 to &minus;36.  The string will be of
+the form &lsquo;<samp class="samp">num/den</samp>&rsquo;, or if the denominator is 1 then just &lsquo;<samp class="samp">num</samp>&rsquo;.
+</p>
+<p>For <var class="var">base</var> in the range 2..36, digits and lower-case letters are used; for
+&minus;2..&minus;36, digits and upper-case letters are used; for 37..62,
+digits, upper-case letters, and lower-case letters (in that significance order)
+are used.
+</p>
+<p>If <var class="var">str</var> is <code class="code">NULL</code>, the result string is allocated using the current
+allocation function (see <a class="pxref" href="constant.Custom_Allocation.html#start">Custom Allocation</a>).  The block will be
+<code class="code">strlen(str)+1</code> bytes, that being exactly enough for the string and
+null-terminator.
+</p>
+<p>If <var class="var">str</var> is not <code class="code">NULL</code>, it should point to a block of storage large
+enough for the result, that being
+</p>
+<div class="example">
+<pre class="example-preformatted">mpz_sizeinbase (mpq_numref(<var class="var">op</var>), <var class="var">base</var>)
++ mpz_sizeinbase (mpq_denref(<var class="var">op</var>), <var class="var">base</var>) + 3
+</pre></div>
+<p>The three extra bytes are for a possible minus sign, possible slash, and the
+null-terminator.
+</p>
+<p>A pointer to the result string is returned, being either the allocated block,
+or the given <var class="var">str</var>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Rational-Arithmetic">
+<div class="nav-panel">
+<p>
+Next: <a href="#Comparing-Rationals" accesskey="n" rel="next">Comparison Functions</a>, Previous: <a href="#Rational-Conversions" accesskey="p" rel="prev">Conversion Functions</a>, Up: <a href="#Rational-Number-Functions" accesskey="u" rel="up">Rational Number Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Arithmetic-Functions-1"><span>6.3 Arithmetic Functions<a class="copiable-link" href="#Arithmetic-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Rational-arithmetic-functions"></a>
+<a class="index-entry-id" id="index-Arithmetic-functions-1"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fadd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_add</strong> <code class="def-code-arguments">(mpq_t <var class="var">sum</var>, const mpq_t <var class="var">addend1</var>, const mpq_t <var class="var">addend2</var>)</code><a class="copiable-link" href="#index-mpq_005fadd"> &para;</a></span></dt>
+<dd><p>Set <var class="var">sum</var> to <var class="var">addend1</var> + <var class="var">addend2</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fsub"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_sub</strong> <code class="def-code-arguments">(mpq_t <var class="var">difference</var>, const mpq_t <var class="var">minuend</var>, const mpq_t <var class="var">subtrahend</var>)</code><a class="copiable-link" href="#index-mpq_005fsub"> &para;</a></span></dt>
+<dd><p>Set <var class="var">difference</var> to <var class="var">minuend</var> &minus; <var class="var">subtrahend</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fmul"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_mul</strong> <code class="def-code-arguments">(mpq_t <var class="var">product</var>, const mpq_t <var class="var">multiplier</var>, const mpq_t <var class="var">multiplicand</var>)</code><a class="copiable-link" href="#index-mpq_005fmul"> &para;</a></span></dt>
+<dd><p>Set <var class="var">product</var> to <em class="math"><var class="var">multiplier</var> times <var class="var">multiplicand</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fmul_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_mul_2exp</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, const mpq_t <var class="var">op1</var>, mp_bitcnt_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpq_005fmul_005f2exp"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> times 2 raised to
+<var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_div</strong> <code class="def-code-arguments">(mpq_t <var class="var">quotient</var>, const mpq_t <var class="var">dividend</var>, const mpq_t <var class="var">divisor</var>)</code><a class="copiable-link" href="#index-mpq_005fdiv"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Division-functions-1"></a>
+<p>Set <var class="var">quotient</var> to <var class="var">dividend</var>/<var class="var">divisor</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fdiv_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_div_2exp</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, const mpq_t <var class="var">op1</var>, mp_bitcnt_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpq_005fdiv_005f2exp"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> divided by 2 raised to
+<var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fneg"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_neg</strong> <code class="def-code-arguments">(mpq_t <var class="var">negated_operand</var>, const mpq_t <var class="var">operand</var>)</code><a class="copiable-link" href="#index-mpq_005fneg"> &para;</a></span></dt>
+<dd><p>Set <var class="var">negated_operand</var> to &minus;<var class="var">operand</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fabs"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_abs</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fabs"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the absolute value of <var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005finv"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_inv</strong> <code class="def-code-arguments">(mpq_t <var class="var">inverted_number</var>, const mpq_t <var class="var">number</var>)</code><a class="copiable-link" href="#index-mpq_005finv"> &para;</a></span></dt>
+<dd><p>Set <var class="var">inverted_number</var> to 1/<var class="var">number</var>.  If the new denominator is
+zero, this routine will divide by zero.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Comparing-Rationals">
+<div class="nav-panel">
+<p>
+Next: <a href="#Applying-Integer-Functions" accesskey="n" rel="next">Applying Integer Functions to Rationals</a>, Previous: <a href="#Rational-Arithmetic" accesskey="p" rel="prev">Arithmetic Functions</a>, Up: <a href="#Rational-Number-Functions" accesskey="u" rel="up">Rational Number Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Comparison-Functions-1"><span>6.4 Comparison Functions<a class="copiable-link" href="#Comparison-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Rational-comparison-functions"></a>
+<a class="index-entry-id" id="index-Comparison-functions-1"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fcmp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpq_cmp</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op1</var>, const mpq_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpq_005fcmp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fcmp_005fz"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpq_cmp_z</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpq_005fcmp_005fz"> &para;</a></span></dt>
+<dd><p>Compare <var class="var">op1</var> and <var class="var">op2</var>.  Return a positive value if <em class="math"><var class="var">op1</var> &gt;
+<var class="var">op2</var></em>, zero if <em class="math"><var class="var">op1</var> = <var class="var">op2</var></em>, and a negative value if
+<em class="math"><var class="var">op1</var> &lt; <var class="var">op2</var></em>.
+</p>
+<p>To determine if two rationals are equal, <code class="code">mpq_equal</code> is faster than
+<code class="code">mpq_cmp</code>.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpq_005fcmp_005fui"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpq_cmp_ui</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op1</var>, unsigned long int <var class="var">num2</var>, unsigned long int <var class="var">den2</var>)</code><a class="copiable-link" href="#index-mpq_005fcmp_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fcmp_005fsi"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpq_cmp_si</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op1</var>, long int <var class="var">num2</var>, unsigned long int <var class="var">den2</var>)</code><a class="copiable-link" href="#index-mpq_005fcmp_005fsi"> &para;</a></span></dt>
+<dd><p>Compare <var class="var">op1</var> and <var class="var">num2</var>/<var class="var">den2</var>.  Return a positive value if
+<em class="math"><var class="var">op1</var> &gt; <var class="var">num2</var>/<var class="var">den2</var></em>, zero if <em class="math"><var class="var">op1</var> =
+<var class="var">num2</var>/<var class="var">den2</var></em>, and a negative value if <em class="math"><var class="var">op1</var> &lt;
+<var class="var">num2</var>/<var class="var">den2</var></em>.
+</p>
+<p><var class="var">num2</var> and <var class="var">den2</var> are allowed to have common factors.
+</p>
+<p>These functions are implemented as macros and evaluate their arguments
+multiple times.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpq_005fsgn"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpq_sgn</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fsgn"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Sign-tests-1"></a>
+<a class="index-entry-id" id="index-Rational-sign-tests"></a>
+<p>Return <em class="math">+1</em> if <em class="math"><var class="var">op</var> &gt; 0</em>, 0 if <em class="math"><var class="var">op</var> = 0</em>, and
+<em class="math">-1</em> if <em class="math"><var class="var">op</var> &lt; 0</em>.
+</p>
+<p>This function is actually implemented as a macro.  It evaluates its
+argument multiple times.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fequal"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpq_equal</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op1</var>, const mpq_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpq_005fequal"> &para;</a></span></dt>
+<dd><p>Return non-zero if <var class="var">op1</var> and <var class="var">op2</var> are equal, zero if they are
+non-equal.  Although <code class="code">mpq_cmp</code> can be used for the same purpose, this
+function is much faster.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Applying-Integer-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="#I_002fO-of-Rationals" accesskey="n" rel="next">Input and Output Functions</a>, Previous: <a href="#Comparing-Rationals" accesskey="p" rel="prev">Comparison Functions</a>, Up: <a href="#Rational-Number-Functions" accesskey="u" rel="up">Rational Number Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Applying-Integer-Functions-to-Rationals"><span>6.5 Applying Integer Functions to Rationals<a class="copiable-link" href="#Applying-Integer-Functions-to-Rationals"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Rational-numerator-and-denominator"></a>
+<a class="index-entry-id" id="index-Numerator-and-denominator"></a>
+<p>The set of <code class="code">mpq</code> functions is quite small.  In particular, there are few
+functions for either input or output.  The following functions give direct
+access to the numerator and denominator of an <code class="code">mpq_t</code>.
+</p>
+<p>Note that if an assignment to the numerator and/or denominator could take an
+<code class="code">mpq_t</code> out of the canonical form described at the start of this chapter
+(see <a class="pxref" href="#Rational-Number-Functions">Rational Number Functions</a>) then <code class="code">mpq_canonicalize</code> must be
+called before any other <code class="code">mpq</code> functions are applied to that <code class="code">mpq_t</code>.
+</p>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpq_005fnumref"><span class="category-def">Macro: </span><span><code class="def-type">mpz_ptr</code> <strong class="def-name">mpq_numref</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fnumref"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fdenref"><span class="category-def">Macro: </span><span><code class="def-type">mpz_ptr</code> <strong class="def-name">mpq_denref</strong> <code class="def-code-arguments">(const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fdenref"> &para;</a></span></dt>
+<dd><p>Return a reference to the numerator and denominator of <var class="var">op</var>, respectively.
+The <code class="code">mpz</code> functions can be used on the result of these macros.  Such
+calls may modify the numerator or denominator. However, care
+should be taken so that <var class="var">op</var> remains in canonical form prior to a
+possible later call to an <code class="code">mpq</code> function.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fget_005fnum"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_get_num</strong> <code class="def-code-arguments">(mpz_t <var class="var">numerator</var>, const mpq_t <var class="var">rational</var>)</code><a class="copiable-link" href="#index-mpq_005fget_005fnum"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fget_005fden"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_get_den</strong> <code class="def-code-arguments">(mpz_t <var class="var">denominator</var>, const mpq_t <var class="var">rational</var>)</code><a class="copiable-link" href="#index-mpq_005fget_005fden"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fset_005fnum"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set_num</strong> <code class="def-code-arguments">(mpq_t <var class="var">rational</var>, const mpz_t <var class="var">numerator</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005fnum"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpq_005fset_005fden"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpq_set_den</strong> <code class="def-code-arguments">(mpq_t <var class="var">rational</var>, const mpz_t <var class="var">denominator</var>)</code><a class="copiable-link" href="#index-mpq_005fset_005fden"> &para;</a></span></dt>
+<dd><p>Get or set the numerator or denominator of a rational.  These functions are
+equivalent to calling <code class="code">mpz_set</code> with an appropriate <code class="code">mpq_numref</code> or
+<code class="code">mpq_denref</code>.  Direct use of <code class="code">mpq_numref</code> or <code class="code">mpq_denref</code> is
+recommended instead of these functions.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="I_002fO-of-Rationals">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Applying-Integer-Functions" accesskey="p" rel="prev">Applying Integer Functions to Rationals</a>, Up: <a href="#Rational-Number-Functions" accesskey="u" rel="up">Rational Number Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Input-and-Output-Functions-1"><span>6.6 Input and Output Functions<a class="copiable-link" href="#Input-and-Output-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Rational-input-and-output-functions"></a>
+<a class="index-entry-id" id="index-Input-functions-1"></a>
+<a class="index-entry-id" id="index-Output-functions-1"></a>
+<a class="index-entry-id" id="index-I_002fO-functions-1"></a>
+<p>Functions that perform input from a stdio stream, and functions that output to
+a stdio stream, of <code class="code">mpq</code> numbers.  Passing a <code class="code">NULL</code> pointer for a
+<var class="var">stream</var> argument to any of these functions will make them read from
+<code class="code">stdin</code> and write to <code class="code">stdout</code>, respectively.
+</p>
+<p>When using any of these functions, it is a good idea to include <samp class="file">stdio.h</samp>
+before <samp class="file">gmp.h</samp>, since that will allow <samp class="file">gmp.h</samp> to define prototypes
+for these functions.
+</p>
+<p>See also <a class="ref" href="constant.Formatted_Output.html#Formatted-Output">Formatted Output</a> and <a class="ref" href="constant.Formatted_Input.html#Formatted-Input">Formatted Input</a>.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005fout_005fstr"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpq_out_str</strong> <code class="def-code-arguments">(FILE *<var class="var">stream</var>, int <var class="var">base</var>, const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpq_005fout_005fstr"> &para;</a></span></dt>
+<dd><p>Output <var class="var">op</var> on stdio stream <var class="var">stream</var>, as a string of digits in base
+<var class="var">base</var>.  The base argument may vary from 2 to 62 or from &minus;2 to
+&minus;36. Output is in the form
+&lsquo;<samp class="samp">num/den</samp>&rsquo; or if the denominator is 1 then just &lsquo;<samp class="samp">num</samp>&rsquo;.
+</p>
+<p>For <var class="var">base</var> in the range 2..36, digits and lower-case letters are used; for
+&minus;2..&minus;36, digits and upper-case letters are used; for 37..62,
+digits, upper-case letters, and lower-case letters (in that significance order)
+are used.
+</p>
+<p>Return the number of bytes written, or if an error occurred, return 0.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpq_005finp_005fstr"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpq_inp_str</strong> <code class="def-code-arguments">(mpq_t <var class="var">rop</var>, FILE *<var class="var">stream</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpq_005finp_005fstr"> &para;</a></span></dt>
+<dd><p>Read a string of digits from <var class="var">stream</var> and convert them to a rational in
+<var class="var">rop</var>.  Any initial white-space characters are read and discarded.  Return
+the number of characters read (including white space), or 0 if a rational
+could not be read.
+</p>
+<p>The input can be a fraction like &lsquo;<samp class="samp">17/63</samp>&rsquo; or just an integer like
+&lsquo;<samp class="samp">123</samp>&rsquo;.  Reading stops at the first character not in this form, and white
+space is not permitted within the string.  If the input might not be in
+canonical form, then <code class="code">mpq_canonicalize</code> must be called (see <a class="pxref" href="#Rational-Number-Functions">Rational Number Functions</a>).
+</p>
+<p>The <var class="var">base</var> can be between 2 and 62, or can be 0 in which case the leading
+characters of the string determine the base, &lsquo;<samp class="samp">0x</samp>&rsquo; or &lsquo;<samp class="samp">0X</samp>&rsquo; for
+hexadecimal, <code class="code">0b</code> and <code class="code">0B</code> for binary, &lsquo;<samp class="samp">0</samp>&rsquo; for octal, or
+decimal otherwise.  The leading characters
+are examined separately for the numerator and denominator of a fraction, so
+for instance &lsquo;<samp class="samp">0x10/11</samp>&rsquo; is <em class="math">16/11</em>, whereas &lsquo;<samp class="samp">0x10/0x11</samp>&rsquo; is
+<em class="math">16/17</em>.
+</p></dd></dl>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Floating_point_Functions.html#Floating_002dpoint-Functions" accesskey="n" rel="next">Floating-point Functions</a>, Previous: <a href="constant.Integer_Functions.html#Integer-Functions" accesskey="p" rel="prev">Integer Functions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

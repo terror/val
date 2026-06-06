@@ -1,0 +1,8 @@
+[package]
+name = "val-wasm-libc-shim"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lints]
+workspace = true

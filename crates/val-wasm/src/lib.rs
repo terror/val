@@ -20,6 +20,7 @@ mod range;
 
 #[wasm_bindgen(start)]
 fn start() {
+  val_wasm_libc_shim::link();
   console_error_panic_hook::set_once();
 }
 

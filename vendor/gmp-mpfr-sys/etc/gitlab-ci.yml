@@ -1,0 +1,145 @@
+# Copyright © 2017–2026 Trevor Spiteri
+
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
+
+variables:
+  MSRV: 1.71.0
+
+before_script:
+  - getconf LONG_BIT
+  - rustup self update
+  - rustup --version
+  - if [ -n "$HOST" ]; then rustup toolchain install --force-non-host --profile minimal beta-$HOST $MSRV-$HOST; fi
+  - if [ -n "$HOST" ]; then rustup component add --toolchain beta-$HOST rustfmt clippy; fi
+  - if [ -d cargo/registry/cache ]; then rm -rf $CARGO_HOME/registry/cache; mkdir -p $CARGO_HOME/registry; cp -R cargo/registry/cache $CARGO_HOME/registry/; echo Copied registry/cache; fi
+  - (if cd $CARGO_HOME/registry && [ -d src ]; then rm -r src; fi)
+  - (if cd $CARGO_HOME/registry && [ -d cache ]; then find cache -name \*.crate | sort; fi)
+
+after_script:
+  - (if cd $CARGO_HOME/registry && [ -d cache ]; then for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e ${s%.crate} ]; then rm -v $c; fi; done; find cache -name \*.crate | sort; fi)
+  - rm -rf cargo
+  - mkdir -p cargo/registry
+  - if [ -d $CARGO_HOME/registry/cache ]; then cp -R $CARGO_HOME/registry/cache cargo/registry/; echo Updated registry/cache; fi
+
+x86_64-gnulinux:
+  image: amd64/rust:1
+  variables:
+    HOST: x86_64
+  cache:
+    key: $CI_JOB_NAME
+    paths:
+    - cargo/
+  script:
+  - cargo +beta-$HOST test --features fail-on-warnings
+  - cargo +beta-$HOST test --release --features fail-on-warnings
+  - cargo +beta-$HOST fmt -- --check
+  - cargo +beta-$HOST clippy --all-targets --features fail-on-warnings
+  - rm Cargo.lock
+  - cargo +$MSRV-$HOST test --features fail-on-warnings
+  - cargo +$MSRV-$HOST test --release --features fail-on-warnings
+  only:
+  - ci
+
+i686-gnulinux:
+  image: i386/rust:1
+  variables:
+    HOST: i686
+  cache:
+    key: $CI_JOB_NAME
+    paths:
+    - cargo/
+  script:
+  - cargo +beta-$HOST test --features fail-on-warnings
+  - cargo +beta-$HOST test --release --features fail-on-warnings
+  - cargo +beta-$HOST fmt -- --check
+  - cargo +beta-$HOST clippy --all-targets --features fail-on-warnings
+  - rm Cargo.lock
+  - cargo +$MSRV-$HOST test --features fail-on-warnings
+  - cargo +$MSRV-$HOST test --release --features fail-on-warnings
+  only:
+  - ci
+
+x86_64-i686-gnulinux:
+  image: amd64/rust:1
+  variables:
+    HOST: x86_64
+    TARGET: i686-unknown-linux-gnu
+  cache:
+    key: $CI_JOB_NAME
+    paths:
+    - cargo/
+  script:
+  - apt-get update -qq && apt-get install -y -qq gcc-multilib libc6-dev-i386
+  - rustup target add --toolchain beta-$HOST $TARGET
+  - cargo +beta-$HOST test --target $TARGET --features fail-on-warnings
+  - cargo +beta-$HOST test --release --target $TARGET --features fail-on-warnings
+  - rm Cargo.lock
+  - rustup target add --toolchain $MSRV-$HOST $TARGET
+  - cargo +$MSRV-$HOST test --target $TARGET --features fail-on-warnings
+  - cargo +$MSRV-$HOST test --release --target $TARGET --features fail-on-warnings
+  only:
+  - ci
+
+#Disable use-system-libs tests until GMP, MPFR and MPC versions catch up
+#
+#x86_64-gnulinux-sys-libs:
+#  image: amd64/rust:1
+#  variables:
+#    HOST: x86_64
+#  cache:
+#    key: $CI_JOB_NAME
+#    paths:
+#    - cargo/
+#  script:
+#  - apt-get -y update
+#  - apt-get -y install libgmp-dev libmpfr-dev libmpc-dev
+#  - cargo +beta-$HOST test --features "fail-on-warnings use-system-libs"
+#  - cargo +beta-$HOST test --release --features "fail-on-warnings use-system-libs"
+#  - cargo +beta-$HOST fmt -- --check
+#  - cargo +beta-$HOST clippy --all-targets --features "fail-on-warnings use-system-libs"
+#  - rm Cargo.lock
+#  - cargo +$MSRV-$HOST test --features "fail-on-warnings use-system-libs"
+#  - cargo +$MSRV-$HOST test --release --features "fail-on-warnings use-system-libs"
+#  only:
+#  - ci
+#
+#i686-gnulinux-sys-libs:
+#  image: i386/rust:1
+#  variables:
+#    HOST: i686
+#  cache:
+#    key: $CI_JOB_NAME
+#    paths:
+#    - cargo/
+#  script:
+#  - apt-get -y update
+#  - apt-get -y install libgmp-dev libmpfr-dev libmpc-dev
+#  - cargo +beta-$HOST test --features "fail-on-warnings use-system-libs"
+#  - cargo +beta-$HOST test --release --features "fail-on-warnings use-system-libs"
+#  - cargo +beta-$HOST fmt -- --check
+#  - cargo +beta-$HOST clippy --all-targets --features "fail-on-warnings use-system-libs"
+#  - rm Cargo.lock
+#  - cargo +$MSRV-$HOST test --features "fail-on-warnings use-system-libs"
+#  - cargo +$MSRV-$HOST test --release --features "fail-on-warnings use-system-libs"
+#  only:
+#  - ci
+
+pages:
+  image: amd64/rust:1
+  variables:
+    TOOLCHAIN: nightly-x86_64
+  script:
+  - rustup toolchain install --profile minimal $TOOLCHAIN
+  - rm -rf public
+  - mkdir public
+  - cp etc/{index.html,rug.svg} public
+  - cargo +$TOOLCHAIN doc --no-deps -Z rustdoc-map
+  - mv target/doc public/dev
+  artifacts:
+    paths:
+    - public
+  only:
+  - www

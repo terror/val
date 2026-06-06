@@ -1,0 +1,99 @@
+# Copyright © 2017–2026 Trevor Spiteri
+
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved. This file is offered as-is,
+# without any warranty.
+
+skip_tags: true
+
+branches:
+  except:
+    - www
+
+environment:
+  MSRV: 1.71.0
+  matrix:
+    - CI_OS: mac
+      APPVEYOR_BUILD_WORKER_IMAGE: macos-sonoma
+    - CI_OS: mac
+      APPVEYOR_BUILD_WORKER_IMAGE: macos-catalina
+    - CI_OS: win
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2022
+      CC: gcc
+      HOST: x86_64-pc-windows-gnu
+      CONFIG_SITE: C:/msys64/mingw64/etc/config.site
+      MINGW_CHOST: x86_64-w64-mingw32
+      MINGW_PACKAGE_PREFIX: mingw-w64-x86_64
+      MINGW_PREFIX: C:/msys64/mingw64
+      MSYSTEM: MINGW64
+      MSYSTEM_CARCH: x86_64
+      MSYSTEM_CHOST: x86_64-w64-mingw32
+      MSYSTEM_PREFIX: C:/msys64/mingw64
+      PKG_CONFIG_PATH: C:\msys64\mingw64\lib\pkgconfig;C:\msys64\mingw64\share\pkgconfig
+
+build: false
+
+for:
+  -
+    matrix:
+      only:
+        - CI_OS: mac
+    cache:
+      - $HOME/.cargo/registry/cache
+    install:
+      - PATH="$PATH:$HOME/.cargo/bin"
+      - curl --proto =https --tlsv1.2 -sSf -o rustup-init.sh https://sh.rustup.rs
+      - sh rustup-init.sh -y --default-toolchain none --no-modify-path
+      - rustup --version
+      - rustup toolchain install --profile minimal beta $MSRV
+      - rustup component add --toolchain beta rustfmt clippy
+    before_test:
+      - (if cd $HOME/.cargo/registry && [ -d src ]; then rm -r src; fi)
+      - (if cd $HOME/.cargo/registry && [ -d cache ]; then find cache -name \*.crate | sort; fi)
+    test_script:
+      - cargo +beta test --features fail-on-warnings
+      - cargo +beta test --release --features fail-on-warnings
+      - cargo +beta fmt -- --check
+      - cargo +beta clippy --all-targets --features fail-on-warnings
+      - rm Cargo.lock
+      - cargo +$MSRV test --features fail-on-warnings
+      - cargo +$MSRV test --release --features fail-on-warnings
+    after_test:
+      # ugh, appveyor can't handle percentage signs, so we need to use $(sed 's/\.crate$//' <<< $s)
+      - (if cd $HOME/.cargo/registry && [ -d cache ]; then for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e $(sed 's/\.crate$//' <<< $s) ]; then rm -v $c; fi; done; find cache -name \*.crate | sort; fi)
+
+  -
+    matrix:
+      only:
+        - CI_OS: win
+    cache:
+      - '%USERPROFILE%\.cargo\registry\cache'
+    install:
+      - set PATH=C:\msys64\%MSYSTEM%\bin;C:\msys64\usr\bin;%USERPROFILE%\.cargo\bin;%PATH%
+      - curl --proto =https --tlsv1.2 -sSf -o rustup-init.exe https://win.rustup.rs
+      - rustup-init.exe -y --default-toolchain none --no-modify-path
+      - rustup --version
+      - rustup toolchain install --profile minimal beta-%HOST% %MSRV%-%HOST%
+      - rustup component add --toolchain beta-%HOST% rustfmt clippy
+    before_test:
+      - bash -c "if cd ""$USERPROFILE/.cargo/registry"" && [ -d src ]; then rm -r src; fi"
+      - bash -c "if cd ""$USERPROFILE/.cargo/registry"" && [ -d cache ]; then find cache -name \*.crate | sort; fi"
+      # Install required packages
+      - pacman -S --needed --noconfirm diffutils m4 make %MINGW_PACKAGE_PREFIX%-%CC%
+    test_script:
+      - cargo +beta-%HOST% test --features fail-on-warnings
+      - cargo +beta-%HOST% test --release --features fail-on-warnings
+      - cargo +beta-%HOST% fmt -- --check
+      - cargo +beta-%HOST% clippy --all-targets --features fail-on-warnings
+      - rm Cargo.lock
+      - cargo +%MSRV%-%HOST% test --features fail-on-warnings
+      - cargo +%MSRV%-%HOST% test --release --features fail-on-warnings
+      # Install fresh GMP, MPFR, MPC now to avoid interference with gcc package
+      - pacman -Sy --noconfirm %MINGW_PACKAGE_PREFIX%-gmp %MINGW_PACKAGE_PREFIX%-mpfr %MINGW_PACKAGE_PREFIX%-mpc
+      - cargo clean
+      - cargo +beta-%HOST% test --features "fail-on-warnings use-system-libs"
+      - cargo +beta-%HOST% test --release --features "fail-on-warnings use-system-libs"
+    after_test:
+      # ugh, appveyor can't handle percentage signs, so we need to use $(sed 's/\.crate$//' <<< $s)
+      - bash -c "if cd ""$USERPROFILE/.cargo/registry"" && [ -d cache ]; then for c in cache/*/*.crate; do s=src/${c#cache/}; if [ ! -e $(sed 's/\.crate$//' <<< $s) ]; then rm -v $c; fi; done; find cache -name \*.crate | sort; fi"

@@ -1,0 +1,809 @@
+<!-- This manual is for GNU MPC, a library for multiple precision complex arithmetic,
+version 1.4.1 of April 2026.
+Copyright © 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, 2020, 2022, 2023, 2024, 2025, 2026 INRIA
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections. A copy of the license is included in the section
+entitled "GNU Free Documentation License." -->
+<div class="chapter-level-extent" id="Complex-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Ball_Arithmetic.html#start" accesskey="n" rel="next">Ball Arithmetic</a>, Previous: <a href="constant.GNU_MPC_Basics.html#GNU-MPC-Basics" accesskey="p" rel="prev">GNU MPC Basics</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPC</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Complex-Functions-1"><span>5 Complex Functions<a class="copiable-link" href="#Complex-Functions-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Complex-functions"></a>
+<p>The complex functions expect arguments of type <code class="code">mpc_t</code>.
+</p>
+<p>The GNU MPC floating-point functions have an interface that is similar to the
+GNU MP
+integer functions.  The function prefix for operations on complex numbers is
+<code class="code">mpc_</code>.
+</p>
+<a class="index-entry-id" id="index-User_002ddefined-precision"></a>
+<p>The precision of a computation is defined as follows: Compute the requested
+operation exactly (with &ldquo;infinite precision&rdquo;), and round the result to
+the destination variable precision with the given rounding mode.
+</p>
+<p>The GNU MPC complex functions are intended to be a smooth extension
+of the IEEE 754 arithmetic. The results obtained on one
+computer should not differ from the results obtained on a computer with a
+different word size.
+</p>
+<ul class="mini-toc">
+<li><a href="#Initializing-Complex-Numbers" accesskey="1">Initialization Functions</a></li>
+<li><a href="#Assigning-Complex-Numbers" accesskey="2">Assignment Functions</a></li>
+<li><a href="#Converting-Complex-Numbers" accesskey="3">Conversion Functions</a></li>
+<li><a href="#String-and-Stream-Input-and-Output" accesskey="4">String and Stream Input and Output</a></li>
+<li><a href="#Complex-Comparison" accesskey="5">Comparison Functions</a></li>
+<li><a href="#Projection-_0026-Decomposing" accesskey="6">Projection and Decomposing Functions</a></li>
+<li><a href="#Basic-Arithmetic" accesskey="7">Basic Arithmetic Functions</a></li>
+<li><a href="#Power-Functions-and-Logarithm" accesskey="8">Power Functions and Logarithm</a></li>
+<li><a href="#Trigonometric-Functions" accesskey="9">Trigonometric Functions</a></li>
+<li><a href="#Modular-Functions">Modular Functions</a></li>
+<li><a href="#Miscellaneous-Complex-Functions">Miscellaneous Functions</a></li>
+<li><a href="#Advanced-Functions">Advanced Functions</a></li>
+<li><a href="#Internals">Internals</a></li>
+</ul>
+<hr>
+<div class="section-level-extent" id="Initializing-Complex-Numbers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assigning-Complex-Numbers" accesskey="n" rel="next">Assignment Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Initialization-Functions"><span>5.1 Initialization Functions<a class="copiable-link" href="#Initialization-Functions"> &para;</a></span></h3>
+<p>An <code class="code">mpc_t</code> object must be initialised before storing the first value in
+it.  The functions <code class="code">mpc_init2</code> and <code class="code">mpc_init3</code>
+are used for that purpose.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005finit2"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_init2</strong> <code class="def-code-arguments">(mpc_t <var class="var">z</var>, mpfr_prec_t <var class="var">prec</var>)</code><a class="copiable-link" href="#index-mpc_005finit2"> &para;</a></span></dt>
+<dd><p>Initialise <var class="var">z</var> to precision <var class="var">prec</var> bits
+and set its real and imaginary parts to NaN.
+Normally, a variable should be initialised once only
+or at least be cleared, using <code class="code">mpc_clear</code>, between initializations.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005finit3"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_init3</strong> <code class="def-code-arguments">(mpc_t <var class="var">z</var>, mpfr_prec_t <var class="var">prec_r</var>, mpfr_prec_t <var class="var">prec_i</var>)</code><a class="copiable-link" href="#index-mpc_005finit3"> &para;</a></span></dt>
+<dd><p>Initialise <var class="var">z</var> with the precision of its real part being
+<var class="var">prec_r</var> bits and the precision of its imaginary part being
+<var class="var">prec_i</var> bits, and set the real and imaginary parts to NaN.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fclear"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_clear</strong> <code class="def-code-arguments">(mpc_t <var class="var">z</var>)</code><a class="copiable-link" href="#index-mpc_005fclear"> &para;</a></span></dt>
+<dd><p>Free the space occupied by <var class="var">z</var>.  Make sure to call this function for all
+<code class="code">mpc_t</code> variables when you are done with them.
+</p></dd></dl>
+<p>Here is an example on how to initialise complex variables:
+</p><div class="example">
+<pre class="example-preformatted">{
+  mpc_t x, y;
+  mpc_init2 (x, 256);		/* precision <em class="emph">exactly</em> 256 bits */
+  mpc_init3 (y, 100, 50);	/* 100/50 bits for the real/imaginary part */
+  ...
+  mpc_clear (x);
+  mpc_clear (y);
+}
+</pre></div>
+<p>The following function is useful for changing the precision during a
+calculation.  A typical use would be for adjusting the precision gradually in
+iterative algorithms like Newton-Raphson, making the computation precision
+closely match the actual accurate part of the numbers.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fset_005fprec"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_set_prec</strong> <code class="def-code-arguments">(mpc_t <var class="var">x</var>, mpfr_prec_t <var class="var">prec</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fprec"> &para;</a></span></dt>
+<dd><p>Reset the precision of <var class="var">x</var> to be <strong class="strong">exactly</strong> <var class="var">prec</var> bits,
+and set its real/imaginary parts to NaN.
+The previous value stored in <var class="var">x</var> is lost. It is equivalent to
+a call to <code class="code">mpc_clear(x)</code> followed by a call to
+<code class="code">mpc_init2(x, prec)</code>, but more efficient as no allocation is done in
+case the current allocated space for the mantissa of <var class="var">x</var> is sufficient.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fget_005fprec"><span class="category-def">Function: </span><span><code class="def-type">mpfr_prec_t</code> <strong class="def-name">mpc_get_prec</strong> <code class="def-code-arguments">(const mpc_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpc_005fget_005fprec"> &para;</a></span></dt>
+<dd><p>If the real and imaginary part of <var class="var">x</var> have the same precision, it is returned,
+otherwise, 0 is returned.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fget_005fprec2"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_get_prec2</strong> <code class="def-code-arguments">(mpfr_prec_t* <var class="var">pr</var>, mpfr_prec_t* <var class="var">pi</var>, const mpc_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpc_005fget_005fprec2"> &para;</a></span></dt>
+<dd><p>Returns the precision of the real part of <var class="var">x</var> via <var class="var">pr</var> and of its imaginary part
+via <var class="var">pi</var>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Assigning-Complex-Numbers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Converting-Complex-Numbers" accesskey="n" rel="next">Conversion Functions</a>, Previous: <a href="#Initializing-Complex-Numbers" accesskey="p" rel="prev">Initialization Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Assignment-Functions"><span>5.2 Assignment Functions<a class="copiable-link" href="#Assignment-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Complex-assignment-functions"></a>
+<p>These functions assign new values to already initialised complex numbers
+(see <a class="pxref" href="#Initializing-Complex-Numbers">Initialization Functions</a>).
+When using any functions with <code class="code">intmax_t</code> or <code class="code">uintmax_t</code>
+parameters, you must include
+<code class="code">&lt;stdint.h&gt;</code> or <code class="code">&lt;inttypes.h&gt;</code> <em class="emph">before</em> <samp class="file">mpc.h</samp>, to allow
+<samp class="file">mpc.h</samp> to define prototypes for these functions.
+Similarly, functions with parameters of type <code class="code">complex</code> or
+<code class="code">long complex</code> are defined only if <code class="code">&lt;complex.h&gt;</code> is included
+<em class="emph">before</em> <samp class="file">mpc.h</samp>.
+If you need assignment functions that are not in the current API, you can
+define them using the <code class="code">MPC_SET_X_Y</code> macro (see <a class="pxref" href="#Advanced-Functions">Advanced Functions</a>).
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fset"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset"> &para;</a></span></dt>
+<dd><p>Set the value of <var class="var">rop</var> from <var class="var">op</var>, rounded to the precision of <var class="var">rop</var>
+with the given rounding mode <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fset_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, unsigned long int <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fsi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_si</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, long int <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fuj"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_uj</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, uintmax_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fuj"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fsj"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_sj</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, intmax_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fsj"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fd"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_d</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, double <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fld"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_ld</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, long double <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fld"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fdc"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_dc</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, double complex <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fdc"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fldc"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_ldc</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, long double complex <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fldc"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fz"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_z</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpz_t <var class="var">op</var> mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fz"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fq"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_q</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpq_t <var class="var">op</var> mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fq"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005ff"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_f</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpf_t <var class="var">op</var> mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005ff"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005ffr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_fr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpfr_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005ffr"> &para;</a></span></dt>
+<dd><p>Set the value of <var class="var">rop</var> from <var class="var">op</var>, rounded to the precision of
+<var class="var">rop</var> with the given rounding mode <var class="var">rnd</var>.
+The argument <var class="var">op</var> is interpreted as real, so the imaginary part of
+<var class="var">rop</var> is set to zero with a positive sign.
+Please note that even a <code class="code">long int</code> may have to be rounded, if the
+destination precision is less than the machine word width.
+For <code class="code">mpc_set_d</code>, be careful that the input number <var class="var">op</var> may not be
+exactly representable as a double-precision number (this happens for 0.1 for
+instance), in which case it is first rounded by the C compiler to a
+double-precision number, and then only to a complex number.
+With the Microsoft compiler, which does not provide the standard type
+<code class="code">double complex</code> or <code class="code">long double complex</code>, replace
+<code class="code">double _Complex</code> by <code class="code">_Dcomplex</code> and
+<code class="code">long double _Complex</code> by <code class="code">_Lcomplex</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fset_005fui_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_ui_ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, unsigned long int <var class="var">op1</var>, unsigned long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fui_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fsi_005fsi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_si_si</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, long int <var class="var">op1</var>, long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fsi_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fuj_005fuj"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_uj_uj</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, uintmax_t <var class="var">op1</var>, uintmax_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fuj_005fuj"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fsj_005fsj"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_sj_sj</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, intmax_t <var class="var">op1</var>, intmax_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fsj_005fsj"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fd_005fd"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_d_d</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, double <var class="var">op1</var>, double <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fd_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fld_005fld"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_ld_ld</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, long double <var class="var">op1</var>, long double <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fld_005fld"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fz_005fz"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_z_z</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fz_005fz"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005fq_005fq"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_q_q</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpq_t <var class="var">op1</var>, const mpq_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fq_005fq"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005ff_005ff"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_f_f</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005ff_005ff"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fset_005ffr_005ffr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_fr_fr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpfr_t <var class="var">op1</var>, const mpfr_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005ffr_005ffr"> &para;</a></span></dt>
+<dd><p>Set the real part of <var class="var">rop</var> from <var class="var">op1</var>, and its imaginary part from
+<var class="var">op2</var>, according to the rounding mode <var class="var">rnd</var>.
+</p>
+<p>Beware that the behaviour of <code class="code">mpc_set_fr_fr</code> is undefined if <var class="var">op1</var>
+or <var class="var">op2</var> is a pointer to the real or imaginary part of <var class="var">rop</var>.
+To exchange the real and the imaginary part of a complex number, either use
+<code class="code">mpfr_swap (mpc_realref (rop), mpc_imagref (rop))</code>, which also exchanges
+the precisions of the two parts; or use a temporary variable.
+</p></dd></dl>
+<p>For functions assigning complex variables from strings or input streams,
+see <a class="pxref" href="#String-and-Stream-Input-and-Output">String and Stream Input and Output</a>.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fset_005fnan"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_set_nan</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>)</code><a class="copiable-link" href="#index-mpc_005fset_005fnan"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to Nan+i*NaN.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fswap"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_swap</strong> <code class="def-code-arguments">(mpc_t <var class="var">op1</var>, mpc_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpc_005fswap"> &para;</a></span></dt>
+<dd><p>Swap the values of <var class="var">op1</var> and <var class="var">op2</var> efficiently. Warning: The
+precisions are exchanged, too; in case these are different,
+<code class="code">mpc_swap</code> is thus not equivalent to three <code class="code">mpc_set</code> calls using a
+third auxiliary variable.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Converting-Complex-Numbers">
+<div class="nav-panel">
+<p>
+Next: <a href="#String-and-Stream-Input-and-Output" accesskey="n" rel="next">String and Stream Input and Output</a>, Previous: <a href="#Assigning-Complex-Numbers" accesskey="p" rel="prev">Assignment Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Conversion-Functions"><span>5.3 Conversion Functions<a class="copiable-link" href="#Conversion-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Conversion-functions"></a>
+<p>The following functions are available only if <code class="code">&lt;complex.h&gt;</code>
+is included <em class="emph">before</em> <samp class="file">mpc.h</samp>.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-complex"><span class="category-def">Function: </span><span><code class="def-type">double</code> <strong class="def-name">complex</strong> <code class="def-code-arguments">mpc_get_dc (const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-complex"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fget_005fldc"><span class="category-def">Function: </span><span><code class="def-type">long double complex</code> <strong class="def-name">mpc_get_ldc</strong> <code class="def-code-arguments">(mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fget_005fldc"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a C complex number, using the rounding mode <var class="var">rnd</var>.
+With the Microsoft compiler, which does not provide the standard type
+<code class="code">double complex</code> or <code class="code">long double complex</code>, replace
+<code class="code">double _Complex</code> by <code class="code">_Dcomplex</code> and
+<code class="code">long double _Complex</code> by <code class="code">_Lcomplex</code>.
+</p></dd></dl>
+<p>For functions converting complex variables to strings or stream output,
+see <a class="pxref" href="#String-and-Stream-Input-and-Output">String and Stream Input and Output</a>.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="String-and-Stream-Input-and-Output">
+<div class="nav-panel">
+<p>
+Next: <a href="#Complex-Comparison" accesskey="n" rel="next">Comparison Functions</a>, Previous: <a href="#Converting-Complex-Numbers" accesskey="p" rel="prev">Conversion Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="String-and-Stream-Input-and-Output-1"><span>5.4 String and Stream Input and Output<a class="copiable-link" href="#String-and-Stream-Input-and-Output-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-String-and-stream-input-and-output"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fstrtoc"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_strtoc</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const char *<var class="var">nptr</var>, char **<var class="var">endptr</var>, int <var class="var">base</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fstrtoc"> &para;</a></span></dt>
+<dd><p>Read a complex number from a string <var class="var">nptr</var> in base <var class="var">base</var>, rounded to
+the precision of <var class="var">rop</var> with the given rounding mode <var class="var">rnd</var>.
+The <var class="var">base</var> must be either 0 or a number from 2 to 36 (otherwise the
+behaviour is undefined).
+If <var class="var">nptr</var> starts with valid data, the result is stored in <var class="var">rop</var>,
+the usual inexact value is returned (see <a class="pxref" href="constant.GNU_MPC_Basics.html#return_002dvalue">Return
+Value</a>) and, if <var class="var">endptr</var> is not the null pointer,
+<var class="var">*endptr</var> points to the character just after the valid data.
+Otherwise, <var class="var">rop</var> is set to <code class="code">NaN + i * NaN</code>, -1 is returned and,
+if <var class="var">endptr</var> is not the null pointer,
+the value of <var class="var">nptr</var> is stored in the location referenced by
+<var class="var">endptr</var>.
+</p>
+<p>The expected form of a complex number string is either a real number (an
+optional leading whitespace, an optional sign followed by a floating-point
+number), or a pair of real numbers in parentheses separated by whitespace. If
+a real number is read, the missing imaginary part is set to +0.
+The form of a floating-point number depends on the base and is described
+in the documentation of <code class="code">mpfr_strtofr</code>
+in the GNU MPFR manual.
+For instance, <code class="code">&quot;3.1415926&quot;</code>, <code class="code">&quot;(1.25e+7 +.17)&quot;</code>, <code class="code">&quot;(@nan@
+2)&quot;</code> and <code class="code">&quot;(-0 -7)&quot;</code> are valid strings for <var class="var">base</var> = 10.
+If <var class="var">base</var> = 0, then a prefix may be used to indicate the base in which the
+floating-point number is written. Use prefix &rsquo;0b&rsquo; for binary numbers, prefix
+&rsquo;0x&rsquo; for hexadecimal numbers, and no prefix for decimal numbers.
+The real and imaginary part may then be written in different bases.
+For instance, <code class="code">&quot;(1.024e+3 +2.05e+3)&quot;</code> and <code class="code">&quot;(0b1p+10 +0x802)&quot;</code> are
+valid strings for <code class="code">base</code>=0 and represent the same value.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fset_005fstr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_set_str</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const char *<var class="var">s</var>, int <var class="var">base</var>, mpc_rnd_t rnd)</code><a class="copiable-link" href="#index-mpc_005fset_005fstr"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the value of the string <var class="var">s</var> in base <var class="var">base</var>, rounded
+to the precision of <var class="var">rop</var> with the given rounding mode <var class="var">rnd</var>.
+See the documentation of <code class="code">mpc_strtoc</code> for a detailed description of the
+valid string formats.
+Contrarily to <code class="code">mpc_strtoc</code>, <code class="code">mpc_set_str</code> requires the <em class="emph">whole</em>
+string to represent a valid complex number (potentially followed by
+additional white space).
+This function returns the usual inexact value (see <a class="pxref" href="constant.GNU_MPC_Basics.html#return_002dvalue">Return
+Value</a>) if the entire string up to the final null character is a valid number
+in base <var class="var">base</var>; otherwise it returns &minus;1, and <var class="var">rop</var> is set to
+NaN+i*NaN.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fget_005fstr"><span class="category-def">Function: </span><span><code class="def-type">char *</code> <strong class="def-name">mpc_get_str</strong> <code class="def-code-arguments">(int <var class="var">b</var>, size_t <var class="var">n</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fget_005fstr"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a string containing its real and imaginary parts,
+separated by a space and enclosed in a pair of parentheses.
+The numbers are written in base <var class="var">b</var> (which may vary from 2 to 36) and
+rounded according to <var class="var">rnd</var>. The number of significant digits, at least 2,
+is given by <var class="var">n</var>. It is also possible to let
+<var class="var">n</var> be zero, in which case the number of digits is chosen large
+enough so that re-reading the printed value with the same precision, assuming
+both output and input use rounding to nearest, will recover the original value
+of <var class="var">op</var>.
+Note that <code class="code">mpc_get_str</code> uses the decimal point of the current locale
+if available, and &lsquo;<samp class="samp">.</samp>&rsquo; otherwise.
+</p>
+<p>The string is generated using the current memory allocation function
+(<code class="code">malloc</code> by default, unless it has been modified using the custom
+memory allocation interface of <code class="code">gmp</code>); once it is not needed any more,
+it should be freed by calling <code class="code">mpc_free_str</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005ffree_005fstr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpc_free_str</strong> <code class="def-code-arguments">(char *<var class="var">str</var>)</code><a class="copiable-link" href="#index-mpc_005ffree_005fstr"> &para;</a></span></dt>
+<dd><p>Free the string <var class="var">str</var>, which needs to have been allocated by
+a call to <code class="code">mpc_get_str</code>.
+</p></dd></dl>
+<p>The following two functions read numbers from input streams and write
+them to output streams.
+When using any of these functions, you need to include <samp class="file">stdio.h</samp>
+<em class="emph">before</em> <samp class="file">mpc.h</samp>.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005finp_005fstr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_inp_str</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, FILE *<var class="var">stream</var>, size_t *<var class="var">read</var>, int <var class="var">base</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005finp_005fstr"> &para;</a></span></dt>
+<dd><p>Input a string in base <var class="var">base</var> in the same format as for <code class="code">mpc_strtoc</code>
+from stdio stream <var class="var">stream</var>, rounded according to <var class="var">rnd</var>, and put the
+read complex number into <var class="var">rop</var>.
+If <var class="var">stream</var> is the null pointer, <var class="var">rop</var> is read from <code class="code">stdin</code>.
+Return the usual inexact value; if an error occurs, set <var class="var">rop</var> to <code class="code">NaN
++ i * NaN</code> and return -1.
+If <var class="var">read</var> is not the null pointer, it is set to the number of read
+characters.
+</p>
+<p>Unlike <code class="code">mpc_strtoc</code>, the function <code class="code">mpc_inp_str</code> does not possess
+perfect knowledge of the string to transform and has to read it
+character by character, so it behaves slightly differently: It tries
+to read a string describing a complex number and processes this string
+through a call to <code class="code">mpc_set_str</code>. Precisely, after skipping optional
+whitespace, a minimal string is read according to the regular expression
+<code class="code">mpfr | '(' \s* mpfr \s+ mpfr \s* ')'</code>, where <code class="code">\s</code> denotes a whitespace,
+and <code class="code">mpfr</code> is either a string containing neither whitespaces nor
+parentheses, or <code class="code">nan(n-char-sequence)</code> or <code class="code">@nan@(n-char-sequence)</code>
+(regardless of capitalisation) with <code class="code">n-char-sequence</code> a string
+of ascii letters, digits or <code class="code">'_'</code>.
+</p>
+<p>For instance, upon input of <code class="code">&quot;nan(13 1)&quot;</code>, the function
+<code class="code">mpc_inp_str</code> starts to recognise a value of NaN followed by an
+n-char-sequence indicated by the opening parenthesis; as soon as the
+space is reached, it becomes clear that the expression in parentheses
+is not an n-char-sequence, and the error flag -1 is returned after 6
+characters have been consumed from the stream (the whitespace itself
+remaining in the stream).
+The function <code class="code">mpc_strtoc</code>, on the other hand, may track back
+when reaching the whitespace; it treats the string as the two successive
+complex numbers <code class="code">NaN + i * 0</code> and <code class="code">13 + i</code>.
+It is thus recommended to have a whitespace follow each floating-point number
+to avoid this problem.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fout_005fstr"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpc_out_str</strong> <code class="def-code-arguments">(FILE *<var class="var">stream</var>, int <var class="var">base</var>, size_t <var class="var">n_digits</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fout_005fstr"> &para;</a></span></dt>
+<dd><p>Output <var class="var">op</var> on stdio stream <var class="var">stream</var> in
+base <var class="var">base</var>, rounded according to <var class="var">rnd</var>, in the same format
+as for <code class="code">mpc_strtoc</code>
+If <var class="var">stream</var> is the null pointer, <var class="var">rop</var> is written to <code class="code">stdout</code>.
+</p>
+<p>Return the number of characters written.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Complex-Comparison">
+<div class="nav-panel">
+<p>
+Next: <a href="#Projection-_0026-Decomposing" accesskey="n" rel="next">Projection and Decomposing Functions</a>, Previous: <a href="#String-and-Stream-Input-and-Output" accesskey="p" rel="prev">String and Stream Input and Output</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Comparison-Functions"><span>5.5 Comparison Functions<a class="copiable-link" href="#Comparison-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Complex-comparisons-functions"></a>
+<a class="index-entry-id" id="index-Comparison-functions"></a>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005fcmp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_cmp</strong> <code class="def-code-arguments">(const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpc_005fcmp"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fcmp_005fsi_005fsi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_cmp_si_si</strong> <code class="def-code-arguments">(const mpc_t <var class="var">op1</var>, long int <var class="var">op2r</var>, long int <var class="var">op2i</var>)</code><a class="copiable-link" href="#index-mpc_005fcmp_005fsi_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fcmp_005fsi"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_cmp_si</strong> <code class="def-code-arguments">(mpc_t <var class="var">op1</var>, long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpc_005fcmp_005fsi"> &para;</a></span></dt>
+<dd>
+<p>Compare <var class="var">op1</var> and <var class="var">op2</var>, where in the case of <code class="code">mpc_cmp_si_si</code>,
+<var class="var">op2</var> is taken to be <var class="var">op2r</var> + i <var class="var">op2i</var>.
+The return value <var class="var">c</var> can be decomposed into <code class="code">x = MPC_INEX_RE(c)</code>
+and <code class="code">y = MPC_INEX_IM(c)</code>, such that <var class="var">x</var> is
+positive if the real part of <var class="var">op1</var> is greater than that of <var class="var">op2</var>,
+zero if both real parts are equal, and negative if the real part of <var class="var">op1</var>
+is less than that of <var class="var">op2</var>, and likewise for <var class="var">y</var>.
+Both <var class="var">op1</var> and <var class="var">op2</var> are considered to their full own precision,
+which may differ.
+It is not allowed that one of the operands has a NaN (Not-a-Number) part.
+</p>
+<p>The storage of the return value is such that equality can be simply checked
+with <code class="code">mpc_cmp (op1, op2) == 0</code>.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005fcmp_005fabs"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_cmp_abs</strong> <code class="def-code-arguments">(const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpc_005fcmp_005fabs"> &para;</a></span></dt>
+<dd>
+<p>Compare the absolute values of <var class="var">op1</var> and <var class="var">op2</var>.
+The return value is 0 if both are the same (including infinity),
+positive if the absolute value of <var class="var">op1</var> is greater than that of <var class="var">op2</var>,
+and negative if it is smaller.
+If <var class="var">op1</var> or <var class="var">op2</var> has a real or imaginary part which is NaN,
+the function behaves like <code class="code">mpfr_cmp</code> on two real numbers of which at least
+one is NaN.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Projection-_0026-Decomposing">
+<div class="nav-panel">
+<p>
+Next: <a href="#Basic-Arithmetic" accesskey="n" rel="next">Basic Arithmetic Functions</a>, Previous: <a href="#Complex-Comparison" accesskey="p" rel="prev">Comparison Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Projection-and-Decomposing-Functions"><span>5.6 Projection and Decomposing Functions<a class="copiable-link" href="#Projection-and-Decomposing-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Projection-and-Decomposing-Functions"></a>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005freal"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_real</strong> <code class="def-code-arguments">(mpfr_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005freal"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the value of the real part of <var class="var">op</var> rounded
+in the direction <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005fimag"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_imag</strong> <code class="def-code-arguments">(mpfr_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fimag"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the value of the imaginary part of <var class="var">op</var> rounded in the
+direction <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005frealref"><span class="category-def">Macro: </span><span><code class="def-type">mpfr_t</code> <strong class="def-name">mpc_realref</strong> <code class="def-code-arguments">(mpc_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpc_005frealref"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fimagref"><span class="category-def">Macro: </span><span><code class="def-type">mpfr_t</code> <strong class="def-name">mpc_imagref</strong> <code class="def-code-arguments">(mpc_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpc_005fimagref"> &para;</a></span></dt>
+<dd><p>Return a reference to the real part and imaginary part of <var class="var">op</var>,
+respectively. The <code class="code">mpfr</code> functions can be used on the result of these
+macros (note that the <code class="code">mpfr_t</code> type is itself a pointer).
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005farg"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_arg</strong> <code class="def-code-arguments">(mpfr_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005farg"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the argument of <var class="var">op</var>, with a branch cut along the
+negative real axis.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005fproj"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_proj</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fproj"> &para;</a></span></dt>
+<dd><p>Compute a projection of <var class="var">op</var> onto the Riemann sphere. Set <var class="var">rop</var> to
+<var class="var">op</var> rounded in the direction <var class="var">rnd</var>, except when at least one part of
+<var class="var">op</var> is infinite (even if the other part is a NaN) in which case the real
+part of <var class="var">rop</var> is set to plus infinity and its imaginary part to a signed
+zero with the same sign as the imaginary part of <var class="var">op</var>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Basic-Arithmetic">
+<div class="nav-panel">
+<p>
+Next: <a href="#Power-Functions-and-Logarithm" accesskey="n" rel="next">Power Functions and Logarithm</a>, Previous: <a href="#Projection-_0026-Decomposing" accesskey="p" rel="prev">Projection and Decomposing Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Basic-Arithmetic-Functions"><span>5.7 Basic Arithmetic Functions<a class="copiable-link" href="#Basic-Arithmetic-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Complex-arithmetic-functions"></a>
+<a class="index-entry-id" id="index-Arithmetic-functions"></a>
+<p>All the following functions are designed in such a way that, when working
+with real numbers instead of complex numbers, their complexity should
+essentially be the same as with the GNU MPFR library, with only a marginal
+overhead due to the GNU MPC layer.
+</p>
+<p>For functions taking as input an integer argument
+(for example <code class="code">mpc_add_ui</code>), when this argument is zero,
+it is considered as an unsigned (that is, exact in this context)
+zero, and we follow the MPFR conventions:
+(0) + (+0) = +0, (0) - (+0) = -0, (0) - (+0) = -0, (0) - (-0) = +0.
+The same applies for functions taking an argument of type <code class="code">mpfr_t</code>,
+such as <code class="code">mpc_add_fr</code>, of which the imaginary part is considered
+to be an exact, unsigned zero.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fadd"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_add</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fadd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fadd_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_add_ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fadd_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fadd_005ffr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_add_fr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpfr_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fadd_005ffr"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> <em class="math">+</em> <var class="var">op2</var> rounded according to <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpc_005fsub"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sub</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsub"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fsub_005ffr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sub_fr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpfr_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsub_005ffr"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005ffr_005fsub"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_fr_sub</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpfr_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005ffr_005fsub"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fsub_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sub_ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsub_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fui_005fsub"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_ui_sub</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, unsigned long int <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fui_005fsub"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fui_005fui_005fsub"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_ui_ui_sub</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, unsigned long int <var class="var">re1</var>, unsigned long int <var class="var">im1</var>, mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fui_005fui_005fsub"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> &minus; <var class="var">op2</var> rounded according to <var class="var">rnd</var>.
+For <code class="code">mpc_ui_ui_sub</code>, <var class="var">op1</var> is <var class="var">re1</var> + <var class="var">im1</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fneg"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_neg</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fneg"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to &minus;<var class="var">op</var> rounded according to <var class="var">rnd</var>.
+Just changes the sign if <var class="var">rop</var> and <var class="var">op</var> are the same variable.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fsum"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sum</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_ptr* <var class="var">op</var>, unsigned long <var class="var">n</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsum"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the sum of the elements in the array <var class="var">op</var> of
+length <var class="var">n</var>, rounded according to <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fmul"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_mul</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fmul"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fmul_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_mul_ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fmul_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fmul_005fsi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_mul_si</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fmul_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fmul_005ffr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_mul_fr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpfr_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fmul_005ffr"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> times <var class="var">op2</var> rounded according to <var class="var">rnd</var>.
+Note: for <code class="code">mpc_mul</code>, in case <var class="var">op1</var> and <var class="var">op2</var> have the same value,
+use <code class="code">mpc_sqr</code> for better efficiency.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fmul_005fi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_mul_i</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, int <var class="var">sgn</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fmul_005fi"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op</var> times the imaginary unit i if <var class="var">sgn</var> is
+non-negative, set <var class="var">rop</var> to <var class="var">op</var> times -i otherwise,
+in both cases rounded according to <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fsqr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sqr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsqr"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the square of <var class="var">op</var> rounded according to <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005ffma"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_fma</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, const mpc_t <var class="var">op3</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005ffma"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var>*<var class="var">op2</var>+<var class="var">op3</var>,
+rounded according to <var class="var">rnd</var>, with only one final rounding.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fdot"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_dot</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_ptr* <var class="var">op1</var>, mpc_ptr* <var class="var">op2</var>, unsigned long <var class="var">n</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fdot"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the dot product of the elements in the arrays <var class="var">op1</var> and
+<var class="var">op2</var>, both of length <var class="var">n</var>, rounded according to <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_div</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fdiv"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fdiv_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_div_ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fdiv_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fdiv_005ffr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_div_fr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpfr_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fdiv_005ffr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fui_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_ui_div</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, unsigned long int <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fui_005fdiv"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005ffr_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_fr_div</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpfr_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005ffr_005fdiv"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var>/<var class="var">op2</var> rounded according to <var class="var">rnd</var>.
+The functions <code class="code">mpc_fr_div</code> and <code class="code">mpc_ui_div</code> follow the C standard (draft N3685,
+section 6.5.6, paragraph 9) concerning special values and signed zeroes.
+</p>
+</dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fconj"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_conj</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fconj"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the conjugate of <var class="var">op</var> rounded according to <var class="var">rnd</var>.
+Just changes the sign of the imaginary part
+if <var class="var">rop</var> and <var class="var">op</var> are the same variable.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fabs"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_abs</strong> <code class="def-code-arguments">(mpfr_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fabs"> &para;</a></span></dt>
+<dd><p>Set the floating-point number <var class="var">rop</var> to the absolute value of <var class="var">op</var>,
+rounded in the direction <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fnorm"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_norm</strong> <code class="def-code-arguments">(mpfr_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpfr_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fnorm"> &para;</a></span></dt>
+<dd><p>Set the floating-point number <var class="var">rop</var> to the norm of <var class="var">op</var>
+(i.e., the square of its absolute value),
+rounded in the direction <var class="var">rnd</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fmul_005f2ui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_mul_2ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fmul_005f2ui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fmul_005f2si"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_mul_2si</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fmul_005f2si"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> times 2 raised to <var class="var">op2</var>
+rounded according to <var class="var">rnd</var>. Just modifies the exponents
+of the real and imaginary parts by <var class="var">op2</var>
+when <var class="var">rop</var> and <var class="var">op1</var> are identical.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fdiv_005f2ui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_div_2ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fdiv_005f2ui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fdiv_005f2si"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_div_2si</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, long int <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fdiv_005f2si"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> divided by 2 raised to <var class="var">op2</var>
+rounded according to <var class="var">rnd</var>. Just modifies the exponents
+of the real and imaginary parts by <var class="var">op2</var>
+when <var class="var">rop</var> and <var class="var">op1</var> are identical.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Power-Functions-and-Logarithm">
+<div class="nav-panel">
+<p>
+Next: <a href="#Trigonometric-Functions" accesskey="n" rel="next">Trigonometric Functions</a>, Previous: <a href="#Basic-Arithmetic" accesskey="p" rel="prev">Basic Arithmetic Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Power-Functions-and-Logarithm-1"><span>5.8 Power Functions and Logarithm<a class="copiable-link" href="#Power-Functions-and-Logarithm-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Power-functions"></a>
+<a class="index-entry-id" id="index-Logarithm"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fsqrt"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sqrt</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsqrt"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the square root of <var class="var">op</var> rounded according to <var class="var">rnd</var>.
+The returned value <var class="var">rop</var> has a non-negative real part, and if its real
+part is zero, a non-negative imaginary part.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fpow"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_pow</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpc_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fpow"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fpow_005fd"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_pow_d</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, double <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fpow_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fpow_005fld"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_pow_ld</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, long double <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fpow_005fld"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fpow_005fsi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_pow_si</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, long <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fpow_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fpow_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_pow_ui</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, unsigned long <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fpow_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fpow_005fz"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_pow_z</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fpow_005fz"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fpow_005ffr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_pow_fr</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op1</var>, const mpfr_t <var class="var">op2</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fpow_005ffr"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> raised to the power <var class="var">op2</var>, rounded according
+to <var class="var">rnd</var>.
+For <code class="code">mpc_pow_d</code>, <code class="code">mpc_pow_ld</code>, <code class="code">mpc_pow_si</code>, <code class="code">mpc_pow_ui</code>,
+<code class="code">mpc_pow_z</code> and <code class="code">mpc_pow_fr</code>,
+the imaginary part of <var class="var">op2</var> is considered as +0.
+When both <var class="var">op1</var> and <var class="var">op2</var> are zero, the result has real part 1,
+and imaginary part 0, with sign being the opposite of that of <var class="var">op2</var>.
+When both <var class="var">op1</var> and <var class="var">op2</var> have real or imaginary part 0, and similarly
+for the result, we use the following rule:
+when we replace both 0 inputs by tiny values of the same sign,
+if the sign of the 0 part in the result does not depend on the relative value
+of these tiny values, we use that sign.
+Otherwise, we fix the zero part in the result to +0.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fexp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_exp</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fexp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fexp10"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_exp10</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fexp10"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fexp2"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_exp2</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fexp2"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the natural, base-10 and base-2 exponential of <var class="var">op</var>,
+rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+The functions <code class="code">mpc_exp10</code> and <code class="code">mpc_exp2</code> currently use a trivial implementation
+calling <code class="code">mpc_pow</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005flog"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_log</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005flog"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005flog2"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_log2</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005flog2"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005flog10"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_log10</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005flog10"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the natural, base-2 and base-10 logarithm of <var class="var">op</var> respectively,
+rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+The principal branch is chosen, with the branch cut on the negative real axis,
+so that the imaginary part of the result lies in
+]-Pi , Pi]
+,
+]-Pi/log(2) , Pi/log(2)]
+and
+]-Pi/log(10) , Pi/log(10)]
+respectively.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005frootofunity"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_rootofunity</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, unsigned long int <var class="var">n</var>, unsigned long int <var class="var">k</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005frootofunity"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the standard primitive <var class="var">n</var>-th root of unity raised to the power <var class="var">k</var>, that is,
+<em class="math">exp (2 Pi i k / n)</em>,
+rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fagm"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_agm</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">a</var>, const mpc_t <var class="var">b</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fagm"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the arithmetic-geometric mean (AGM) of <var class="var">a</var> and
+<var class="var">b</var>, rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+Concerning the branch cut, the function is computed by homogeneity either
+as <var class="var">a</var> AGM(1,b0) with b0=<var class="var">b</var>/<var class="var">a</var> if |<var class="var">a</var>|&gt;=|<var class="var">b</var>|,
+or as <var class="var">b</var> AGM(1,b0) with b0=<var class="var">a</var>/<var class="var">b</var> otherwise;
+then when b0 is real and negative, AGM(1,b0) is chosen to have positive
+imaginary part.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Trigonometric-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Modular-Functions" accesskey="n" rel="next">Modular Functions</a>, Previous: <a href="#Power-Functions-and-Logarithm" accesskey="p" rel="prev">Power Functions and Logarithm</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Trigonometric-Functions-1"><span>5.9 Trigonometric Functions<a class="copiable-link" href="#Trigonometric-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Trigonometric-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fsin"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sin</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsin"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fcos"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_cos</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fcos"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005ftan"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_tan</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005ftan"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the sine, cosine, tangent of <var class="var">op</var>,
+rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fsin_005fcos"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sin_cos</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop_sin</var>, mpc_t <var class="var">rop_cos</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd_sin</var>, mpc_rnd_t <var class="var">rnd_cos</var>)</code><a class="copiable-link" href="#index-mpc_005fsin_005fcos"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop_sin</var> to the sine of <var class="var">op</var>,
+rounded according to <var class="var">rnd_sin</var> with the precision of <var class="var">rop_sin</var>,
+and <var class="var">rop_cos</var> to the cosine of <var class="var">op</var>,
+rounded according to <var class="var">rnd_cos</var> with the precision of <var class="var">rop_cos</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fsinh"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_sinh</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fsinh"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fcosh"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_cosh</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fcosh"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005ftanh"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_tanh</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005ftanh"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the hyperbolic sine, hyperbolic cosine, hyperbolic tangent of <var class="var">op</var>,
+rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fasin"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_asin</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fasin"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005facos"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_acos</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005facos"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fatan"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_atan</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fatan"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the inverse sine, inverse cosine, inverse tangent of <var class="var">op</var>,
+rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fasinh"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_asinh</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fasinh"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005facosh"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_acosh</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005facosh"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpc_005fatanh"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_atanh</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005fatanh"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the inverse hyperbolic sine, inverse hyperbolic cosine,
+inverse hyperbolic tangent of <var class="var">op</var>,
+rounded according to <var class="var">rnd</var> with the precision of <var class="var">rop</var>.
+The branch cut of <code class="code">mpc_acosh</code> is
+(-Inf, 1)
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Modular-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Miscellaneous-Complex-Functions" accesskey="n" rel="next">Miscellaneous Functions</a>, Previous: <a href="#Trigonometric-Functions" accesskey="p" rel="prev">Trigonometric Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Modular-Functions-1"><span>5.10 Modular Functions<a class="copiable-link" href="#Modular-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Modular-functions"></a>
+<p>The following function is experimental, not least because it depends on
+the equally experimental ball arithmetic, see <a class="ref" href="constant.Ball_Arithmetic.html#start">Ball Arithmetic</a>.
+So its prototype may change in future releases, and it may be removed
+altogether.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005feta_005ffund"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_eta_fund</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, const mpc_t <var class="var">op</var>, mpc_rnd_t <var class="var">rnd</var>)</code><a class="copiable-link" href="#index-mpc_005feta_005ffund"> &para;</a></span></dt>
+<dd><p>Assuming that the argument <var class="var">op</var> lies in the fundamental domain for
+<em class="math">Sl_2(Z)</em>, that is, it has real part not below <em class="math">-1/2</em> and
+not above <em class="math">+1/2</em> and absolute value at least 1,
+return the value of the Dedekind eta-function in <var class="var">rop</var>.
+For arguments outside the fundamental domain the function is expected to
+loop indefinitely.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Miscellaneous-Complex-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Advanced-Functions" accesskey="n" rel="next">Advanced Functions</a>, Previous: <a href="#Modular-Functions" accesskey="p" rel="prev">Modular Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Miscellaneous-Functions"><span>5.11 Miscellaneous Functions<a class="copiable-link" href="#Miscellaneous-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Miscellaneous-complex-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005furandom"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpc_urandom</strong> <code class="def-code-arguments">(mpc_t <var class="var">rop</var>, gmp_randstate_t <var class="var">state</var>)</code><a class="copiable-link" href="#index-mpc_005furandom"> &para;</a></span></dt>
+<dd><p>Generate a uniformly distributed random complex in the unit square <em class="math">[0,
+1] x [0, 1]</em>. Return 0, unless an exponent in the real or imaginary part
+is not in the current exponent range, in which case that part is set to NaN
+and a zero value is returned. The second argument is a <code class="code">gmp_randstate_t</code>
+structure which should be created using the GMP <code class="code">rand_init</code> function, see
+the GMP manual.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpc_005fget_005fversion"><span class="category-def">Function: </span><span><code class="def-type">const char *</code> <strong class="def-name">mpc_get_version</strong> <code class="def-code-arguments">(void)</code><a class="copiable-link" href="#index-mpc_005fget_005fversion"> &para;</a></span></dt>
+<dd><p>Return the GNU MPC version, as a null-terminated string.
+</p></dd></dl>
+<dl class="first-deffn first-defmac-alias-first-deffn def-block">
+<dt class="deffn defmac-alias-deffn def-line" id="index-MPC_005fVERSION"><span class="category-def">Macro: </span><span><strong class="def-name">MPC_VERSION</strong><a class="copiable-link" href="#index-MPC_005fVERSION"> &para;</a></span></dt>
+<dt class="deffnx defmacx-alias-deffnx def-cmd-deffn def-line" id="index-MPC_005fVERSION_005fMAJOR"><span class="category-def">Macro: </span><span><strong class="def-name">MPC_VERSION_MAJOR</strong><a class="copiable-link" href="#index-MPC_005fVERSION_005fMAJOR"> &para;</a></span></dt>
+<dt class="deffnx defmacx-alias-deffnx def-cmd-deffn def-line" id="index-MPC_005fVERSION_005fMINOR"><span class="category-def">Macro: </span><span><strong class="def-name">MPC_VERSION_MINOR</strong><a class="copiable-link" href="#index-MPC_005fVERSION_005fMINOR"> &para;</a></span></dt>
+<dt class="deffnx defmacx-alias-deffnx def-cmd-deffn def-line" id="index-MPC_005fVERSION_005fPATCHLEVEL"><span class="category-def">Macro: </span><span><strong class="def-name">MPC_VERSION_PATCHLEVEL</strong><a class="copiable-link" href="#index-MPC_005fVERSION_005fPATCHLEVEL"> &para;</a></span></dt>
+<dt class="deffnx defmacx-alias-deffnx def-cmd-deffn def-line" id="index-MPC_005fVERSION_005fSTRING"><span class="category-def">Macro: </span><span><strong class="def-name">MPC_VERSION_STRING</strong><a class="copiable-link" href="#index-MPC_005fVERSION_005fSTRING"> &para;</a></span></dt>
+<dd><p><code class="code">MPC_VERSION</code> is the version of GNU MPC as a preprocessing constant.
+<code class="code">MPC_VERSION_MAJOR</code>, <code class="code">MPC_VERSION_MINOR</code> and
+<code class="code">MPC_VERSION_PATCHLEVEL</code> are respectively the major, minor and
+patch level of GNU MPC version, as preprocessing constants.
+<code class="code">MPC_VERSION_STRING</code> is the version as a string constant, which
+can be compared to the result of <code class="code">mpc_get_version</code> to check at
+run time the header file and library used match:
+</p><div class="example">
+<pre class="example-preformatted">if (strcmp (mpc_get_version (), MPC_VERSION_STRING))
+  fprintf (stderr, &quot;Warning: header and library do not match\n&quot;);
+</pre></div>
+<p>Note: Obtaining different strings is not necessarily an error, as in
+general, a program compiled with some old GNU MPC version can be
+dynamically linked with a newer GNU MPC library version (if allowed by the
+library versioning system).
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-MPC_005fVERSION_005fNUM"><span class="category-def">Macro: </span><span><code class="def-type">long</code> <strong class="def-name">MPC_VERSION_NUM</strong> <code class="def-code-arguments">(<var class="var">major</var>, <var class="var">minor</var>, <var class="var">patchlevel</var>)</code><a class="copiable-link" href="#index-MPC_005fVERSION_005fNUM"> &para;</a></span></dt>
+<dd><p>Create an integer in the same format as used by <code class="code">MPC_VERSION</code> from the
+given <var class="var">major</var>, <var class="var">minor</var> and <var class="var">patchlevel</var>.
+Here is an example of how to check the GNU MPC version at compile time:
+</p><div class="example">
+<pre class="example-preformatted">#if (!defined(MPC_VERSION) || (MPC_VERSION&lt;MPC_VERSION_NUM(2,1,0)))
+# error &quot;Wrong GNU MPC version.&quot;
+#endif
+</pre></div>
+</dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Advanced-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Internals" accesskey="n" rel="next">Internals</a>, Previous: <a href="#Miscellaneous-Complex-Functions" accesskey="p" rel="prev">Miscellaneous Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Advanced-Functions-1"><span>5.12 Advanced Functions<a class="copiable-link" href="#Advanced-Functions-1"> &para;</a></span></h3>
+<dl class="first-deffn first-defmac-alias-first-deffn def-block">
+<dt class="deffn defmac-alias-deffn def-line" id="index-MPC_005fSET_005fX_005fY"><span class="category-def">Macro: </span><span><strong class="def-name">MPC_SET_X_Y</strong> <var class="def-var-arguments">(<var class="var">real_suffix</var>, <var class="var">imag_suffix</var>, <var class="var">rop</var>, <var class="var">real</var>, <var class="var">imag</var>, <var class="var">rnd</var>)</var><a class="copiable-link" href="#index-MPC_005fSET_005fX_005fY"> &para;</a></span></dt>
+<dd><p>The macro MPC_SET_X_Y is designed to serve as the body of an assignment
+function and cannot be used by itself.
+The <var class="var">real_suffix</var> and <var class="var">imag_suffix</var> parameters are the
+types of the real and imaginary part, that is, the <code class="code">x</code> in the
+<code class="code">mpfr_set_x</code> function one would use to set the part;
+for the mpfr type, use <code class="code">fr</code>.
+<var class="var">real</var> (respectively <var class="var">imag</var>) is the value you want to assign to the
+real (resp. imaginary) part, its type must conform to <var class="var">real_suffix</var>
+(resp. <var class="var">imag_suffix</var>).
+<var class="var">rnd</var> is the <code class="code">mpc_rnd_t</code> rounding mode.
+The return value is the usual inexact value (see <a class="pxref" href="constant.GNU_MPC_Basics.html#return_002dvalue">Return
+Value</a>).
+</p>
+<p>For instance, you can define mpc_set_ui_fr as follows:
+</p><div class="example">
+<pre class="example-preformatted">int mpc_set_ui_fr (mpc_t rop, unsigned long int re, mpfr_t im, mpc_rnd_t rnd)
+    MPC_SET_X_Y (ui, fr, rop, re, im, rnd);
+</pre></div>
+</dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Internals">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Advanced-Functions" accesskey="p" rel="prev">Advanced Functions</a>, Up: <a href="#Complex-Functions" accesskey="u" rel="up">Complex Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Internals-1"><span>5.13 Internals<a class="copiable-link" href="#Internals-1"> &para;</a></span></h3>
+<p>These macros and
+functions are mainly designed for the implementation of GNU MPC,
+but may be useful for users too.
+However, no upward compatibility is guaranteed.
+You need to include <code class="code">mpc-impl.h</code> to use them.
+</p>
+<p>The macro <code class="code">MPC_MAX_PREC(z)</code> gives the maximum of the precisions
+of the real and imaginary parts of a complex number.
+</p>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Ball_Arithmetic.html#start" accesskey="n" rel="next">Ball Arithmetic</a>, Previous: <a href="constant.GNU_MPC_Basics.html#GNU-MPC-Basics" accesskey="p" rel="prev">GNU MPC Basics</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MPC</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

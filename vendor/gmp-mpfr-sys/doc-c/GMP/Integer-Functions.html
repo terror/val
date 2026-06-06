@@ -1,0 +1,1297 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="Integer-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Rational_Number_Functions.html#Rational-Number-Functions" accesskey="n" rel="next">Rational Number Functions</a>, Previous: <a href="constant.Reporting_Bugs.html#start" accesskey="p" rel="prev">Reporting Bugs</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Integer-Functions-1"><span>5 Integer Functions<a class="copiable-link" href="#Integer-Functions-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Integer-functions"></a>
+<p>This chapter describes the GMP functions for performing integer arithmetic.
+These functions start with the prefix <code class="code">mpz_</code>.
+</p>
+<p>GMP integers are stored in objects of type <code class="code">mpz_t</code>.
+</p>
+<ul class="mini-toc">
+<li><a href="#Initializing-Integers" accesskey="1">Initialization Functions</a></li>
+<li><a href="#Assigning-Integers" accesskey="2">Assignment Functions</a></li>
+<li><a href="#Simultaneous-Integer-Init-_0026-Assign" accesskey="3">Combined Initialization and Assignment Functions</a></li>
+<li><a href="#Converting-Integers" accesskey="4">Conversion Functions</a></li>
+<li><a href="#Integer-Arithmetic" accesskey="5">Arithmetic Functions</a></li>
+<li><a href="#Integer-Division" accesskey="6">Division Functions</a></li>
+<li><a href="#Integer-Exponentiation" accesskey="7">Exponentiation Functions</a></li>
+<li><a href="#Integer-Roots" accesskey="8">Root Extraction Functions</a></li>
+<li><a href="#Number-Theoretic-Functions" accesskey="9">Number Theoretic Functions</a></li>
+<li><a href="#Integer-Comparisons">Comparison Functions</a></li>
+<li><a href="#Integer-Logic-and-Bit-Fiddling">Logical and Bit Manipulation Functions</a></li>
+<li><a href="#I_002fO-of-Integers">Input and Output Functions</a></li>
+<li><a href="#Integer-Random-Numbers">Random Number Functions</a></li>
+<li><a href="#Integer-Import-and-Export">Integer Import and Export</a></li>
+<li><a href="#Miscellaneous-Integer-Functions">Miscellaneous Functions</a></li>
+<li><a href="#Integer-Special-Functions">Special Functions</a></li>
+</ul>
+<hr>
+<div class="section-level-extent" id="Initializing-Integers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assigning-Integers" accesskey="n" rel="next">Assignment Functions</a>, Previous: <a href="#Integer-Functions" accesskey="p" rel="prev">Integer Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Initialization-Functions"><span>5.1 Initialization Functions<a class="copiable-link" href="#Initialization-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-initialization-functions"></a>
+<a class="index-entry-id" id="index-Initialization-functions"></a>
+<p>The functions for integer arithmetic assume that all integer objects are
+initialized.  You do that by calling the function <code class="code">mpz_init</code>.  For
+example,
+</p>
+<div class="example">
+<pre class="example-preformatted">{
+  mpz_t integ;
+  mpz_init (integ);
+  ...
+  mpz_add (integ, ...);
+  ...
+  mpz_sub (integ, ...);
+  /* Unless the program is about to exit, do ... */
+  mpz_clear (integ);
+}
+</pre></div>
+<p>As you can see, you can store new values any number of times, once an
+object is initialized.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_init</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpz_005finit"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">x</var>, and set its value to 0.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finits"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_inits</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, ...)</code><a class="copiable-link" href="#index-mpz_005finits"> &para;</a></span></dt>
+<dd><p>Initialize a NULL-terminated list of <code class="code">mpz_t</code> variables, and set their
+values to 0.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finit2"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_init2</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, mp_bitcnt_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005finit2"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">x</var>, with space for <var class="var">n</var>-bit numbers, and set its value to 0.
+Calling this function instead of <code class="code">mpz_init</code> or <code class="code">mpz_inits</code> is never
+necessary; reallocation is handled automatically by GMP when needed.
+</p>
+<p>While <var class="var">n</var> defines the initial space, <var class="var">x</var> will grow automatically in the
+normal way, if necessary, for subsequent values stored.  <code class="code">mpz_init2</code> makes
+it possible to avoid such reallocations if a maximum size is known in advance.
+</p>
+<p>In preparation for an operation, GMP often allocates one limb more than
+ultimately needed.  To make sure GMP will not perform reallocation for
+<var class="var">x</var>, you need to add the number of bits in <code class="code">mp_limb_t</code> to <var class="var">n</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fclear"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_clear</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpz_005fclear"> &para;</a></span></dt>
+<dd><p>Free the space occupied by <var class="var">x</var>.  Call this function for all <code class="code">mpz_t</code>
+variables when you are done with them.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fclears"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_clears</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, ...)</code><a class="copiable-link" href="#index-mpz_005fclears"> &para;</a></span></dt>
+<dd><p>Free the space occupied by a NULL-terminated list of <code class="code">mpz_t</code> variables.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005frealloc2"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_realloc2</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, mp_bitcnt_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005frealloc2"> &para;</a></span></dt>
+<dd><p>Change the space allocated for <var class="var">x</var> to <var class="var">n</var> bits.  The value in <var class="var">x</var>
+is preserved if it fits, or is set to 0 if not.
+</p>
+<p>Calling this function is never necessary; reallocation is handled automatically
+by GMP when needed.  But this function can be used to increase the space for a
+variable in order to avoid repeated automatic reallocations, or to decrease it
+to give memory back to the heap.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Assigning-Integers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Simultaneous-Integer-Init-_0026-Assign" accesskey="n" rel="next">Combined Initialization and Assignment Functions</a>, Previous: <a href="#Initializing-Integers" accesskey="p" rel="prev">Initialization Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Assignment-Functions"><span>5.2 Assignment Functions<a class="copiable-link" href="#Assignment-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-assignment-functions"></a>
+<a class="index-entry-id" id="index-Assignment-functions"></a>
+<p>These functions assign new values to already initialized integers
+(see <a class="pxref" href="#Initializing-Integers">Initialization Functions</a>).
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fset"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_set</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fset"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fset_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_set_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fset_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fset_005fsi"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_set_si</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, signed long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fset_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fset_005fd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_set_d</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, double <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fset_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fset_005fq"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_set_q</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fset_005fq"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fset_005ff"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_set_f</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fset_005ff"> &para;</a></span></dt>
+<dd><p>Set the value of <var class="var">rop</var> from <var class="var">op</var>.
+</p>
+<p><code class="code">mpz_set_d</code>, <code class="code">mpz_set_q</code> and <code class="code">mpz_set_f</code> truncate <var class="var">op</var> to
+make it an integer.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fset_005fstr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_set_str</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const char *<var class="var">str</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpz_005fset_005fstr"> &para;</a></span></dt>
+<dd><p>Set the value of <var class="var">rop</var> from <var class="var">str</var>, a null-terminated C string in base
+<var class="var">base</var>.  White space is allowed in the string, and is simply ignored.
+</p>
+<p>The <var class="var">base</var> may vary from 2 to 62, or if <var class="var">base</var> is 0, then the leading
+characters are used: <code class="code">0x</code> and <code class="code">0X</code> for hexadecimal, <code class="code">0b</code> and
+<code class="code">0B</code> for binary, <code class="code">0</code> for octal, or decimal otherwise.
+</p>
+<p>For bases up to 36, case is ignored; upper-case and lower-case letters have
+the same value.  For bases 37 to 62, upper-case letters represent the usual
+10..35 while lower-case letters represent 36..61.
+</p>
+<p>This function returns 0 if the entire string is a valid number in base
+<var class="var">base</var>.  Otherwise it returns &minus;1.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fswap"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_swap</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop1</var>, mpz_t <var class="var">rop2</var>)</code><a class="copiable-link" href="#index-mpz_005fswap"> &para;</a></span></dt>
+<dd><p>Swap the values <var class="var">rop1</var> and <var class="var">rop2</var> efficiently.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Simultaneous-Integer-Init-_0026-Assign">
+<div class="nav-panel">
+<p>
+Next: <a href="#Converting-Integers" accesskey="n" rel="next">Conversion Functions</a>, Previous: <a href="#Assigning-Integers" accesskey="p" rel="prev">Assignment Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Combined-Initialization-and-Assignment-Functions"><span>5.3 Combined Initialization and Assignment Functions<a class="copiable-link" href="#Combined-Initialization-and-Assignment-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-assignment-functions-1"></a>
+<a class="index-entry-id" id="index-Assignment-functions-1"></a>
+<a class="index-entry-id" id="index-Integer-initialization-functions-1"></a>
+<a class="index-entry-id" id="index-Initialization-functions-1"></a>
+<p>For convenience, GMP provides a parallel series of initialize-and-set functions
+which initialize the output and then store the value there.  These functions&rsquo;
+names have the form <code class="code">mpz_init_set&hellip;</code>
+</p>
+<p>Here is an example of using one:
+</p>
+<div class="example">
+<pre class="example-preformatted">{
+  mpz_t pie;
+  mpz_init_set_str (pie, &quot;3141592653589793238462643383279502884&quot;, 10);
+  ...
+  mpz_sub (pie, ...);
+  ...
+  mpz_clear (pie);
+}
+</pre></div>
+<p>Once the integer has been initialized by any of the <code class="code">mpz_init_set&hellip;</code>
+functions, it can be used as the source or destination operand for the ordinary
+integer functions.  Don&rsquo;t use an initialize-and-set function on a variable
+already initialized!
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finit_005fset"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_init_set</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005finit_005fset"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005finit_005fset_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_init_set_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005finit_005fset_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005finit_005fset_005fsi"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_init_set_si</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, signed long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005finit_005fset_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005finit_005fset_005fd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_init_set_d</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, double <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005finit_005fset_005fd"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">rop</var> with limb space and set the initial numeric value from
+<var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finit_005fset_005fstr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_init_set_str</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const char *<var class="var">str</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpz_005finit_005fset_005fstr"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">rop</var> and set its value like <code class="code">mpz_set_str</code> (see its
+documentation above for details).
+</p>
+<p>If the string is a correct base <var class="var">base</var> number, the function returns 0;
+if an error occurs it returns &minus;1.  <var class="var">rop</var> is initialized even if
+an error occurs.  (I.e., you have to call <code class="code">mpz_clear</code> for it.)
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Converting-Integers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Arithmetic" accesskey="n" rel="next">Arithmetic Functions</a>, Previous: <a href="#Simultaneous-Integer-Init-_0026-Assign" accesskey="p" rel="prev">Combined Initialization and Assignment Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Conversion-Functions"><span>5.4 Conversion Functions<a class="copiable-link" href="#Conversion-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-conversion-functions"></a>
+<a class="index-entry-id" id="index-Conversion-functions"></a>
+<p>This section describes functions for converting GMP integers to standard C
+types.  Functions for converting <em class="emph">to</em> GMP integers are described in
+<a class="ref" href="#Assigning-Integers">Assignment Functions</a> and <a class="ref" href="#I_002fO-of-Integers">Input and Output Functions</a>.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fget_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_get_ui</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fget_005fui"> &para;</a></span></dt>
+<dd><p>Return the value of <var class="var">op</var> as an <code class="code">unsigned long</code>.
+</p>
+<p>If <var class="var">op</var> is too big to fit an <code class="code">unsigned long</code> then just the least
+significant bits that do fit are returned.  The sign of <var class="var">op</var> is ignored,
+only the absolute value is used.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fget_005fsi"><span class="category-def">Function: </span><span><code class="def-type">signed long int</code> <strong class="def-name">mpz_get_si</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fget_005fsi"> &para;</a></span></dt>
+<dd><p>If <var class="var">op</var> fits into a <code class="code">signed long int</code> return the value of <var class="var">op</var>.
+Otherwise return the least significant part of <var class="var">op</var>, with the same sign
+as <var class="var">op</var>.
+</p>
+<p>If <var class="var">op</var> is too big to fit in a <code class="code">signed long int</code>, the returned
+result is probably not very useful.  To find out if the value will fit, use
+the function <code class="code">mpz_fits_slong_p</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fget_005fd"><span class="category-def">Function: </span><span><code class="def-type">double</code> <strong class="def-name">mpz_get_d</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fget_005fd"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a <code class="code">double</code>, truncating if necessary (i.e. rounding
+towards zero).
+</p>
+<p>If the exponent from the conversion is too big, the result is system
+dependent.  An infinity is returned where available.  A hardware overflow trap
+may or may not occur.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fget_005fd_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">double</code> <strong class="def-name">mpz_get_d_2exp</strong> <code class="def-code-arguments">(signed long int *<var class="var">exp</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fget_005fd_005f2exp"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a <code class="code">double</code>, truncating if necessary (i.e. rounding
+towards zero), and returning the exponent separately.
+</p>
+<p>The return value is in the range <em class="math">0.5&lt;=abs(<var class="var">d</var>)&lt;1</em> and the
+exponent is stored to <code class="code">*<var class="var">exp</var></code>.  <em class="math"><var class="var">d</var> *
+2^<var class="var">exp</var></em> is the (truncated) <var class="var">op</var> value.  If <var class="var">op</var> is zero, the
+return is <em class="math">0.0</em> and 0 is stored to <code class="code">*<var class="var">exp</var></code>.
+</p>
+<a class="index-entry-id" id="index-frexp"></a>
+<p>This is similar to the standard C <code class="code">frexp</code> function (see <a data-manual="libc" href="https://www.gnu.org/software/libc/manual/html_node/Normalization-Functions.html#Normalization-Functions">Normalization
+Functions</a> in <cite class="cite">The GNU C Library Reference Manual</cite>).
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fget_005fstr"><span class="category-def">Function: </span><span><code class="def-type">char *</code> <strong class="def-name">mpz_get_str</strong> <code class="def-code-arguments">(char *<var class="var">str</var>, int <var class="var">base</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fget_005fstr"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a string of digits in base <var class="var">base</var>.  The base argument
+may vary from 2 to 62 or from &minus;2 to &minus;36.
+</p>
+<p>For <var class="var">base</var> in the range 2..36, digits and lower-case letters are used; for
+&minus;2..&minus;36, digits and upper-case letters are used; for 37..62,
+digits, upper-case letters, and lower-case letters (in that significance order)
+are used.
+</p>
+<p>If <var class="var">str</var> is <code class="code">NULL</code>, the result string is allocated using the current
+allocation function (see <a class="pxref" href="constant.Custom_Allocation.html#start">Custom Allocation</a>).  The block will be
+<code class="code">strlen(str)+1</code> bytes, that being exactly enough for the string and
+null-terminator.
+</p>
+<p>If <var class="var">str</var> is not <code class="code">NULL</code>, it should point to a block of storage large
+enough for the result, that being <code class="code">mpz_sizeinbase (<var class="var">op</var>, <var class="var">base</var>)
++ 2</code>.  The two extra bytes are for a possible minus sign, and the
+null-terminator.
+</p>
+<p>A pointer to the result string is returned, being either the allocated block,
+or the given <var class="var">str</var>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Arithmetic">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Division" accesskey="n" rel="next">Division Functions</a>, Previous: <a href="#Converting-Integers" accesskey="p" rel="prev">Conversion Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Arithmetic-Functions"><span>5.5 Arithmetic Functions<a class="copiable-link" href="#Arithmetic-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-arithmetic-functions"></a>
+<a class="index-entry-id" id="index-Arithmetic-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fadd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_add</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fadd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fadd_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_add_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fadd_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> + <var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fsub"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_sub</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fsub"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fsub_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_sub_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fsub_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fui_005fsub"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_ui_sub</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fui_005fsub"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> &minus; <var class="var">op2</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fmul"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_mul</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fmul"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fmul_005fsi"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_mul_si</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fmul_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fmul_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_mul_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fmul_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> times <var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005faddmul"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_addmul</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005faddmul"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005faddmul_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_addmul_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005faddmul_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">rop</var> + <var class="var">op1</var> times <var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fsubmul"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_submul</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fsubmul"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fsubmul_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_submul_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fsubmul_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">rop</var> - <var class="var">op1</var> times <var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fmul_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_mul_2exp</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, mp_bitcnt_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fmul_005f2exp"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Bit-shift-left"></a>
+<p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> times 2 raised to
+<var class="var">op2</var></em>.  This operation can also be defined as a left shift by <var class="var">op2</var>
+bits.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fneg"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_neg</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fneg"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to &minus;<var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fabs"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_abs</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fabs"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the absolute value of <var class="var">op</var>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Division">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Exponentiation" accesskey="n" rel="next">Exponentiation Functions</a>, Previous: <a href="#Integer-Arithmetic" accesskey="p" rel="prev">Arithmetic Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Division-Functions"><span>5.6 Division Functions<a class="copiable-link" href="#Division-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-division-functions"></a>
+<a class="index-entry-id" id="index-Division-functions"></a>
+<p>Division is undefined if the divisor is zero.  Passing a zero divisor to the
+division or modulo functions (including the modular powering functions
+<code class="code">mpz_powm</code> and <code class="code">mpz_powm_ui</code>) will cause an intentional division by
+zero.  This lets a program handle arithmetic exceptions in these functions the
+same way as for normal C <code class="code">int</code> arithmetic.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fcdiv_005fq"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_cdiv_q</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fq"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_cdiv_r</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fqr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_cdiv_qr</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fqr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fq_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_cdiv_q_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fq_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fr_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_cdiv_r_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fr_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fqr_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_cdiv_qr_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, mpz_t <var class="var">r</var>, const&nbsp;mpz_t&nbsp;<var class="var">n</var><!-- /@w -->, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fqr_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_cdiv_ui</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fq_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_cdiv_q_2exp</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, mp_bitcnt_t&nbsp;<var class="var">b</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fq_005f2exp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcdiv_005fr_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_cdiv_r_2exp</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, mp_bitcnt_t&nbsp;<var class="var">b</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fcdiv_005fr_005f2exp"> &para;</a></span></dt>
+</dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005ffdiv_005fq"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fdiv_q</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fq"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fdiv_r</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fqr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fdiv_qr</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fqr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fq_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_fdiv_q_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fq_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fr_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_fdiv_r_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fr_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fqr_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_fdiv_qr_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, mpz_t <var class="var">r</var>, const&nbsp;mpz_t&nbsp;<var class="var">n</var><!-- /@w -->, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fqr_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_fdiv_ui</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fq_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fdiv_q_2exp</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, mp_bitcnt_t&nbsp;<var class="var">b</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fq_005f2exp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffdiv_005fr_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fdiv_r_2exp</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, mp_bitcnt_t&nbsp;<var class="var">b</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ffdiv_005fr_005f2exp"> &para;</a></span></dt>
+</dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005ftdiv_005fq"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_tdiv_q</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fq"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_tdiv_r</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fqr"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_tdiv_qr</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fqr"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fq_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_tdiv_q_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fq_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fr_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_tdiv_r_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fr_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fqr_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_tdiv_qr_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, mpz_t <var class="var">r</var>, const&nbsp;mpz_t&nbsp;<var class="var">n</var><!-- /@w -->, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fqr_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_tdiv_ui</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fq_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_tdiv_q_2exp</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, mp_bitcnt_t&nbsp;<var class="var">b</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fq_005f2exp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ftdiv_005fr_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_tdiv_r_2exp</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, mp_bitcnt_t&nbsp;<var class="var">b</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005ftdiv_005fr_005f2exp"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Bit-shift-right"></a>
+<br>
+<p>Divide <var class="var">n</var> by <var class="var">d</var>, forming a quotient <var class="var">q</var> and/or remainder
+<var class="var">r</var>.  For the <code class="code">2exp</code> functions, <em class="math"><var class="var">d</var>=2^<var class="var">b</var></em>.
+The rounding is in three styles, each suiting different applications.
+</p>
+<ul class="itemize mark-bullet">
+<li><code class="code">cdiv</code> rounds <var class="var">q</var> up towards <em class="math">+infinity</em>, and <var class="var">r</var> will
+have the opposite sign to <var class="var">d</var>.  The <code class="code">c</code> stands for &ldquo;ceil&rdquo;.
+</li><li><code class="code">fdiv</code> rounds <var class="var">q</var> down towards <em class="math">&minus;infinity</em>, and
+<var class="var">r</var> will have the same sign as <var class="var">d</var>.  The <code class="code">f</code> stands for
+&ldquo;floor&rdquo;.
+</li><li><code class="code">tdiv</code> rounds <var class="var">q</var> towards zero, and <var class="var">r</var> will have the same sign
+as <var class="var">n</var>.  The <code class="code">t</code> stands for &ldquo;truncate&rdquo;.
+</li></ul>
+<p>In all cases <var class="var">q</var> and <var class="var">r</var> will satisfy
+<em class="math"><var class="var">n</var>=<var class="var">q</var>*<var class="var">d</var>+<var class="var">r</var></em>, and
+<var class="var">r</var> will satisfy <em class="math">0&lt;=abs(<var class="var">r</var>)&lt;abs(<var class="var">d</var>)</em>.
+</p>
+<p>The <code class="code">q</code> functions calculate only the quotient, the <code class="code">r</code> functions
+only the remainder, and the <code class="code">qr</code> functions calculate both.  Note that for
+<code class="code">qr</code> the same variable cannot be passed for both <var class="var">q</var> and <var class="var">r</var>, or
+results will be unpredictable.
+</p>
+<p>For the <code class="code">ui</code> variants the return value is the remainder, and in fact
+returning the remainder is all the <code class="code">div_ui</code> functions do.  For
+<code class="code">tdiv</code> and <code class="code">cdiv</code> the remainder can be negative, so for those the
+return value is the absolute value of the remainder.
+</p>
+<p>For the <code class="code">2exp</code> variants the divisor is <em class="math">2^<var class="var">b</var></em>.  These
+functions are implemented as right shifts and bit masks, but of course they
+round the same as the other functions.
+</p>
+<p>For positive <var class="var">n</var> both <code class="code">mpz_fdiv_q_2exp</code> and <code class="code">mpz_tdiv_q_2exp</code>
+are simple bitwise right shifts.  For negative <var class="var">n</var>, <code class="code">mpz_fdiv_q_2exp</code>
+is effectively an arithmetic right shift treating <var class="var">n</var> as two&rsquo;s complement
+the same as the bitwise logical functions do, whereas <code class="code">mpz_tdiv_q_2exp</code>
+effectively treats <var class="var">n</var> as sign and magnitude.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fmod"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_mod</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fmod"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fmod_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_mod_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">r</var>, const mpz_t <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">d</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fmod_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">r</var> to <var class="var">n</var> <code class="code">mod</code> <var class="var">d</var>.  The sign of the divisor is
+ignored; the result is always non-negative.
+</p>
+<p><code class="code">mpz_mod_ui</code> is identical to <code class="code">mpz_fdiv_r_ui</code> above, returning the
+remainder as well as setting <var class="var">r</var>.  See <code class="code">mpz_fdiv_ui</code> above if only
+the return value is wanted.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fdivexact"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_divexact</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fdivexact"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fdivexact_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_divexact_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">q</var>, const mpz_t <var class="var">n</var>, unsigned long <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fdivexact_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Exact-division-functions"></a>
+<p>Set <var class="var">q</var> to <var class="var">n</var>/<var class="var">d</var>.  These functions produce correct results only
+when it is known in advance that <var class="var">d</var> divides <var class="var">n</var>.
+</p>
+<p>These routines are much faster than the other division functions, and are the
+best choice when exact division is known to occur, for example reducing a
+rational to lowest terms.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fdivisible_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_divisible_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fdivisible_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fdivisible_005fui_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_divisible_ui_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, unsigned long int <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fdivisible_005fui_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fdivisible_005f2exp_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_divisible_2exp_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, mp_bitcnt_t <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fdivisible_005f2exp_005fp"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Divisibility-functions"></a>
+<p>Return non-zero if <var class="var">n</var> is exactly divisible by <var class="var">d</var>, or in the case of
+<code class="code">mpz_divisible_2exp_p</code> by <em class="math">2^<var class="var">b</var></em>.
+</p>
+<p><var class="var">n</var> is divisible by <var class="var">d</var> if there exists an integer <var class="var">q</var> satisfying
+<em class="math"><var class="var">n</var> = <var class="var">q</var>*<var class="var">d</var></em>.  Unlike the other division
+functions, <em class="math"><var class="var">d</var>=0</em> is accepted and following the rule it can be seen
+that only 0 is considered divisible by 0.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fcongruent_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_congruent_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, const mpz_t <var class="var">c</var>, const mpz_t <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fcongruent_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcongruent_005fui_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_congruent_ui_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, unsigned long int <var class="var">c</var>, unsigned long int <var class="var">d</var>)</code><a class="copiable-link" href="#index-mpz_005fcongruent_005fui_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcongruent_005f2exp_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_congruent_2exp_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, const mpz_t <var class="var">c</var>, mp_bitcnt_t <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fcongruent_005f2exp_005fp"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Divisibility-functions-1"></a>
+<a class="index-entry-id" id="index-Congruence-functions"></a>
+<p>Return non-zero if <var class="var">n</var> is congruent to <var class="var">c</var> modulo <var class="var">d</var>, or in the
+case of <code class="code">mpz_congruent_2exp_p</code> modulo <em class="math">2^<var class="var">b</var></em>.
+</p>
+<p><var class="var">n</var> is congruent to <var class="var">c</var> mod <var class="var">d</var> if there exists an integer <var class="var">q</var>
+satisfying <em class="math"><var class="var">n</var> = <var class="var">c</var> + <var class="var">q</var>*<var class="var">d</var></em>.  Unlike
+the other division functions, <em class="math"><var class="var">d</var>=0</em> is accepted and following the
+rule it can be seen that <var class="var">n</var> and <var class="var">c</var> are considered congruent mod 0
+only when exactly equal.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Exponentiation">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Roots" accesskey="n" rel="next">Root Extraction Functions</a>, Previous: <a href="#Integer-Division" accesskey="p" rel="prev">Division Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Exponentiation-Functions"><span>5.7 Exponentiation Functions<a class="copiable-link" href="#Exponentiation-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-exponentiation-functions"></a>
+<a class="index-entry-id" id="index-Exponentiation-functions"></a>
+<a class="index-entry-id" id="index-Powering-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fpowm"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_powm</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">base</var>, const mpz_t <var class="var">exp</var>, const mpz_t <var class="var">mod</var>)</code><a class="copiable-link" href="#index-mpz_005fpowm"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fpowm_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_powm_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">base</var>, unsigned long int <var class="var">exp</var>, const mpz_t <var class="var">mod</var>)</code><a class="copiable-link" href="#index-mpz_005fpowm_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math">(<var class="var">base</var> raised to <var class="var">exp</var>)
+modulo <var class="var">mod</var></em>.
+</p>
+<p>Negative <var class="var">exp</var> is supported if the inverse <em class="math"><var class="var">base</var><sup class="sup">-1</sup> mod
+<var class="var">mod</var></em> exists (see <code class="code">mpz_invert</code> in
+<a class="ref" href="#Number-Theoretic-Functions">Number Theoretic Functions</a>).  If an inverse doesn&rsquo;t exist then a divide
+by zero is raised.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fpowm_005fsec"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_powm_sec</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">base</var>, const mpz_t <var class="var">exp</var>, const mpz_t <var class="var">mod</var>)</code><a class="copiable-link" href="#index-mpz_005fpowm_005fsec"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math">(<var class="var">base</var> raised to <var class="var">exp</var>)
+modulo <var class="var">mod</var></em>.
+</p>
+<p>It is required that <em class="math"><var class="var">exp</var> &gt; 0</em> and that <var class="var">mod</var> is odd.
+</p>
+<p>This function is designed to take the same time and have the same cache access
+patterns for any two same-size arguments, assuming that function arguments are
+placed at the same position and that the machine state is identical upon
+function entry.  This function is intended for cryptographic purposes, where
+resilience to side-channel attacks is desired.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fpow_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_pow_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">base</var>, unsigned long int <var class="var">exp</var>)</code><a class="copiable-link" href="#index-mpz_005fpow_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fui_005fpow_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_ui_pow_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">base</var>, unsigned long int <var class="var">exp</var>)</code><a class="copiable-link" href="#index-mpz_005fui_005fpow_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">base</var> raised to <var class="var">exp</var></em>.  The case
+<em class="math">0^0</em> yields 1.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Roots">
+<div class="nav-panel">
+<p>
+Next: <a href="#Number-Theoretic-Functions" accesskey="n" rel="next">Number Theoretic Functions</a>, Previous: <a href="#Integer-Exponentiation" accesskey="p" rel="prev">Exponentiation Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Root-Extraction-Functions"><span>5.8 Root Extraction Functions<a class="copiable-link" href="#Root-Extraction-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-root-functions"></a>
+<a class="index-entry-id" id="index-Root-extraction-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005froot"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_root</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005froot"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to  the truncated integer
+part of the <var class="var">n</var>th root of <var class="var">op</var>.  Return non-zero if the computation
+was exact, i.e., if <var class="var">op</var> is <var class="var">rop</var> to the <var class="var">n</var>th power.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005frootrem"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_rootrem</strong> <code class="def-code-arguments">(mpz_t <var class="var">root</var>, mpz_t <var class="var">rem</var>, const mpz_t <var class="var">u</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005frootrem"> &para;</a></span></dt>
+<dd><p>Set <var class="var">root</var> to  the truncated
+integer part of the <var class="var">n</var>th root of <var class="var">u</var>.  Set <var class="var">rem</var> to the
+remainder, <em class="math"><var class="var">u</var>&minus;<var class="var">root</var>**<var class="var">n</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fsqrt"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_sqrt</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fsqrt"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to  the truncated
+integer part of the square root of <var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fsqrtrem"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_sqrtrem</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop1</var>, mpz_t <var class="var">rop2</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fsqrtrem"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop1</var> to <em class="math">the truncated integer part
+of the square root of <var class="var">op</var></em>, like <code class="code">mpz_sqrt</code>.  Set <var class="var">rop2</var> to the
+remainder <em class="math"><var class="var">op</var>&minus;<var class="var">rop1</var>*<var class="var">rop1</var></em>, which will be zero if <var class="var">op</var> is a
+perfect square.
+</p>
+<p>If <var class="var">rop1</var> and <var class="var">rop2</var> are the same variable, the results are
+undefined.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fperfect_005fpower_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_perfect_power_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fperfect_005fpower_005fp"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Perfect-power-functions"></a>
+<a class="index-entry-id" id="index-Root-testing-functions"></a>
+<p>Return non-zero if <var class="var">op</var> is a perfect power, i.e., if there exist integers
+<em class="math"><var class="var">a</var></em> and <em class="math"><var class="var">b</var></em>, with <em class="math"><var class="var">b</var>&gt;1</em>, such that
+<em class="math"><var class="var">op</var> equals <var class="var">a</var> raised to the power <var class="var">b</var></em>.
+</p>
+<p>Under this definition both 0 and 1 are considered to be perfect powers.
+Negative values of <var class="var">op</var> are accepted, but of course can only be odd
+perfect powers.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fperfect_005fsquare_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_perfect_square_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fperfect_005fsquare_005fp"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Perfect-square-functions"></a>
+<a class="index-entry-id" id="index-Root-testing-functions-1"></a>
+<p>Return non-zero if <var class="var">op</var> is a perfect square, i.e., if the square root of
+<var class="var">op</var> is an integer.  Under this definition both 0 and 1 are considered to
+be perfect squares.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Number-Theoretic-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Comparisons" accesskey="n" rel="next">Comparison Functions</a>, Previous: <a href="#Integer-Roots" accesskey="p" rel="prev">Root Extraction Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Number-Theoretic-Functions-1"><span>5.9 Number Theoretic Functions<a class="copiable-link" href="#Number-Theoretic-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Number-theoretic-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fprobab_005fprime_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_probab_prime_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">n</var>, int <var class="var">reps</var>)</code><a class="copiable-link" href="#index-mpz_005fprobab_005fprime_005fp"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Prime-testing-functions"></a>
+<a class="index-entry-id" id="index-Probable-prime-testing-functions"></a>
+<p>Determine whether <var class="var">n</var> is prime.  Return 2 if <var class="var">n</var> is definitely prime,
+return 1 if <var class="var">n</var> is probably prime (without being certain), or return 0 if
+<var class="var">n</var> is definitely non-prime.
+</p>
+<p>This function performs some trial divisions, a Baillie-PSW probable prime
+test, then <var class="var">reps-24</var> Miller-Rabin probabilistic primality tests.  A
+higher <var class="var">reps</var> value will reduce the chances of a non-prime being
+identified as &ldquo;probably prime&rdquo;.  A composite number will be identified as a
+prime with an asymptotic probability of less than <em class="math">4^(-<var class="var">reps</var>)</em>.
+Reasonable values of <var class="var">reps</var> are between 15 and 50.
+</p>
+<p>GMP versions up to and including 6.1.2 did not use the Baillie-PSW
+primality test. In those older versions of GMP, this function performed
+<var class="var">reps</var> Miller-Rabin tests.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fnextprime"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_nextprime</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fnextprime"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Next-prime-function"></a>
+<p>Set <var class="var">rop</var> to the next prime greater than <var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fprevprime"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_prevprime</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fprevprime"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Previous-prime-function"></a>
+<p>Set <var class="var">rop</var> to the greatest prime less than <var class="var">op</var>.
+</p>
+<p>If a previous prime doesn&rsquo;t exist (i.e. <var class="var">op</var> &lt; 3), rop is unchanged and
+0 is returned.
+</p>
+<p>Return 1 if <var class="var">rop</var> is a probably prime, and 2 if <var class="var">rop</var> is definitely
+prime.
+</p>
+<p>These functions use a probabilistic algorithm to identify primes.  For
+practical purposes it&rsquo;s adequate, the chance of a composite passing will be
+extremely small.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fgcd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_gcd</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fgcd"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Greatest-common-divisor-functions"></a>
+<a class="index-entry-id" id="index-GCD-functions"></a>
+<p>Set <var class="var">rop</var> to the greatest common divisor of <var class="var">op1</var> and <var class="var">op2</var>.  The
+result is always positive even if one or both input operands are negative.
+Except if both inputs are zero; then this function defines <em class="math">gcd(0,0) = 0</em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fgcd_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long int</code> <strong class="def-name">mpz_gcd_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fgcd_005fui"> &para;</a></span></dt>
+<dd><p>Compute the greatest common divisor of <var class="var">op1</var> and <var class="var">op2</var>.  If
+<var class="var">rop</var> is not <code class="code">NULL</code>, store the result there.
+</p>
+<p>If the result is small enough to fit in an <code class="code">unsigned long int</code>, it is
+returned.  If the result does not fit, 0 is returned, and the result is equal
+to the argument <var class="var">op1</var>.  Note that the result will always fit if <var class="var">op2</var>
+is non-zero.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fgcdext"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_gcdext</strong> <code class="def-code-arguments">(mpz_t <var class="var">g</var>, mpz_t <var class="var">s</var>, mpz_t <var class="var">t</var>, const mpz_t <var class="var">a</var>, const mpz_t <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fgcdext"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Extended-GCD"></a>
+<a class="index-entry-id" id="index-GCD-extended"></a>
+<p>Set <var class="var">g</var> to the greatest common divisor of <var class="var">a</var> and <var class="var">b</var>, and in
+addition set <var class="var">s</var> and <var class="var">t</var> to coefficients satisfying
+<em class="math"><var class="var">a</var>*<var class="var">s</var> + <var class="var">b</var>*<var class="var">t</var> = <var class="var">g</var></em>.
+The value in <var class="var">g</var> is always positive, even if one or both of <var class="var">a</var> and
+<var class="var">b</var> are negative (or zero if both inputs are zero).  The values in <var class="var">s</var>
+and <var class="var">t</var> are chosen such that normally, <em class="math">abs(<var class="var">s</var>) &lt;
+abs(<var class="var">b</var>) / (2 <var class="var">g</var>)</em> and <em class="math">abs(<var class="var">t</var>) &lt; abs(<var class="var">a</var>)
+/ (2 <var class="var">g</var>)</em>, and these relations define <var class="var">s</var> and <var class="var">t</var> uniquely.  There
+are a few exceptional cases:
+</p>
+<p>If <em class="math">abs(<var class="var">a</var>) = abs(<var class="var">b</var>)</em>, then <em class="math"><var class="var">s</var> = 0</em>,
+<em class="math"><var class="var">t</var> = sgn(<var class="var">b</var>)</em>.
+</p>
+<p>Otherwise, <em class="math"><var class="var">s</var> = sgn(<var class="var">a</var>)</em> if <em class="math"><var class="var">b</var> = 0</em> or
+<em class="math">abs(<var class="var">b</var>) = 2 <var class="var">g</var></em>, and <em class="math"><var class="var">t</var> = sgn(<var class="var">b</var>)</em> if
+<em class="math"><var class="var">a</var> = 0</em> or <em class="math">abs(<var class="var">a</var>) = 2 <var class="var">g</var></em>.
+</p>
+<p>In all cases, <em class="math"><var class="var">s</var> = 0</em> if and only if <em class="math"><var class="var">g</var> =
+abs(<var class="var">b</var>)</em>, i.e., if <var class="var">b</var> divides <var class="var">a</var> or <em class="math"><var class="var">a</var> = <var class="var">b</var>
+= 0</em>.
+</p>
+<p>If <var class="var">t</var> or <var class="var">g</var> is <code class="code">NULL</code> then that value is not computed.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005flcm"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_lcm</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005flcm"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005flcm_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_lcm_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, unsigned long <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005flcm_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Least-common-multiple-functions"></a>
+<a class="index-entry-id" id="index-LCM-functions"></a>
+<p>Set <var class="var">rop</var> to the least common multiple of <var class="var">op1</var> and <var class="var">op2</var>.
+<var class="var">rop</var> is always positive, irrespective of the signs of <var class="var">op1</var> and
+<var class="var">op2</var>.  <var class="var">rop</var> will be zero if either <var class="var">op1</var> or <var class="var">op2</var> is zero.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finvert"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_invert</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005finvert"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Modular-inverse-functions"></a>
+<a class="index-entry-id" id="index-Inverse-modulo-functions"></a>
+<p>Compute the inverse of <var class="var">op1</var> modulo <var class="var">op2</var> and put the result in
+<var class="var">rop</var>.  If the inverse exists, the return value is non-zero and <var class="var">rop</var>
+will satisfy <em class="math">0 &lt;= <var class="var">rop</var> &lt; abs(<var class="var">op2</var>)</em> (with <em class="math"><var class="var">rop</var>
+= 0</em> possible only when <em class="math">abs(<var class="var">op2</var>) = 1</em>, i.e., in the
+somewhat degenerate zero ring).  If an inverse doesn&rsquo;t
+exist the return value is zero and <var class="var">rop</var> is undefined.  The behaviour of
+this function is undefined when <var class="var">op2</var> is zero.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fjacobi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_jacobi</strong> <code class="def-code-arguments">(const mpz_t <var class="var">a</var>, const mpz_t <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fjacobi"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Jacobi-symbol-functions"></a>
+<p>Calculate the Jacobi symbol <em class="math">(<var class="var">a</var>/<var class="var">b</var>)</em>.  This is defined only for <var class="var">b</var> odd.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005flegendre"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_legendre</strong> <code class="def-code-arguments">(const mpz_t <var class="var">a</var>, const mpz_t <var class="var">p</var>)</code><a class="copiable-link" href="#index-mpz_005flegendre"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Legendre-symbol-functions"></a>
+<p>Calculate the Legendre symbol <em class="math">(<var class="var">a</var>/<var class="var">p</var>)</em>.  This is defined only for <var class="var">p</var> an odd positive
+prime, and for such <var class="var">p</var> it&rsquo;s identical to the Jacobi symbol.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fkronecker"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_kronecker</strong> <code class="def-code-arguments">(const mpz_t <var class="var">a</var>, const mpz_t <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fkronecker"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fkronecker_005fsi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_kronecker_si</strong> <code class="def-code-arguments">(const mpz_t <var class="var">a</var>, long <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fkronecker_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fkronecker_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_kronecker_ui</strong> <code class="def-code-arguments">(const mpz_t <var class="var">a</var>, unsigned long <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fkronecker_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fsi_005fkronecker"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_si_kronecker</strong> <code class="def-code-arguments">(long <var class="var">a</var>, const mpz_t <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fsi_005fkronecker"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fui_005fkronecker"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_ui_kronecker</strong> <code class="def-code-arguments">(unsigned long <var class="var">a</var>, const mpz_t <var class="var">b</var>)</code><a class="copiable-link" href="#index-mpz_005fui_005fkronecker"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Kronecker-symbol-functions"></a>
+<p>Calculate the Jacobi symbol <em class="math">(<var class="var">a</var>/<var class="var">b</var>)</em> with the Kronecker extension <em class="math">(a/2)=(2/a)</em> when <em class="math">a</em> odd, or
+<em class="math">(a/2)=0</em> when <em class="math">a</em> even.
+</p>
+<p>When <var class="var">b</var> is odd the Jacobi symbol and Kronecker symbol are
+identical, so <code class="code">mpz_kronecker_ui</code> etc can be used for mixed
+precision Jacobi symbols too.
+</p>
+<p>For more information see Henri Cohen section 1.4.2 (see <a class="pxref" href="constant.References.html#start">References</a>),
+or any number theory textbook.  See also the example program
+<samp class="file">demos/qcn.c</samp> which uses <code class="code">mpz_kronecker_ui</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fremove"><span class="category-def">Function: </span><span><code class="def-type">mp_bitcnt_t</code> <strong class="def-name">mpz_remove</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>, const mpz_t <var class="var">f</var>)</code><a class="copiable-link" href="#index-mpz_005fremove"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Remove-factor-functions"></a>
+<a class="index-entry-id" id="index-Factor-removal-functions"></a>
+<p>Remove all occurrences of the factor <var class="var">f</var> from <var class="var">op</var> and store the
+result in <var class="var">rop</var>.  The return value is how many such occurrences were
+removed.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005ffac_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fac_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005ffac_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005f2fac_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_2fac_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005f2fac_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fmfac_005fuiui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_mfac_uiui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">n</var>, unsigned long int <var class="var">m</var>)</code><a class="copiable-link" href="#index-mpz_005fmfac_005fuiui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Factorial-functions"></a>
+<p>Set <var class="var">rop</var> to the factorial of <var class="var">n</var>: <code class="code">mpz_fac_ui</code> computes the plain factorial <var class="var">n</var>!,
+<code class="code">mpz_2fac_ui</code> computes the double-factorial <var class="var">n</var>!!, and <code class="code">mpz_mfac_uiui</code> the
+<var class="var">m</var>-multi-factorial <em class="math"><var class="var">n</var>!^(<var class="var">m</var>)</em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fprimorial_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_primorial_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005fprimorial_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Primorial-functions"></a>
+<p>Set <var class="var">rop</var> to the primorial of <var class="var">n</var>, i.e. the product of all positive
+prime numbers <em class="math">&lt;=<var class="var">n</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fbin_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_bin_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">n</var>, unsigned long int <var class="var">k</var>)</code><a class="copiable-link" href="#index-mpz_005fbin_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fbin_005fuiui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_bin_uiui</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, unsigned long int <var class="var">n</var>, unsigned&nbsp;long&nbsp;int&nbsp;<var class="var">k</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005fbin_005fuiui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Binomial-coefficient-functions"></a>
+<p>Compute the binomial coefficient <em class="math"><var class="var">n</var> over
+<var class="var">k</var></em> and store the result in <var class="var">rop</var>.  Negative values of <var class="var">n</var> are
+supported by <code class="code">mpz_bin_ui</code>, using the identity
+<em class="math">bin(-n,k) = (-1)^k * bin(n+k-1,k)</em>, see Knuth volume 1 section 1.2.6
+part G.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005ffib_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fib_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">fn</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005ffib_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffib2_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_fib2_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">fn</var>, mpz_t <var class="var">fnsub1</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005ffib2_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Fibonacci-sequence-functions"></a>
+<p><code class="code">mpz_fib_ui</code> sets <var class="var">fn</var> to <em class="math">F[n]</em>, the <var class="var">n</var>th Fibonacci
+number.  <code class="code">mpz_fib2_ui</code> sets <var class="var">fn</var> to <em class="math">F[n]</em>, and <var class="var">fnsub1</var> to
+<em class="math">F[n-1]</em>.
+</p>
+<p>These functions are designed for calculating isolated Fibonacci numbers.  When
+a sequence of values is wanted it&rsquo;s best to start with <code class="code">mpz_fib2_ui</code> and
+iterate the defining <em class="math">F[n+1]=F[n]+F[n-1]</em> or
+similar.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005flucnum_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_lucnum_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">ln</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005flucnum_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005flucnum2_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_lucnum2_ui</strong> <code class="def-code-arguments">(mpz_t <var class="var">ln</var>, mpz_t <var class="var">lnsub1</var>, unsigned long int <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005flucnum2_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Lucas-number-functions"></a>
+<p><code class="code">mpz_lucnum_ui</code> sets <var class="var">ln</var> to <em class="math">L[n]</em>, the <var class="var">n</var>th Lucas
+number.  <code class="code">mpz_lucnum2_ui</code> sets <var class="var">ln</var> to <em class="math">L[n]</em>, and <var class="var">lnsub1</var>
+to <em class="math">L[n-1]</em>.
+</p>
+<p>These functions are designed for calculating isolated Lucas numbers.  When a
+sequence of values is wanted it&rsquo;s best to start with <code class="code">mpz_lucnum2_ui</code> and
+iterate the defining <em class="math">L[n+1]=L[n]+L[n-1]</em> or
+similar.
+</p>
+<p>The Fibonacci numbers and Lucas numbers are related sequences, so it&rsquo;s never
+necessary to call both <code class="code">mpz_fib2_ui</code> and <code class="code">mpz_lucnum2_ui</code>.  The
+formulas for going from Fibonacci to Lucas can be found in <a class="ref" href="constant.Algorithms.html#Lucas-Numbers-Algorithm">Lucas Numbers</a>, the reverse is straightforward too.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Comparisons">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Logic-and-Bit-Fiddling" accesskey="n" rel="next">Logical and Bit Manipulation Functions</a>, Previous: <a href="#Number-Theoretic-Functions" accesskey="p" rel="prev">Number Theoretic Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Comparison-Functions"><span>5.10 Comparison Functions<a class="copiable-link" href="#Comparison-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-comparison-functions"></a>
+<a class="index-entry-id" id="index-Comparison-functions"></a>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpz_005fcmp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_cmp</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fcmp"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcmp_005fd"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_cmp_d</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, double <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fcmp_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcmp_005fsi"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_cmp_si</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, signed long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fcmp_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcmp_005fui"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_cmp_ui</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fcmp_005fui"> &para;</a></span></dt>
+<dd><p>Compare <var class="var">op1</var> and <var class="var">op2</var>.  Return a positive value if <em class="math"><var class="var">op1</var> &gt;
+<var class="var">op2</var></em>, zero if <em class="math"><var class="var">op1</var> = <var class="var">op2</var></em>, or a negative value if
+<em class="math"><var class="var">op1</var> &lt; <var class="var">op2</var></em>.
+</p>
+<p><code class="code">mpz_cmp_ui</code> and <code class="code">mpz_cmp_si</code> are macros and will evaluate their
+arguments more than once.  <code class="code">mpz_cmp_d</code> can be called with an infinity,
+but results are undefined for a NaN.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpz_005fcmpabs"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_cmpabs</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fcmpabs"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcmpabs_005fd"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_cmpabs_d</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, double <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fcmpabs_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fcmpabs_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_cmpabs_ui</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fcmpabs_005fui"> &para;</a></span></dt>
+<dd><p>Compare the absolute values of <var class="var">op1</var> and <var class="var">op2</var>.  Return a positive
+value if <em class="math">abs(<var class="var">op1</var>) &gt; abs(<var class="var">op2</var>)</em>, zero if
+<em class="math">abs(<var class="var">op1</var>) = abs(<var class="var">op2</var>)</em>, or a negative value if
+<em class="math">abs(<var class="var">op1</var>) &lt; abs(<var class="var">op2</var>)</em>.
+</p>
+<p><code class="code">mpz_cmpabs_d</code> can be called with an infinity, but results are undefined
+for a NaN.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpz_005fsgn"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_sgn</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fsgn"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Sign-tests"></a>
+<a class="index-entry-id" id="index-Integer-sign-tests"></a>
+<p>Return <em class="math">+1</em> if <em class="math"><var class="var">op</var> &gt; 0</em>, 0 if <em class="math"><var class="var">op</var> = 0</em>, and
+<em class="math">-1</em> if <em class="math"><var class="var">op</var> &lt; 0</em>.
+</p>
+<p>This function is actually implemented as a macro.  It evaluates its argument
+multiple times.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Logic-and-Bit-Fiddling">
+<div class="nav-panel">
+<p>
+Next: <a href="#I_002fO-of-Integers" accesskey="n" rel="next">Input and Output Functions</a>, Previous: <a href="#Integer-Comparisons" accesskey="p" rel="prev">Comparison Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Logical-and-Bit-Manipulation-Functions"><span>5.11 Logical and Bit Manipulation Functions<a class="copiable-link" href="#Logical-and-Bit-Manipulation-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Logical-functions"></a>
+<a class="index-entry-id" id="index-Bit-manipulation-functions"></a>
+<a class="index-entry-id" id="index-Integer-logical-functions"></a>
+<a class="index-entry-id" id="index-Integer-bit-manipulation-functions"></a>
+<p>These functions behave as if two&rsquo;s complement arithmetic were used (although
+sign-magnitude is the actual implementation).  The least significant bit is
+number 0.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fand"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_and</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fand"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> bitwise-and <var class="var">op2</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fior"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_ior</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fior"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> bitwise inclusive-or <var class="var">op2</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fxor"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_xor</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fxor"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> bitwise exclusive-or <var class="var">op2</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fcom"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_com</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fcom"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the one&rsquo;s complement of <var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fpopcount"><span class="category-def">Function: </span><span><code class="def-type">mp_bitcnt_t</code> <strong class="def-name">mpz_popcount</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fpopcount"> &para;</a></span></dt>
+<dd><p>If <em class="math"><var class="var">op</var>&gt;=0</em>, return the population count of <var class="var">op</var>, which is the
+number of 1 bits in the binary representation.  If <em class="math"><var class="var">op</var>&lt;0</em>, the
+number of 1s is infinite, and the return value is the largest possible
+<code class="code">mp_bitcnt_t</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fhamdist"><span class="category-def">Function: </span><span><code class="def-type">mp_bitcnt_t</code> <strong class="def-name">mpz_hamdist</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpz_005fhamdist"> &para;</a></span></dt>
+<dd><p>If <var class="var">op1</var> and <var class="var">op2</var> are both <em class="math">&gt;=0</em> or both <em class="math">&lt;0</em>, return the
+hamming distance between the two operands, which is the number of bit positions
+where <var class="var">op1</var> and <var class="var">op2</var> have different bit values.  If one operand is
+<em class="math">&gt;=0</em> and the other <em class="math">&lt;0</em> then the number of bits different is
+infinite, and the return value is the largest possible <code class="code">mp_bitcnt_t</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fscan0"><span class="category-def">Function: </span><span><code class="def-type">mp_bitcnt_t</code> <strong class="def-name">mpz_scan0</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>, mp_bitcnt_t <var class="var">starting_bit</var>)</code><a class="copiable-link" href="#index-mpz_005fscan0"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005fscan1"><span class="category-def">Function: </span><span><code class="def-type">mp_bitcnt_t</code> <strong class="def-name">mpz_scan1</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>, mp_bitcnt_t <var class="var">starting_bit</var>)</code><a class="copiable-link" href="#index-mpz_005fscan1"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Bit-scanning-functions"></a>
+<a class="index-entry-id" id="index-Scan-bit-functions"></a>
+<p>Scan <var class="var">op</var>, starting from bit <var class="var">starting_bit</var>, towards more significant
+bits, until the first 0 or 1 bit (respectively) is found.  Return the index of
+the found bit.
+</p>
+<p>If the bit at <var class="var">starting_bit</var> is already what&rsquo;s sought, then
+<var class="var">starting_bit</var> is returned.
+</p>
+<p>If there&rsquo;s no bit found, then the largest possible <code class="code">mp_bitcnt_t</code> is
+returned.  This will happen in <code class="code">mpz_scan0</code> past the end of a negative
+number, or <code class="code">mpz_scan1</code> past the end of a nonnegative number.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fsetbit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_setbit</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, mp_bitcnt_t <var class="var">bit_index</var>)</code><a class="copiable-link" href="#index-mpz_005fsetbit"> &para;</a></span></dt>
+<dd><p>Set bit <var class="var">bit_index</var> in <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fclrbit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_clrbit</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, mp_bitcnt_t <var class="var">bit_index</var>)</code><a class="copiable-link" href="#index-mpz_005fclrbit"> &para;</a></span></dt>
+<dd><p>Clear bit <var class="var">bit_index</var> in <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fcombit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_combit</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, mp_bitcnt_t <var class="var">bit_index</var>)</code><a class="copiable-link" href="#index-mpz_005fcombit"> &para;</a></span></dt>
+<dd><p>Complement bit <var class="var">bit_index</var> in <var class="var">rop</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005ftstbit"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_tstbit</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>, mp_bitcnt_t <var class="var">bit_index</var>)</code><a class="copiable-link" href="#index-mpz_005ftstbit"> &para;</a></span></dt>
+<dd><p>Test bit <var class="var">bit_index</var> in <var class="var">op</var> and return 0 or 1 accordingly.
+</p></dd></dl>
+<p>Shifting is also possible using multiplication (<a class="ref" href="#Integer-Arithmetic">Arithmetic Functions</a>) and
+division (<a class="ref" href="#Integer-Division">Division Functions</a>), in particular the <code class="code">2exp</code> functions.
+</p>
+<hr>
+</div>
+<div class="section-level-extent" id="I_002fO-of-Integers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Random-Numbers" accesskey="n" rel="next">Random Number Functions</a>, Previous: <a href="#Integer-Logic-and-Bit-Fiddling" accesskey="p" rel="prev">Logical and Bit Manipulation Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Input-and-Output-Functions"><span>5.12 Input and Output Functions<a class="copiable-link" href="#Input-and-Output-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-input-and-output-functions"></a>
+<a class="index-entry-id" id="index-Input-functions"></a>
+<a class="index-entry-id" id="index-Output-functions"></a>
+<a class="index-entry-id" id="index-I_002fO-functions"></a>
+<p>Functions that perform input from a stdio stream, and functions that output to
+a stdio stream, of <code class="code">mpz</code> numbers.  Passing a <code class="code">NULL</code> pointer for a
+<var class="var">stream</var> argument to any of these functions will make them read from
+<code class="code">stdin</code> and write to <code class="code">stdout</code>, respectively.
+</p>
+<p>When using any of these functions, it is a good idea to include <samp class="file">stdio.h</samp>
+before <samp class="file">gmp.h</samp>, since that will allow <samp class="file">gmp.h</samp> to define prototypes
+for these functions.
+</p>
+<p>See also <a class="ref" href="constant.Formatted_Output.html#Formatted-Output">Formatted Output</a> and <a class="ref" href="constant.Formatted_Input.html#Formatted-Input">Formatted Input</a>.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fout_005fstr"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpz_out_str</strong> <code class="def-code-arguments">(FILE *<var class="var">stream</var>, int <var class="var">base</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fout_005fstr"> &para;</a></span></dt>
+<dd><p>Output <var class="var">op</var> on stdio stream <var class="var">stream</var>, as a string of digits in base
+<var class="var">base</var>.  The base argument may vary from 2 to 62 or from &minus;2 to
+&minus;36.
+</p>
+<p>For <var class="var">base</var> in the range 2..36, digits and lower-case letters are used; for
+&minus;2..&minus;36, digits and upper-case letters are used; for 37..62,
+digits, upper-case letters, and lower-case letters (in that significance order)
+are used.
+</p>
+<p>Return the number of bytes written, or if an error occurred, return 0.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finp_005fstr"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpz_inp_str</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, FILE *<var class="var">stream</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpz_005finp_005fstr"> &para;</a></span></dt>
+<dd><p>Input a possibly white-space preceded string in base <var class="var">base</var> from stdio
+stream <var class="var">stream</var>, and put the read integer in <var class="var">rop</var>.
+</p>
+<p>The <var class="var">base</var> may vary from 2 to 62, or if <var class="var">base</var> is 0, then the leading
+characters are used: <code class="code">0x</code> and <code class="code">0X</code> for hexadecimal, <code class="code">0b</code> and
+<code class="code">0B</code> for binary, <code class="code">0</code> for octal, or decimal otherwise.
+</p>
+<p>For bases up to 36, case is ignored; upper-case and lower-case letters have
+the same value.  For bases 37 to 62, upper-case letters represent the usual
+10..35 while lower-case letters represent 36..61.
+</p>
+<p>Return the number of bytes read, or if an error occurred, return 0.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fout_005fraw"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpz_out_raw</strong> <code class="def-code-arguments">(FILE *<var class="var">stream</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fout_005fraw"> &para;</a></span></dt>
+<dd><p>Output <var class="var">op</var> on stdio stream <var class="var">stream</var>, in raw binary format.  The
+integer is written in a portable format, with 4 bytes of size information, and
+that many bytes of limbs.  Both the size and the limbs are written in
+decreasing significance order (i.e., in big-endian).
+</p>
+<p>The output can be read with <code class="code">mpz_inp_raw</code>.
+</p>
+<p>Return the number of bytes written, or if an error occurred, return 0.
+</p>
+<p>The output of this can not be read by <code class="code">mpz_inp_raw</code> from GMP 1, because
+of changes necessary for compatibility between 32-bit and 64-bit machines.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005finp_005fraw"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpz_inp_raw</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, FILE *<var class="var">stream</var>)</code><a class="copiable-link" href="#index-mpz_005finp_005fraw"> &para;</a></span></dt>
+<dd><p>Input from stdio stream <var class="var">stream</var> in the format written by
+<code class="code">mpz_out_raw</code>, and put the result in <var class="var">rop</var>.  Return the number of
+bytes read, or if an error occurred, return 0.
+</p>
+<p>This routine can read the output from <code class="code">mpz_out_raw</code> also from GMP 1, in
+spite of changes necessary for compatibility between 32-bit and 64-bit
+machines.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Random-Numbers">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Import-and-Export" accesskey="n" rel="next">Integer Import and Export</a>, Previous: <a href="#I_002fO-of-Integers" accesskey="p" rel="prev">Input and Output Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Random-Number-Functions-1"><span>5.13 Random Number Functions<a class="copiable-link" href="#Random-Number-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Integer-random-number-functions"></a>
+<a class="index-entry-id" id="index-Random-number-functions"></a>
+<p>The random number functions of GMP come in two groups; older functions
+that rely on a global state, and newer functions that accept a state
+parameter that is read and modified.  Please see the <a class="ref" href="constant.Random_Number_Functions.html#Random-Number-Functions">Random Number Functions</a> for more information on how to use and not to use random
+number functions.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005furandomb"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_urandomb</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, gmp_randstate_t <var class="var">state</var>, mp_bitcnt_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005furandomb"> &para;</a></span></dt>
+<dd><p>Generate a uniformly distributed random integer in the range 0 to
+<em class="math">2<sup class="sup">n</sup>-1</em>, inclusive.
+</p>
+<p>The variable <var class="var">state</var> must be initialized by calling one of the
+<code class="code">gmp_randinit</code> functions (<a class="ref" href="constant.Random_Number_Functions.html#Random-State-Initialization">Random State Initialization</a>) before
+invoking this function.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005furandomm"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_urandomm</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, gmp_randstate_t <var class="var">state</var>, const mpz_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005furandomm"> &para;</a></span></dt>
+<dd><p>Generate a uniform random integer in the range 0 to <em class="math"><var class="var">n</var>-1</em>,
+inclusive.
+</p>
+<p>The variable <var class="var">state</var> must be initialized by calling one of the
+<code class="code">gmp_randinit</code> functions (<a class="ref" href="constant.Random_Number_Functions.html#Random-State-Initialization">Random State Initialization</a>)
+before invoking this function.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005frrandomb"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_rrandomb</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, gmp_randstate_t <var class="var">state</var>, mp_bitcnt_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005frrandomb"> &para;</a></span></dt>
+<dd><p>Generate a random integer with long strings of zeros and ones in the
+binary representation.  Useful for testing functions and algorithms,
+since this kind of random numbers have proven to be more likely to
+trigger corner-case bugs.  The random number will be in the range
+<em class="math">2<sup class="sup">n-1</sup></em> to <em class="math">2<sup class="sup">n</sup>-1</em>, inclusive.
+</p>
+<p>The variable <var class="var">state</var> must be initialized by calling one of the
+<code class="code">gmp_randinit</code> functions (<a class="ref" href="constant.Random_Number_Functions.html#Random-State-Initialization">Random State Initialization</a>)
+before invoking this function.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005frandom"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_random</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, mp_size_t <var class="var">max_size</var>)</code><a class="copiable-link" href="#index-mpz_005frandom"> &para;</a></span></dt>
+<dd><p>Generate a random integer of at most <var class="var">max_size</var> limbs.  The generated
+random number doesn&rsquo;t satisfy any particular requirements of randomness.
+Negative random numbers are generated when <var class="var">max_size</var> is negative.
+</p>
+<p>This function is obsolete.  Use <code class="code">mpz_urandomb</code> or
+<code class="code">mpz_urandomm</code> instead.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005frandom2"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_random2</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, mp_size_t <var class="var">max_size</var>)</code><a class="copiable-link" href="#index-mpz_005frandom2"> &para;</a></span></dt>
+<dd><p>Generate a random integer of at most <var class="var">max_size</var> limbs, with long strings
+of zeros and ones in the binary representation.  Useful for testing functions
+and algorithms, since this kind of random numbers have proven to be more
+likely to trigger corner-case bugs.  Negative random numbers are generated
+when <var class="var">max_size</var> is negative.
+</p>
+<p>This function is obsolete.  Use <code class="code">mpz_rrandomb</code> instead.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Import-and-Export">
+<div class="nav-panel">
+<p>
+Next: <a href="#Miscellaneous-Integer-Functions" accesskey="n" rel="next">Miscellaneous Functions</a>, Previous: <a href="#Integer-Random-Numbers" accesskey="p" rel="prev">Random Number Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Integer-Import-and-Export-1"><span>5.14 Integer Import and Export<a class="copiable-link" href="#Integer-Import-and-Export-1"> &para;</a></span></h3>
+<p><code class="code">mpz_t</code> variables can be converted to and from arbitrary words of binary
+data with the following functions.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fimport"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_import</strong> <code class="def-code-arguments">(mpz_t <var class="var">rop</var>, size_t <var class="var">count</var>, int <var class="var">order</var>, size_t <var class="var">size</var>, int <var class="var">endian</var>, size_t <var class="var">nails</var>, const void *<var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fimport"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Integer-import"></a>
+<a class="index-entry-id" id="index-Import"></a>
+<p>Set <var class="var">rop</var> from an array of word data at <var class="var">op</var>.
+</p>
+<p>The parameters specify the format of the data.  <var class="var">count</var> many words are
+read, each <var class="var">size</var> bytes.  <var class="var">order</var> can be 1 for most significant word
+first or -1 for least significant first.  Within each word <var class="var">endian</var> can be
+1 for most significant byte first, -1 for least significant first, or 0 for
+the native endianness of the host CPU.  The most significant <var class="var">nails</var> bits
+of each word are skipped, this can be 0 to use the full words.
+</p>
+<p>There is no sign taken from the data, <var class="var">rop</var> will simply be a positive
+integer.  An application can handle any sign itself, and apply it for instance
+with <code class="code">mpz_neg</code>.
+</p>
+<p>There are no data alignment restrictions on <var class="var">op</var>, any address is allowed.
+</p>
+<p>Here&rsquo;s an example converting an array of <code class="code">unsigned long</code> data, most
+significant element first, and host byte order within each value.
+</p>
+<div class="example">
+<pre class="example-preformatted">unsigned long  a[20];
+/* Initialize <var class="var">z</var> and <var class="var">a</var> */
+mpz_import (z, 20, 1, sizeof(a[0]), 0, 0, a);
+</pre></div>
+<p>This example assumes the full <code class="code">sizeof</code> bytes are used for data in the
+given type, which is usually true, and certainly true for <code class="code">unsigned long</code>
+everywhere we know of.  However on Cray vector systems it may be noted that
+<code class="code">short</code> and <code class="code">int</code> are always stored in 8 bytes (and with
+<code class="code">sizeof</code> indicating that) but use only 32 or 46 bits.  The <var class="var">nails</var>
+feature can account for this, by passing for instance
+<code class="code">8*sizeof(int)-INT_BIT</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fexport"><span class="category-def">Function: </span><span><code class="def-type">void *</code> <strong class="def-name">mpz_export</strong> <code class="def-code-arguments">(void *<var class="var">rop</var>, size_t *<var class="var">countp</var>, int <var class="var">order</var>, size_t <var class="var">size</var>, int <var class="var">endian</var>, size_t <var class="var">nails</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fexport"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Integer-export"></a>
+<a class="index-entry-id" id="index-Export"></a>
+<p>Fill <var class="var">rop</var> with word data from <var class="var">op</var>.
+</p>
+<p>The parameters specify the format of the data produced.  Each word will be
+<var class="var">size</var> bytes and <var class="var">order</var> can be 1 for most significant word first or
+-1 for least significant first.  Within each word <var class="var">endian</var> can be 1 for
+most significant byte first, -1 for least significant first, or 0 for the
+native endianness of the host CPU.  The most significant <var class="var">nails</var> bits of
+each word are unused and set to zero, this can be 0 to produce full words.
+</p>
+<p>The number of words produced is written to <code class="code">*<var class="var">countp</var></code>, or
+<var class="var">countp</var> can be <code class="code">NULL</code> to discard the count.  <var class="var">rop</var> must have
+enough space for the data, or if <var class="var">rop</var> is <code class="code">NULL</code> then a result array
+of the necessary size is allocated using the current GMP allocation function
+(see <a class="pxref" href="constant.Custom_Allocation.html#start">Custom Allocation</a>).  In either case the return value is the
+destination used, either <var class="var">rop</var> or the allocated block.
+</p>
+<p>If <var class="var">op</var> is non-zero then the most significant word produced will be
+non-zero.  If <var class="var">op</var> is zero then the count returned will be zero and
+nothing written to <var class="var">rop</var>.  If <var class="var">rop</var> is <code class="code">NULL</code> in this case, no
+block is allocated, just <code class="code">NULL</code> is returned.
+</p>
+<p>The sign of <var class="var">op</var> is ignored, just the absolute value is exported.  An
+application can use <code class="code">mpz_sgn</code> to get the sign and handle it as desired.
+(see <a class="pxref" href="#Integer-Comparisons">Comparison Functions</a>)
+</p>
+<p>There are no data alignment restrictions on <var class="var">rop</var>, any address is allowed.
+</p>
+<p>When an application is allocating space itself the required size can be
+determined with a calculation like the following.  Since <code class="code">mpz_sizeinbase</code>
+always returns at least 1, <code class="code">count</code> here will be at least one, which
+avoids any portability problems with <code class="code">malloc(0)</code>, though if <code class="code">z</code> is
+zero no space at all is actually needed (or written).
+</p>
+<div class="example">
+<pre class="example-preformatted">numb = 8*size - nail;
+count = (mpz_sizeinbase (z, 2) + numb-1) / numb;
+p = malloc (count * size);
+</pre></div>
+</dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Miscellaneous-Integer-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="#Integer-Special-Functions" accesskey="n" rel="next">Special Functions</a>, Previous: <a href="#Integer-Import-and-Export" accesskey="p" rel="prev">Integer Import and Export</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Miscellaneous-Functions"><span>5.15 Miscellaneous Functions<a class="copiable-link" href="#Miscellaneous-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Miscellaneous-integer-functions"></a>
+<a class="index-entry-id" id="index-Integer-miscellaneous-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005ffits_005fulong_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_fits_ulong_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005ffits_005fulong_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffits_005fslong_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_fits_slong_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005ffits_005fslong_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffits_005fuint_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_fits_uint_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005ffits_005fuint_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffits_005fsint_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_fits_sint_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005ffits_005fsint_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffits_005fushort_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_fits_ushort_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005ffits_005fushort_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005ffits_005fsshort_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_fits_sshort_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005ffits_005fsshort_005fp"> &para;</a></span></dt>
+<dd><p>Return non-zero iff the value of <var class="var">op</var> fits in an <code class="code">unsigned long int</code>,
+<code class="code">signed long int</code>, <code class="code">unsigned int</code>, <code class="code">signed int</code>, <code class="code">unsigned
+short int</code>, or <code class="code">signed short int</code>, respectively.  Otherwise, return zero.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpz_005fodd_005fp"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_odd_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fodd_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005feven_005fp"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpz_even_p</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005feven_005fp"> &para;</a></span></dt>
+<dd><p>Determine whether <var class="var">op</var> is odd or even, respectively.  Return non-zero if
+yes, zero if no.  These macros evaluate their argument more than once.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fsizeinbase"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpz_sizeinbase</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpz_005fsizeinbase"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Size-in-digits"></a>
+<a class="index-entry-id" id="index-Digits-in-an-integer"></a>
+<p>Return the size of <var class="var">op</var> measured in number of digits in the given
+<var class="var">base</var>.  <var class="var">base</var> can vary from 2 to 62.  The sign of <var class="var">op</var> is
+ignored, just the absolute value is used.  The result will be either exact or
+1 too big.  If <var class="var">base</var> is a power of 2, the result is always exact.  If
+<var class="var">op</var> is zero the return value is always 1.
+</p>
+<p>This function can be used to determine the space required when converting
+<var class="var">op</var> to a string.  The right amount of allocation is normally two more
+than the value returned by <code class="code">mpz_sizeinbase</code>, one extra for a minus sign
+and one for the null-terminator.
+</p>
+<a class="index-entry-id" id="index-Most-significant-bit"></a>
+<p>It will be noted that <code class="code">mpz_sizeinbase(<var class="var">op</var>,2)</code> can be used to locate
+the most significant 1 bit in <var class="var">op</var>, counting from 1.  (Unlike the bitwise
+functions which start from 0, See <a class="xref" href="#Integer-Logic-and-Bit-Fiddling">Logical
+and Bit Manipulation Functions</a>.)
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Integer-Special-Functions">
+<div class="nav-panel">
+<p>
+Previous: <a href="#Miscellaneous-Integer-Functions" accesskey="p" rel="prev">Miscellaneous Functions</a>, Up: <a href="#Integer-Functions" accesskey="u" rel="up">Integer Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Special-Functions"><span>5.16 Special Functions<a class="copiable-link" href="#Special-Functions"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Special-integer-functions"></a>
+<a class="index-entry-id" id="index-Integer-special-functions"></a>
+<p>The functions in this section are for various special purposes.  Most
+applications will not need them.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005farray_005finit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_array_init</strong> <code class="def-code-arguments">(mpz_t <var class="var">integer_array</var>, mp_size_t <var class="var">array_size</var>, mp_size_t&nbsp;<var class="var">fixed_num_bits</var><!-- /@w -->)</code><a class="copiable-link" href="#index-mpz_005farray_005finit"> &para;</a></span></dt>
+<dd><p><strong class="strong">This is an obsolete function.  Do not use it.</strong>
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-_005fmpz_005frealloc"><span class="category-def">Function: </span><span><code class="def-type">void *</code> <strong class="def-name">_mpz_realloc</strong> <code class="def-code-arguments">(mpz_t <var class="var">integer</var>, mp_size_t <var class="var">new_alloc</var>)</code><a class="copiable-link" href="#index-_005fmpz_005frealloc"> &para;</a></span></dt>
+<dd><p>Change the space for <var class="var">integer</var> to <var class="var">new_alloc</var> limbs.  The value in
+<var class="var">integer</var> is preserved if it fits, or is set to 0 if not.  The return
+value is not useful to applications and should be ignored.
+</p>
+<p><code class="code">mpz_realloc2</code> is the preferred way to accomplish allocation changes like
+this.  <code class="code">mpz_realloc2</code> and <code class="code">_mpz_realloc</code> are the same except that
+<code class="code">_mpz_realloc</code> takes its size in limbs.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fgetlimbn"><span class="category-def">Function: </span><span><code class="def-type">mp_limb_t</code> <strong class="def-name">mpz_getlimbn</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>, mp_size_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005fgetlimbn"> &para;</a></span></dt>
+<dd><p>Return limb number <var class="var">n</var> from <var class="var">op</var>.  The sign of <var class="var">op</var> is ignored,
+just the absolute value is used.  The least significant limb is number 0.
+</p>
+<p><code class="code">mpz_size</code> can be used to find how many limbs make up <var class="var">op</var>.
+<code class="code">mpz_getlimbn</code> returns zero if <var class="var">n</var> is outside the range 0 to
+<code class="code">mpz_size(<var class="var">op</var>)-1</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005fsize"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpz_size</strong> <code class="def-code-arguments">(const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpz_005fsize"> &para;</a></span></dt>
+<dd><p>Return the size of <var class="var">op</var> measured in number of limbs.  If <var class="var">op</var> is zero,
+the returned value will be zero.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005flimbs_005fread"><span class="category-def">Function: </span><span><code class="def-type">const mp_limb_t *</code> <strong class="def-name">mpz_limbs_read</strong> <code class="def-code-arguments">(const mpz_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpz_005flimbs_005fread"> &para;</a></span></dt>
+<dd><p>Return a pointer to the limb array representing the absolute value of <var class="var">x</var>.
+The size of the array is <code class="code">mpz_size(<var class="var">x</var>)</code>. Intended for read access
+only.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005flimbs_005fwrite"><span class="category-def">Function: </span><span><code class="def-type">mp_limb_t *</code> <strong class="def-name">mpz_limbs_write</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, mp_size_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005flimbs_005fwrite"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpz_005flimbs_005fmodify"><span class="category-def">Function: </span><span><code class="def-type">mp_limb_t *</code> <strong class="def-name">mpz_limbs_modify</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, mp_size_t <var class="var">n</var>)</code><a class="copiable-link" href="#index-mpz_005flimbs_005fmodify"> &para;</a></span></dt>
+<dd><p>Return a pointer to the limb array, intended for write access. The array is
+reallocated as needed, to make room for <var class="var">n</var> limbs. Requires <em class="math"><var class="var">n</var>
+&gt; 0</em>. The <code class="code">mpz_limbs_modify</code> function returns an array that holds the old
+absolute value of <var class="var">x</var>, while <code class="code">mpz_limbs_write</code> may destroy the old
+value and return an array with unspecified contents.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005flimbs_005ffinish"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpz_limbs_finish</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, mp_size_t <var class="var">s</var>)</code><a class="copiable-link" href="#index-mpz_005flimbs_005ffinish"> &para;</a></span></dt>
+<dd><p>Updates the internal size field of <var class="var">x</var>. Used after writing to the limb
+array pointer returned by <code class="code">mpz_limbs_write</code> or <code class="code">mpz_limbs_modify</code> is
+completed. The array should contain <em class="math">abs(<var class="var">s</var>)</em> valid limbs,
+representing the new absolute value for <var class="var">x</var>, and the sign of <var class="var">x</var> is
+taken from the sign of <var class="var">s</var>. This function never reallocates <var class="var">x</var>, so
+the limb pointer remains valid.
+</p></dd></dl>
+<div class="example">
+<pre class="example-preformatted">void foo (mpz_t x)
+{
+  mp_size_t n, i;
+  mp_limb_t *xp;
+  n = mpz_size (x);
+  xp = mpz_limbs_modify (x, 2*n);
+  for (i = 0; i &lt; n; i++)
+    xp[n+i] = xp[n-1-i];
+  mpz_limbs_finish (x, mpz_sgn (x) &lt; 0 ? - 2*n : 2*n);
+}
+</pre></div>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpz_005froinit_005fn"><span class="category-def">Function: </span><span><code class="def-type">mpz_srcptr</code> <strong class="def-name">mpz_roinit_n</strong> <code class="def-code-arguments">(mpz_t <var class="var">x</var>, const mp_limb_t *<var class="var">xp</var>, mp_size_t <var class="var">xs</var>)</code><a class="copiable-link" href="#index-mpz_005froinit_005fn"> &para;</a></span></dt>
+<dd><p>Special initialization of <var class="var">x</var>, using the given limb array and size.
+<var class="var">x</var> should be treated as read-only: it can be passed safely as input to
+any mpz function, but not as an output. The array <var class="var">xp</var> must point to at
+least a readable limb, its size is
+<em class="math">abs(<var class="var">xs</var>)</em>, and the sign of <var class="var">x</var> is the sign of <var class="var">xs</var>. For
+convenience, the function returns <var class="var">x</var>, but cast to a const pointer type.
+</p></dd></dl>
+<div class="example">
+<pre class="example-preformatted">void foo (mpz_t x)
+{
+  static const mp_limb_t y[3] = { 0x1, 0x2, 0x3 };
+  mpz_t tmp;
+  mpz_add (x, x, mpz_roinit_n (tmp, y, 3));
+}
+</pre></div>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-MPZ_005fROINIT_005fN"><span class="category-def">Macro: </span><span><code class="def-type">mpz_t</code> <strong class="def-name">MPZ_ROINIT_N</strong> <code class="def-code-arguments">(mp_limb_t *<var class="var">xp</var>, mp_size_t <var class="var">xs</var>)</code><a class="copiable-link" href="#index-MPZ_005fROINIT_005fN"> &para;</a></span></dt>
+<dd><p>This macro expands to an initializer which can be assigned to an mpz_t
+variable. The limb array <var class="var">xp</var> must point to at least a readable limb,
+moreover, unlike the <code class="code">mpz_roinit_n</code> function, the array must be
+normalized: if <var class="var">xs</var> is non-zero, then
+<code class="code"><var class="var">xp</var>[<em class="math">abs(<var class="var">xs</var>)-1</em>]</code> must be non-zero. Intended
+primarily for constant values. Using it for non-constant values requires a C
+compiler supporting C99.
+</p></dd></dl>
+<div class="example">
+<pre class="example-preformatted">void foo (mpz_t x)
+{
+  static const mp_limb_t ya[3] = { 0x1, 0x2, 0x3 };
+  static const mpz_t y = MPZ_ROINIT_N ((mp_limb_t *) ya, 3);
+  mpz_add (x, x, y);
+}
+</pre></div>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Rational_Number_Functions.html#Rational-Number-Functions" accesskey="n" rel="next">Rational Number Functions</a>, Previous: <a href="constant.Reporting_Bugs.html#start" accesskey="p" rel="prev">Reporting Bugs</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

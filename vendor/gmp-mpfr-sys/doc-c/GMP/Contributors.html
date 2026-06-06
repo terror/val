@@ -1,0 +1,156 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="appendix-level-extent" id="Contributors">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.References.html#start" accesskey="n" rel="next">References</a>, Previous: <a href="constant.Internals.html#Internals" accesskey="p" rel="prev">Internals</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="appendix" id="Contributors-1"><span>Appendix A Contributors<a class="copiable-link" href="#Contributors-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Contributors"></a>
+<p>Torbj&ouml;rn Granlund wrote the original GMP library and is still the main
+developer.  Code not explicitly attributed to others was contributed by
+Torbj&ouml;rn.  Several other individuals and organizations have contributed
+GMP.  Here is a list in chronological order on first contribution:
+</p>
+<p>Gunnar Sj&ouml;din and Hans Riesel helped with mathematical problems in early
+versions of the library.
+</p>
+<p>Richard Stallman helped with the interface design and revised the first
+version of this manual.
+</p>
+<p>Brian Beuning and Doug Lea helped with testing of early versions of the
+library and made creative suggestions.
+</p>
+<p>John Amanatides of York University in Canada contributed the function
+<code class="code">mpz_probab_prime_p</code>.
+</p>
+<p>Paul Zimmermann wrote the REDC-based mpz_powm code, the Sch&ouml;nhage-Strassen
+FFT multiply code, and the Karatsuba square root code.  He also improved the
+Toom3 code for GMP 4.2.  Paul sparked the development of GMP 2, with his
+comparisons between bignum packages.  The ECMNET project Paul is organizing
+was a driving force behind many of the optimizations in GMP 3.  Paul also
+wrote the new GMP 4.3 nth root code (with Torbj&ouml;rn).
+</p>
+<p>Ken Weber (Kent State University, Universidade Federal do Rio Grande do Sul)
+contributed now defunct versions of <code class="code">mpz_gcd</code>, <code class="code">mpz_divexact</code>,
+<code class="code">mpn_gcd</code>, and <code class="code">mpn_bdivmod</code>, partially supported by CNPq (Brazil)
+grant 301314194-2.
+</p>
+<p>Per Bothner of Cygnus Support helped to set up GMP to use Cygnus&rsquo; configure.
+He has also made valuable suggestions and tested numerous intermediary
+releases.
+</p>
+<p>Joachim Hollman was involved in the design of the <code class="code">mpf</code> interface, and in
+the <code class="code">mpz</code> design revisions for version 2.
+</p>
+<p>Bennet Yee contributed the initial versions of <code class="code">mpz_jacobi</code> and
+<code class="code">mpz_legendre</code>.
+</p>
+<p>Andreas Schwab contributed the files <samp class="file">mpn/m68k/lshift.S</samp> and
+<samp class="file">mpn/m68k/rshift.S</samp> (now in <samp class="file">.asm</samp> form).
+</p>
+<p>Robert Harley of Inria, France and David Seal of ARM, England, suggested clever
+improvements for population count.  Robert also wrote highly optimized
+Karatsuba and 3-way Toom multiplication functions for GMP 3, and contributed
+the ARM assembly code.
+</p>
+<p>Torsten Ekedahl of the Mathematical Department of Stockholm University provided
+significant inspiration during several phases of the GMP development.  His
+mathematical expertise helped improve several algorithms.
+</p>
+<p>Linus Nordberg wrote the new configure system based on autoconf and
+implemented the new random functions.
+</p>
+<p>Kevin Ryde worked on a large number of things: optimized x86 code, m4 asm
+macros, parameter tuning, speed measuring, the configure system, function
+inlining, divisibility tests, bit scanning, Jacobi symbols, Fibonacci and Lucas
+number functions, printf and scanf functions, perl interface, demo expression
+parser, the algorithms chapter in the manual, <samp class="file">gmpasm-mode.el</samp>, and
+various miscellaneous improvements elsewhere.
+</p>
+<p>Kent Boortz made the Mac OS 9 port.
+</p>
+<p>Steve Root helped write the optimized alpha 21264 assembly code.
+</p>
+<p>Gerardo Ballabio wrote the <samp class="file">gmpxx.h</samp> C++ class interface and the C++
+<code class="code">istream</code> input routines.
+</p>
+<p>Jason Moxham rewrote <code class="code">mpz_fac_ui</code>.
+</p>
+<p>Pedro Gimeno implemented the Mersenne Twister and made other random number
+improvements.
+</p>
+<p>Niels M&ouml;ller wrote the sub-quadratic GCD, extended GCD and Jacobi code, the
+quadratic Hensel division code, and (with Torbj&ouml;rn) the new divide and
+conquer division code for GMP 4.3.  Niels also helped implement the new Toom
+multiply code for GMP 4.3 and implemented helper functions to simplify Toom
+evaluations for GMP 5.0.  He wrote the original version of mpn_mulmod_bnm1, and
+he is the main author of the mini-gmp package used for gmp bootstrapping.
+</p>
+<p>Alberto Zanoni and Marco Bodrato suggested the unbalanced multiply strategy,
+and found the optimal strategies for evaluation and interpolation in Toom
+multiplication.
+</p>
+<p>Marco Bodrato helped implement the new Toom multiply code for GMP 4.3 and
+implemented most of the new Toom multiply and squaring code for 5.0.
+He is the main author of the current mpn_mulmod_bnm1, mpn_mullo_n, and
+mpn_sqrlo.  Marco also wrote the functions mpn_invert and mpn_invertappr,
+and improved the speed of integer root extraction.  He is the author of
+mini-mpq, an additional layer to mini-gmp; of most of the combinatorial
+functions and the BPSW primality testing implementation, for both the
+main library and the mini-gmp package.
+</p>
+<p>David Harvey suggested the internal function <code class="code">mpn_bdiv_dbm1</code>, implementing
+division relevant to Toom multiplication.  He also worked on fast assembly
+sequences, in particular on a fast AMD64 <code class="code">mpn_mul_basecase</code>. He wrote
+the internal middle product functions <code class="code">mpn_mulmid_basecase</code>,
+<code class="code">mpn_toom42_mulmid</code>, <code class="code">mpn_mulmid_n</code> and related helper routines.
+</p>
+<p>Martin Boij wrote <code class="code">mpn_perfect_power_p</code>.
+</p>
+<p>Marc Glisse improved <samp class="file">gmpxx.h</samp>: use fewer temporaries (faster),
+specializations of <code class="code">numeric_limits</code> and <code class="code">common_type</code>, C++11
+features (move constructors, explicit bool conversion, UDL), make the
+conversion from <code class="code">mpq_class</code> to <code class="code">mpz_class</code> explicit, optimize
+operations where one argument is a small compile-time constant, replace
+some heap allocations by stack allocations.  He also fixed the eofbit
+handling of C++ streams, and removed one division from <samp class="file">mpq/aors.c</samp>.
+</p>
+<p>David S Miller wrote assembly code for SPARC T3 and T4.
+</p>
+<p>Mark Sofroniou cleaned up the types of mul_fft.c, letting it work for huge
+operands.
+</p>
+<p>Ulrich Weigand ported GMP to the powerpc64le ABI.
+</p>
+<p>(This list is chronological, not ordered after significance.  If you have
+contributed to GMP but are not listed above, please tell
+<a class="email" href="mailto:gmp-devel@gmplib.org">gmp-devel@gmplib.org</a> about the omission!)
+</p>
+<p>The development of floating point functions of GNU MP 2 was supported in part
+by the ESPRIT-BRA (Basic Research Activities) 6846 project POSSO (POlynomial
+System SOlving).
+</p>
+<p>The development of GMP 2, 3, and 4.0 was supported in part by the IDA Center
+for Computing Sciences.
+</p>
+<p>The development of GMP 4.3, 5.0, and 5.1 was supported in part by the Swedish
+Foundation for Strategic Research.
+</p>
+<p>Thanks go to Hans Thorsen for donating an SGI system for the GMP test system
+environment.
+</p>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.References.html#start" accesskey="n" rel="next">References</a>, Previous: <a href="constant.Internals.html#Internals" accesskey="p" rel="prev">Internals</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>

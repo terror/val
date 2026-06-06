@@ -11,5 +11,6 @@ crate-type = ["cdylib", "rlib"]
 console_error_panic_hook = "0.1.7"
 serde = { version = "1.0.228", features = ["derive"] }
 serde-wasm-bindgen = "0.6.5"
-val = { path = "../.." }
+val = { path = "../..", features = ["force-cross"] }
+val-wasm-libc-shim = { version = "0.0.0", path = "../val-wasm-libc-shim" }
 wasm-bindgen = "0.2.105"

@@ -1,0 +1,607 @@
+<!-- This manual describes how to install and use the GNU multiple precision
+arithmetic library, version 6.3.0.
+Copyright 1991, 1993-2016, 2018-2020 Free Software Foundation, Inc.
+Permission is granted to copy, distribute and/or modify this document under
+the terms of the GNU Free Documentation License, Version 1.3 or any later
+version published by the Free Software Foundation; with no Invariant Sections,
+with the Front-Cover Texts being "A GNU Manual", and with the Back-Cover
+Texts being "You have freedom to copy and modify this GNU Manual, like GNU
+software".  A copy of the license is included in
+GNU Free Documentation License. -->
+<div class="chapter-level-extent" id="Floating_002dpoint-Functions">
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Low_level_Functions.html#start" accesskey="n" rel="next">Low-level Functions</a>, Previous: <a href="constant.Rational_Number_Functions.html#Rational-Number-Functions" accesskey="p" rel="prev">Rational Number Functions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h2 class="chapter" id="Floating_002dpoint-Functions-1"><span>7 Floating-point Functions<a class="copiable-link" href="#Floating_002dpoint-Functions-1"> &para;</a></span></h2>
+<a class="index-entry-id" id="index-Floating_002dpoint-functions"></a>
+<a class="index-entry-id" id="index-Float-functions"></a>
+<a class="index-entry-id" id="index-User_002ddefined-precision"></a>
+<a class="index-entry-id" id="index-Precision-of-floats"></a>
+<p>GMP floating point numbers are stored in objects of type <code class="code">mpf_t</code> and
+functions operating on them have an <code class="code">mpf_</code> prefix.
+</p>
+<p>The mantissa of each float has a user-selectable precision, in practice only
+limited by available memory.  Each variable has its own precision, and that can
+be increased or decreased at any time.  This selectable precision is a minimum
+value, GMP rounds it up to a whole limb.
+</p>
+<p>The accuracy of a calculation is determined by the priorly set precision of the
+destination variable and the numeric values of the input variables.  Input
+variables&rsquo; set precisions do not affect calculations (except indirectly as
+their values might have been affected when they were assigned).
+</p>
+<p>The exponent of each float has fixed precision, one machine word on most
+systems.  In the current implementation the exponent is a count of limbs, so
+for example on a 32-bit system this means a range of roughly
+<em class="math">2^-68719476768<!-- /@w --></em> to <em class="math">2^68719476736<!-- /@w --></em>, or on a 64-bit system
+this will be much greater.  Note however that <code class="code">mpf_get_str</code> can only
+return an exponent which fits an <code class="code">mp_exp_t</code> and currently
+<code class="code">mpf_set_str</code> doesn&rsquo;t accept exponents bigger than a <code class="code">long</code>.
+</p>
+<p>Each variable keeps track of the mantissa data actually in use.  This means
+that if a float is exactly represented in only a few bits then only those bits
+will be used in a calculation, even if the variable&rsquo;s selected precision is
+high.  This is a performance optimization; it does not affect the numeric
+results.
+</p>
+<p>Internally, GMP sometimes calculates with higher precision than that of the
+destination variable in order to limit errors.  Final results are always
+truncated to the destination variable&rsquo;s precision.
+</p>
+<p>The mantissa is stored in binary.  One consequence of this is that decimal
+fractions like <em class="math">0.1</em> cannot be represented exactly.  The same is true of
+plain IEEE <code class="code">double</code> floats.  This makes both highly unsuitable for
+calculations involving money or other values that should be exact decimal
+fractions.  (Suitably scaled integers, or perhaps rationals, are better
+choices.)
+</p>
+<p>The <code class="code">mpf</code> functions and variables have no special notion of infinity or
+not-a-number, and applications must take care not to overflow the exponent or
+results will be unpredictable.
+</p>
+<p>Note that the <code class="code">mpf</code> functions are <em class="emph">not</em> intended as a smooth
+extension to IEEE P754 arithmetic.  In particular results obtained on one
+computer often differ from the results on a computer with a different word
+size.
+</p>
+<p>New projects should consider using the GMP extension library MPFR
+(<a class="url" href="https://www.mpfr.org/">https://www.mpfr.org/</a>) instead.  MPFR provides well-defined precision and
+accurate rounding, and thereby naturally extends IEEE P754.
+</p>
+<ul class="mini-toc">
+<li><a href="#Initializing-Floats" accesskey="1">Initialization Functions</a></li>
+<li><a href="#Assigning-Floats" accesskey="2">Assignment Functions</a></li>
+<li><a href="#Simultaneous-Float-Init-_0026-Assign" accesskey="3">Combined Initialization and Assignment Functions</a></li>
+<li><a href="#Converting-Floats" accesskey="4">Conversion Functions</a></li>
+<li><a href="#Float-Arithmetic" accesskey="5">Arithmetic Functions</a></li>
+<li><a href="#Float-Comparison" accesskey="6">Comparison Functions</a></li>
+<li><a href="#I_002fO-of-Floats" accesskey="7">Input and Output Functions</a></li>
+<li><a href="#Miscellaneous-Float-Functions" accesskey="8">Miscellaneous Functions</a></li>
+</ul>
+<hr>
+<div class="section-level-extent" id="Initializing-Floats">
+<div class="nav-panel">
+<p>
+Next: <a href="#Assigning-Floats" accesskey="n" rel="next">Assignment Functions</a>, Previous: <a href="#Floating_002dpoint-Functions" accesskey="p" rel="prev">Floating-point Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Initialization-Functions-1"><span>7.1 Initialization Functions<a class="copiable-link" href="#Initialization-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-initialization-functions"></a>
+<a class="index-entry-id" id="index-Initialization-functions-3"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fset_005fdefault_005fprec"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_default_prec</strong> <code class="def-code-arguments">(mp_bitcnt_t <var class="var">prec</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fdefault_005fprec"> &para;</a></span></dt>
+<dd><p>Set the default precision to be <strong class="strong">at least</strong> <var class="var">prec</var> bits.  All
+subsequent calls to <code class="code">mpf_init</code> will use this precision, but previously
+initialized variables are unaffected.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fget_005fdefault_005fprec"><span class="category-def">Function: </span><span><code class="def-type">mp_bitcnt_t</code> <strong class="def-name">mpf_get_default_prec</strong> <code class="def-code-arguments">(void)</code><a class="copiable-link" href="#index-mpf_005fget_005fdefault_005fprec"> &para;</a></span></dt>
+<dd><p>Return the default precision actually used.
+</p></dd></dl>
+<p>An <code class="code">mpf_t</code> object must be initialized before storing the first value in
+it.  The functions <code class="code">mpf_init</code> and <code class="code">mpf_init2</code> are used for that
+purpose.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005finit"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_init</strong> <code class="def-code-arguments">(mpf_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpf_005finit"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">x</var> to 0.  Normally, a variable should be initialized once only
+or at least be cleared, using <code class="code">mpf_clear</code>, between initializations.  The
+precision of <var class="var">x</var> is undefined unless a default precision has already been
+established by a call to <code class="code">mpf_set_default_prec</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005finit2"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_init2</strong> <code class="def-code-arguments">(mpf_t <var class="var">x</var>, mp_bitcnt_t <var class="var">prec</var>)</code><a class="copiable-link" href="#index-mpf_005finit2"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">x</var> to 0 and set its precision to be <strong class="strong">at least</strong>
+<var class="var">prec</var> bits.  Normally, a variable should be initialized once only or at
+least be cleared, using <code class="code">mpf_clear</code>, between initializations.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005finits"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_inits</strong> <code class="def-code-arguments">(mpf_t <var class="var">x</var>, ...)</code><a class="copiable-link" href="#index-mpf_005finits"> &para;</a></span></dt>
+<dd><p>Initialize a NULL-terminated list of <code class="code">mpf_t</code> variables, and set their
+values to 0.  The precision of the initialized variables is undefined unless a
+default precision has already been established by a call to
+<code class="code">mpf_set_default_prec</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fclear"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_clear</strong> <code class="def-code-arguments">(mpf_t <var class="var">x</var>)</code><a class="copiable-link" href="#index-mpf_005fclear"> &para;</a></span></dt>
+<dd><p>Free the space occupied by <var class="var">x</var>.  Make sure to call this function for all
+<code class="code">mpf_t</code> variables when you are done with them.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fclears"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_clears</strong> <code class="def-code-arguments">(mpf_t <var class="var">x</var>, ...)</code><a class="copiable-link" href="#index-mpf_005fclears"> &para;</a></span></dt>
+<dd><p>Free the space occupied by a NULL-terminated list of <code class="code">mpf_t</code> variables.
+</p></dd></dl>
+<p>Here is an example on how to initialize floating-point variables:
+</p><div class="example">
+<pre class="example-preformatted">{
+  mpf_t x, y;
+  mpf_init (x);           /* use default precision */
+  mpf_init2 (y, 256);     /* precision <em class="emph">at least</em> 256 bits */
+  ...
+  /* Unless the program is about to exit, do ... */
+  mpf_clear (x);
+  mpf_clear (y);
+}
+</pre></div>
+<p>The following three functions are useful for changing the precision during a
+calculation.  A typical use would be for adjusting the precision gradually in
+iterative algorithms like Newton-Raphson, making the computation precision
+closely match the actual accurate part of the numbers.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fget_005fprec"><span class="category-def">Function: </span><span><code class="def-type">mp_bitcnt_t</code> <strong class="def-name">mpf_get_prec</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fget_005fprec"> &para;</a></span></dt>
+<dd><p>Return the current precision of <var class="var">op</var>, in bits.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fset_005fprec"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_prec</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, mp_bitcnt_t <var class="var">prec</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fprec"> &para;</a></span></dt>
+<dd><p>Set the precision of <var class="var">rop</var> to be <strong class="strong">at least</strong> <var class="var">prec</var> bits.  The
+value in <var class="var">rop</var> will be truncated to the new precision.
+</p>
+<p>This function requires a call to <code class="code">realloc</code>, and so should not be used in
+a tight loop.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fset_005fprec_005fraw"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_prec_raw</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, mp_bitcnt_t <var class="var">prec</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fprec_005fraw"> &para;</a></span></dt>
+<dd><p>Set the precision of <var class="var">rop</var> to be <strong class="strong">at least</strong> <var class="var">prec</var> bits,
+without changing the memory allocated.
+</p>
+<p><var class="var">prec</var> must be no more than the allocated precision for <var class="var">rop</var>, that
+being the precision when <var class="var">rop</var> was initialized, or in the most recent
+<code class="code">mpf_set_prec</code>.
+</p>
+<p>The value in <var class="var">rop</var> is unchanged, and in particular if it had a higher
+precision than <var class="var">prec</var> it will retain that higher precision.  New values
+written to <var class="var">rop</var> will use the new <var class="var">prec</var>.
+</p>
+<p>Before calling <code class="code">mpf_clear</code> or the full <code class="code">mpf_set_prec</code>, another
+<code class="code">mpf_set_prec_raw</code> call must be made to restore <var class="var">rop</var> to its original
+allocated precision.  Failing to do so will have unpredictable results.
+</p>
+<p><code class="code">mpf_get_prec</code> can be used before <code class="code">mpf_set_prec_raw</code> to get the
+original allocated precision.  After <code class="code">mpf_set_prec_raw</code> it reflects the
+<var class="var">prec</var> value set.
+</p>
+<p><code class="code">mpf_set_prec_raw</code> is an efficient way to use an <code class="code">mpf_t</code> variable at
+different precisions during a calculation, perhaps to gradually increase
+precision in an iteration, or just to use various different precisions for
+different purposes during a calculation.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Assigning-Floats">
+<div class="nav-panel">
+<p>
+Next: <a href="#Simultaneous-Float-Init-_0026-Assign" accesskey="n" rel="next">Combined Initialization and Assignment Functions</a>, Previous: <a href="#Initializing-Floats" accesskey="p" rel="prev">Initialization Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Assignment-Functions-1"><span>7.2 Assignment Functions<a class="copiable-link" href="#Assignment-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-assignment-functions"></a>
+<a class="index-entry-id" id="index-Assignment-functions-3"></a>
+<p>These functions assign new values to already initialized floats
+(see <a class="pxref" href="#Initializing-Floats">Initialization Functions</a>).
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fset"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fset"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fset_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, unsigned long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fset_005fsi"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_si</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, signed long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fset_005fd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_d</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, double <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fset_005fz"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_z</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpz_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fz"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fset_005fq"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_set_q</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpq_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fq"> &para;</a></span></dt>
+<dd><p>Set the value of <var class="var">rop</var> from <var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fset_005fstr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_set_str</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const char *<var class="var">str</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpf_005fset_005fstr"> &para;</a></span></dt>
+<dd><p>Set the value of <var class="var">rop</var> from the string in <var class="var">str</var>.  The string is of the
+form &lsquo;<samp class="samp">M@N</samp>&rsquo; or, if the base is 10 or less, alternatively &lsquo;<samp class="samp">MeN</samp>&rsquo;.
+&lsquo;<samp class="samp">M</samp>&rsquo; is the mantissa and &lsquo;<samp class="samp">N</samp>&rsquo; is the exponent.  The mantissa is always
+in the specified base.  The exponent is either in the specified base or, if
+<var class="var">base</var> is negative, in decimal.  The decimal point expected is taken from
+the current locale, on systems providing <code class="code">localeconv</code>.
+</p>
+<p>The argument <var class="var">base</var> may be in the ranges 2 to 62, or &minus;62 to
+&minus;2.  Negative values are used to specify that the exponent is in
+decimal.
+</p>
+<p>For bases up to 36, case is ignored; upper-case and lower-case letters have
+the same value; for bases 37 to 62, upper-case letters represent the usual
+10..35 while lower-case letters represent 36..61.
+</p>
+<p>Unlike the corresponding <code class="code">mpz</code> function, the base will not be determined
+from the leading characters of the string if <var class="var">base</var> is 0.  This is so that
+numbers like &lsquo;<samp class="samp">0.23</samp>&rsquo; are not interpreted as octal.
+</p>
+<p>White space is allowed in the string, and is simply ignored.  [This is not
+really true; white-space is ignored in the beginning of the string and within
+the mantissa, but not in other places, such as after a minus sign or in the
+exponent.  We are considering changing the definition of this function, making
+it fail when there is any white-space in the input, since that makes a lot of
+sense.  Please tell us your opinion about this change.  Do you really want it
+to accept <code class="code">&quot;3 14&quot;</code> as meaning 314 as it does now?]
+</p>
+<p>This function returns 0 if the entire string is a valid number in base
+<var class="var">base</var>.  Otherwise it returns &minus;1.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fswap"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_swap</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop1</var>, mpf_t <var class="var">rop2</var>)</code><a class="copiable-link" href="#index-mpf_005fswap"> &para;</a></span></dt>
+<dd><p>Swap <var class="var">rop1</var> and <var class="var">rop2</var> efficiently.  Both the values and the
+precisions of the two variables are swapped.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Simultaneous-Float-Init-_0026-Assign">
+<div class="nav-panel">
+<p>
+Next: <a href="#Converting-Floats" accesskey="n" rel="next">Conversion Functions</a>, Previous: <a href="#Assigning-Floats" accesskey="p" rel="prev">Assignment Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Combined-Initialization-and-Assignment-Functions-1"><span>7.3 Combined Initialization and Assignment Functions<a class="copiable-link" href="#Combined-Initialization-and-Assignment-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-assignment-functions-1"></a>
+<a class="index-entry-id" id="index-Assignment-functions-4"></a>
+<a class="index-entry-id" id="index-Float-initialization-functions-1"></a>
+<a class="index-entry-id" id="index-Initialization-functions-4"></a>
+<p>For convenience, GMP provides a parallel series of initialize-and-set functions
+which initialize the output and then store the value there.  These functions&rsquo;
+names have the form <code class="code">mpf_init_set&hellip;</code>
+</p>
+<p>Once the float has been initialized by any of the <code class="code">mpf_init_set&hellip;</code>
+functions, it can be used as the source or destination operand for the ordinary
+float functions.  Don&rsquo;t use an initialize-and-set function on a variable
+already initialized!
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005finit_005fset"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_init_set</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005finit_005fset"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005finit_005fset_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_init_set_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, unsigned long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005finit_005fset_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005finit_005fset_005fsi"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_init_set_si</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, signed long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005finit_005fset_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005finit_005fset_005fd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_init_set_d</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, double <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005finit_005fset_005fd"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">rop</var> and set its value from <var class="var">op</var>.
+</p>
+<p>The precision of <var class="var">rop</var> will be taken from the active default precision, as
+set by <code class="code">mpf_set_default_prec</code>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005finit_005fset_005fstr"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_init_set_str</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const char *<var class="var">str</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpf_005finit_005fset_005fstr"> &para;</a></span></dt>
+<dd><p>Initialize <var class="var">rop</var> and set its value from the string in <var class="var">str</var>.  See
+<code class="code">mpf_set_str</code> above for details on the assignment operation.
+</p>
+<p>Note that <var class="var">rop</var> is initialized even if an error occurs.  (I.e., you have to
+call <code class="code">mpf_clear</code> for it.)
+</p>
+<p>The precision of <var class="var">rop</var> will be taken from the active default precision, as
+set by <code class="code">mpf_set_default_prec</code>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Converting-Floats">
+<div class="nav-panel">
+<p>
+Next: <a href="#Float-Arithmetic" accesskey="n" rel="next">Arithmetic Functions</a>, Previous: <a href="#Simultaneous-Float-Init-_0026-Assign" accesskey="p" rel="prev">Combined Initialization and Assignment Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Conversion-Functions-2"><span>7.4 Conversion Functions<a class="copiable-link" href="#Conversion-Functions-2"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-conversion-functions"></a>
+<a class="index-entry-id" id="index-Conversion-functions-2"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fget_005fd"><span class="category-def">Function: </span><span><code class="def-type">double</code> <strong class="def-name">mpf_get_d</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fget_005fd"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a <code class="code">double</code>, truncating if necessary (i.e. rounding
+towards zero).
+</p>
+<p>If the exponent in <var class="var">op</var> is too big or too small to fit a <code class="code">double</code>
+then the result is system dependent.  For too big an infinity is returned when
+available.  For too small <em class="math">0.0</em> is normally returned.  Hardware overflow,
+underflow and denorm traps may or may not occur.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fget_005fd_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">double</code> <strong class="def-name">mpf_get_d_2exp</strong> <code class="def-code-arguments">(signed long int *<var class="var">exp</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fget_005fd_005f2exp"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a <code class="code">double</code>, truncating if necessary (i.e. rounding
+towards zero), and with an exponent returned separately.
+</p>
+<p>The return value is in the range <em class="math">0.5&lt;=abs(<var class="var">d</var>)&lt;1</em> and the
+exponent is stored to <code class="code">*<var class="var">exp</var></code>.  <em class="math"><var class="var">d</var> * 2^<var class="var">exp</var></em> is the (truncated) <var class="var">op</var> value.  If <var class="var">op</var> is zero,
+the return is <em class="math">0.0</em> and 0 is stored to <code class="code">*<var class="var">exp</var></code>.
+</p>
+<a class="index-entry-id" id="index-frexp-1"></a>
+<p>This is similar to the standard C <code class="code">frexp</code> function (see <a data-manual="libc" href="https://www.gnu.org/software/libc/manual/html_node/Normalization-Functions.html#Normalization-Functions">Normalization
+Functions</a> in <cite class="cite">The GNU C Library Reference Manual</cite>).
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fget_005fsi"><span class="category-def">Function: </span><span><code class="def-type">long</code> <strong class="def-name">mpf_get_si</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fget_005fsi"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fget_005fui"><span class="category-def">Function: </span><span><code class="def-type">unsigned long</code> <strong class="def-name">mpf_get_ui</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fget_005fui"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a <code class="code">long</code> or <code class="code">unsigned long</code>, truncating any
+fraction part.  If <var class="var">op</var> is too big for the return type, the result is
+undefined.
+</p>
+<p>See also <code class="code">mpf_fits_slong_p</code> and <code class="code">mpf_fits_ulong_p</code>
+(see <a class="pxref" href="#Miscellaneous-Float-Functions">Miscellaneous Functions</a>).
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fget_005fstr"><span class="category-def">Function: </span><span><code class="def-type">char *</code> <strong class="def-name">mpf_get_str</strong> <code class="def-code-arguments">(char *<var class="var">str</var>, mp_exp_t *<var class="var">expptr</var>, int <var class="var">base</var>, size_t <var class="var">n_digits</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fget_005fstr"> &para;</a></span></dt>
+<dd><p>Convert <var class="var">op</var> to a string of digits in base <var class="var">base</var>.  The base argument
+may vary from 2 to 62 or from &minus;2 to &minus;36.  Up to <var class="var">n_digits</var>
+digits will be generated.  Trailing zeros are not returned.  No more digits
+than can be accurately represented by <var class="var">op</var> are ever generated.  If
+<var class="var">n_digits</var> is 0 then that accurate maximum number of digits are generated.
+</p>
+<p>For <var class="var">base</var> in the range 2..36, digits and lower-case letters are used; for
+&minus;2..&minus;36, digits and upper-case letters are used; for 37..62,
+digits, upper-case letters, and lower-case letters (in that significance order)
+are used.
+</p>
+<p>If <var class="var">str</var> is <code class="code">NULL</code>, the result string is allocated using the current
+allocation function (see <a class="pxref" href="constant.Custom_Allocation.html#start">Custom Allocation</a>).  The block will be
+<code class="code">strlen(str)+1</code> bytes, that being exactly enough for the string and
+null-terminator.
+</p>
+<p>If <var class="var">str</var> is not <code class="code">NULL</code>, it should point to a block of
+<em class="math"><var class="var">n_digits</var> + 2</em> bytes, that being enough for the mantissa, a
+possible minus sign, and a null-terminator.  When <var class="var">n_digits</var> is 0 to get
+all significant digits, an application won&rsquo;t be able to know the space
+required, and <var class="var">str</var> should be <code class="code">NULL</code> in that case.
+</p>
+<p>The generated string is a fraction, with an implicit radix point immediately
+to the left of the first digit.  The applicable exponent is written through
+the <var class="var">expptr</var> pointer.  For example, the number 3.1416 would be returned as
+string <code class="code">&quot;31416&quot;</code> and exponent 1.
+</p>
+<p>When <var class="var">op</var> is zero, an empty string is produced and the exponent returned
+is 0.
+</p>
+<p>A pointer to the result string is returned, being either the allocated block
+or the given <var class="var">str</var>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Float-Arithmetic">
+<div class="nav-panel">
+<p>
+Next: <a href="#Float-Comparison" accesskey="n" rel="next">Comparison Functions</a>, Previous: <a href="#Converting-Floats" accesskey="p" rel="prev">Conversion Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Arithmetic-Functions-2"><span>7.5 Arithmetic Functions<a class="copiable-link" href="#Arithmetic-Functions-2"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-arithmetic-functions"></a>
+<a class="index-entry-id" id="index-Arithmetic-functions-2"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fadd"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_add</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fadd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fadd_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_add_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fadd_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> + <var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fsub"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_sub</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fsub"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fui_005fsub"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_ui_sub</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, unsigned long int <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fui_005fsub"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fsub_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_sub_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fsub_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <var class="var">op1</var> &minus; <var class="var">op2</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fmul"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_mul</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fmul"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fmul_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_mul_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fmul_005fui"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> times <var class="var">op2</var></em>.
+</p></dd></dl>
+<p>Division is undefined if the divisor is zero, and passing a zero divisor to the
+divide functions will make these functions intentionally divide by zero.  This
+lets the user handle arithmetic exceptions in these functions in the same
+manner as other arithmetic exceptions.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_div</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fdiv"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fui_005fdiv"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_ui_div</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, unsigned long int <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fui_005fdiv"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fdiv_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_div_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fdiv_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Division-functions-2"></a>
+<p>Set <var class="var">rop</var> to <var class="var">op1</var>/<var class="var">op2</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fsqrt"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_sqrt</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fsqrt"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fsqrt_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_sqrt_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, unsigned long int <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fsqrt_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Root-extraction-functions-1"></a>
+<p>Set <var class="var">rop</var> to <em class="math">the square root of <var class="var">op</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fpow_005fui"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_pow_ui</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fpow_005fui"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Exponentiation-functions-1"></a>
+<a class="index-entry-id" id="index-Powering-functions-1"></a>
+<p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> raised to the power <var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fneg"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_neg</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fneg"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to &minus;<var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fabs"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_abs</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fabs"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to the absolute value of <var class="var">op</var>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fmul_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_mul_2exp</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, mp_bitcnt_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fmul_005f2exp"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> times 2 raised to
+<var class="var">op2</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fdiv_005f2exp"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_div_2exp</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, mp_bitcnt_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fdiv_005f2exp"> &para;</a></span></dt>
+<dd><p>Set <var class="var">rop</var> to <em class="math"><var class="var">op1</var> divided by 2 raised to
+<var class="var">op2</var></em>.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Float-Comparison">
+<div class="nav-panel">
+<p>
+Next: <a href="#I_002fO-of-Floats" accesskey="n" rel="next">Input and Output Functions</a>, Previous: <a href="#Float-Arithmetic" accesskey="p" rel="prev">Arithmetic Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Comparison-Functions-2"><span>7.6 Comparison Functions<a class="copiable-link" href="#Comparison-Functions-2"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-comparison-functions"></a>
+<a class="index-entry-id" id="index-Comparison-functions-2"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fcmp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_cmp</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fcmp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fcmp_005fz"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_cmp_z</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op1</var>, const mpz_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fcmp_005fz"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fcmp_005fd"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_cmp_d</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op1</var>, double <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fcmp_005fd"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fcmp_005fui"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_cmp_ui</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op1</var>, unsigned long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fcmp_005fui"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005fcmp_005fsi"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_cmp_si</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op1</var>, signed long int <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005fcmp_005fsi"> &para;</a></span></dt>
+<dd><p>Compare <var class="var">op1</var> and <var class="var">op2</var>.  Return a positive value if <em class="math"><var class="var">op1</var> &gt;
+<var class="var">op2</var></em>, zero if <em class="math"><var class="var">op1</var> = <var class="var">op2</var></em>, and a negative value if
+<em class="math"><var class="var">op1</var> &lt; <var class="var">op2</var></em>.
+</p>
+<p><code class="code">mpf_cmp_d</code> can be called with an infinity, but results are undefined for
+a NaN.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005feq"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_eq</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>, mp_bitcnt_t op3)</code><a class="copiable-link" href="#index-mpf_005feq"> &para;</a></span></dt>
+<dd><p><strong class="strong">This function is mathematically ill-defined and should not be used.</strong>
+</p>
+<p>Return non-zero if the first <var class="var">op3</var> bits of <var class="var">op1</var> and <var class="var">op2</var> are
+equal, zero otherwise.  Note that numbers like e.g., 256 (binary 100000000) and
+255 (binary 11111111) will never be equal by this function&rsquo;s measure, and
+furthermore that 0 will only be equal to itself.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005freldiff"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_reldiff</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op1</var>, const mpf_t <var class="var">op2</var>)</code><a class="copiable-link" href="#index-mpf_005freldiff"> &para;</a></span></dt>
+<dd><p>Compute the relative difference between <var class="var">op1</var> and <var class="var">op2</var> and store the
+result in <var class="var">rop</var>.  This is <em class="math">abs(<var class="var">op1</var>-<var class="var">op2</var>)/<var class="var">op1</var></em>.
+</p></dd></dl>
+<dl class="first-deftypefn def-block">
+<dt class="deftypefn def-line" id="index-mpf_005fsgn"><span class="category-def">Macro: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_sgn</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fsgn"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Sign-tests-2"></a>
+<a class="index-entry-id" id="index-Float-sign-tests"></a>
+<p>Return <em class="math">+1</em> if <em class="math"><var class="var">op</var> &gt; 0</em>, 0 if <em class="math"><var class="var">op</var> = 0</em>, and
+<em class="math">-1</em> if <em class="math"><var class="var">op</var> &lt; 0</em>.
+</p>
+<p>This function is actually implemented as a macro.  It evaluates its argument
+multiple times.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="I_002fO-of-Floats">
+<div class="nav-panel">
+<p>
+Next: <a href="#Miscellaneous-Float-Functions" accesskey="n" rel="next">Miscellaneous Functions</a>, Previous: <a href="#Float-Comparison" accesskey="p" rel="prev">Comparison Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Input-and-Output-Functions-2"><span>7.7 Input and Output Functions<a class="copiable-link" href="#Input-and-Output-Functions-2"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Float-input-and-output-functions"></a>
+<a class="index-entry-id" id="index-Input-functions-2"></a>
+<a class="index-entry-id" id="index-Output-functions-2"></a>
+<a class="index-entry-id" id="index-I_002fO-functions-2"></a>
+<p>Functions that perform input from a stdio stream, and functions that output to
+a stdio stream, of <code class="code">mpf</code> numbers.  Passing a <code class="code">NULL</code> pointer for a
+<var class="var">stream</var> argument to any of these functions will make them read from
+<code class="code">stdin</code> and write to <code class="code">stdout</code>, respectively.
+</p>
+<p>When using any of these functions, it is a good idea to include <samp class="file">stdio.h</samp>
+before <samp class="file">gmp.h</samp>, since that will allow <samp class="file">gmp.h</samp> to define prototypes
+for these functions.
+</p>
+<p>See also <a class="ref" href="constant.Formatted_Output.html#Formatted-Output">Formatted Output</a> and <a class="ref" href="constant.Formatted_Input.html#Formatted-Input">Formatted Input</a>.
+</p>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fout_005fstr"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpf_out_str</strong> <code class="def-code-arguments">(FILE *<var class="var">stream</var>, int <var class="var">base</var>, size_t <var class="var">n_digits</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fout_005fstr"> &para;</a></span></dt>
+<dd><p>Print <var class="var">op</var> to <var class="var">stream</var>, as a string of digits.  Return the number of
+bytes written, or if an error occurred, return 0.
+</p>
+<p>The mantissa is prefixed with an &lsquo;<samp class="samp">0.</samp>&rsquo; and is in the given <var class="var">base</var>,
+which may vary from 2 to 62 or from &minus;2 to &minus;36.  An exponent is
+then printed, separated by an &lsquo;<samp class="samp">e</samp>&rsquo;, or if the base is greater than 10 then
+by an &lsquo;<samp class="samp">@</samp>&rsquo;.  The exponent is always in decimal.  The decimal point follows
+the current locale, on systems providing <code class="code">localeconv</code>.
+</p>
+<p>For <var class="var">base</var> in the range 2..36, digits and lower-case letters are used; for
+&minus;2..&minus;36, digits and upper-case letters are used; for 37..62,
+digits, upper-case letters, and lower-case letters (in that significance order)
+are used.
+</p>
+<p>Up to <var class="var">n_digits</var> will be printed from the mantissa, except that no more
+digits than are accurately representable by <var class="var">op</var> will be printed.
+<var class="var">n_digits</var> can be 0 to select that accurate maximum.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005finp_005fstr"><span class="category-def">Function: </span><span><code class="def-type">size_t</code> <strong class="def-name">mpf_inp_str</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, FILE *<var class="var">stream</var>, int <var class="var">base</var>)</code><a class="copiable-link" href="#index-mpf_005finp_005fstr"> &para;</a></span></dt>
+<dd><p>Read a string in base <var class="var">base</var> from <var class="var">stream</var>, and put the read float in
+<var class="var">rop</var>.  The string is of the form &lsquo;<samp class="samp">M@N</samp>&rsquo; or, if the base is 10 or
+less, alternatively &lsquo;<samp class="samp">MeN</samp>&rsquo;.  &lsquo;<samp class="samp">M</samp>&rsquo; is the mantissa and &lsquo;<samp class="samp">N</samp>&rsquo; is the
+exponent.  The mantissa is always in the specified base.  The exponent is
+either in the specified base or, if <var class="var">base</var> is negative, in decimal.  The
+decimal point expected is taken from the current locale, on systems providing
+<code class="code">localeconv</code>.
+</p>
+<p>The argument <var class="var">base</var> may be in the ranges 2 to 36, or &minus;36 to
+&minus;2.  Negative values are used to specify that the exponent is in
+decimal.
+</p>
+<p>Unlike the corresponding <code class="code">mpz</code> function, the base will not be determined
+from the leading characters of the string if <var class="var">base</var> is 0.  This is so that
+numbers like &lsquo;<samp class="samp">0.23</samp>&rsquo; are not interpreted as octal.
+</p>
+<p>Return the number of bytes read, or if an error occurred, return 0.
+</p></dd></dl>
+<hr>
+</div>
+<div class="section-level-extent" id="Miscellaneous-Float-Functions">
+<div class="nav-panel">
+<p>
+Previous: <a href="#I_002fO-of-Floats" accesskey="p" rel="prev">Input and Output Functions</a>, Up: <a href="#Floating_002dpoint-Functions" accesskey="u" rel="up">Floating-point Functions</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
+<h3 class="section" id="Miscellaneous-Functions-1"><span>7.8 Miscellaneous Functions<a class="copiable-link" href="#Miscellaneous-Functions-1"> &para;</a></span></h3>
+<a class="index-entry-id" id="index-Miscellaneous-float-functions"></a>
+<a class="index-entry-id" id="index-Float-miscellaneous-functions"></a>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005fceil"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_ceil</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005fceil"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005ffloor"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_floor</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ffloor"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005ftrunc"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_trunc</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ftrunc"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Rounding-functions"></a>
+<a class="index-entry-id" id="index-Float-rounding-functions"></a>
+<p>Set <var class="var">rop</var> to <var class="var">op</var> rounded to an integer.  <code class="code">mpf_ceil</code> rounds to the
+next higher integer, <code class="code">mpf_floor</code> to the next lower, and <code class="code">mpf_trunc</code>
+to the integer towards zero.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005finteger_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_integer_p</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005finteger_005fp"> &para;</a></span></dt>
+<dd><p>Return non-zero if <var class="var">op</var> is an integer.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005ffits_005fulong_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_fits_ulong_p</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ffits_005fulong_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005ffits_005fslong_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_fits_slong_p</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ffits_005fslong_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005ffits_005fuint_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_fits_uint_p</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ffits_005fuint_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005ffits_005fsint_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_fits_sint_p</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ffits_005fsint_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005ffits_005fushort_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_fits_ushort_p</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ffits_005fushort_005fp"> &para;</a></span></dt>
+<dt class="deftypefnx deftypefunx-alias-deftypefnx def-cmd-deftypefn def-line" id="index-mpf_005ffits_005fsshort_005fp"><span class="category-def">Function: </span><span><code class="def-type">int</code> <strong class="def-name">mpf_fits_sshort_p</strong> <code class="def-code-arguments">(const mpf_t <var class="var">op</var>)</code><a class="copiable-link" href="#index-mpf_005ffits_005fsshort_005fp"> &para;</a></span></dt>
+<dd><p>Return non-zero if <var class="var">op</var> would fit in the respective C data type, when
+truncated to an integer.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005furandomb"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_urandomb</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, gmp_randstate_t <var class="var">state</var>, mp_bitcnt_t <var class="var">nbits</var>)</code><a class="copiable-link" href="#index-mpf_005furandomb"> &para;</a></span></dt>
+<dd><a class="index-entry-id" id="index-Random-number-functions-1"></a>
+<a class="index-entry-id" id="index-Float-random-number-functions"></a>
+<p>Generate a uniformly distributed random float in <var class="var">rop</var>, such that <em class="math">0
+&lt;= <var class="var">rop</var> &lt; 1</em>, with <var class="var">nbits</var> significant bits in the mantissa or
+less if the precision of <var class="var">rop</var> is smaller.
+</p>
+<p>The variable <var class="var">state</var> must be initialized by calling one of the
+<code class="code">gmp_randinit</code> functions (<a class="ref" href="constant.Random_Number_Functions.html#Random-State-Initialization">Random State Initialization</a>) before
+invoking this function.
+</p></dd></dl>
+<dl class="first-deftypefn first-deftypefun-alias-first-deftypefn def-block">
+<dt class="deftypefn deftypefun-alias-deftypefn def-line" id="index-mpf_005frandom2"><span class="category-def">Function: </span><span><code class="def-type">void</code> <strong class="def-name">mpf_random2</strong> <code class="def-code-arguments">(mpf_t <var class="var">rop</var>, mp_size_t <var class="var">max_size</var>, mp_exp_t <var class="var">exp</var>)</code><a class="copiable-link" href="#index-mpf_005frandom2"> &para;</a></span></dt>
+<dd><p>Generate a random float of at most <var class="var">max_size</var> limbs, with long strings of
+zeros and ones in the binary representation.  The exponent of the number is in
+the interval &minus;<var class="var">exp</var> to <var class="var">exp</var> (in limbs).  This function is
+useful for testing functions and algorithms, since these kind of random
+numbers have proven to be more likely to trigger corner-case bugs.  Negative
+random numbers are generated when <var class="var">max_size</var> is negative.
+</p></dd></dl>
+</div>
+</div>
+<hr>
+<div class="nav-panel">
+<p>
+Next: <a href="constant.Low_level_Functions.html#start" accesskey="n" rel="next">Low-level Functions</a>, Previous: <a href="constant.Rational_Number_Functions.html#Rational-Number-Functions" accesskey="p" rel="prev">Rational Number Functions</a>, Up: <a href="index.html#start" accesskey="u" rel="up">GNU MP</a> &nbsp; [<a href="constant.Concept_Index.html#start" title="Index" rel="index">Index</a>]</p>
+</div>
