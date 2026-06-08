@@ -37,14 +37,14 @@ Relational       → Sum (('>=' | '<=' | '>' | '<') Sum)*
 Sum              → Product (('+' | '-') Product)*
 Product          → Power (('*' | '/' | '%') Power)*
 Power            → Unary ('^' Power)?
-Unary            → ('-' | '!')* ListAccess
-ListAccess       → Atom ('[' Expression ']')*
+Unary            → ('-' | '!')* Postfix
+Postfix          → Atom (Call | ListAccess)*
 Atom             → Number
                  | Boolean
                  | Null
                  | String
                  | List
-                 | FunctionCall
+                 | FunctionExpression
                  | Identifier
                  | '(' Expression ')'
 
@@ -53,7 +53,10 @@ Boolean          → 'true' | 'false'
 Null             → 'null'
 String           → '"' [^"]* '"' | "'" [^']* "'"
 List             → '[' Arguments? ','? ']'
-FunctionCall     → Identifier '(' Arguments? ','? ')'
+FunctionExpression
+                 → 'fn' '(' Parameters? ','? ')' Block
+Call             → '(' Arguments? ','? ')'
+ListAccess       → '[' Expression ']'
 Arguments        → Expression (',' Expression)*
 Identifier       → Letter (Letter | Digit)*
 Padding          → (Whitespace | LineComment)*

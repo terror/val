@@ -1352,6 +1352,37 @@ fn function_returned_closure_keeps_scope() -> Result {
 }
 
 #[test]
+fn function_values_can_be_called_from_expressions() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn make_adder(x) {
+        return fn(y) {
+          return x + y
+        }
+      }
+
+      fn apply(x, f) {
+        return f(x)
+      }
+
+      functions = [fn(x) {
+        return x * 2
+      }]
+
+      println((make_adder(2))(3))
+      println(functions[0](4))
+      println(apply(5, fn(x) {
+        return x - 1
+      }))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("5\n8\n4\n"))
+    .run()
+}
+
+#[test]
 fn function_with_local_variables() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1391,10 +1422,8 @@ fn function_with_multiple_statements() -> Result {
 }
 
 #[test]
-#[ignore = "captures current unsupported zero-argument function behavior"]
 fn function_with_no_arguments() -> Result {
   Test::new()?
-    .argument("-p")
     .program(indoc! {
       "
       fn get_pi() {
@@ -2614,6 +2643,15 @@ fn nested_while_loops() -> Result {
     })
     .expected_status(0)
     .expected_stdout(Exact("0\n1\n2\n3\n4\n"))
+    .run()
+}
+
+#[test]
+fn non_function_expression_cannot_be_called() -> Result {
+  Test::new()?
+    .program("println([1][0](2))")
+    .expected_status(1)
+    .expected_stderr(Contains("'1' is not a function"))
     .run()
 }
 

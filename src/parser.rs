@@ -113,11 +113,11 @@ where
 
 fn statement_parser<'a>()
 -> impl Parser<'a, &'a str, Spanned<Statement<'a>>, ParserError<'a>> + Clone {
-  let expression = expression_parser();
-
   recursive(|statement| {
     let statement_block = statement_list_parser(statement.clone())
       .delimited_by(padded_parser(just('{')), padded_parser(just('}')));
+
+    let expression = expression_parser(statement_block.clone());
 
     let simple_ident = padded_parser(text::ident()).map_with(|name, error| {
       let span = error.span();
@@ -228,8 +228,13 @@ fn statement_parser<'a>()
   })
 }
 
-fn expression_parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Expression<'a>>, ParserError<'a>> + Clone {
+fn expression_parser<'a, P>(
+  statement_block: P,
+) -> impl Parser<'a, &'a str, Spanned<Expression<'a>>, ParserError<'a>> + Clone
+where
+  P: Parser<'a, &'a str, Vec<Spanned<Statement<'a>>>, ParserError<'a>> + Clone,
+  P: 'a,
+{
   let identifier = padded_parser(text::ident());
 
   recursive(|expression| {
@@ -265,13 +270,18 @@ fn expression_parser<'a>()
 
     let string = double_quoted_string.or(single_quoted_string);
 
-    let function_call = identifier
-      .clone()
-      .then(
-        comma_separated_parser(expression.clone())
+    let arguments = comma_separated_parser(expression.clone())
+      .delimited_by(padded_parser(just('(')), padded_parser(just(')')))
+      .padded_by(padding_parser())
+      .map_with(|arguments, error| (arguments, error.span()));
+
+    let function = keyword_parser("fn")
+      .ignore_then(
+        comma_separated_parser(padded_parser(text::ident()))
           .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
       )
-      .map(|(name, arguments)| Expression::FunctionCall(name, arguments))
+      .then(statement_block.clone())
+      .map(|(params, body)| Expression::Function(params, body))
       .map_with(|ast, error| (ast, error.span()));
 
     let identifier = identifier
@@ -287,7 +297,7 @@ fn expression_parser<'a>()
       .or(boolean)
       .or(null)
       .or(expression.clone().delimited_by(just('('), just(')')))
-      .or(function_call)
+      .or(function)
       .or(list)
       .or(identifier)
       .or(string)
@@ -312,6 +322,20 @@ fn expression_parser<'a>()
       };
 
     atom.pratt((
+      postfix(
+        8,
+        arguments,
+        |function,
+         (arguments, _),
+         error: &mut MapExtra<'a, '_, &'a str, ParserError<'a>>| {
+          let span = error.span();
+
+          let expression =
+            Expression::FunctionCall(Box::new(function), arguments);
+
+          (expression, span)
+        },
+      ),
       postfix(
         8,
         index_parser(expression.clone()),
@@ -472,7 +496,28 @@ mod tests {
   fn for_loop() {
     Test::new()
       .program("for x in [1, 2, 3] { println(x) }")
-      .ast("statements(for(x, list(number(1), number(2), number(3)), block(expression(function_call(println,identifier(x))))))")
+      .ast("statements(for(x, list(number(1), number(2), number(3)), block(expression(function_call(identifier(println), identifier(x))))))")
+      .run();
+  }
+
+  #[test]
+  fn function_call() {
+    Test::new()
+      .program("make_counter(0)(1)")
+      .ast("statements(expression(function_call(function_call(identifier(make_counter), number(0)), number(1))))")
+      .run();
+
+    Test::new()
+      .program("f[0](x)")
+      .ast("statements(expression(function_call(list_access(identifier(f), number(0)), identifier(x))))")
+      .run();
+  }
+
+  #[test]
+  fn function_expression() {
+    Test::new()
+      .program("fn(x) { return x + 1 }")
+      .ast("statements(expression(function([x], block(return(binary_op(+, identifier(x), number(1)))))))")
       .run();
   }
 
@@ -514,7 +559,7 @@ mod tests {
       .program("2 +* 3")
       .errors(vec![Error::new(
         SimpleSpan::from(3..4),
-        "found '*' expected '-', '!', int, '\"true\"', '\"false\"', '\"null\"', '(', identifier, '[', '\"', or '''",
+        "found '*' expected '-', '!', int, '\"true\"', '\"false\"', '\"null\"', '(', '\"fn\"', '[', identifier, '\"', or '''",
       )])
       .run();
   }
@@ -563,7 +608,7 @@ mod tests {
   fn loop_with_continue() {
     Test::new()
     .program("loop { if (x % 2 == 0) { continue; }; println(x); x = x + 1; }")
-    .ast("statements(loop(block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(println,identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .ast("statements(loop(block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(identifier(println), identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
   }
 
@@ -573,7 +618,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![Error::new(
         SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
+        "found end of input expected any, '.', '(', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
       )])
       .run();
   }
@@ -712,7 +757,7 @@ mod tests {
   fn while_with_continue() {
     Test::new()
     .program("while (x < 10) { if (x % 2 == 0) { continue; }; println(x); x = x + 1; }")
-    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(println,identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
+    .ast("statements(while(binary_op(<, identifier(x), number(10)), block(if(binary_op(==, binary_op(%, identifier(x), number(2)), number(0)), block(continue)), expression(function_call(identifier(println), identifier(x))), assignment(identifier(x), binary_op(+, identifier(x), number(1))))))")
     .run();
   }
 

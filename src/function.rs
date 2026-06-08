@@ -9,7 +9,7 @@ pub enum Function<'src> {
   UserDefined {
     body: Vec<Spanned<Statement<'src>>>,
     environment: Environment<'src>,
-    name: &'src str,
+    name: Option<&'src str>,
     parameters: Vec<&'src str>,
   },
 }
@@ -38,7 +38,7 @@ impl<'src> Function<'src> {
             span,
             format!(
               "Function `{}` expects {} arguments, got {}",
-              name,
+              self.name(),
               parameters.len(),
               arguments.len()
             ),
@@ -47,7 +47,9 @@ impl<'src> Function<'src> {
 
         let call_environment = Environment::with_parent(environment.clone());
 
-        call_environment.add_function(name, self.clone());
+        if let Some(name) = name {
+          call_environment.add_function(name, self.clone());
+        }
 
         for (parameter, argument) in parameters.iter().zip(arguments.iter()) {
           call_environment.add_symbol(parameter, argument.clone());
@@ -66,9 +68,23 @@ impl<'src> Function<'src> {
     }
   }
 
-  pub(crate) fn name(&self) -> &'src str {
+  pub(crate) fn name(&self) -> &str {
     match self {
-      Self::Builtin { name, .. } | Self::UserDefined { name, .. } => name,
+      Self::Builtin { name, .. } => name,
+      Self::UserDefined { name, .. } => name.unwrap_or("<anonymous>"),
+    }
+  }
+}
+
+impl PartialEq for Function<'_> {
+  fn eq(&self, other: &Self) -> bool {
+    match (self, other) {
+      (Self::Builtin { name: a, .. }, Self::Builtin { name: b, .. })
+      | (
+        Self::UserDefined { name: Some(a), .. },
+        Self::UserDefined { name: Some(b), .. },
+      ) => a == b,
+      _ => false,
     }
   }
 }

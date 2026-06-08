@@ -109,7 +109,7 @@ impl PartialEq for Value<'_> {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Value::Boolean(a), Value::Boolean(b)) => a == b,
-      (Value::Function(a), Value::Function(b)) => a.name() == b.name(),
+      (Value::Function(a), Value::Function(b)) => a == b,
       (Value::List(a), Value::List(b)) => {
         a.len() == b.len() && a.iter().zip(b.iter()).all(|(a, b)| a == b)
       }
