@@ -286,7 +286,8 @@ impl Display for BinaryOp {
 pub enum Expression<'a> {
   BinaryOp(BinaryOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
   Boolean(bool),
-  FunctionCall(&'a str, Vec<Spanned<Self>>),
+  Function(Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
+  FunctionCall(Box<Spanned<Self>>, Vec<Spanned<Self>>),
   Identifier(&'a str),
   List(Vec<Spanned<Self>>),
   ListAccess(Box<Spanned<Self>>, Box<Spanned<Self>>),
@@ -302,6 +303,7 @@ impl Expression<'_> {
     String::from(match self {
       Expression::BinaryOp(_, _, _) => "binary_op",
       Expression::Boolean(_) => "boolean",
+      Expression::Function(_, _) => "function",
       Expression::FunctionCall(_, _) => "function_call",
       Expression::Identifier(_) => "identifier",
       Expression::List(_) => "list",
@@ -321,17 +323,26 @@ impl Display for Expression<'_> {
         write!(f, "binary_op({}, {}, {})", op, lhs.0, rhs.0)
       }
       Expression::Boolean(boolean) => write!(f, "boolean({boolean})"),
-      Expression::FunctionCall(name, arguments) => {
+      Expression::Function(params, body) => {
         write!(
           f,
-          "function_call({},{})",
-          name,
-          arguments
+          "function([{}], block({}))",
+          params.join(", "),
+          body
             .iter()
-            .map(|a| a.0.to_string())
+            .map(|s| s.0.to_string())
             .collect::<Vec<_>>()
             .join(", ")
         )
+      }
+      Expression::FunctionCall(function, arguments) => {
+        write!(f, "function_call({}", function.0)?;
+
+        for argument in arguments {
+          write!(f, ", {}", argument.0)?;
+        }
+
+        write!(f, ")")
       }
       Expression::Identifier(identifier) => {
         write!(f, "identifier({identifier})")

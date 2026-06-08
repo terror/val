@@ -214,7 +214,20 @@ impl From<(&Expression<'_>, &Span)> for AstNode {
         range,
         children,
       },
-      Expression::FunctionCall(_, arguments) => {
+      Expression::Function(_, body) => {
+        for (statement, span) in body {
+          children.push(Self::from((statement, span)));
+        }
+
+        Self {
+          kind: expression.kind(),
+          range,
+          children,
+        }
+      }
+      Expression::FunctionCall(function, arguments) => {
+        children.push(Self::from((&function.0, &function.1)));
+
         for (ast, span) in arguments {
           children.push(Self::from((ast, span)));
         }

@@ -182,7 +182,8 @@ complex operations:
 |                | Less Than or Equal    | `a <= b`                      | `i <= 5`                             |
 |                | Greater Than          | `a > b`                       | `count > 0`                          |
 |                | Greater Than or Equal | `a >= b`                      | `value >= 100`                       |
-| **Other**      | Function Call         | `function(args)`              | `sin(x)`                             |
+| **Other**      | Function Call         | `function(args)`              | `make_adder(2)(3)`                   |
+|                | Function Literal      | `fn(args) { ... }`            | `fn(x) { return x + 1 }`             |
 |                | List Indexing         | `list[index]`                 | `numbers[0]`                         |
 |                | List Creation         | `[item1, item2, ...]`         | `[1, 2, 3]`                          |
 |                | List Concatenation    | `list1 + list2`               | `[1, 2] + [3, 4]`                    |
@@ -253,7 +254,8 @@ combined = numbers + [6, 7]
 #### Function
 
 A function is a value, and can be used in assignments, passed around to other
-functions, etc.
+functions, returned from functions, and called from any expression that
+evaluates to a function.
 
 Check out the [higher order functions example](https://github.com/terror/val/blob/master/examples/hof.val)
 for how this works.
@@ -276,6 +278,18 @@ fn sum(a, b) {
 l = [1, 2, 3, 4, 5]
 
 println(reduce(l, sum, 0))
+```
+
+Anonymous functions use the same block body syntax:
+
+```rust
+fn apply(x, f) {
+  return f(x)
+}
+
+println(apply(2, fn(x) {
+  return x * 3
+}))
 ```
 
 #### Null
