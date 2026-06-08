@@ -65,12 +65,9 @@ impl<'src> Function<'src> {
         }
 
         Evaluator::from(call_environment).enter_function(|evaluator| {
-          if let Completion::Return(value) =
-            evaluator.evaluate_statements(body)?
-          {
-            Ok(value)
-          } else {
-            Ok(Value::Null)
+          match evaluator.evaluate_statements(body)? {
+            Completion::Return(value) | Completion::Value(value) => Ok(value),
+            Completion::Break | Completion::Continue => Ok(Value::Null),
           }
         })
       }
