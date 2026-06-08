@@ -74,7 +74,7 @@ Arguments:
   [FILENAME]  File to evaluate
 
 Options:
-      --digits <DIGITS>                Decimal digits to display for approximate numbers [default: 16]
+  -d, --digits <DIGITS>                Decimal digits to display for approximate numbers [default: 16]
   -e, --expression <EXPRESSION>        Expression to evaluate
   -l, --load <LOAD>                    Load files before entering the REPL
   -p, --precision <PRECISION>          Binary precision (bits) to use for calculations [default: 1024]
@@ -213,8 +213,8 @@ constants like `pi`, uses [`rug::Float`](https://docs.rs/rug/latest/rug/struct.F
 
 You can specify the rounding mode and binary precision used for approximate
 calculations with `--rounding-mode` and `--precision`. `--precision` controls
-binary precision, measured in bits. Use `--digits` to control how many decimal
-digits are displayed for approximate numbers.
+binary precision, measured in bits. Use `--digits` or `-d` to control how many
+decimal digits are displayed for approximate numbers.
 
 #### Boolean
 

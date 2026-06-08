@@ -17,6 +17,7 @@ use super::*;
 )]
 pub(crate) struct Arguments {
   #[clap(
+    short,
     long,
     value_parser = clap::value_parser!(NonZeroUsize),
     default_value = "16",
@@ -275,9 +276,15 @@ mod tests {
 
   #[test]
   fn digits() {
-    let arguments = Arguments::parse_from(vec!["program", "--digits", "4"]);
+    #[track_caller]
+    fn case(argument: &str) {
+      let arguments = Arguments::parse_from(vec!["program", argument, "4"]);
 
-    assert_eq!(arguments.digits, NonZeroUsize::new(4).unwrap());
+      assert_eq!(arguments.digits, NonZeroUsize::new(4).unwrap());
+    }
+
+    case("--digits");
+    case("-d");
   }
 
   #[test]
