@@ -1,14 +1,5 @@
 use super::*;
 
-pub type BuiltinFunction =
-  for<'src> fn(&BuiltinFunctionPayload<'src>) -> Result<Value<'src>, Error>;
-
-pub struct BuiltinFunctionPayload<'src> {
-  pub arguments: Vec<Value<'src>>,
-  pub config: Config,
-  pub span: Span,
-}
-
 #[derive(Clone, Copy, Debug)]
 pub enum Builtin {
   Constant {
@@ -16,6 +7,7 @@ pub enum Builtin {
     value: fn(Config) -> Number,
   },
   Function {
+    arity: BuiltinArity,
     function: BuiltinFunction,
     name: &'static str,
   },

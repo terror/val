@@ -27,7 +27,10 @@ use {
 };
 
 pub use crate::{
-  builtin::{Builtin, BuiltinFunction, BuiltinFunctionPayload},
+  builtin::Builtin,
+  builtin_arity::BuiltinArity,
+  builtin_function::BuiltinFunction,
+  builtin_function_payload::BuiltinFunctionPayload,
   completion::Completion,
   config::Config,
   environment::Environment,
@@ -47,6 +50,9 @@ type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
 pub mod ast;
 mod builtin;
+mod builtin_arity;
+mod builtin_function;
+mod builtin_function_payload;
 mod builtins;
 mod completion;
 mod config;

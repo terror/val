@@ -18,194 +18,214 @@ pub(crate) const BUILTINS: &[Builtin] = &[
     value: constant_tau,
   },
   Builtin::Function {
-    function: abs,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(abs),
     name: "abs",
   },
   Builtin::Function {
-    function: acos,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(acos),
     name: "acos",
   },
   Builtin::Function {
-    function: acot,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(acot),
     name: "acot",
   },
   Builtin::Function {
-    function: acsc,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(acsc),
     name: "acsc",
   },
   Builtin::Function {
-    function: append,
+    arity: BuiltinArity::Exact(2),
+    function: BuiltinFunction::Fallible(append),
     name: "append",
   },
   Builtin::Function {
-    function: arc,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(arc),
     name: "arc",
   },
   Builtin::Function {
-    function: asec,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(asec),
     name: "asec",
   },
   Builtin::Function {
-    function: asin,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(asin),
     name: "asin",
   },
   Builtin::Function {
-    function: r#bool,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(r#bool),
     name: "bool",
   },
   Builtin::Function {
-    function: ceil,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(ceil),
     name: "ceil",
   },
   Builtin::Function {
-    function: cos,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(cos),
     name: "cos",
   },
   Builtin::Function {
-    function: cosh,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(cosh),
     name: "cosh",
   },
   Builtin::Function {
-    function: cot,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(cot),
     name: "cot",
   },
   Builtin::Function {
-    function: csc,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(csc),
     name: "csc",
   },
   Builtin::Function {
-    function: e,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(e),
     name: "e",
   },
   Builtin::Function {
-    function: exit,
+    arity: BuiltinArity::Range(0, 1),
+    function: BuiltinFunction::Fallible(exit),
     name: "exit",
   },
   Builtin::Function {
-    function: float,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(float),
     name: "float",
   },
   Builtin::Function {
-    function: floor,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(floor),
     name: "floor",
   },
   Builtin::Function {
-    function: gcd,
+    arity: BuiltinArity::Exact(2),
+    function: BuiltinFunction::Fallible(gcd),
     name: "gcd",
   },
   Builtin::Function {
-    function: input,
+    arity: BuiltinArity::Range(0, 1),
+    function: BuiltinFunction::Fallible(input),
     name: "input",
   },
   Builtin::Function {
-    function: int,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(int),
     name: "int",
   },
   Builtin::Function {
-    function: join,
+    arity: BuiltinArity::Exact(2),
+    function: BuiltinFunction::Fallible(join),
     name: "join",
   },
   Builtin::Function {
-    function: lcm,
+    arity: BuiltinArity::Exact(2),
+    function: BuiltinFunction::Fallible(lcm),
     name: "lcm",
   },
   Builtin::Function {
-    function: len,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(len),
     name: "len",
   },
   Builtin::Function {
-    function: list,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Infallible(list),
     name: "list",
   },
   Builtin::Function {
-    function: ln,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(ln),
     name: "ln",
   },
   Builtin::Function {
-    function: log10,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(log10),
     name: "log10",
   },
   Builtin::Function {
-    function: log2,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(log2),
     name: "log2",
   },
   Builtin::Function {
-    function: print,
+    arity: BuiltinArity::Any,
+    function: BuiltinFunction::Fallible(print),
     name: "print",
   },
   Builtin::Function {
-    function: println,
+    arity: BuiltinArity::Any,
+    function: BuiltinFunction::Fallible(println),
     name: "println",
   },
   Builtin::Function {
-    function: quit,
+    arity: BuiltinArity::Range(0, 1),
+    function: BuiltinFunction::Fallible(quit),
     name: "quit",
   },
   Builtin::Function {
-    function: range,
+    arity: BuiltinArity::Range(2, 3),
+    function: BuiltinFunction::Fallible(range),
     name: "range",
   },
   Builtin::Function {
-    function: sec,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(sec),
     name: "sec",
   },
   Builtin::Function {
-    function: sin,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(sin),
     name: "sin",
   },
   Builtin::Function {
-    function: sinh,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(sinh),
     name: "sinh",
   },
   Builtin::Function {
-    function: split,
+    arity: BuiltinArity::Exact(2),
+    function: BuiltinFunction::Fallible(split),
     name: "split",
   },
   Builtin::Function {
-    function: sqrt,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(sqrt),
     name: "sqrt",
   },
   Builtin::Function {
-    function: sum,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(sum),
     name: "sum",
   },
   Builtin::Function {
-    function: tan,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(tan),
     name: "tan",
   },
   Builtin::Function {
-    function: tanh,
+    arity: BuiltinArity::Exact(1),
+    function: BuiltinFunction::Fallible(tanh),
     name: "tanh",
   },
 ];
 
 fn abs<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `abs` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0].number(payload.span)?.abs(),
   ))
 }
 
 fn acos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `acos` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let argument = payload.arguments[0].number(payload.span)?;
 
   if argument < Number::from(-1_i64) || argument > Number::from(1_i64) {
@@ -219,16 +239,6 @@ fn acos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn acot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `acot` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let argument = payload.arguments[0].number(payload.span)?;
 
   let pi_div_2 = Number::Approx(
@@ -247,16 +257,6 @@ fn acot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `acsc` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let argument = payload.arguments[0].number(payload.span)?;
 
   if argument.abs() < Number::from(1_i64) {
@@ -274,16 +274,6 @@ fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 fn append<'a>(
   payload: &BuiltinFunctionPayload<'a>,
 ) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `append` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let mut list = payload.arguments[0].list(payload.span)?;
 
   list.push(payload.arguments[1].clone());
@@ -292,16 +282,6 @@ fn append<'a>(
 }
 
 fn arc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `arc` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?
@@ -310,16 +290,6 @@ fn arc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `asec` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let argument = payload.arguments[0].number(payload.span)?;
 
   if argument.abs() < Number::from(1_i64) {
@@ -335,16 +305,6 @@ fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn asin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `asin` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let argument = payload.arguments[0].number(payload.span)?;
 
   if argument < Number::from(-1_i64) || argument > Number::from(1_i64) {
@@ -360,16 +320,6 @@ fn asin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 fn r#bool<'a>(
   payload: &BuiltinFunctionPayload<'a>,
 ) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `bool` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let value = &payload.arguments[0];
 
   match value {
@@ -386,16 +336,6 @@ fn r#bool<'a>(
 }
 
 fn ceil<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `ceil` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0].number(payload.span)?.ceil(),
   ))
@@ -423,16 +363,6 @@ fn constant_tau(config: Config) -> Number {
 }
 
 fn cos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `cos` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?
@@ -441,16 +371,6 @@ fn cos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn cosh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `cosh` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?
@@ -459,16 +379,6 @@ fn cosh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn cot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `cot` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let tan = payload.arguments[0]
     .number(payload.span)?
     .tan(payload.config);
@@ -484,16 +394,6 @@ fn cot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `csc` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let sin = payload.arguments[0]
     .number(payload.span)?
     .sin(payload.config);
@@ -509,16 +409,6 @@ fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `e` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?
@@ -529,16 +419,6 @@ fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 fn exit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   if payload.arguments.is_empty() {
     process::exit(0);
-  }
-
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `exit` expects 0 or 1 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
   }
 
   let Some(code) = payload.arguments[0]
@@ -562,16 +442,6 @@ fn exit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `float` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let value = &payload.arguments[0];
 
   match value {
@@ -594,32 +464,12 @@ fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn floor<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `floor` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0].number(payload.span)?.floor(),
   ))
 }
 
 fn gcd<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `gcd` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let Some(a) = payload.arguments[0].number(payload.span)?.to_integer() else {
     return Err(Error::new(
       payload.span,
@@ -642,16 +492,6 @@ fn gcd<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
 fn input<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   use std::io::{self, BufRead, Write};
-
-  if payload.arguments.len() > 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `input` expects 0 or 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
 
   if payload.arguments.len() == 1 {
     print!("{}", payload.arguments[0].string(payload.span)?);
@@ -682,16 +522,6 @@ fn input<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `int` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let value = &payload.arguments[0];
 
   match value {
@@ -710,16 +540,6 @@ fn int<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `join` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let list = payload.arguments[0].list(payload.span)?;
 
   let delimiter = payload.arguments[1].string(payload.span)?;
@@ -737,16 +557,6 @@ fn join<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn lcm<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `lcm` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let Some(a) = payload.arguments[0].number(payload.span)?.to_integer() else {
     return Err(Error::new(
       payload.span,
@@ -768,16 +578,6 @@ fn lcm<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `len` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let value = &payload.arguments[0];
 
   match value {
@@ -790,41 +590,21 @@ fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 }
 
-fn list<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `list` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
+fn list<'a>(payload: &BuiltinFunctionPayload<'a>) -> Value<'a> {
   let value = &payload.arguments[0];
 
   match value {
-    Value::List(items) => Ok(Value::List(items.clone())),
-    Value::String(s) => Ok(Value::List(
+    Value::List(items) => Value::List(items.clone()),
+    Value::String(s) => Value::List(
       s.chars()
         .map(|c| Value::String(Cow::Owned(c.to_string())))
         .collect(),
-    )),
-    _ => Ok(Value::List(vec![value.clone()])),
+    ),
+    _ => Value::List(vec![value.clone()]),
   }
 }
 
 fn ln<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `ln` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let number = payload.arguments[0].number(payload.span)?;
 
   if number.is_zero() || number.is_negative() {
@@ -838,16 +618,6 @@ fn ln<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn log10<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `log10` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let number = payload.arguments[0].number(payload.span)?;
 
   if number.is_zero() || number.is_negative() {
@@ -861,16 +631,6 @@ fn log10<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn log2<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `log2` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let number = payload.arguments[0].number(payload.span)?;
 
   if number.is_zero() || number.is_negative() {
@@ -920,16 +680,6 @@ fn quit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     process::exit(0);
   }
 
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `quit` expects 0 or 1 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let Some(code) = payload.arguments[0]
     .number(payload.span)?
     .to_non_negative_usize()
@@ -951,16 +701,6 @@ fn quit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() < 2 || payload.arguments.len() > 3 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `range` expects 2 or 3 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let mut numbers = Vec::with_capacity(payload.arguments.len());
 
   for argument in &payload.arguments {
@@ -1006,16 +746,6 @@ fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn sec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sec` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let cos = payload.arguments[0]
     .number(payload.span)?
     .cos(payload.config);
@@ -1028,16 +758,6 @@ fn sec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn sin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sin` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?
@@ -1046,16 +766,6 @@ fn sin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn sinh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sinh` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?
@@ -1064,16 +774,6 @@ fn sinh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn split<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 2 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `split` expects 2 arguments, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let string = payload.arguments[0].string(payload.span)?;
 
   let delimiter = payload.arguments[1].string(payload.span)?;
@@ -1088,16 +788,6 @@ fn split<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn sqrt<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sqrt` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let number = payload.arguments[0].number(payload.span)?;
 
   if number.is_negative() {
@@ -1111,23 +801,6 @@ fn sqrt<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn sum<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.is_empty() {
-    return Err(Error::new(
-      payload.span,
-      "Function `sum` expects at least one argument",
-    ));
-  }
-
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `sum` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   let list = payload.arguments[0].list(payload.span)?;
 
   let mut sum = Number::from(0_i64);
@@ -1140,16 +813,6 @@ fn sum<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn tan<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `tan` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?
@@ -1158,16 +821,6 @@ fn tan<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn tanh<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.len() != 1 {
-    return Err(Error::new(
-      payload.span,
-      format!(
-        "Function `tanh` expects 1 argument, got {}",
-        payload.arguments.len()
-      ),
-    ));
-  }
-
   Ok(Value::Number(
     payload.arguments[0]
       .number(payload.span)?

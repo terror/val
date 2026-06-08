@@ -3,6 +3,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub enum Function<'src> {
   Builtin {
+    arity: BuiltinArity,
     function: BuiltinFunction,
     name: &'src str,
   },
@@ -22,11 +23,19 @@ impl<'src> Function<'src> {
     span: Span,
   ) -> Result<Value<'src>, Error> {
     match self {
-      Self::Builtin { function, .. } => function(&BuiltinFunctionPayload {
-        arguments,
-        config,
-        span,
-      }),
+      Self::Builtin {
+        arity,
+        function,
+        name,
+      } => {
+        arity.check(name, arguments.len(), span)?;
+
+        function.call(&BuiltinFunctionPayload {
+          arguments,
+          config,
+          span,
+        })
+      }
       Self::UserDefined {
         body,
         environment,

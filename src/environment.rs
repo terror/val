@@ -105,10 +105,13 @@ impl<'src> Environment<'src> {
         Builtin::Constant { value, .. } => {
           environment.add_symbol(builtin.name(), Value::Number(value(config)));
         }
-        Builtin::Function { function, .. } => {
+        Builtin::Function {
+          arity, function, ..
+        } => {
           environment.add_function(
             builtin.name(),
             Function::Builtin {
+              arity: *arity,
               function: *function,
               name: builtin.name(),
             },
