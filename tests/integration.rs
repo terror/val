@@ -1114,19 +1114,25 @@ fn float_literals() -> Result {
 
 #[test]
 fn configured_digits() -> Result {
+  #[track_caller]
+  fn case(argument: &str) -> Result {
+    Test::new()?
+      .argument(argument)
+      .argument("4")
+      .program("println(2 / 5555222222222)")
+      .expected_status(0)
+      .expected_stdout(Exact("3.6e-13\n"))
+      .run()
+  }
+
   Test::new()?
     .program("println(2 / 5555222222222)")
     .expected_status(0)
     .expected_stdout(Exact("3.600216012960922e-13\n"))
     .run()?;
 
-  Test::new()?
-    .argument("--digits")
-    .argument("4")
-    .program("println(2 / 5555222222222)")
-    .expected_status(0)
-    .expected_stdout(Exact("3.6e-13\n"))
-    .run()
+  case("--digits")?;
+  case("-d")
 }
 
 #[test]
