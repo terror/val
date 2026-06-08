@@ -25,7 +25,9 @@ pub fn parse(input: &str) -> Result<Spanned<Program<'_>>, Vec<Error>> {
 
 fn program_parser<'a>()
 -> impl Parser<'a, &'a str, Spanned<Program<'a>>, ParserError<'a>> + Clone {
-  statement_list_parser(statement_parser())
+  padding_parser()
+    .ignore_then(statement_list_parser(statement_parser()))
+    .then_ignore(padding_parser())
     .map(Program::Statements)
     .map_with(|ast, error| (ast, error.span()))
 }
@@ -37,7 +39,7 @@ where
   P: Parser<'a, &'a str, T, ParserError<'a>> + Clone,
 {
   parser
-    .separated_by(just(',').padded())
+    .separated_by(padded_parser(just(',')))
     .allow_trailing()
     .collect::<Vec<_>>()
 }
@@ -50,15 +52,50 @@ where
   P: Parser<'a, &'a str, Spanned<Expression<'a>>, ParserError<'a>> + Clone,
 {
   expression
-    .delimited_by(just('['), just(']'))
-    .padded()
+    .delimited_by(padded_parser(just('[')), padded_parser(just(']')))
+    .padded_by(padding_parser())
     .map_with(|expression, error| (expression, error.span()))
 }
 
 fn keyword_parser<'a>(
   keyword: &'static str,
 ) -> impl Parser<'a, &'a str, (), ParserError<'a>> + Clone {
-  text::keyword(keyword).padded().ignored()
+  padded_parser(text::keyword(keyword)).ignored()
+}
+
+fn padded_parser<'a, P, T>(
+  parser: P,
+) -> impl Parser<'a, &'a str, T, ParserError<'a>> + Clone
+where
+  P: Parser<'a, &'a str, T, ParserError<'a>> + Clone,
+{
+  parser.padded_by(padding_parser())
+}
+
+fn padding_parser<'a>() -> impl Parser<'a, &'a str, (), ParserError<'a>> + Clone
+{
+  custom(|input| {
+    loop {
+      let checkpoint = input.save();
+
+      match input.next() {
+        Some(character) if character.is_whitespace() => {}
+        Some('/') if input.peek() == Some('/') => {
+          input.next();
+
+          while input.peek().is_some_and(|character| character != '\n') {
+            input.next();
+          }
+        }
+        _ => {
+          input.rewind(checkpoint);
+          break;
+        }
+      }
+    }
+
+    Ok(())
+  })
 }
 
 fn statement_list_parser<'a, P>(
@@ -68,7 +105,7 @@ where
   P: Parser<'a, &'a str, Spanned<Statement<'a>>, ParserError<'a>> + Clone,
 {
   statement
-    .then(just(';').padded().or_not())
+    .then(padded_parser(just(';')).or_not())
     .map(|(statement, _)| statement)
     .repeated()
     .collect::<Vec<_>>()
@@ -80,9 +117,9 @@ fn statement_parser<'a>()
 
   recursive(|statement| {
     let statement_block = statement_list_parser(statement.clone())
-      .delimited_by(just('{').padded(), just('}').padded());
+      .delimited_by(padded_parser(just('{')), padded_parser(just('}')));
 
-    let simple_ident = text::ident().padded().map_with(|name, error| {
+    let simple_ident = padded_parser(text::ident()).map_with(|name, error| {
       let span = error.span();
       (AssignmentTarget::Identifier(name), span)
     });
@@ -100,16 +137,16 @@ fn statement_parser<'a>()
     );
 
     let assignment_statement = assignment_target
-      .then_ignore(just('=').padded())
+      .then_ignore(padded_parser(just('=')))
       .then(expression.clone())
       .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs))
       .map_with(|ast, error| (ast, error.span()));
 
     let function_statement = keyword_parser("fn")
-      .ignore_then(text::ident().padded())
+      .ignore_then(padded_parser(text::ident()))
       .then(
-        comma_separated_parser(text::ident().padded())
-          .delimited_by(just('(').padded(), just(')').padded()),
+        comma_separated_parser(padded_parser(text::ident()))
+          .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
       )
       .then(statement_block.clone())
       .map(|((name, params), body)| Statement::Function(name, params, body))
@@ -122,7 +159,7 @@ fn statement_parser<'a>()
 
     let condition_parser = expression
       .clone()
-      .delimited_by(just('(').padded(), just(')').padded());
+      .delimited_by(padded_parser(just('(')), padded_parser(just(')')));
 
     let if_statement = keyword_parser("if")
       .ignore_then(condition_parser.clone())
@@ -144,7 +181,7 @@ fn statement_parser<'a>()
       .map_with(|ast, error| (ast, error.span()));
 
     let for_statement = keyword_parser("for")
-      .ignore_then(text::ident().padded())
+      .ignore_then(padded_parser(text::ident()))
       .then_ignore(keyword_parser("in"))
       .then(expression.clone())
       .then(statement_block.clone())
@@ -186,14 +223,14 @@ fn statement_parser<'a>()
       continue_statement,
       expression_statement,
     ))
-    .padded()
+    .padded_by(padding_parser())
     .boxed()
   })
 }
 
 fn expression_parser<'a>()
 -> impl Parser<'a, &'a str, Spanned<Expression<'a>>, ParserError<'a>> + Clone {
-  let identifier = text::ident().padded();
+  let identifier = padded_parser(text::ident());
 
   recursive(|expression| {
     let number = text::int(10)
@@ -229,9 +266,10 @@ fn expression_parser<'a>()
     let string = double_quoted_string.or(single_quoted_string);
 
     let function_call = identifier
+      .clone()
       .then(
         comma_separated_parser(expression.clone())
-          .delimited_by(just('('), just(')')),
+          .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
       )
       .map(|(name, arguments)| Expression::FunctionCall(name, arguments))
       .map_with(|ast, error| (ast, error.span()));
@@ -241,7 +279,7 @@ fn expression_parser<'a>()
       .map_with(|ast, error| (ast, error.span()));
 
     let list = comma_separated_parser(expression.clone())
-      .delimited_by(just('['), just(']'))
+      .delimited_by(padded_parser(just('[')), padded_parser(just(']')))
       .map(Expression::List)
       .map_with(|ast, error| (ast, error.span()));
 
@@ -253,7 +291,7 @@ fn expression_parser<'a>()
       .or(list)
       .or(identifier)
       .or(string)
-      .padded();
+      .padded_by(padding_parser());
 
     let binary =
       |lhs: Spanned<Expression<'a>>,
@@ -288,50 +326,58 @@ fn expression_parser<'a>()
           (expression, span)
         },
       ),
-      prefix(7, just('-').padded().to(UnaryOp::Negate), unary),
-      prefix(7, just('!').padded().to(UnaryOp::Not), unary),
-      infix(right(6), just('^').padded().to(BinaryOp::Power), binary),
+      prefix(7, padded_parser(just('-')).to(UnaryOp::Negate), unary),
+      prefix(7, padded_parser(just('!')).to(UnaryOp::Not), unary),
+      infix(
+        right(6),
+        padded_parser(just('^')).to(BinaryOp::Power),
+        binary,
+      ),
       infix(
         left(5),
         choice((
-          just('%').padded().to(BinaryOp::Modulo),
-          just('*').padded().to(BinaryOp::Multiply),
-          just('/').padded().to(BinaryOp::Divide),
+          padded_parser(just('%')).to(BinaryOp::Modulo),
+          padded_parser(just('*')).to(BinaryOp::Multiply),
+          padded_parser(just('/')).to(BinaryOp::Divide),
         )),
         binary,
       ),
       infix(
         left(4),
         choice((
-          just('+').padded().to(BinaryOp::Add),
-          just('-').padded().to(BinaryOp::Subtract),
+          padded_parser(just('+')).to(BinaryOp::Add),
+          padded_parser(just('-')).to(BinaryOp::Subtract),
         )),
         binary,
       ),
       infix(
         left(3),
         choice((
-          just(">=").padded().to(BinaryOp::GreaterThanEqual),
-          just("<=").padded().to(BinaryOp::LessThanEqual),
-          just(">").padded().to(BinaryOp::GreaterThan),
-          just("<").padded().to(BinaryOp::LessThan),
+          padded_parser(just(">=")).to(BinaryOp::GreaterThanEqual),
+          padded_parser(just("<=")).to(BinaryOp::LessThanEqual),
+          padded_parser(just(">")).to(BinaryOp::GreaterThan),
+          padded_parser(just("<")).to(BinaryOp::LessThan),
         )),
         binary,
       ),
       infix(
         left(2),
         choice((
-          just("==").padded().to(BinaryOp::Equal),
-          just("!=").padded().to(BinaryOp::NotEqual),
+          padded_parser(just("==")).to(BinaryOp::Equal),
+          padded_parser(just("!=")).to(BinaryOp::NotEqual),
         )),
         binary,
       ),
       infix(
         left(1),
-        just("&&").padded().to(BinaryOp::LogicalAnd),
+        padded_parser(just("&&")).to(BinaryOp::LogicalAnd),
         binary,
       ),
-      infix(left(0), just("||").padded().to(BinaryOp::LogicalOr), binary),
+      infix(
+        left(0),
+        padded_parser(just("||")).to(BinaryOp::LogicalOr),
+        binary,
+      ),
     ))
   })
 }
@@ -406,6 +452,19 @@ mod tests {
     Test::new()
       .program("continue")
       .ast("statements(continue)")
+      .run();
+  }
+
+  #[test]
+  fn comments() {
+    Test::new()
+      .program("// foo\n// bar\n")
+      .ast("statements()")
+      .run();
+
+    Test::new()
+      .program("// foo\na = [1, // bar\n 2,]\na[// baz\n0] + 3 // bob")
+      .ast("statements(assignment(identifier(a), list(number(1), number(2))), expression(binary_op(+, list_access(identifier(a), number(0)), number(3))))")
       .run();
   }
 

@@ -49,6 +49,10 @@ impl<'src> Highlighter<'src> {
 
       if character.is_whitespace() {
         cursor += character.len_utf8();
+      } else if let Some(end) = self.scan_comment(cursor) {
+        spans.push(HighlightSpan::new(cursor, end, HighlightKind::Comment));
+
+        cursor = end;
       } else if character == '_' || character.is_alphabetic() {
         let end = self.scan_identifier(cursor);
         let kind = self.identifier_kind(cursor, end);
@@ -103,11 +107,7 @@ impl<'src> Highlighter<'src> {
       "false" | "true" => HighlightKind::Boolean,
       "break" | "continue" | "else" | "fn" | "for" | "if" | "in" | "loop"
       | "null" | "return" | "while" => HighlightKind::Keyword,
-      _ if self.content[end..]
-        .chars()
-        .find(|character| !character.is_whitespace())
-        == Some('(') =>
-      {
+      _ if self.next_non_padding_char(end) == Some('(') => {
         HighlightKind::Function
       }
       _ => HighlightKind::Identifier,
@@ -116,6 +116,28 @@ impl<'src> Highlighter<'src> {
 
   pub(crate) fn new(content: &'src str) -> Self {
     Self { content }
+  }
+
+  fn next_non_padding_char(&self, start: usize) -> Option<char> {
+    let mut cursor = start;
+
+    loop {
+      while let Some(character) = self.content[cursor..].chars().next() {
+        if character.is_whitespace() {
+          cursor += character.len_utf8();
+        } else {
+          break;
+        }
+      }
+
+      if let Some(end) = self.scan_comment(cursor) {
+        cursor = end;
+      } else {
+        break;
+      }
+    }
+
+    self.content[cursor..].chars().next()
   }
 
   fn normalize_spans(&self, spans: &[HighlightSpan]) -> Vec<HighlightSpan> {
@@ -148,6 +170,24 @@ impl<'src> Highlighter<'src> {
     }
 
     normalized
+  }
+
+  fn scan_comment(&self, start: usize) -> Option<usize> {
+    if !self.content[start..].starts_with("//") {
+      return None;
+    }
+
+    let mut end = start;
+
+    while let Some(character) = self.content[end..].chars().next() {
+      if character == '\n' {
+        break;
+      }
+
+      end += character.len_utf8();
+    }
+
+    Some(end)
   }
 
   fn scan_identifier(&self, start: usize) -> usize {
@@ -255,6 +295,22 @@ mod tests {
         HighlightSpan::new(14, 15, HighlightKind::Operator),
         HighlightSpan::new(16, 17, HighlightKind::Operator),
         HighlightSpan::new(18, 19, HighlightKind::Number),
+      ]
+    );
+  }
+
+  #[test]
+  fn comments() {
+    let highlighter = Highlighter::new("x = 1 // foo\n// bar");
+
+    assert_eq!(
+      highlighter.collect_highlight_spans(),
+      [
+        HighlightSpan::new(0, 1, HighlightKind::Identifier),
+        HighlightSpan::new(2, 3, HighlightKind::Operator),
+        HighlightSpan::new(4, 5, HighlightKind::Number),
+        HighlightSpan::new(6, 12, HighlightKind::Comment),
+        HighlightSpan::new(13, 19, HighlightKind::Comment),
       ]
     );
   }

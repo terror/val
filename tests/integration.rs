@@ -658,6 +658,44 @@ fn combined_operations() -> Result {
 }
 
 #[test]
+fn comments() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      // foo
+      x = 1 // bar
+      y = [
+        2,
+        // baz
+        3,
+      ]
+
+      println(x + y[0] + y[1]) // bob
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("6\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      // foo
+      // bar
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Empty)
+    .run()?;
+
+  Test::new()?
+    .program("# foo")
+    .expected_status(1)
+    .expected_stderr(Contains("found '#'"))
+    .run()
+}
+
+#[test]
 fn comparison_with_expressions() -> Result {
   Test::new()?
     .program("println((1 + 2) == (4 - 1))")
