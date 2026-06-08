@@ -285,22 +285,12 @@ impl<'a> Evaluator<'a> {
         }))
       }
       Expression::FunctionCall(function, arguments) => {
-        let mut evaluated_arguments = Vec::with_capacity(arguments.len());
-
-        for argument in arguments {
-          evaluated_arguments.push(self.evaluate_expression(argument)?);
-        }
-
         let function = match &function.0 {
           Expression::Identifier(name) => {
-            self
-              .environment
-              .call_function(name, evaluated_arguments, *span)
+            self.environment.function(name, *span)
           }
           _ => match self.evaluate_expression(function)? {
-            Value::Function(function) => {
-              function.call(evaluated_arguments, self.environment.config, *span)
-            }
+            Value::Function(function) => Ok(function),
             value => Err(Error::new(
               function.1,
               format!("'{value}' is not a function"),
@@ -308,7 +298,15 @@ impl<'a> Evaluator<'a> {
           },
         }?;
 
-        Ok(function)
+        function.check_arity(arguments.len(), *span)?;
+
+        let mut evaluated_arguments = Vec::with_capacity(arguments.len());
+
+        for argument in arguments {
+          evaluated_arguments.push(self.evaluate_expression(argument)?);
+        }
+
+        function.call(evaluated_arguments, self.environment.config, *span)
       }
       Expression::Identifier(name) => {
         match self.environment.resolve_symbol(name) {

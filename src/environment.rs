@@ -53,14 +53,13 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub(crate) fn call_function(
+  pub(crate) fn function(
     &self,
     name: &str,
-    arguments: Vec<Value<'src>>,
     span: Span,
-  ) -> Result<Value<'src>, Error> {
+  ) -> Result<Function<'src>, Error> {
     match self.resolve_function(name) {
-      Some(function) => function.call(arguments, self.config, span),
+      Some(function) => Ok(function),
       None if self.resolve_symbol(name).is_some() => {
         Err(Error::new(span, format!("`{name}` is not a function")))
       }

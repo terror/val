@@ -16,20 +16,41 @@ pub enum Function<'src> {
 }
 
 impl<'src> Function<'src> {
+  pub(crate) fn check_arity(
+    &self,
+    len: usize,
+    span: Span,
+  ) -> Result<(), Error> {
+    match self {
+      Self::Builtin { arity, name, .. } => arity.check(name, len, span),
+      Self::UserDefined { parameters, .. } => {
+        if parameters.len() == len {
+          return Ok(());
+        }
+
+        Err(Error::new(
+          span,
+          format!(
+            "Function `{}` expects {} arguments, got {}",
+            self.name(),
+            parameters.len(),
+            len
+          ),
+        ))
+      }
+    }
+  }
+
   pub(crate) fn call(
     &self,
     arguments: Vec<Value<'src>>,
     config: Config,
     span: Span,
   ) -> Result<Value<'src>, Error> {
-    match self {
-      Self::Builtin {
-        arity,
-        function,
-        name,
-      } => {
-        arity.check(name, arguments.len(), span)?;
+    self.check_arity(arguments.len(), span)?;
 
+    match self {
+      Self::Builtin { function, .. } => {
         function.call(&BuiltinFunctionPayload {
           arguments,
           config,
@@ -42,18 +63,6 @@ impl<'src> Function<'src> {
         name,
         parameters,
       } => {
-        if parameters.len() != arguments.len() {
-          return Err(Error::new(
-            span,
-            format!(
-              "Function `{}` expects {} arguments, got {}",
-              self.name(),
-              parameters.len(),
-              arguments.len()
-            ),
-          ));
-        }
-
         let call_environment = Environment::with_parent(environment.clone());
 
         if let Some(name) = name {

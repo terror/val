@@ -574,6 +574,32 @@ fn call_builtin_function() -> Result {
 }
 
 #[test]
+fn callee_expression_is_checked_before_arguments() -> Result {
+  Test::new()?
+    .program("['foo'][0](println('bar'))")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("'foo' is not a function"))
+    .run()
+}
+
+#[test]
+fn callee_identifier_is_checked_before_arguments() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = 1
+
+      foo(println('bar'))
+      "
+    })
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("`foo` is not a function"))
+    .run()
+}
+
+#[test]
 fn can_override_builtin_functions() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1248,6 +1274,29 @@ fn for_loop_with_break_and_continue() -> Result {
       "
     })
     .expected_stdout(Exact("8\n"))
+    .run()
+}
+
+#[test]
+fn function_arity_is_checked_before_arguments() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo() { }
+
+      foo(println('bar'))
+      "
+    })
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("Function `foo` expects 0 arguments, got 1"))
+    .run()?;
+
+  Test::new()?
+    .program("abs(println('bar'), 1)")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("Function `abs` expects 1 argument, got 2"))
     .run()
 }
 
@@ -3207,6 +3256,16 @@ fn type_conversions_list() -> Result {
     })
     .expected_status(0)
     .expected_stdout(Exact("['a', 'b', 'c']\n[123]\n[true]\n"))
+    .run()
+}
+
+#[test]
+fn undefined_callee_is_checked_before_arguments() -> Result {
+  Test::new()?
+    .program("foo(println('bar'))")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("Function `foo` is not defined"))
     .run()
 }
 
