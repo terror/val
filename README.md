@@ -124,7 +124,7 @@ program. The tool supports executing arbitrary expressions inline using the
 
 ```bash
 val -p 53 -e 'sin(2) * e ^ pi * cos(sum([1, 2, 3]))'
-20.203684508229124193
+20.20368450822912
 ```
 
 **n.b.** The `--expression` option and `filename` argument are mutually
@@ -201,13 +201,13 @@ Numeric values are represented exactly as rational numbers where possible, using
 Approximate math, such as trigonometric functions, logarithms, exponentials, and
 constants like `pi`, uses [`rug::Float`](https://docs.rs/rug/latest/rug/struct.Float.html):
 
-```rust
+```console
 > pi
 3.141592653589793
 > e
 2.718281828459045
 > sin(2) * e ^ pi * cos(sum([1, 2, 3]))
-16.48145579391288
+20.20368450822912
 >
 ```
 
