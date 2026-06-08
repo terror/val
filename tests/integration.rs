@@ -1830,6 +1830,30 @@ fn if_with_while_loop() -> Result {
 }
 
 #[test]
+fn implicit_return() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn double(x) { x * 2 }
+
+      identity = fn(x) { x }
+
+      fn calculate(x) {
+        doubled = x * 2
+        doubled + 10
+      }
+
+      println(double(3))
+      println(identity('foo'))
+      println(calculate(5))
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("6\nfoo\n20\n"))
+    .run()
+}
+
+#[test]
 fn infinite_loop_with_return() -> Result {
   Test::new()?
     .program(indoc! {
