@@ -16,31 +16,6 @@ pub enum Function<'src> {
 }
 
 impl<'src> Function<'src> {
-  pub(crate) fn check_arity(
-    &self,
-    len: usize,
-    span: Span,
-  ) -> Result<(), Error> {
-    match self {
-      Self::Builtin { arity, name, .. } => arity.check(name, len, span),
-      Self::UserDefined { parameters, .. } => {
-        if parameters.len() == len {
-          return Ok(());
-        }
-
-        Err(Error::new(
-          span,
-          format!(
-            "Function `{}` expects {} arguments, got {}",
-            self.name(),
-            parameters.len(),
-            len
-          ),
-        ))
-      }
-    }
-  }
-
   pub(crate) fn call(
     &self,
     arguments: Vec<Value<'src>>,
@@ -79,6 +54,31 @@ impl<'src> Function<'src> {
             Completion::Break | Completion::Continue => Ok(Value::Null),
           }
         })
+      }
+    }
+  }
+
+  pub(crate) fn check_arity(
+    &self,
+    len: usize,
+    span: Span,
+  ) -> Result<(), Error> {
+    match self {
+      Self::Builtin { arity, name, .. } => arity.check(name, len, span),
+      Self::UserDefined { parameters, .. } => {
+        if parameters.len() == len {
+          return Ok(());
+        }
+
+        Err(Error::new(
+          span,
+          format!(
+            "Function `{}` expects {} arguments, got {}",
+            self.name(),
+            parameters.len(),
+            len
+          ),
+        ))
       }
     }
   }
