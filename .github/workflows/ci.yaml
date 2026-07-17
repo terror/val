@@ -95,5 +95,5 @@ jobs:
 
     - name: Test
       if: ${{ matrix.os == 'windows-latest' }}
-      run: cargo +stable-x86_64-pc-windows-gnu test --all
+      run: cargo +stable-x86_64-pc-windows-gnu test --all --features use-system-libs
       shell: msys2 {0}

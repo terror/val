@@ -40,6 +40,7 @@ unreachable_pub = "deny"
 
 [features]
 force-cross = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/force-cross"]
+use-system-libs = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/use-system-libs"]
 
 [dependencies]
 anyhow = "1.0.102"
