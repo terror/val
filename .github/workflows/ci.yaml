@@ -78,7 +78,7 @@ jobs:
     - uses: msys2/setup-msys2@v2
       if: ${{ matrix.os == 'windows-latest' }}
       with:
-        install: diffutils m4 make mingw-w64-x86_64-gcc
+        install: diffutils m4 make mingw-w64-x86_64-gcc mingw-w64-x86_64-pkgconf
         msystem: MINGW64
         path-type: inherit
         update: true
@@ -95,5 +95,5 @@ jobs:
 
     - name: Test
       if: ${{ matrix.os == 'windows-latest' }}
-      run: cargo +stable-x86_64-pc-windows-gnu test --all
+      run: cargo +stable-x86_64-pc-windows-gnu test --all --features use-system-libs
       shell: msys2 {0}
