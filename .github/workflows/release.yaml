@@ -154,12 +154,22 @@ jobs:
       run: ./bin/package
       shell: msys2 {0}
 
+    - name: Extract Release Notes
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      run: |
+        awk -v ver="${{ github.ref_name }}" '
+          $0 ~ "^## \\["ver"\\]" { flag=1; next }
+          flag && /^## \[/ { exit }
+          flag { print }
+        ' CHANGELOG.md > RELEASE_NOTES.md
+
     - name: Publish Archive
       uses: softprops/action-gh-release@v2.2.1
       if: ${{ startsWith(github.ref, 'refs/tags/') }}
       with:
         draft: false
         files: ${{ steps.package.outputs.archive || steps.package_windows.outputs.archive }}
+        body_path: RELEASE_NOTES.md
         prerelease: ${{ needs.prerelease.outputs.value }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
