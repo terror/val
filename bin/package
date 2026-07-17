@@ -25,10 +25,10 @@ else
 fi
 
 HOST=$("${RUSTC[@]}" -vV | sed -n 's/^host: //p')
-FEATURES=()
+BUILD=("${CARGO[@]}" build --bin val --target "$TARGET" --release)
 
 if [[ $TARGET != "$HOST" ]]; then
-  FEATURES=(--features force-cross)
+  BUILD+=(--features force-cross)
 fi
 
 if [[ $TARGET == aarch64-unknown-linux-musl ]]; then
@@ -38,7 +38,7 @@ fi
 echo "Building val..."
 
 RUSTFLAGS="--deny warnings --codegen target-feature=+crt-static $TARGET_RUSTFLAGS" \
-  "${CARGO[@]}" build --bin val "${FEATURES[@]}" --target "$TARGET" --release
+  "${BUILD[@]}"
 
 EXECUTABLE=target/$TARGET/release/val
 
