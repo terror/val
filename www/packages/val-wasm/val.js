@@ -158,6 +158,10 @@ function getStringFromWasm0(ptr, len) {
     return decodeText(ptr, len);
 }
 
+export function start() {
+    wasm.start();
+}
+
 function takeFromExternrefTable0(idx) {
     const value = wasm.__wbindgen_externrefs.get(idx);
     wasm.__externref_table_dealloc(idx);
@@ -175,10 +179,6 @@ export function parse(input) {
         throw takeFromExternrefTable0(ret[1]);
     }
     return takeFromExternrefTable0(ret[0]);
-}
-
-export function start() {
-    wasm.start();
 }
 
 /**
