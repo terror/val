@@ -7,6 +7,9 @@ publish = false
 [lib]
 crate-type = ["cdylib", "rlib"]
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [dependencies]
 console_error_panic_hook = "0.1.7"
 serde = { version = "1.0.228", features = ["derive"] }
