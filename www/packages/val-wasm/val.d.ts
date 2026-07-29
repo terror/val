@@ -1,7 +1,7 @@
 /* tslint:disable */
 /* eslint-disable */
-export function parse(input: string): any;
 export function start(): void;
+export function parse(input: string): any;
 export function evaluate(input: string): any;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
