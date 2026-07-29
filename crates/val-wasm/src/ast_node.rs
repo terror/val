@@ -309,6 +309,7 @@ mod tests {
   #[test]
   fn converts_nested_ranges() {
     let converter = RangeConverter::new("é 😀");
+
     let mut node = AstNode {
       kind: "foo".into(),
       range: Range { start: 0, end: 7 },
