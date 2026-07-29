@@ -2899,6 +2899,12 @@ fn power() -> Result {
     .program("println(2 ^ 0)")
     .expected_status(0)
     .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(0 ^ -1)")
+    .expected_status(1)
+    .expected_stderr(Contains("Zero cannot be raised to a negative power"))
     .run()
 }
 
@@ -3090,6 +3096,17 @@ fn square_root() -> Result {
     .program("println(sqrt(-1))")
     .expected_status(1)
     .expected_stderr(Contains("Cannot take square root of negative number"))
+    .run()
+}
+
+#[test]
+fn stack_size_overflow() -> Result {
+  Test::new()?
+    .argument("--stack-size")
+    .argument(&usize::MAX.to_string())
+    .program("1")
+    .expected_status(1)
+    .expected_stderr(Contains("Stack size is too large"))
     .run()
 }
 

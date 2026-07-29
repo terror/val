@@ -23,7 +23,7 @@ use {
     borrow::{Cow, Cow::Owned},
     fmt::{self, Display, Formatter},
     fs,
-    num::NonZeroUsize,
+    num::{NonZeroU32, NonZeroUsize},
     path::PathBuf,
     process,
     str::FromStr,
@@ -44,17 +44,22 @@ type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 fn main() {
   let arguments = Arguments::parse();
 
-  let stack_size = arguments.stack_size * 1024 * 1024;
+  let stack_size = arguments.stack_size.get().checked_mul(1024 * 1024);
 
-  let result = thread::Builder::new()
-    .stack_size(stack_size)
-    .spawn(move || arguments.run())
-    .unwrap()
-    .join();
+  let result = match stack_size {
+    Some(stack_size) => thread::Builder::new()
+      .stack_size(stack_size)
+      .spawn(move || arguments.run())
+      .map_err(anyhow::Error::from)
+      .and_then(|thread| {
+        thread
+          .join()
+          .unwrap_or_else(|_| Err(anyhow::anyhow!("Thread panicked")))
+      }),
+    None => Err(anyhow::anyhow!("Stack size is too large")),
+  };
 
-  if let Err(error) =
-    result.unwrap_or_else(|_| Err(anyhow::anyhow!("Thread panicked")))
-  {
+  if let Err(error) = result {
     if let Some(&ReadlineError::Eof | &ReadlineError::Interrupted) =
       error.downcast_ref::<ReadlineError>()
     {
