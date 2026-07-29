@@ -69,8 +69,9 @@ impl Arguments {
 
     let filename = filename.to_string_lossy().to_string();
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let mut evaluator = Evaluator::from(Environment::new_with_process_control(
+      Into::<Config>::into(self),
+    ));
 
     match parse(&content) {
       Ok(ast) => match evaluator.evaluate(&ast) {
@@ -96,8 +97,9 @@ impl Arguments {
   }
 
   fn evaluate_expression(&self, value: String) -> Result {
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let mut evaluator = Evaluator::from(Environment::new_with_process_control(
+      Into::<Config>::into(self),
+    ));
 
     match parse(&value) {
       Ok(ast) => match evaluator.evaluate(&ast) {
@@ -148,8 +150,9 @@ impl Arguments {
     editor.set_helper(Some(Prompt::new()));
     editor.load_history(&history).ok();
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let mut evaluator = Evaluator::from(Environment::new_with_process_control(
+      Into::<Config>::into(self),
+    ));
 
     if let Some(filenames) = &self.load {
       for filename in filenames {

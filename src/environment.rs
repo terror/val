@@ -53,6 +53,38 @@ impl<'src> Environment<'src> {
     }
   }
 
+  fn from_builtins(
+    config: Config,
+    builtins: impl IntoIterator<Item = &'static Builtin>,
+  ) -> Self {
+    let environment = Self {
+      config,
+      frame: Rc::new(RefCell::new(Frame::default())),
+    };
+
+    for builtin in builtins {
+      match builtin {
+        Builtin::Constant { value, .. } => {
+          environment.add_symbol(builtin.name(), Value::Number(value(config)));
+        }
+        Builtin::Function {
+          arity, function, ..
+        } => {
+          environment.add_function(
+            builtin.name(),
+            Function::Builtin {
+              arity: *arity,
+              function: *function,
+              name: builtin.name(),
+            },
+          );
+        }
+      }
+    }
+
+    environment
+  }
+
   pub(crate) fn function(
     &self,
     name: &str,
@@ -94,32 +126,17 @@ impl<'src> Environment<'src> {
 
   #[must_use]
   pub fn new(config: Config) -> Self {
-    let environment = Self {
+    Self::from_builtins(
       config,
-      frame: Rc::new(RefCell::new(Frame::default())),
-    };
+      BUILTINS
+        .iter()
+        .filter(|builtin| !builtin.controls_process()),
+    )
+  }
 
-    for builtin in BUILTINS {
-      match builtin {
-        Builtin::Constant { value, .. } => {
-          environment.add_symbol(builtin.name(), Value::Number(value(config)));
-        }
-        Builtin::Function {
-          arity, function, ..
-        } => {
-          environment.add_function(
-            builtin.name(),
-            Function::Builtin {
-              arity: *arity,
-              function: *function,
-              name: builtin.name(),
-            },
-          );
-        }
-      }
-    }
-
-    environment
+  #[must_use]
+  pub fn new_with_process_control(config: Config) -> Self {
+    Self::from_builtins(config, BUILTINS)
   }
 
   fn resolve_function(&self, name: &str) -> Option<Function<'src>> {
@@ -150,5 +167,22 @@ impl fmt::Debug for Environment<'_> {
     f.debug_struct("Environment")
       .field("config", &self.config)
       .finish_non_exhaustive()
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn process_control_is_opt_in() {
+    let safe = Environment::new(Config::default());
+    let process_control =
+      Environment::new_with_process_control(Config::default());
+
+    for name in ["exit", "quit"] {
+      assert!(safe.resolve_function(name).is_none());
+      assert!(process_control.resolve_function(name).is_some());
+    }
   }
 }

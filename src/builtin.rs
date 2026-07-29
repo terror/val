@@ -14,6 +14,10 @@ pub enum Builtin {
 }
 
 impl Builtin {
+  pub(crate) fn controls_process(&self) -> bool {
+    matches!(self.name(), "exit" | "quit")
+  }
+
   #[must_use]
   pub fn kind(&self) -> &'static str {
     match self {
