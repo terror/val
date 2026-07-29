@@ -2,7 +2,8 @@ use {
   crate::{
     ast_node::AstNode,
     error::{ErrorKind, ValError},
-    range::{Range, RangeConverter},
+    range::Range,
+    range_converter::RangeConverter,
   },
   serde::Serialize,
   serde_wasm_bindgen::to_value,
@@ -17,6 +18,7 @@ use {
 mod ast_node;
 mod error;
 mod range;
+mod range_converter;
 
 #[wasm_bindgen(start)]
 fn start() {
