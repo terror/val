@@ -265,6 +265,13 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
+        if lhs_num.is_zero() && rhs_num.is_negative() {
+          return Err(Error::new(
+            rhs.1,
+            "Zero cannot be raised to a negative power",
+          ));
+        }
+
         Ok(Value::Number(
           lhs_num.pow(&rhs_num, self.environment.config),
         ))

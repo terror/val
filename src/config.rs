@@ -16,3 +16,9 @@ impl Default for Config {
     }
   }
 }
+
+impl Config {
+  pub(crate) fn precision(self) -> u32 {
+    self.precision.max(1)
+  }
+}
