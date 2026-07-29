@@ -30,7 +30,7 @@ impl Number {
     } else {
       Self::Approx(
         Float::with_val_round(
-          config.precision,
+          config.precision(),
           &self.to_float(config) + &rhs.to_float(config),
           config.rounding_mode,
         )
@@ -42,7 +42,7 @@ impl Number {
   fn approx_pow(&self, rhs: &Self, config: Config) -> Self {
     Self::Approx(
       Float::with_val_round(
-        config.precision,
+        config.precision(),
         self.to_float(config).pow(rhs.to_float(config)),
         config.rounding_mode,
       )
@@ -111,7 +111,7 @@ impl Number {
         if let Some(decimal) = Decimal::from_rational(number) {
           decimal.display(config.digits)
         } else {
-          Self::Approx(Float::with_val(config.precision, number))
+          Self::Approx(Float::with_val(config.precision(), number))
             .display(config)
         }
       }
@@ -125,7 +125,7 @@ impl Number {
     } else {
       Self::Approx(
         Float::with_val_round(
-          config.precision,
+          config.precision(),
           &self.to_float(config) / &rhs.to_float(config),
           config.rounding_mode,
         )
@@ -192,7 +192,7 @@ impl Number {
     } else {
       Self::Approx(
         Float::with_val_round(
-          config.precision,
+          config.precision(),
           &self.to_float(config) * &rhs.to_float(config),
           config.rounding_mode,
         )
@@ -266,7 +266,7 @@ impl Number {
     } else {
       Self::Approx(
         Float::with_val_round(
-          config.precision,
+          config.precision(),
           &self.to_float(config) - &rhs.to_float(config),
           config.rounding_mode,
         )
@@ -289,7 +289,7 @@ impl Number {
   pub fn tau(config: Config) -> Self {
     Self::Approx(
       Float::with_val_round(
-        config.precision,
+        config.precision(),
         Constant::Pi,
         config.rounding_mode,
       )
@@ -307,10 +307,12 @@ impl Number {
   pub fn to_float(&self, config: Config) -> Float {
     match self {
       Self::Approx(number) => {
-        Float::with_val_round(config.precision, number, config.rounding_mode).0
+        Float::with_val_round(config.precision(), number, config.rounding_mode)
+          .0
       }
       Self::Exact(number) => {
-        Float::with_val_round(config.precision, number, config.rounding_mode).0
+        Float::with_val_round(config.precision(), number, config.rounding_mode)
+          .0
       }
     }
   }
@@ -499,6 +501,20 @@ mod tests {
   #[test]
   fn display_approx_positive_integer() {
     assert_eq!(Number::Approx(Float::with_val(8, 23)).to_string(), "23");
+  }
+
+  #[test]
+  fn zero_precision_uses_minimum() {
+    let config = Config {
+      precision: 0,
+      ..Config::default()
+    };
+
+    let Number::Approx(number) = Number::e(config) else {
+      panic!("expected approximate number");
+    };
+
+    assert_eq!(number.prec(), 1);
   }
 
   #[test]

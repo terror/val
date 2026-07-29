@@ -43,10 +43,11 @@ pub(crate) struct Arguments {
   #[clap(
     short,
     long,
+    value_parser = clap::value_parser!(NonZeroU32),
     default_value = "1024",
     help = "Binary precision (bits) to use for calculations"
   )]
-  precision: u32,
+  precision: NonZeroU32,
   #[clap(
     short,
     long,
@@ -57,10 +58,11 @@ pub(crate) struct Arguments {
   rounding_mode: RoundingMode,
   #[clap(
     long,
+    value_parser = clap::value_parser!(NonZeroUsize),
     default_value = "128",
     help = "Stack size in MB for evaluations"
   )]
-  pub stack_size: usize,
+  pub stack_size: NonZeroUsize,
 }
 
 impl Arguments {
@@ -236,7 +238,7 @@ impl From<&Arguments> for Config {
   fn from(arguments: &Arguments) -> Self {
     Config {
       digits: arguments.digits,
-      precision: arguments.precision,
+      precision: arguments.precision.get(),
       rounding_mode: arguments.rounding_mode.into(),
     }
   }
@@ -295,6 +297,15 @@ mod tests {
     let result = Arguments::try_parse_from(vec!["program", "--digits", "0"]);
 
     assert!(result.is_err());
+  }
+
+  #[test]
+  fn nonzero_arguments_reject_zero() {
+    for argument in ["--precision", "--stack-size"] {
+      let result = Arguments::try_parse_from(vec!["program", argument, "0"]);
+
+      assert!(result.is_err());
+    }
   }
 
   #[test]
