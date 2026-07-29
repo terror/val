@@ -50,10 +50,10 @@ mod tests {
   fn converts_utf8_bytes_to_utf16_units() {
     #[track_caller]
     fn case(input: &str, span: std::ops::Range<usize>, expected: Range) {
-      let converter = RangeConverter::new(input);
-      let actual = converter.convert(Range::from(Span::from(span)));
-
-      assert_eq!(actual, expected);
+      assert_eq!(
+        RangeConverter::new(input).convert(Range::from(Span::from(span))),
+        expected,
+      );
     }
 
     case("foo", 1..3, Range { start: 1, end: 3 });
