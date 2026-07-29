@@ -7,6 +7,16 @@ pub struct AstNode {
   pub children: Vec<AstNode>,
 }
 
+impl AstNode {
+  pub(crate) fn convert_ranges(&mut self, converter: &RangeConverter) {
+    self.range = converter.convert(self.range);
+
+    for child in &mut self.children {
+      child.convert_ranges(converter);
+    }
+  }
+}
+
 impl From<(&Program<'_>, &Span)> for AstNode {
   fn from(value: (&Program<'_>, &Span)) -> Self {
     let (program, span) = value;
@@ -289,5 +299,30 @@ impl From<(&Expression<'_>, &Span)> for AstNode {
         }
       }
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn converts_nested_ranges() {
+    let converter = RangeConverter::new("é 😀");
+
+    let mut node = AstNode {
+      kind: "foo".into(),
+      range: Range { start: 0, end: 7 },
+      children: vec![AstNode {
+        kind: "bar".into(),
+        range: Range { start: 3, end: 7 },
+        children: Vec::new(),
+      }],
+    };
+
+    node.convert_ranges(&converter);
+
+    assert_eq!(node.range, Range { start: 0, end: 4 });
+    assert_eq!(node.children[0].range, Range { start: 2, end: 4 });
   }
 }
