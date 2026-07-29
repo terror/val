@@ -63,7 +63,7 @@ cd "$DIST"
 echo "Creating release archive..."
 
 case $OS in
-  ubuntu-latest | macos-latest)
+  ubuntu-latest | macos-*)
     ARCHIVE=val-$VERSION-$TARGET.tar.gz
     tar czf "$ARCHIVE" ./*
     echo "archive=$DIST/$ARCHIVE" >> "$GITHUB_OUTPUT"
@@ -72,5 +72,9 @@ case $OS in
     ARCHIVE=val-$VERSION-$TARGET.zip
     7z a "$ARCHIVE" ./*
     echo "archive=$(pwd -W)/$ARCHIVE" >> "$GITHUB_OUTPUT"
+    ;;
+  *)
+    echo "Unsupported runner: $OS" >&2
+    exit 1
     ;;
 esac
