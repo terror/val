@@ -243,7 +243,7 @@ fn acot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let pi_div_2 = Number::Approx(
     Float::with_val_round(
-      payload.config.precision,
+      payload.config.precision(),
       Constant::Pi,
       payload.config.rounding_mode,
     )
@@ -353,8 +353,12 @@ fn constant_phi(config: Config) -> Number {
 
 fn constant_pi(config: Config) -> Number {
   Number::Approx(
-    Float::with_val_round(config.precision, Constant::Pi, config.rounding_mode)
-      .0,
+    Float::with_val_round(
+      config.precision(),
+      Constant::Pi,
+      config.rounding_mode,
+    )
+    .0,
   )
 }
 

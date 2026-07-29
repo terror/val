@@ -22,6 +22,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Setup wasm-pack
+        uses: taiki-e/install-action@wasm-pack
+
+      - name: Install Emscripten
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y emscripten
+
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
@@ -33,6 +46,12 @@ jobs:
       - name: Install dependencies
         working-directory: ./www
         run: bun install
+
+      - name: Build WASM
+        run: |
+          wasm-pack build crates/val-wasm --target web \
+            --out-name val \
+            --out-dir ../../www/packages/val-wasm
 
       - name: Test
         working-directory: ./www
