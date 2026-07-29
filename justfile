@@ -23,8 +23,6 @@ build-wasm:
     --out-name val \
     --out-dir ../../www/packages/val-wasm
 
-  rm -rf www/packages/val-wasm/.gitignore
-
 [group: 'check']
 check:
  cargo check

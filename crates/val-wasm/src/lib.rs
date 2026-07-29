@@ -3,6 +3,7 @@ use {
     ast_node::AstNode,
     error::{ErrorKind, ValError},
     range::Range,
+    range_converter::RangeConverter,
   },
   serde::Serialize,
   serde_wasm_bindgen::to_value,
@@ -17,6 +18,7 @@ use {
 mod ast_node;
 mod error;
 mod range;
+mod range_converter;
 
 #[wasm_bindgen(start)]
 fn start() {
@@ -26,8 +28,16 @@ fn start() {
 
 #[wasm_bindgen]
 pub fn parse(input: &str) -> Result<JsValue, JsValue> {
+  let converter = RangeConverter::new(input);
+
   match val::parse(input) {
-    Ok((ast, span)) => Ok(to_value(&AstNode::from((&ast, &span))).unwrap()),
+    Ok((ast, span)) => {
+      let mut ast = AstNode::from((&ast, &span));
+
+      ast.convert_ranges(&converter);
+
+      Ok(to_value(&ast).unwrap())
+    }
     Err(errors) => Err(
       to_value(
         &errors
@@ -35,7 +45,7 @@ pub fn parse(input: &str) -> Result<JsValue, JsValue> {
           .map(|error| ValError {
             kind: ErrorKind::Parser,
             message: error.message,
-            range: Range::from(error.span),
+            range: converter.convert(Range::from(error.span)),
           })
           .collect::<Vec<ValError>>(),
       )
@@ -46,6 +56,8 @@ pub fn parse(input: &str) -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
+  let converter = RangeConverter::new(input);
+
   match val::parse(input) {
     Ok(ast) => {
       let mut evaluator = Evaluator::from(Environment::new(val::Config {
@@ -60,7 +72,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
           to_value(&[ValError {
             kind: ErrorKind::Evaluator,
             message: error.message,
-            range: Range::from(error.span),
+            range: converter.convert(Range::from(error.span)),
           }])
           .unwrap(),
         ),
@@ -73,7 +85,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
           .map(|error| ValError {
             kind: ErrorKind::Parser,
             message: error.message,
-            range: Range::from(error.span),
+            range: converter.convert(Range::from(error.span)),
           })
           .collect::<Vec<ValError>>(),
       )
