@@ -22,7 +22,7 @@ cd "$TMP_DIR"
 VERSION=$(sed -En 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/p' Cargo.toml | head -1)
 
 git tag -a "$VERSION" -m "Release $VERSION"
-git push origin "$VERSION"
 cargo publish
+git push origin "$VERSION"
 
 cd "$ROOT_DIR"
