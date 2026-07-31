@@ -2058,9 +2058,15 @@ fn lcm_function() -> Result {
 #[test]
 fn len() -> Result {
   Test::new()?
-    .program("println(len(\"Hello, world!\"))")
+    .program(indoc! {
+      r#"
+      println(len("Hello, world!"))
+      println(len("é"))
+      println(len(list("é")))
+      "#
+    })
     .expected_status(0)
-    .expected_stdout(Exact("13\n"))
+    .expected_stdout(Exact("13\n1\n1\n"))
     .run()
 }
 
