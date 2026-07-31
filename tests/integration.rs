@@ -1317,6 +1317,35 @@ fn function_arity_is_checked_before_arguments() -> Result {
 }
 
 #[test]
+fn function_equality_uses_identity() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      anonymous = fn() {}
+      alias = anonymous
+
+      println(anonymous == anonymous)
+      println(anonymous == alias)
+      println(anonymous == fn() {})
+
+      fn foo() {
+        return 1
+      }
+
+      original = foo
+
+      fn foo() {
+        return 2
+      }
+
+      println(original == foo)
+      "
+    })
+    .expected_stdout(Exact("true\ntrue\nfalse\nfalse\n"))
+    .run()
+}
+
+#[test]
 fn function_call_as_argument() -> Result {
   Test::new()?
     .program(indoc! {

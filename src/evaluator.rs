@@ -289,6 +289,7 @@ impl<'a> Evaluator<'a> {
         Ok(Value::Function(Function::UserDefined {
           body: body.clone(),
           environment: self.environment.clone(),
+          identity: Rc::new(()),
           name: None,
           parameters: parameters.clone(),
         }))
@@ -447,6 +448,7 @@ impl<'a> Evaluator<'a> {
         let function = Function::UserDefined {
           body: body.clone(),
           environment: self.environment.clone(),
+          identity: Rc::new(()),
           name: Some(name.clone()),
           parameters: params.clone(),
         };
