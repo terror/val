@@ -3,6 +3,7 @@
 [![release](https://img.shields.io/github/release/terror/val.svg?label=release&style=flat&labelColor=282c34&logo=github)](https://github.com/terror/val/releases/latest)
 [![crates.io](https://shields.io/crates/v/val.svg)](https://crates.io/crates/val)
 [![CI](https://github.com/terror/val/actions/workflows/ci.yaml/badge.svg)](https://github.com/terror/val/actions/workflows/ci.yaml)
+[![codecov](https://codecov.io/gh/terror/val/graph/badge.svg)](https://codecov.io/gh/terror/val)
 [![docs.rs](https://img.shields.io/docsrs/val)](https://docs.rs/val)
 [![dependency status](https://deps.rs/repo/github/terror/val/status.svg)](https://deps.rs/repo/github/terror/val)
 
