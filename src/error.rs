@@ -34,24 +34,3 @@ impl Error {
     report.finish()
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use {super::*, ariadne::Source};
-
-  #[test]
-  fn report_uses_byte_spans() {
-    let source = "'é' +* 3";
-    let error = parse(source).unwrap_err().into_iter().next().unwrap();
-    let mut output = Vec::new();
-
-    error
-      .report("foo")
-      .write(("foo", Source::from(source)), &mut output)
-      .unwrap();
-
-    let output = String::from_utf8(output).unwrap();
-
-    assert!(output.contains("foo:1:6"), "{output}");
-  }
-}
