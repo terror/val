@@ -136,11 +136,13 @@ impl<'a> Evaluator<'a> {
             Cow::Owned(format!("{}{}", a.as_ref(), b.as_ref())),
           )),
           (Value::String(a), _) => Ok(Value::String(Cow::Owned(format!(
-            "{}{rhs_val}",
-            a.as_ref()
+            "{}{}",
+            a.as_ref(),
+            rhs_val.display(self.environment.config)
           )))),
           (_, Value::String(b)) => Ok(Value::String(Cow::Owned(format!(
-            "{lhs_val}{}",
+            "{}{}",
+            lhs_val.display(self.environment.config),
             b.as_ref()
           )))),
           (Value::List(a), Value::List(b)) => {

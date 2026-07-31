@@ -1162,6 +1162,22 @@ fn configured_digits() -> Result {
 }
 
 #[test]
+fn configured_digits_in_concatenation() -> Result {
+  Test::new()?
+    .argument("--digits")
+    .argument("4")
+    .program(indoc! {
+      "
+      value = 2 / 5555222222222
+      println('value = ' + value)
+      println(value + ' = value')
+      "
+    })
+    .expected_stdout(Exact("value = 3.6e-13\n3.6e-13 = value\n"))
+    .run()
+}
+
+#[test]
 fn floor_function() -> Result {
   Test::new()?
     .program("println(floor(3.14))")
