@@ -2949,6 +2949,14 @@ fn range_rejects_zero_step() -> Result {
 }
 
 #[test]
+fn range_stops_before_overflow() -> Result {
+  Test::new()?
+    .program("println(range(9223372036854775806, 9223372036854775807, 2))")
+    .expected_stdout(Exact("[9223372036854775806]\n"))
+    .run()
+}
+
+#[test]
 fn secant() -> Result {
   Test::new()?
     .program("println(sec(0))")

@@ -741,9 +741,11 @@ fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   } {
     result.push(Value::Number(Number::from(current)));
 
-    current = current
-      .checked_add(step)
-      .ok_or_else(|| Error::new(payload.span, "`range` overflowed"))?;
+    let Some(next) = current.checked_add(step) else {
+      break;
+    };
+
+    current = next;
   }
 
   Ok(Value::List(result))
