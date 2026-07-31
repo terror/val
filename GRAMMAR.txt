@@ -1,5 +1,3 @@
-Padding may appear between lexical tokens in the productions below.
-
 Program          → Padding StatementList Padding
 
 StatementList    → (Statement ';'?)*
