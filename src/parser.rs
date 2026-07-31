@@ -6,6 +6,11 @@ use {
 
 type ParserError<'a> = extra::Err<Rich<'a, char>>;
 
+const RESERVED_WORDS: [&str; 13] = [
+  "break", "continue", "else", "false", "fn", "for", "if", "in", "loop",
+  "null", "return", "true", "while",
+];
+
 /// # Errors
 ///
 /// Returns parser errors when input cannot be parsed into a complete program.
@@ -55,6 +60,20 @@ where
     .delimited_by(padded_parser(just('[')), padded_parser(just(']')))
     .padded_by(padding_parser())
     .map_with(|expression, error| (expression, error.span()))
+}
+
+fn identifier_parser<'a>()
+-> impl Parser<'a, &'a str, &'a str, ParserError<'a>> + Clone {
+  padded_parser(text::ident().try_map(|identifier, span| {
+    if RESERVED_WORDS.contains(&identifier) {
+      Err(Rich::custom(
+        span,
+        format!("`{identifier}` is a reserved word"),
+      ))
+    } else {
+      Ok(identifier)
+    }
+  }))
 }
 
 fn keyword_parser<'a>(
@@ -119,7 +138,7 @@ fn statement_parser<'a>()
 
     let expression = expression_parser(statement_block.clone());
 
-    let simple_ident = padded_parser(text::ident()).map_with(|name, error| {
+    let simple_ident = identifier_parser().map_with(|name, error| {
       let span = error.span();
       (AssignmentTarget::Identifier(name), span)
     });
@@ -143,9 +162,9 @@ fn statement_parser<'a>()
       .map_with(|ast, error| (ast, error.span()));
 
     let function_statement = keyword_parser("fn")
-      .ignore_then(padded_parser(text::ident()))
+      .ignore_then(identifier_parser())
       .then(
-        comma_separated_parser(padded_parser(text::ident()))
+        comma_separated_parser(identifier_parser())
           .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
       )
       .then(statement_block.clone())
@@ -181,7 +200,7 @@ fn statement_parser<'a>()
       .map_with(|ast, error| (ast, error.span()));
 
     let for_statement = keyword_parser("for")
-      .ignore_then(padded_parser(text::ident()))
+      .ignore_then(identifier_parser())
       .then_ignore(keyword_parser("in"))
       .then(expression.clone())
       .then(statement_block.clone())
@@ -235,7 +254,7 @@ where
   P: Parser<'a, &'a str, Vec<Spanned<Statement<'a>>>, ParserError<'a>> + Clone,
   P: 'a,
 {
-  let identifier = padded_parser(text::ident());
+  let identifier = identifier_parser();
 
   recursive(|expression| {
     let number = text::int(10)
@@ -277,7 +296,7 @@ where
 
     let function = keyword_parser("fn")
       .ignore_then(
-        comma_separated_parser(padded_parser(text::ident()))
+        comma_separated_parser(identifier_parser())
           .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
       )
       .then(statement_block.clone())
@@ -724,6 +743,33 @@ mod tests {
       .program("return")
       .ast("statements(return())")
       .run();
+  }
+
+  #[test]
+  fn reserved_words_are_not_identifiers() {
+    #[track_caller]
+    fn case(program: &str, word: &str, start: usize) {
+      assert_eq!(
+        parse(program).unwrap_err(),
+        [Error::new(
+          SimpleSpan::from(start..start + word.len()),
+          format!("`{word}` is a reserved word"),
+        )],
+      );
+    }
+
+    for word in RESERVED_WORDS {
+      case(&format!("fn foo({word}) {{}}"), word, 7);
+    }
+
+    for program in [
+      "true = 1",
+      "fn true() {}",
+      "for true in [] {}",
+      "fn(true) {}",
+    ] {
+      assert!(parse(program).is_err());
+    }
   }
 
   #[test]
