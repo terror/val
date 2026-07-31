@@ -1,5 +1,5 @@
 use {
-  ariadne::{Color, Label, Report, ReportKind},
+  ariadne::{Color, IndexType, Label, Report, ReportKind},
   ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   builtins::BUILTINS,
   chumsky::prelude::*,
