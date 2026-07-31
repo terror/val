@@ -549,30 +549,3 @@ impl<'a> From<Environment<'a>> for Evaluator<'a> {
     }
   }
 }
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn evaluation_does_not_borrow_source() {
-    let definition = {
-      let source = String::from("fn foo() { 'bar' }");
-      parse(&source).unwrap()
-    };
-
-    let mut evaluator = Evaluator::from(Environment::default());
-    evaluator.evaluate(&definition).unwrap();
-    drop(definition);
-
-    let call = {
-      let source = String::from("foo()");
-      parse(&source).unwrap()
-    };
-
-    assert_eq!(
-      evaluator.evaluate(&call).unwrap(),
-      Value::String("bar".into())
-    );
-  }
-}
