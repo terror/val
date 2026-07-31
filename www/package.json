@@ -24,7 +24,6 @@
     "@radix-ui/react-slot": "^1.2.0",
     "@radix-ui/react-switch": "^1.1.4",
     "@replit/codemirror-vim": "^6.3.0",
-    "@tailwindcss/vite": "^4.1.3",
     "@uiw/react-codemirror": "^4.23.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -36,11 +35,11 @@
     "react-resizable-panels": "^2.1.7",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.2.0",
-    "tailwindcss": "^4.1.3",
     "tw-animate-css": "^1.2.5",
     "val-wasm": "workspace:*"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.1.3",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "^22.14.1",
     "@types/react": "^18.0.37",
@@ -51,8 +50,10 @@
     "eslint": "^8.38.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.3.4",
+    "postcss": "^8.5.25",
     "prettier-plugin-tailwindcss": "^0.6.11",
+    "tailwindcss": "^4.1.3",
     "typescript": "^5.0.2",
-    "vite": "^4.3.9"
+    "vite": "^6.4.3"
   }
 }
