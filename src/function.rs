@@ -10,6 +10,7 @@ pub enum Function<'src> {
   UserDefined {
     body: Vec<Spanned<Statement>>,
     environment: Environment<'src>,
+    identity: Rc<()>,
     name: Option<String>,
     parameters: Vec<String>,
   },
@@ -37,6 +38,7 @@ impl<'src> Function<'src> {
         environment,
         name,
         parameters,
+        ..
       } => {
         let call_environment = Environment::with_parent(environment.clone());
 
@@ -98,9 +100,9 @@ impl PartialEq for Function<'_> {
     match (self, other) {
       (Self::Builtin { name: a, .. }, Self::Builtin { name: b, .. }) => a == b,
       (
-        Self::UserDefined { name: Some(a), .. },
-        Self::UserDefined { name: Some(b), .. },
-      ) => a == b,
+        Self::UserDefined { identity: a, .. },
+        Self::UserDefined { identity: b, .. },
+      ) => Rc::ptr_eq(a, b),
       _ => false,
     }
   }

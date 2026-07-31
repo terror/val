@@ -1355,6 +1355,35 @@ fn function_calling_builtin() -> Result {
 }
 
 #[test]
+fn function_equality_uses_identity() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      anonymous = fn() {}
+      alias = anonymous
+
+      println(anonymous == anonymous)
+      println(anonymous == alias)
+      println(anonymous == fn() {})
+
+      fn foo() {
+        return 1
+      }
+
+      original = foo
+
+      fn foo() {
+        return 2
+      }
+
+      println(original == foo)
+      "
+    })
+    .expected_stdout(Exact("true\ntrue\nfalse\nfalse\n"))
+    .run()
+}
+
+#[test]
 fn function_modifying_outer_scope() -> Result {
   Test::new()?
     .program(indoc! {
