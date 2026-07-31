@@ -585,7 +585,7 @@ fn len<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let value = &payload.arguments[0];
 
   match value {
-    Value::String(s) => Ok(Value::Number(Number::from(s.len()))),
+    Value::String(s) => Ok(Value::Number(Number::from(s.chars().count()))),
     Value::List(items) => Ok(Value::Number(Number::from(items.len()))),
     _ => Err(Error::new(
       payload.span,
