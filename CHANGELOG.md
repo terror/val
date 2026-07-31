@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.1](https://github.com/terror/val/releases/tag/0.4.1) - 2026-07-31
+
+### Fixed
+
+- Package x86 macOS release archive ([#124](https://github.com/terror/val/pull/124) by [terror](https://github.com/terror))
+- Build current WASM for web deployment ([#125](https://github.com/terror/val/pull/125) by [terror](https://github.com/terror))
+- Prevent invalid evaluations from panicking ([#126](https://github.com/terror/val/pull/126) by [terror](https://github.com/terror))
+- Use UTF-16 offsets for browser ranges ([#128](https://github.com/terror/val/pull/128) by [terror](https://github.com/terror))
+- Disable incompatible WASM optimization ([#129](https://github.com/terror/val/pull/129) by [terror](https://github.com/terror))
+- Fix mixed exact and approximate comparisons ([#130](https://github.com/terror/val/pull/130) by [terror](https://github.com/terror))
+- Fix unicode diagnostic offsets ([#131](https://github.com/terror/val/pull/131) by [terror](https://github.com/terror))
+- Count string length in unicode characters ([#132](https://github.com/terror/val/pull/132) by [terror](https://github.com/terror))
+- Reject reserved words as identifiers ([#133](https://github.com/terror/val/pull/133) by [terror](https://github.com/terror))
+
+### Misc
+
+- Bump clap from 4.6.1 to 4.6.2 ([#119](https://github.com/terror/val/pull/119) by [app/dependabot](https://github.com/app/dependabot))
+- Bump regex from 1.13.0 to 1.13.1 ([#120](https://github.com/terror/val/pull/120) by [app/dependabot](https://github.com/app/dependabot))
+- Bump anyhow from 1.0.103 to 1.0.104 ([#121](https://github.com/terror/val/pull/121) by [app/dependabot](https://github.com/app/dependabot))
+- Bump clap from 4.6.2 to 4.6.4 ([#122](https://github.com/terror/val/pull/122) by [app/dependabot](https://github.com/app/dependabot))
+- Bump serde from 1.0.228 to 1.0.229 ([#123](https://github.com/terror/val/pull/123) by [app/dependabot](https://github.com/app/dependabot))
+
 ## [0.4.0](https://github.com/terror/val/releases/tag/0.4.0) - 2026-07-16
 
 ### Added
