@@ -1,11 +1,11 @@
 use super::*;
 
 #[derive(Debug, Clone)]
-pub enum Program<'a> {
-  Statements(Vec<Spanned<Statement<'a>>>),
+pub enum Program {
+  Statements(Vec<Spanned<Statement>>),
 }
 
-impl Program<'_> {
+impl Program {
   #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
@@ -14,7 +14,7 @@ impl Program<'_> {
   }
 }
 
-impl Display for Program<'_> {
+impl Display for Program {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       Program::Statements(statements) => {
@@ -33,29 +33,25 @@ impl Display for Program<'_> {
 }
 
 #[derive(Debug, Clone)]
-pub enum Statement<'a> {
-  Assignment(Spanned<AssignmentTarget<'a>>, Spanned<Expression<'a>>),
-  Block(Vec<Spanned<Statement<'a>>>),
+pub enum Statement {
+  Assignment(Spanned<AssignmentTarget>, Spanned<Expression>),
+  Block(Vec<Spanned<Statement>>),
   Break,
   Continue,
-  Expression(Spanned<Expression<'a>>),
-  For(
-    &'a str,
-    Spanned<Expression<'a>>,
-    Vec<Spanned<Statement<'a>>>,
-  ),
-  Function(&'a str, Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
+  Expression(Spanned<Expression>),
+  For(String, Spanned<Expression>, Vec<Spanned<Statement>>),
+  Function(String, Vec<String>, Vec<Spanned<Statement>>),
   If(
-    Spanned<Expression<'a>>,
-    Vec<Spanned<Statement<'a>>>,
-    Option<Vec<Spanned<Statement<'a>>>>,
+    Spanned<Expression>,
+    Vec<Spanned<Statement>>,
+    Option<Vec<Spanned<Statement>>>,
   ),
-  Loop(Vec<Spanned<Statement<'a>>>),
-  Return(Option<Spanned<Expression<'a>>>),
-  While(Spanned<Expression<'a>>, Vec<Spanned<Statement<'a>>>),
+  Loop(Vec<Spanned<Statement>>),
+  Return(Option<Spanned<Expression>>),
+  While(Spanned<Expression>, Vec<Spanned<Statement>>),
 }
 
-impl Statement<'_> {
+impl Statement {
   #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
@@ -74,7 +70,7 @@ impl Statement<'_> {
   }
 }
 
-impl Display for Statement<'_> {
+impl Display for Statement {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       Statement::Assignment(lhs, rhs) => {
@@ -180,12 +176,12 @@ impl Display for Statement<'_> {
 }
 
 #[derive(Debug, Clone)]
-pub enum AssignmentTarget<'a> {
-  Identifier(&'a str),
-  ListAccess(Box<Spanned<Self>>, Box<Spanned<Expression<'a>>>),
+pub enum AssignmentTarget {
+  Identifier(String),
+  ListAccess(Box<Spanned<Self>>, Box<Spanned<Expression>>),
 }
 
-impl AssignmentTarget<'_> {
+impl AssignmentTarget {
   #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
@@ -195,8 +191,8 @@ impl AssignmentTarget<'_> {
   }
 }
 
-impl<'a> AssignmentTarget<'a> {
-  pub(crate) fn indices(&self) -> Vec<&Spanned<Expression<'a>>> {
+impl AssignmentTarget {
+  pub(crate) fn indices(&self) -> Vec<&Spanned<Expression>> {
     match self {
       AssignmentTarget::Identifier(_) => Vec::new(),
       AssignmentTarget::ListAccess(base, index) => {
@@ -207,7 +203,7 @@ impl<'a> AssignmentTarget<'a> {
     }
   }
 
-  pub(crate) fn root(&self, span: Span) -> (&'a str, Span) {
+  pub(crate) fn root(&self, span: Span) -> (&str, Span) {
     match self {
       AssignmentTarget::Identifier(name) => (name, span),
       AssignmentTarget::ListAccess(base, _) => base.0.root(base.1),
@@ -215,7 +211,7 @@ impl<'a> AssignmentTarget<'a> {
   }
 }
 
-impl Display for AssignmentTarget<'_> {
+impl Display for AssignmentTarget {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       AssignmentTarget::Identifier(identifier) => {
@@ -283,21 +279,21 @@ impl Display for BinaryOp {
 }
 
 #[derive(Debug, Clone)]
-pub enum Expression<'a> {
+pub enum Expression {
   BinaryOp(BinaryOp, Box<Spanned<Self>>, Box<Spanned<Self>>),
   Boolean(bool),
-  Function(Vec<&'a str>, Vec<Spanned<Statement<'a>>>),
+  Function(Vec<String>, Vec<Spanned<Statement>>),
   FunctionCall(Box<Spanned<Self>>, Vec<Spanned<Self>>),
-  Identifier(&'a str),
+  Identifier(String),
   List(Vec<Spanned<Self>>),
   ListAccess(Box<Spanned<Self>>, Box<Spanned<Self>>),
   Null,
   Number(Number),
-  String(&'a str),
+  String(String),
   UnaryOp(UnaryOp, Box<Spanned<Self>>),
 }
 
-impl Expression<'_> {
+impl Expression {
   #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
@@ -316,7 +312,7 @@ impl Expression<'_> {
   }
 }
 
-impl Display for Expression<'_> {
+impl Display for Expression {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       Expression::BinaryOp(op, lhs, rhs) => {

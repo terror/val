@@ -8,10 +8,10 @@ pub enum Function<'src> {
     name: &'src str,
   },
   UserDefined {
-    body: Vec<Spanned<Statement<'src>>>,
+    body: Vec<Spanned<Statement>>,
     environment: Environment<'src>,
-    name: Option<&'src str>,
-    parameters: Vec<&'src str>,
+    name: Option<String>,
+    parameters: Vec<String>,
   },
 }
 
@@ -86,7 +86,9 @@ impl<'src> Function<'src> {
   pub(crate) fn name(&self) -> &str {
     match self {
       Self::Builtin { name, .. } => name,
-      Self::UserDefined { name, .. } => name.unwrap_or("<anonymous>"),
+      Self::UserDefined { name, .. } => {
+        name.as_deref().unwrap_or("<anonymous>")
+      }
     }
   }
 }
@@ -94,8 +96,8 @@ impl<'src> Function<'src> {
 impl PartialEq for Function<'_> {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
-      (Self::Builtin { name: a, .. }, Self::Builtin { name: b, .. })
-      | (
+      (Self::Builtin { name: a, .. }, Self::Builtin { name: b, .. }) => a == b,
+      (
         Self::UserDefined { name: Some(a), .. },
         Self::UserDefined { name: Some(b), .. },
       ) => a == b,

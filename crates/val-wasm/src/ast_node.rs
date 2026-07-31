@@ -17,8 +17,8 @@ impl AstNode {
   }
 }
 
-impl From<(&Program<'_>, &Span)> for AstNode {
-  fn from(value: (&Program<'_>, &Span)) -> Self {
+impl From<(&Program, &Span)> for AstNode {
+  fn from(value: (&Program, &Span)) -> Self {
     let (program, span) = value;
 
     let range = Range::from(span);
@@ -41,8 +41,8 @@ impl From<(&Program<'_>, &Span)> for AstNode {
   }
 }
 
-impl From<(&Statement<'_>, &Span)> for AstNode {
-  fn from(value: (&Statement<'_>, &Span)) -> Self {
+impl From<(&Statement, &Span)> for AstNode {
+  fn from(value: (&Statement, &Span)) -> Self {
     let (statement, span) = value;
 
     let range = Range::from(span);
@@ -172,8 +172,8 @@ impl From<(&Statement<'_>, &Span)> for AstNode {
   }
 }
 
-impl From<(&AssignmentTarget<'_>, &Span)> for AstNode {
-  fn from(value: (&AssignmentTarget<'_>, &Span)) -> Self {
+impl From<(&AssignmentTarget, &Span)> for AstNode {
+  fn from(value: (&AssignmentTarget, &Span)) -> Self {
     let (target, span) = value;
 
     let range = Range::from(span);
@@ -200,8 +200,8 @@ impl From<(&AssignmentTarget<'_>, &Span)> for AstNode {
   }
 }
 
-impl From<(&Expression<'_>, &Span)> for AstNode {
-  fn from(value: (&Expression<'_>, &Span)) -> Self {
+impl From<(&Expression, &Span)> for AstNode {
+  fn from(value: (&Expression, &Span)) -> Self {
     let (expression, span) = value;
 
     let range = Range::from(span);

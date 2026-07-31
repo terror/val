@@ -7,31 +7,27 @@ pub struct Environment<'src> {
 }
 
 impl<'src> Environment<'src> {
-  pub fn add_function(&self, name: &'src str, function: Function<'src>) {
+  pub fn add_function(&self, name: &str, function: Function<'src>) {
     self
       .frame
       .borrow_mut()
       .symbols
-      .entry(name)
+      .entry(name.to_owned())
       .or_default()
       .function = Some(function);
   }
 
-  pub fn add_symbol(&self, name: &'src str, value: Value<'src>) {
+  pub fn add_symbol(&self, name: &str, value: Value<'src>) {
     self
       .frame
       .borrow_mut()
       .symbols
-      .entry(name)
+      .entry(name.to_owned())
       .or_default()
       .value = Some(value);
   }
 
-  fn assign_existing_symbol(
-    &self,
-    name: &'src str,
-    value: Value<'src>,
-  ) -> bool {
+  fn assign_existing_symbol(&self, name: &str, value: Value<'src>) -> bool {
     let parent = {
       let mut frame = self.frame.borrow_mut();
 
@@ -47,7 +43,7 @@ impl<'src> Environment<'src> {
     parent.is_some_and(|parent| parent.assign_existing_symbol(name, value))
   }
 
-  pub(crate) fn assign_symbol(&self, name: &'src str, value: Value<'src>) {
+  pub(crate) fn assign_symbol(&self, name: &str, value: Value<'src>) {
     if !self.assign_existing_symbol(name, value.clone()) {
       self.add_symbol(name, value);
     }

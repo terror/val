@@ -14,7 +14,7 @@ const RESERVED_WORDS: [&str; 13] = [
 /// # Errors
 ///
 /// Returns parser errors when input cannot be parsed into a complete program.
-pub fn parse(input: &str) -> Result<Spanned<Program<'_>>, Vec<Error>> {
+pub fn parse(input: &str) -> Result<Spanned<Program>, Vec<Error>> {
   let result = program_parser().parse(input);
 
   match result.into_output_errors() {
@@ -29,7 +29,7 @@ pub fn parse(input: &str) -> Result<Spanned<Program<'_>>, Vec<Error>> {
 }
 
 fn program_parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Program<'a>>, ParserError<'a>> + Clone {
+-> impl Parser<'a, &'a str, Spanned<Program>, ParserError<'a>> + Clone {
   padding_parser()
     .ignore_then(statement_list_parser(statement_parser()))
     .then_ignore(padding_parser())
@@ -51,10 +51,10 @@ where
 
 fn index_parser<'a, P>(
   expression: P,
-) -> impl Parser<'a, &'a str, (Spanned<Expression<'a>>, SimpleSpan), ParserError<'a>>
+) -> impl Parser<'a, &'a str, (Spanned<Expression>, SimpleSpan), ParserError<'a>>
 + Clone
 where
-  P: Parser<'a, &'a str, Spanned<Expression<'a>>, ParserError<'a>> + Clone,
+  P: Parser<'a, &'a str, Spanned<Expression>, ParserError<'a>> + Clone,
 {
   expression
     .delimited_by(padded_parser(just('[')), padded_parser(just(']')))
@@ -63,7 +63,7 @@ where
 }
 
 fn identifier_parser<'a>()
--> impl Parser<'a, &'a str, &'a str, ParserError<'a>> + Clone {
+-> impl Parser<'a, &'a str, String, ParserError<'a>> + Clone {
   padded_parser(text::ident().try_map(|identifier, span| {
     if RESERVED_WORDS.contains(&identifier) {
       Err(Rich::custom(
@@ -71,7 +71,7 @@ fn identifier_parser<'a>()
         format!("`{identifier}` is a reserved word"),
       ))
     } else {
-      Ok(identifier)
+      Ok(identifier.to_owned())
     }
   }))
 }
@@ -119,9 +119,9 @@ fn padding_parser<'a>() -> impl Parser<'a, &'a str, (), ParserError<'a>> + Clone
 
 fn statement_list_parser<'a, P>(
   statement: P,
-) -> impl Parser<'a, &'a str, Vec<Spanned<Statement<'a>>>, ParserError<'a>> + Clone
+) -> impl Parser<'a, &'a str, Vec<Spanned<Statement>>, ParserError<'a>> + Clone
 where
-  P: Parser<'a, &'a str, Spanned<Statement<'a>>, ParserError<'a>> + Clone,
+  P: Parser<'a, &'a str, Spanned<Statement>, ParserError<'a>> + Clone,
 {
   statement
     .then(padded_parser(just(';')).or_not())
@@ -131,7 +131,7 @@ where
 }
 
 fn statement_parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Statement<'a>>, ParserError<'a>> + Clone {
+-> impl Parser<'a, &'a str, Spanned<Statement>, ParserError<'a>> + Clone {
   recursive(|statement| {
     let statement_block = statement_list_parser(statement.clone())
       .delimited_by(padded_parser(just('{')), padded_parser(just('}')));
@@ -249,9 +249,9 @@ fn statement_parser<'a>()
 
 fn expression_parser<'a, P>(
   statement_block: P,
-) -> impl Parser<'a, &'a str, Spanned<Expression<'a>>, ParserError<'a>> + Clone
+) -> impl Parser<'a, &'a str, Spanned<Expression>, ParserError<'a>> + Clone
 where
-  P: Parser<'a, &'a str, Vec<Spanned<Statement<'a>>>, ParserError<'a>> + Clone,
+  P: Parser<'a, &'a str, Vec<Spanned<Statement>>, ParserError<'a>> + Clone,
   P: 'a,
 {
   let identifier = identifier_parser();
@@ -278,12 +278,14 @@ where
     let double_quoted_string = just('"')
       .ignore_then(none_of('"').repeated().to_slice())
       .then_ignore(just('"'))
+      .map(str::to_owned)
       .map(Expression::String)
       .map_with(|ast, error| (ast, error.span()));
 
     let single_quoted_string = just('\'')
       .ignore_then(none_of('\'').repeated().to_slice())
       .then_ignore(just('\''))
+      .map(str::to_owned)
       .map(Expression::String)
       .map_with(|ast, error| (ast, error.span()));
 
@@ -323,9 +325,9 @@ where
       .padded_by(padding_parser());
 
     let binary =
-      |lhs: Spanned<Expression<'a>>,
+      |lhs: Spanned<Expression>,
        op: BinaryOp,
-       rhs: Spanned<Expression<'a>>,
+       rhs: Spanned<Expression>,
        error: &mut MapExtra<'a, '_, &'a str, ParserError<'a>>| {
         (
           Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)),
@@ -335,7 +337,7 @@ where
 
     let unary =
       |op: UnaryOp,
-       rhs: Spanned<Expression<'a>>,
+       rhs: Spanned<Expression>,
        error: &mut MapExtra<'a, '_, &'a str, ParserError<'a>>| {
         (Expression::UnaryOp(op, Box::new(rhs)), error.span())
       };
