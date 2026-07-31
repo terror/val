@@ -1,73 +1,122 @@
-Program          → Padding StatementList Padding
+val grammar
+===========
 
-StatementList    → (Statement ';'?)*
+tokens
+------
 
-Statement        → Assignment
-                 | Block
-                 | Break
-                 | Continue
-                 | ExpressionStmt
-                 | For
-                 | Function
-                 | If
-                 | Loop
-                 | Return
-                 | While
+```
+EOF          = emitted at the end of the input
+IDENTIFIER   = [_\p{XID_Start}]\p{XID_Continue}* # excluding reserved words
+LINE_COMMENT = //[^\n]*
+NUMBER       = (0|[1-9][0-9]*)(\.[0-9]+)?
+STRING       = "[^"]*"|'[^']*'
+WHITESPACE   = Unicode whitespace
+```
 
-Assignment       → AssignmentTarget '=' Expression
-AssignmentTarget → Identifier ('[' Expression ']')*
-Block            → '{' StatementList '}'
-Break            → 'break'
-Continue         → 'continue'
-ExpressionStmt   → Expression
-For              → 'for' Identifier 'in' Expression Block
-Function         → 'fn' Identifier '(' (Parameters ','?)? ')' Block
-If               → 'if' '(' Expression ')' Block ('else' Block)?
-Loop             → 'loop' Block
-Return           → 'return' Expression?
-While            → 'while' '(' Expression ')' Block
+grammar syntax
+--------------
 
-Parameters       → Identifier (',' Identifier)*
+```
+|   alternation
+()  grouping
+_?  option (0 or 1 times)
+_*  repetition (0 or more times)
+_+  repetition (1 or more times)
+```
 
-Expression       → LogicalOr
-LogicalOr        → LogicalAnd ('||' LogicalAnd)*
-LogicalAnd       → Equality ('&&' Equality)*
-Equality         → Relational (('==' | '!=') Relational)*
-Relational       → Sum (('>=' | '<=' | '>' | '<') Sum)*
-Sum              → Product (('+' | '-') Product)*
-Product          → Power (('*' | '/' | '%') Power)*
-Power            → Unary ('^' Power)?
-Unary            → ('-' | '!')* Postfix
-Postfix          → Atom (Call | ListAccess)*
-Atom             → Number
-                 | Boolean
-                 | Null
-                 | String
-                 | List
-                 | FunctionExpression
-                 | Identifier
-                 | '(' Expression ')'
+grammar
+-------
 
-Number           → Integer ('.' Digit+)?
-Integer          → '0' | NonzeroDigit Digit*
-Boolean          → 'true' | 'false'
-Null             → 'null'
-String           → '"' [^"]* '"' | "'" [^']* "'"
-List             → '[' (Arguments ','?)? ']'
-FunctionExpression
-                 → 'fn' '(' (Parameters ','?)? ')' Block
-Call             → '(' (Arguments ','?)? ')'
-ListAccess       → '[' Expression ']'
-Arguments        → Expression (',' Expression)*
-Identifier       → IdentifierText, provided IdentifierText is not a ReservedWord
-IdentifierText   → IdentifierStart IdentifierContinue*
-IdentifierStart  → Unicode XID_Start | '_'
-IdentifierContinue
-                 → Unicode XID_Continue
-ReservedWord     → 'break' | 'continue' | 'else' | 'false' | 'fn' | 'for'
-                 | 'if' | 'in' | 'loop' | 'null' | 'return' | 'true' | 'while'
-Padding          → (Whitespace | LineComment)*
-LineComment      → '//' [^\n]*
-Whitespace       → Unicode whitespace
-Digit            → '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-NonzeroDigit     → '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+```
+program              : padding statement_list padding EOF
+
+statement_list       : (statement ';'?)*
+
+statement            : assignment
+                     | block
+                     | break
+                     | continue
+                     | expression_statement
+                     | for
+                     | function
+                     | if
+                     | loop
+                     | return
+                     | while
+
+assignment           : assignment_target '=' expression
+
+assignment_target    : IDENTIFIER ('[' expression ']')*
+
+block                : '{' statement_list '}'
+
+break                : 'break'
+
+continue             : 'continue'
+
+expression_statement : expression
+
+for                  : 'for' IDENTIFIER 'in' expression block
+
+function             : 'fn' IDENTIFIER '(' (parameters ','?)? ')' block
+
+if                   : 'if' '(' expression ')' block ('else' block)?
+
+loop                 : 'loop' block
+
+return               : 'return' expression?
+
+while                : 'while' '(' expression ')' block
+
+parameters           : IDENTIFIER (',' IDENTIFIER)*
+
+expression           : logical_or
+
+logical_or           : logical_and ('||' logical_and)*
+
+logical_and          : equality ('&&' equality)*
+
+equality             : relational (('==' | '!=') relational)*
+
+relational           : sum (('>=' | '<=' | '>' | '<') sum)*
+
+sum                  : product (('+' | '-') product)*
+
+product              : power (('*' | '/' | '%') power)*
+
+power                : unary ('^' power)?
+
+unary                : ('-' | '!')* postfix
+
+postfix              : atom (call | list_access)*
+
+atom                 : NUMBER
+                     | boolean
+                     | null
+                     | STRING
+                     | list
+                     | function_expression
+                     | IDENTIFIER
+                     | '(' expression ')'
+
+boolean              : 'true'
+                     | 'false'
+
+null                 : 'null'
+
+list                 : '[' (arguments ','?)? ']'
+
+function_expression  : 'fn' '(' (parameters ','?)? ')' block
+
+call                 : '(' (arguments ','?)? ')'
+
+list_access          : '[' expression ']'
+
+arguments            : expression (',' expression)*
+
+padding              : (WHITESPACE | LINE_COMMENT)*
+```
+
+The reserved words excluded from `IDENTIFIER` are `break`, `continue`, `else`,
+`false`, `fn`, `for`, `if`, `in`, `loop`, `null`, `return`, `true`, and
+`while`.
