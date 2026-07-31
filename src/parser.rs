@@ -493,14 +493,6 @@ mod tests {
   }
 
   #[test]
-  fn continue_statement() {
-    Test::new()
-      .program("continue")
-      .ast("statements(continue)")
-      .run();
-  }
-
-  #[test]
   fn comments() {
     Test::new()
       .program("// foo\n// bar\n")
@@ -510,6 +502,14 @@ mod tests {
     Test::new()
       .program("// foo\na = [1, // bar\n 2,]\na[// baz\n0] + 3 // bob")
       .ast("statements(assignment(identifier(a), list(number(1), number(2))), expression(binary_op(+, list_access(identifier(a), number(0)), number(3))))")
+      .run();
+  }
+
+  #[test]
+  fn continue_statement() {
+    Test::new()
+      .program("continue")
+      .ast("statements(continue)")
       .run();
   }
 
@@ -735,19 +735,6 @@ mod tests {
   }
 
   #[test]
-  fn return_statement() {
-    Test::new()
-      .program("return 5")
-      .ast("statements(return(number(5)))")
-      .run();
-
-    Test::new()
-      .program("return")
-      .ast("statements(return())")
-      .run();
-  }
-
-  #[test]
   fn reserved_words_are_not_identifiers() {
     #[track_caller]
     fn case(program: &str, word: &str, start: usize) {
@@ -772,6 +759,19 @@ mod tests {
     ] {
       assert!(parse(program).is_err());
     }
+  }
+
+  #[test]
+  fn return_statement() {
+    Test::new()
+      .program("return 5")
+      .ast("statements(return(number(5)))")
+      .run();
+
+    Test::new()
+      .program("return")
+      .ast("statements(return())")
+      .run();
   }
 
   #[test]

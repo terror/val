@@ -243,13 +243,55 @@ mod tests {
   use {super::*, clap::Parser, std::path::PathBuf};
 
   #[test]
-  fn filename_only() {
-    let arguments = Arguments::parse_from(vec!["program", "file.txt"]);
+  fn both_should_fail() {
+    assert!(
+      Arguments::try_parse_from(vec![
+        "program",
+        "file.txt",
+        "--expression",
+        "1 + 2"
+      ])
+      .is_err()
+    );
+  }
 
-    assert!(arguments.filename.is_some());
-    assert!(arguments.expression.is_none());
+  #[test]
+  fn conflict_error_message() {
+    let result = Arguments::try_parse_from(vec![
+      "program",
+      "file.txt",
+      "--expression",
+      "1 + 2",
+    ]);
 
-    assert_eq!(arguments.filename.unwrap(), PathBuf::from("file.txt"));
+    assert!(result.is_err());
+
+    let error = result.unwrap_err().to_string();
+
+    assert!(
+      error.contains("cannot be used with"),
+      "Error should mention conflicts: {error}"
+    );
+  }
+
+  #[test]
+  fn digits() {
+    #[track_caller]
+    fn case(argument: &str) {
+      let arguments = Arguments::parse_from(vec!["program", argument, "4"]);
+
+      assert_eq!(arguments.digits, NonZeroUsize::new(4).unwrap());
+    }
+
+    case("--digits");
+    case("-d");
+  }
+
+  #[test]
+  fn digits_rejects_zero() {
+    let result = Arguments::try_parse_from(vec!["program", "--digits", "0"]);
+
+    assert!(result.is_err());
   }
 
   #[test]
@@ -274,72 +316,13 @@ mod tests {
   }
 
   #[test]
-  fn digits() {
-    #[track_caller]
-    fn case(argument: &str) {
-      let arguments = Arguments::parse_from(vec!["program", argument, "4"]);
+  fn filename_only() {
+    let arguments = Arguments::parse_from(vec!["program", "file.txt"]);
 
-      assert_eq!(arguments.digits, NonZeroUsize::new(4).unwrap());
-    }
-
-    case("--digits");
-    case("-d");
-  }
-
-  #[test]
-  fn digits_rejects_zero() {
-    let result = Arguments::try_parse_from(vec!["program", "--digits", "0"]);
-
-    assert!(result.is_err());
-  }
-
-  #[test]
-  fn nonzero_arguments_reject_zero() {
-    for argument in ["--precision", "--stack-size"] {
-      let result = Arguments::try_parse_from(vec!["program", argument, "0"]);
-
-      assert!(result.is_err());
-    }
-  }
-
-  #[test]
-  fn both_should_fail() {
-    assert!(
-      Arguments::try_parse_from(vec![
-        "program",
-        "file.txt",
-        "--expression",
-        "1 + 2"
-      ])
-      .is_err()
-    );
-  }
-
-  #[test]
-  fn neither_provided() {
-    let arguments = Arguments::parse_from(vec!["program"]);
-
-    assert!(arguments.filename.is_none());
+    assert!(arguments.filename.is_some());
     assert!(arguments.expression.is_none());
-  }
 
-  #[test]
-  fn conflict_error_message() {
-    let result = Arguments::try_parse_from(vec![
-      "program",
-      "file.txt",
-      "--expression",
-      "1 + 2",
-    ]);
-
-    assert!(result.is_err());
-
-    let error = result.unwrap_err().to_string();
-
-    assert!(
-      error.contains("cannot be used with"),
-      "Error should mention conflicts: {error}"
-    );
+    assert_eq!(arguments.filename.unwrap(), PathBuf::from("file.txt"));
   }
 
   #[test]
@@ -359,5 +342,22 @@ mod tests {
       error.contains("cannot be used with"),
       "Error should mention conflicts: {error}"
     );
+  }
+
+  #[test]
+  fn neither_provided() {
+    let arguments = Arguments::parse_from(vec!["program"]);
+
+    assert!(arguments.filename.is_none());
+    assert!(arguments.expression.is_none());
+  }
+
+  #[test]
+  fn nonzero_arguments_reject_zero() {
+    for argument in ["--precision", "--stack-size"] {
+      let result = Arguments::try_parse_from(vec!["program", argument, "0"]);
+
+      assert!(result.is_err());
+    }
   }
 }
