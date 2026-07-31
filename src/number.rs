@@ -3,13 +3,6 @@ use super::*;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ParseDecimalError;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ArithmeticError {
-  DivisionByZero,
-  ModuloByZero,
-  ZeroToNegativePower,
-}
-
 #[derive(Clone, Debug)]
 pub enum Number {
   Approx(Float),
@@ -395,18 +388,6 @@ impl Display for Number {
     f.write_str(&self.display(Config::default()))
   }
 }
-
-impl Display for ArithmeticError {
-  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    f.write_str(match self {
-      Self::DivisionByZero => "Division by zero",
-      Self::ModuloByZero => "Modulo by zero",
-      Self::ZeroToNegativePower => "Zero cannot be raised to a negative power",
-    })
-  }
-}
-
-impl std::error::Error for ArithmeticError {}
 
 impl From<bool> for Number {
   fn from(value: bool) -> Self {

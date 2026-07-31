@@ -27,6 +27,7 @@ use {
 };
 
 pub use crate::{
+  arithmetic_error::ArithmeticError,
   builtin::Builtin,
   builtin_arity::BuiltinArity,
   builtin_function::BuiltinFunction,
@@ -37,7 +38,7 @@ pub use crate::{
   error::Error,
   evaluator::Evaluator,
   function::Function,
-  number::{ArithmeticError, Number, ParseDecimalError},
+  number::{Number, ParseDecimalError},
   parser::parse,
   rounding_mode::RoundingMode,
   value::Value,
@@ -48,6 +49,7 @@ pub type Spanned<T> = (T, Span);
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
+mod arithmetic_error;
 pub mod ast;
 mod builtin;
 mod builtin_arity;
