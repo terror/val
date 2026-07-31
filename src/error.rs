@@ -22,6 +22,7 @@ impl Error {
       ReportKind::Custom("error", Color::Red),
       (id, span_range.clone()),
     )
+    .with_config(ariadne::Config::new().with_index_type(IndexType::Byte))
     .with_message(&self.message);
 
     report = report.with_label(
