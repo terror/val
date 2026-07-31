@@ -249,7 +249,8 @@ fn acot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     )
     .0,
   )
-  .div(&Number::from(2_i64), payload.config);
+  .div(&Number::from(2_i64), payload.config)
+  .unwrap();
 
   Ok(Value::Number(
     pi_div_2.sub(&argument.atan(payload.config), payload.config),
@@ -266,7 +267,9 @@ fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let reciprocal = Number::from(1_i64).div(&argument, payload.config);
+  let reciprocal = Number::from(1_i64)
+    .div(&argument, payload.config)
+    .map_err(|error| Error::new(payload.span, error.to_string()))?;
 
   Ok(Value::Number(reciprocal.asin(payload.config)))
 }
@@ -299,7 +302,9 @@ fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  let reciprocal = Number::from(1_i64).div(&argument, payload.config);
+  let reciprocal = Number::from(1_i64)
+    .div(&argument, payload.config)
+    .map_err(|error| Error::new(payload.span, error.to_string()))?;
 
   Ok(Value::Number(reciprocal.acos(payload.config)))
 }
@@ -349,6 +354,7 @@ fn constant_phi(config: Config) -> Number {
   Number::from(1_i64)
     .add(&Number::from(5_i64).sqrt(config), config)
     .div(&Number::from(2_i64), config)
+    .unwrap()
 }
 
 fn constant_pi(config: Config) -> Number {
@@ -394,7 +400,10 @@ fn cot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  Ok(Value::Number(Number::from(1_i64).div(&tan, payload.config)))
+  Number::from(1_i64)
+    .div(&tan, payload.config)
+    .map(Value::Number)
+    .map_err(|error| Error::new(payload.span, error.to_string()))
 }
 
 fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -409,7 +418,10 @@ fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     ));
   }
 
-  Ok(Value::Number(Number::from(1_i64).div(&sin, payload.config)))
+  Number::from(1_i64)
+    .div(&sin, payload.config)
+    .map(Value::Number)
+    .map_err(|error| Error::new(payload.span, error.to_string()))
 }
 
 fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -760,7 +772,10 @@ fn sec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
     return Err(Error::new(payload.span, "Cannot compute sec of π/2 + nπ"));
   }
 
-  Ok(Value::Number(Number::from(1_i64).div(&cos, payload.config)))
+  Number::from(1_i64)
+    .div(&cos, payload.config)
+    .map(Value::Number)
+    .map_err(|error| Error::new(payload.span, error.to_string()))
 }
 
 fn sin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {

@@ -27,6 +27,7 @@ use {
 };
 
 pub use crate::{
+  arithmetic_error::ArithmeticError,
   builtin::Builtin,
   builtin_arity::BuiltinArity,
   builtin_function::BuiltinFunction,
@@ -48,6 +49,7 @@ pub type Spanned<T> = (T, Span);
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
+mod arithmetic_error;
 pub mod ast;
 mod builtin;
 mod builtin_arity;

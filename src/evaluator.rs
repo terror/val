@@ -166,13 +166,10 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        if rhs_num.is_zero() {
-          return Err(Error::new(rhs.1, "Division by zero"));
-        }
-
-        Ok(Value::Number(
-          lhs_num.div(&rhs_num, self.environment.config),
-        ))
+        lhs_num
+          .div(&rhs_num, self.environment.config)
+          .map(Value::Number)
+          .map_err(|error| Error::new(rhs.1, error.to_string()))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.evaluate_expression(lhs)? == self.evaluate_expression(rhs)?,
@@ -241,13 +238,10 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        if rhs_num.is_zero() {
-          return Err(Error::new(rhs.1, "Modulo by zero"));
-        }
-
-        Ok(Value::Number(
-          lhs_num.rem(&rhs_num, self.environment.config),
-        ))
+        lhs_num
+          .rem(&rhs_num, self.environment.config)
+          .map(Value::Number)
+          .map_err(|error| Error::new(rhs.1, error.to_string()))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
@@ -267,16 +261,10 @@ impl<'a> Evaluator<'a> {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        if lhs_num.is_zero() && rhs_num.is_negative() {
-          return Err(Error::new(
-            rhs.1,
-            "Zero cannot be raised to a negative power",
-          ));
-        }
-
-        Ok(Value::Number(
-          lhs_num.pow(&rhs_num, self.environment.config),
-        ))
+        lhs_num
+          .pow(&rhs_num, self.environment.config)
+          .map(Value::Number)
+          .map_err(|error| Error::new(rhs.1, error.to_string()))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
