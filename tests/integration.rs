@@ -749,6 +749,45 @@ fn comparison_with_expressions() -> Result {
 }
 
 #[test]
+fn configured_digits() -> Result {
+  #[track_caller]
+  fn case(argument: &str) -> Result {
+    Test::new()?
+      .argument(argument)
+      .argument("4")
+      .program("println(2 / 5555222222222)")
+      .expected_status(0)
+      .expected_stdout(Exact("3.6e-13\n"))
+      .run()
+  }
+
+  Test::new()?
+    .program("println(2 / 5555222222222)")
+    .expected_status(0)
+    .expected_stdout(Exact("3.600216012960922e-13\n"))
+    .run()?;
+
+  case("--digits")?;
+  case("-d")
+}
+
+#[test]
+fn configured_digits_in_concatenation() -> Result {
+  Test::new()?
+    .argument("--digits")
+    .argument("4")
+    .program(indoc! {
+      "
+      value = 2 / 5555222222222
+      println('value = ' + value)
+      println(value + ' = value')
+      "
+    })
+    .expected_stdout(Exact("value = 3.6e-13\n3.6e-13 = value\n"))
+    .run()
+}
+
+#[test]
 fn continue_in_if_outside_loop() -> Result {
   Test::new()?
     .program(indoc! {
@@ -938,46 +977,6 @@ fn division() -> Result {
 }
 
 #[test]
-fn exact_decimal_arithmetic() -> Result {
-  Test::new()?
-    .program(indoc! {
-      "
-      a = 0.001
-
-      while (a < 1) {
-        a = a + 0.001
-      }
-
-      println(a)
-      "
-    })
-    .expected_status(0)
-    .expected_stdout(Exact("1\n"))
-    .run()?;
-
-  Test::new()?
-    .program("println(0.1 + 0.2)")
-    .expected_status(0)
-    .expected_stdout(Exact("0.3\n"))
-    .run()
-}
-
-#[test]
-fn exact_rational_arithmetic() -> Result {
-  Test::new()?
-    .program("println(1 / 3)")
-    .expected_status(0)
-    .expected_stdout(Exact("0.3333333333333333\n"))
-    .run()?;
-
-  Test::new()?
-    .program("println((1 / 3) * 3)")
-    .expected_status(0)
-    .expected_stdout(Exact("1\n"))
-    .run()
-}
-
-#[test]
 fn division_by_zero() -> Result {
   Test::new()?
     .program("println(5 / 0)")
@@ -1024,6 +1023,46 @@ fn equal_to() -> Result {
     .program("println(\"hello\" == \"world\")")
     .expected_status(0)
     .expected_stdout(Exact("false\n"))
+    .run()
+}
+
+#[test]
+fn exact_decimal_arithmetic() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      a = 0.001
+
+      while (a < 1) {
+        a = a + 0.001
+      }
+
+      println(a)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println(0.1 + 0.2)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.3\n"))
+    .run()
+}
+
+#[test]
+fn exact_rational_arithmetic() -> Result {
+  Test::new()?
+    .program("println(1 / 3)")
+    .expected_status(0)
+    .expected_stdout(Exact("0.3333333333333333\n"))
+    .run()?;
+
+  Test::new()?
+    .program("println((1 / 3) * 3)")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
     .run()
 }
 
@@ -1135,45 +1174,6 @@ fn float_literals() -> Result {
     .program("println(3.5 * 2.0)")
     .expected_status(0)
     .expected_stdout(Exact("7\n"))
-    .run()
-}
-
-#[test]
-fn configured_digits() -> Result {
-  #[track_caller]
-  fn case(argument: &str) -> Result {
-    Test::new()?
-      .argument(argument)
-      .argument("4")
-      .program("println(2 / 5555222222222)")
-      .expected_status(0)
-      .expected_stdout(Exact("3.6e-13\n"))
-      .run()
-  }
-
-  Test::new()?
-    .program("println(2 / 5555222222222)")
-    .expected_status(0)
-    .expected_stdout(Exact("3.600216012960922e-13\n"))
-    .run()?;
-
-  case("--digits")?;
-  case("-d")
-}
-
-#[test]
-fn configured_digits_in_concatenation() -> Result {
-  Test::new()?
-    .argument("--digits")
-    .argument("4")
-    .program(indoc! {
-      "
-      value = 2 / 5555222222222
-      println('value = ' + value)
-      println(value + ' = value')
-      "
-    })
-    .expected_stdout(Exact("value = 3.6e-13\n3.6e-13 = value\n"))
     .run()
 }
 
@@ -2246,21 +2246,6 @@ fn list_element_assignment_updates_value() -> Result {
 }
 
 #[test]
-fn nested_list_element_assignment_updates_value() -> Result {
-  Test::new()?
-    .program(indoc! {
-      "
-      nums = [[1, 2], [3, 4]]
-      nums[1][0] = 5
-      println(nums)
-      "
-    })
-    .expected_status(0)
-    .expected_stdout(Exact("[[1, 2], [5, 4]]\n"))
-    .run()
-}
-
-#[test]
 fn list_literals() -> Result {
   Test::new()?
     .program("println([1, 2, 1 + 2])")
@@ -2629,6 +2614,21 @@ fn nested_if_statements() -> Result {
     })
     .expected_status(0)
     .expected_stdout(Exact("both conditions met\n"))
+    .run()
+}
+
+#[test]
+fn nested_list_element_assignment_updates_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      nums = [[1, 2], [3, 4]]
+      nums[1][0] = 5
+      println(nums)
+      "
+    })
+    .expected_status(0)
+    .expected_stdout(Exact("[[1, 2], [5, 4]]\n"))
     .run()
 }
 

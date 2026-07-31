@@ -500,20 +500,6 @@ mod tests {
   }
 
   #[test]
-  fn zero_precision_uses_minimum() {
-    let config = Config {
-      precision: 0,
-      ..Config::default()
-    };
-
-    let Number::Approx(number) = Number::e(config) else {
-      panic!("expected approximate number");
-    };
-
-    assert_eq!(number.prec(), 1);
-  }
-
-  #[test]
   fn display_approx_rounded_large_integer() {
     assert_eq!(
       Number::Approx(Float::with_val(8, 4.8e4)).to_string(),
@@ -568,5 +554,19 @@ mod tests {
 
     assert!(approx < greater);
     assert!(greater > approx);
+  }
+
+  #[test]
+  fn zero_precision_uses_minimum() {
+    let config = Config {
+      precision: 0,
+      ..Config::default()
+    };
+
+    let Number::Approx(number) = Number::e(config) else {
+      panic!("expected approximate number");
+    };
+
+    assert_eq!(number.prec(), 1);
   }
 }
