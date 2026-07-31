@@ -395,12 +395,8 @@ impl PartialOrd for Number {
     match (self, other) {
       (Self::Exact(lhs), Self::Exact(rhs)) => lhs.partial_cmp(rhs),
       (Self::Approx(lhs), Self::Approx(rhs)) => lhs.partial_cmp(rhs),
-      (Self::Exact(lhs), Self::Approx(rhs)) => {
-        Float::with_val(rhs.prec(), lhs).partial_cmp(rhs)
-      }
-      (Self::Approx(lhs), Self::Exact(rhs)) => {
-        lhs.partial_cmp(&Float::with_val(lhs.prec(), rhs))
-      }
+      (Self::Exact(lhs), Self::Approx(rhs)) => lhs.partial_cmp(rhs),
+      (Self::Approx(lhs), Self::Exact(rhs)) => lhs.partial_cmp(rhs),
     }
   }
 }
@@ -558,5 +554,19 @@ mod tests {
       Number::try_from("1.5").unwrap().to_non_negative_usize(),
       None
     );
+  }
+
+  #[test]
+  fn mixed_exact_approx_comparison_preserves_exact_value() {
+    let approx = Number::Approx(Float::with_val(53, 9_007_199_254_740_992_i64));
+
+    let equal = Number::from(9_007_199_254_740_992_i64);
+    let greater = Number::from(9_007_199_254_740_993_i64);
+
+    assert_eq!(approx, equal);
+    assert_ne!(approx, greater);
+
+    assert!(approx < greater);
+    assert!(greater > approx);
   }
 }
