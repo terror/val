@@ -155,12 +155,11 @@ impl Arguments {
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
-        let content: &'static str =
-          Box::leak(fs::read_to_string(filename)?.into_boxed_str());
+        let content = fs::read_to_string(filename)?;
 
         let filename = filename.to_string_lossy().to_string();
 
-        match parse(content) {
+        match parse(&content) {
           Ok(ast) => match evaluator.evaluate(&ast) {
             Ok(_) => {}
             Err(error) => {
@@ -190,9 +189,7 @@ impl Arguments {
       editor.add_history_entry(&line)?;
       editor.save_history(&history)?;
 
-      let line: &'static str = Box::leak(line.into_boxed_str());
-
-      match parse(line) {
+      match parse(&line) {
         Ok(ast) => match evaluator.evaluate(&ast) {
           Ok(value) if !matches!(value, Value::Null) => {
             println!("{}", value.display(Into::<Config>::into(self)));
@@ -200,13 +197,13 @@ impl Arguments {
           Ok(_) => {}
           Err(error) => error
             .report("<input>")
-            .eprint(("<input>", Source::from(line)))?,
+            .eprint(("<input>", Source::from(&line)))?,
         },
         Err(errors) => {
           for error in errors {
             error
               .report("<input>")
-              .eprint(("<input>", Source::from(line)))?;
+              .eprint(("<input>", Source::from(&line)))?;
           }
         }
       }

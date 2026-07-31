@@ -8,7 +8,7 @@ pub struct Evaluator<'a> {
 impl<'a> Evaluator<'a> {
   fn assign(
     &mut self,
-    target: &Spanned<AssignmentTarget<'a>>,
+    target: &Spanned<AssignmentTarget>,
     value: Value<'a>,
   ) -> Result<(), Error> {
     match &target.0 {
@@ -40,9 +40,9 @@ impl<'a> Evaluator<'a> {
 
   fn assign_indices(
     &mut self,
-    name: &'a str,
+    name: &str,
     value: Value<'a>,
-    indices: &[&Spanned<Expression<'a>>],
+    indices: &[&Spanned<Expression>],
     assigned: Value<'a>,
     span: Span,
   ) -> Result<Value<'a>, Error> {
@@ -104,7 +104,7 @@ impl<'a> Evaluator<'a> {
   /// Returns an evaluation error when a statement or expression is invalid.
   pub fn evaluate(
     &mut self,
-    ast: &Spanned<Program<'a>>,
+    ast: &Spanned<Program>,
   ) -> Result<Value<'a>, Error> {
     let (node, _) = ast;
 
@@ -117,7 +117,7 @@ impl<'a> Evaluator<'a> {
 
   fn evaluate_expression(
     &mut self,
-    ast: &Spanned<Expression<'a>>,
+    ast: &Spanned<Expression>,
   ) -> Result<Value<'a>, Error> {
     let (node, span) = ast;
 
@@ -354,7 +354,9 @@ impl<'a> Evaluator<'a> {
       }
       Expression::Null => Ok(Value::Null),
       Expression::Number(number) => Ok(Value::Number(number.clone())),
-      Expression::String(string) => Ok(Value::String(Cow::Borrowed(string))),
+      Expression::String(string) => {
+        Ok(Value::String(Cow::Owned(string.clone())))
+      }
       Expression::UnaryOp(UnaryOp::Negate, rhs) => Ok(Value::Number(
         self.evaluate_expression(rhs)?.number(rhs.1)?.neg(),
       )),
@@ -366,7 +368,7 @@ impl<'a> Evaluator<'a> {
 
   fn evaluate_list_index(
     &mut self,
-    index: &Spanned<Expression<'a>>,
+    index: &Spanned<Expression>,
   ) -> Result<usize, Error> {
     self
       .evaluate_expression(index)?
@@ -379,7 +381,7 @@ impl<'a> Evaluator<'a> {
 
   pub(crate) fn evaluate_statement(
     &mut self,
-    statement: &Spanned<Statement<'a>>,
+    statement: &Spanned<Statement>,
   ) -> Result<Completion<'a>, Error> {
     let (node, span) = statement;
 
@@ -445,7 +447,7 @@ impl<'a> Evaluator<'a> {
         let function = Function::UserDefined {
           body: body.clone(),
           environment: self.environment.clone(),
-          name: Some(name),
+          name: Some(name.clone()),
           parameters: params.clone(),
         };
 
@@ -518,7 +520,7 @@ impl<'a> Evaluator<'a> {
 
   pub(crate) fn evaluate_statements(
     &mut self,
-    statements: &[Spanned<Statement<'a>>],
+    statements: &[Spanned<Statement>],
   ) -> Result<Completion<'a>, Error> {
     let mut result = Value::Null;
 
@@ -545,5 +547,32 @@ impl<'a> From<Environment<'a>> for Evaluator<'a> {
       environment,
       context: Context::default(),
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn evaluation_does_not_borrow_source() {
+    let definition = {
+      let source = String::from("fn foo() { 'bar' }");
+      parse(&source).unwrap()
+    };
+
+    let mut evaluator = Evaluator::from(Environment::default());
+    evaluator.evaluate(&definition).unwrap();
+    drop(definition);
+
+    let call = {
+      let source = String::from("foo()");
+      parse(&source).unwrap()
+    };
+
+    assert_eq!(
+      evaluator.evaluate(&call).unwrap(),
+      Value::String("bar".into())
+    );
   }
 }
