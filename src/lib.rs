@@ -37,7 +37,7 @@ pub use crate::{
   error::Error,
   evaluator::Evaluator,
   function::Function,
-  number::{Number, ParseDecimalError},
+  number::{ArithmeticError, Number, ParseDecimalError},
   parser::parse,
   rounding_mode::RoundingMode,
   value::Value,

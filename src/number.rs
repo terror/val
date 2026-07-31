@@ -3,6 +3,13 @@ use super::*;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ParseDecimalError;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ArithmeticError {
+  DivisionByZero,
+  ModuloByZero,
+  ZeroToNegativePower,
+}
+
 #[derive(Clone, Debug)]
 pub enum Number {
   Approx(Float),
@@ -118,19 +125,27 @@ impl Number {
     }
   }
 
-  #[must_use]
-  pub fn div(&self, rhs: &Self, config: Config) -> Self {
-    if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
-      Self::Exact((lhs / rhs).complete())
+  /// # Errors
+  ///
+  /// Returns [`ArithmeticError::DivisionByZero`] if `rhs` is zero.
+  pub fn div(
+    &self,
+    rhs: &Self,
+    config: Config,
+  ) -> std::result::Result<Self, ArithmeticError> {
+    if rhs.is_zero() {
+      Err(ArithmeticError::DivisionByZero)
+    } else if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
+      Ok(Self::Exact((lhs / rhs).complete()))
     } else {
-      Self::Approx(
+      Ok(Self::Approx(
         Float::with_val_round(
           config.precision(),
           &self.to_float(config) / &rhs.to_float(config),
           config.rounding_mode,
         )
         .0,
-      )
+      ))
     }
   }
 
@@ -209,25 +224,46 @@ impl Number {
     }
   }
 
-  #[must_use]
-  pub fn pow(&self, rhs: &Self, config: Config) -> Self {
+  /// # Errors
+  ///
+  /// Returns [`ArithmeticError::ZeroToNegativePower`] if `self` is zero and
+  /// `rhs` is negative.
+  pub fn pow(
+    &self,
+    rhs: &Self,
+    config: Config,
+  ) -> std::result::Result<Self, ArithmeticError> {
+    if self.is_zero() && rhs.is_negative() {
+      return Err(ArithmeticError::ZeroToNegativePower);
+    }
+
     match (self, rhs) {
       (Self::Exact(lhs), Self::Exact(exponent)) => {
         if exponent.is_integer()
           && let Some(exponent) = exponent.numer().to_i32()
         {
-          return Self::Exact(lhs.clone().pow(exponent));
+          return Ok(Self::Exact(lhs.clone().pow(exponent)));
         }
 
-        self.approx_pow(rhs, config)
+        Ok(self.approx_pow(rhs, config))
       }
-      _ => self.approx_pow(rhs, config),
+      _ => Ok(self.approx_pow(rhs, config)),
     }
   }
 
-  #[must_use]
-  pub fn rem(&self, rhs: &Self, config: Config) -> Self {
-    self.sub(&self.div(rhs, config).floor().mul(rhs, config), config)
+  /// # Errors
+  ///
+  /// Returns [`ArithmeticError::ModuloByZero`] if `rhs` is zero.
+  pub fn rem(
+    &self,
+    rhs: &Self,
+    config: Config,
+  ) -> std::result::Result<Self, ArithmeticError> {
+    if rhs.is_zero() {
+      return Err(ArithmeticError::ModuloByZero);
+    }
+
+    Ok(self.sub(&self.div(rhs, config)?.floor().mul(rhs, config), config))
   }
 
   #[must_use]
@@ -360,6 +396,18 @@ impl Display for Number {
   }
 }
 
+impl Display for ArithmeticError {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    f.write_str(match self {
+      Self::DivisionByZero => "Division by zero",
+      Self::ModuloByZero => "Modulo by zero",
+      Self::ZeroToNegativePower => "Zero cannot be raised to a negative power",
+    })
+  }
+}
+
+impl std::error::Error for ArithmeticError {}
+
 impl From<bool> for Number {
   fn from(value: bool) -> Self {
     Self::from(i64::from(value))
@@ -452,7 +500,8 @@ mod tests {
   fn display_approx_configured_digits() {
     let number = Number::from(2_i64)
       .to_approx(Config::default())
-      .div(&Number::from(5_555_222_222_222_i64), Config::default());
+      .div(&Number::from(5_555_222_222_222_i64), Config::default())
+      .unwrap();
 
     let config = Config {
       digits: NonZeroUsize::new(4).unwrap(),
@@ -513,6 +562,7 @@ mod tests {
       Number::from(2_i64)
         .to_approx(Config::default())
         .div(&Number::from(5_555_222_222_222_i64), Config::default())
+        .unwrap()
         .to_string(),
       "3.600216012960922e-13"
     );
@@ -554,6 +604,26 @@ mod tests {
 
     assert!(approx < greater);
     assert!(greater > approx);
+  }
+
+  #[test]
+  fn undefined_exact_arithmetic_returns_error() {
+    let zero = Number::from(0_i64);
+
+    assert_eq!(
+      Number::from(1_i64).div(&zero, Config::default()),
+      Err(ArithmeticError::DivisionByZero)
+    );
+
+    assert_eq!(
+      Number::from(1_i64).rem(&zero, Config::default()),
+      Err(ArithmeticError::ModuloByZero)
+    );
+
+    assert_eq!(
+      zero.pow(&Number::from(-1_i64), Config::default()),
+      Err(ArithmeticError::ZeroToNegativePower)
+    );
   }
 
   #[test]
