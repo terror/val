@@ -23,8 +23,6 @@ impl<'src> Function<'src> {
     config: Config,
     span: Span,
   ) -> Result<Value<'src>, Error> {
-    self.check_arity(arguments.len(), span)?;
-
     match self {
       Self::Builtin { function, .. } => {
         function.call(&BuiltinFunctionPayload {
@@ -46,8 +44,8 @@ impl<'src> Function<'src> {
           call_environment.add_function(name, self.clone());
         }
 
-        for (parameter, argument) in parameters.iter().zip(arguments.iter()) {
-          call_environment.add_symbol(parameter, argument.clone());
+        for (parameter, argument) in parameters.iter().zip(arguments) {
+          call_environment.add_symbol(parameter, argument);
         }
 
         Evaluator::from(call_environment).enter_function(|evaluator| {

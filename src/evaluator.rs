@@ -73,8 +73,9 @@ impl<'a> Evaluator<'a> {
       ));
     }
 
-    list[index] =
-      self.assign_indices(name, list[index].clone(), rest, assigned, span)?;
+    let value = std::mem::replace(&mut list[index], Value::Null);
+
+    list[index] = self.assign_indices(name, value, rest, assigned, span)?;
 
     Ok(Value::List(list))
   }
@@ -110,7 +111,10 @@ impl<'a> Evaluator<'a> {
 
     match node {
       Program::Statements(statements) => {
-        Ok(self.evaluate_statements(statements)?.unwrap())
+        match self.evaluate_statements(statements)? {
+          Completion::Return(value) | Completion::Value(value) => Ok(value),
+          Completion::Break | Completion::Continue => Ok(Value::Null),
+        }
       }
     }
   }
@@ -128,32 +132,33 @@ impl<'a> Evaluator<'a> {
           self.evaluate_expression(rhs)?,
         );
 
-        match (&lhs_val, &rhs_val) {
+        match (lhs_val, rhs_val) {
           (Value::Number(a), Value::Number(b)) => {
-            Ok(Value::Number(a.add(b, self.environment.config)))
+            Ok(Value::Number(a.add(&b, self.environment.config)))
           }
-          (Value::String(a), Value::String(b)) => Ok(Value::String(
-            Cow::Owned(format!("{}{}", a.as_ref(), b.as_ref())),
-          )),
-          (Value::String(a), _) => Ok(Value::String(Cow::Owned(format!(
-            "{}{}",
-            a.as_ref(),
-            rhs_val.display(self.environment.config)
-          )))),
-          (_, Value::String(b)) => Ok(Value::String(Cow::Owned(format!(
-            "{}{}",
-            lhs_val.display(self.environment.config),
-            b.as_ref()
-          )))),
-          (Value::List(a), Value::List(b)) => {
-            let mut result = a.clone();
-            result.extend(b.clone());
-            Ok(Value::List(result))
+          (Value::String(a), Value::String(b)) => {
+            let mut result = a.into_owned();
+            result.push_str(&b);
+            Ok(Value::String(Cow::Owned(result)))
           }
-          _ => Ok(Value::Number(
-            lhs_val
+          (Value::String(a), rhs) => {
+            let mut result = a.into_owned();
+            result.push_str(&rhs.display(self.environment.config));
+            Ok(Value::String(Cow::Owned(result)))
+          }
+          (lhs, Value::String(b)) => {
+            let mut result = lhs.display(self.environment.config);
+            result.push_str(&b);
+            Ok(Value::String(Cow::Owned(result)))
+          }
+          (Value::List(mut a), Value::List(b)) => {
+            a.extend(b);
+            Ok(Value::List(a))
+          }
+          (lhs_value, rhs_value) => Ok(Value::Number(
+            lhs_value
               .number(lhs.1)?
-              .add(&rhs_val.number(rhs.1)?, self.environment.config),
+              .add(rhs_value.number(rhs.1)?, self.environment.config),
           )),
         }
       }
@@ -167,7 +172,7 @@ impl<'a> Evaluator<'a> {
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
         lhs_num
-          .div(&rhs_num, self.environment.config)
+          .div(rhs_num, self.environment.config)
           .map(Value::Number)
           .map_err(|error| Error::new(rhs.1, error.to_string()))
       }
@@ -239,13 +244,13 @@ impl<'a> Evaluator<'a> {
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
         lhs_num
-          .rem(&rhs_num, self.environment.config)
+          .rem(rhs_num, self.environment.config)
           .map(Value::Number)
           .map_err(|error| Error::new(rhs.1, error.to_string()))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
-          &self.evaluate_expression(rhs)?.number(rhs.1)?,
+          self.evaluate_expression(rhs)?.number(rhs.1)?,
           self.environment.config,
         ),
       )),
@@ -262,13 +267,13 @@ impl<'a> Evaluator<'a> {
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
         lhs_num
-          .pow(&rhs_num, self.environment.config)
+          .pow(rhs_num, self.environment.config)
           .map(Value::Number)
           .map_err(|error| Error::new(rhs.1, error.to_string()))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
-          &self.evaluate_expression(rhs)?.number(rhs.1)?,
+          self.evaluate_expression(rhs)?.number(rhs.1)?,
           self.environment.config,
         ),
       )),
@@ -418,13 +423,18 @@ impl<'a> Evaluator<'a> {
             for statement in body {
               let completion = evaluator.evaluate_statement(statement)?;
 
-              result = completion.unwrap();
-
               match completion {
-                Completion::Break => return Ok(Completion::Value(result)),
-                Completion::Continue => break,
-                Completion::Return(_) => return Ok(Completion::Return(result)),
-                Completion::Value(_) => {}
+                Completion::Break => {
+                  return Ok(Completion::Value(Value::Null));
+                }
+                Completion::Continue => {
+                  result = Value::Null;
+                  break;
+                }
+                Completion::Return(value) => {
+                  return Ok(Completion::Return(value));
+                }
+                Completion::Value(value) => result = value,
               }
             }
           }
@@ -459,12 +469,14 @@ impl<'a> Evaluator<'a> {
           for statement in body {
             let completion = evaluator.evaluate_statement(statement)?;
 
-            let result = completion.unwrap();
-
             match completion {
-              Completion::Break => return Ok(Completion::Value(result)),
+              Completion::Break => {
+                return Ok(Completion::Value(Value::Null));
+              }
               Completion::Continue => break,
-              Completion::Return(_) => return Ok(Completion::Return(result)),
+              Completion::Return(value) => {
+                return Ok(Completion::Return(value));
+              }
               Completion::Value(_) => {}
             }
           }
@@ -491,13 +503,18 @@ impl<'a> Evaluator<'a> {
             for statement in body {
               let completion = evaluator.evaluate_statement(statement)?;
 
-              result = completion.unwrap();
-
               match completion {
-                Completion::Break => return Ok(Completion::Value(result)),
-                Completion::Continue => break,
-                Completion::Return(_) => return Ok(Completion::Return(result)),
-                Completion::Value(_) => {}
+                Completion::Break => {
+                  return Ok(Completion::Value(Value::Null));
+                }
+                Completion::Continue => {
+                  result = Value::Null;
+                  break;
+                }
+                Completion::Return(value) => {
+                  return Ok(Completion::Return(value));
+                }
+                Completion::Value(value) => result = value,
               }
             }
           }
@@ -517,13 +534,13 @@ impl<'a> Evaluator<'a> {
     for statement in statements {
       let completion = self.evaluate_statement(statement)?;
 
-      result = completion.unwrap();
-
-      if matches!(
-        &completion,
-        Completion::Return(_) | Completion::Break | Completion::Continue
-      ) {
-        return Ok(completion);
+      match completion {
+        Completion::Return(value) => {
+          return Ok(Completion::Return(value));
+        }
+        Completion::Break => return Ok(Completion::Break),
+        Completion::Continue => return Ok(Completion::Continue),
+        Completion::Value(value) => result = value,
       }
     }
 

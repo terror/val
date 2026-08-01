@@ -8,43 +8,62 @@ pub struct Environment<'src> {
 
 impl<'src> Environment<'src> {
   pub fn add_function(&self, name: &str, function: Function<'src>) {
-    self
-      .frame
-      .borrow_mut()
-      .symbols
-      .entry(name.to_owned())
-      .or_default()
-      .function = Some(function);
+    let mut frame = self.frame.borrow_mut();
+
+    if let Some(symbol) = frame.symbols.get_mut(name) {
+      symbol.function = Some(function);
+    } else {
+      frame.symbols.insert(
+        name.to_owned(),
+        Symbol {
+          function: Some(function),
+          value: None,
+        },
+      );
+    }
   }
 
   pub fn add_symbol(&self, name: &str, value: Value<'src>) {
-    self
-      .frame
-      .borrow_mut()
-      .symbols
-      .entry(name.to_owned())
-      .or_default()
-      .value = Some(value);
+    let mut frame = self.frame.borrow_mut();
+
+    if let Some(symbol) = frame.symbols.get_mut(name) {
+      symbol.value = Some(value);
+    } else {
+      frame.symbols.insert(
+        name.to_owned(),
+        Symbol {
+          function: None,
+          value: Some(value),
+        },
+      );
+    }
   }
 
-  fn assign_existing_symbol(&self, name: &str, value: Value<'src>) -> bool {
+  fn assign_existing_symbol(
+    &self,
+    name: &str,
+    value: Value<'src>,
+  ) -> std::result::Result<(), Value<'src>> {
     let parent = {
       let mut frame = self.frame.borrow_mut();
 
       match frame.symbols.get_mut(name) {
         Some(symbol) if symbol.value.is_some() => {
           symbol.value = Some(value);
-          return true;
+          return Ok(());
         }
         _ => frame.parent.clone(),
       }
     };
 
-    parent.is_some_and(|parent| parent.assign_existing_symbol(name, value))
+    match parent {
+      Some(parent) => parent.assign_existing_symbol(name, value),
+      None => Err(value),
+    }
   }
 
   pub(crate) fn assign_symbol(&self, name: &str, value: Value<'src>) {
-    if !self.assign_existing_symbol(name, value.clone()) {
+    if let Err(value) = self.assign_existing_symbol(name, value) {
       self.add_symbol(name, value);
     }
   }

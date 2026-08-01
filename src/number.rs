@@ -273,12 +273,12 @@ impl Number {
   pub fn sqrt(&self, config: Config) -> Self {
     match self {
       Self::Exact(number) => {
-        let (numerator, denominator) = number.clone().into_numer_denom();
-
-        if numerator.is_perfect_square() && denominator.is_perfect_square() {
+        if number.numer().is_perfect_square()
+          && number.denom().is_perfect_square()
+        {
           return Self::Exact(Rational::from((
-            numerator.sqrt(),
-            denominator.sqrt(),
+            number.numer().clone().sqrt(),
+            number.denom().clone().sqrt(),
           )));
         }
 
@@ -373,12 +373,26 @@ impl Number {
 
   #[must_use]
   pub fn to_non_negative_usize(&self) -> Option<usize> {
-    let number = self.to_integer()?;
+    match self {
+      Self::Exact(number) if number.is_integer() => {
+        let number = number.numer();
 
-    if number.is_negative() {
-      None
-    } else {
-      number.to_usize()
+        if number.is_negative() {
+          None
+        } else {
+          number.to_usize()
+        }
+      }
+      Self::Exact(_) => None,
+      Self::Approx(_) => {
+        let number = self.to_integer()?;
+
+        if number.is_negative() {
+          None
+        } else {
+          number.to_usize()
+        }
+      }
     }
   }
 }
