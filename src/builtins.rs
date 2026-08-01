@@ -228,7 +228,7 @@ fn abs<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 fn acos<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument < Number::from(-1_i64) || argument > Number::from(1_i64) {
+  if argument < &Number::from(-1_i64) || argument > &Number::from(1_i64) {
     return Err(Error::new(
       payload.span,
       "acos argument must be between -1 and 1",
@@ -268,7 +268,7 @@ fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 
   let reciprocal = Number::from(1_i64)
-    .div(&argument, payload.config)
+    .div(argument, payload.config)
     .map_err(|error| Error::new(payload.span, error.to_string()))?;
 
   Ok(Value::Number(reciprocal.asin(payload.config)))
@@ -277,7 +277,7 @@ fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 fn append<'a>(
   payload: &BuiltinFunctionPayload<'a>,
 ) -> Result<Value<'a>, Error> {
-  let mut list = payload.arguments[0].list(payload.span)?;
+  let mut list = payload.arguments[0].list(payload.span)?.to_vec();
 
   list.push(payload.arguments[1].clone());
 
@@ -303,7 +303,7 @@ fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   }
 
   let reciprocal = Number::from(1_i64)
-    .div(&argument, payload.config)
+    .div(argument, payload.config)
     .map_err(|error| Error::new(payload.span, error.to_string()))?;
 
   Ok(Value::Number(reciprocal.acos(payload.config)))
@@ -312,7 +312,7 @@ fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 fn asin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let argument = payload.arguments[0].number(payload.span)?;
 
-  if argument < Number::from(-1_i64) || argument > Number::from(1_i64) {
+  if argument < &Number::from(-1_i64) || argument > &Number::from(1_i64) {
     return Err(Error::new(
       payload.span,
       "asin argument must be between -1 and 1",
@@ -827,7 +827,7 @@ fn sum<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   let mut sum = Number::from(0_i64);
 
   for value in list {
-    sum = sum.add(&value.number(payload.span)?, payload.config);
+    sum = sum.add(value.number(payload.span)?, payload.config);
   }
 
   Ok(Value::Number(sum))

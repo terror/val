@@ -54,9 +54,9 @@ impl<'a> Value<'a> {
     }
   }
 
-  pub(crate) fn list(&self, span: Span) -> Result<Vec<Value<'a>>, Error> {
+  pub(crate) fn list(&self, span: Span) -> Result<&[Value<'a>], Error> {
     if let Value::List(x) = self {
-      Ok(x.clone())
+      Ok(x)
     } else {
       Err(Error {
         span,
@@ -65,9 +65,9 @@ impl<'a> Value<'a> {
     }
   }
 
-  pub(crate) fn number(&self, span: Span) -> Result<Number, Error> {
+  pub(crate) fn number(&self, span: Span) -> Result<&Number, Error> {
     if let Value::Number(x) = self {
-      Ok(x.clone())
+      Ok(x)
     } else {
       Err(Error {
         span,
