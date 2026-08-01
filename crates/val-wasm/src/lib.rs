@@ -44,8 +44,8 @@ pub fn parse(input: &str) -> Result<JsValue, JsValue> {
           .into_iter()
           .map(|error| ValError {
             kind: ErrorKind::Parser,
-            message: error.message,
-            range: converter.convert(Range::from(error.span)),
+            message: error.to_string(),
+            range: converter.convert(Range::from(error.span())),
           })
           .collect::<Vec<ValError>>(),
       )
@@ -71,8 +71,8 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
         Err(error) => Err(
           to_value(&[ValError {
             kind: ErrorKind::Evaluator,
-            message: error.message,
-            range: converter.convert(Range::from(error.span)),
+            message: error.to_string(),
+            range: converter.convert(Range::from(error.span())),
           }])
           .unwrap(),
         ),
@@ -84,8 +84,8 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
           .into_iter()
           .map(|error| ValError {
             kind: ErrorKind::Parser,
-            message: error.message,
-            range: converter.convert(Range::from(error.span)),
+            message: error.to_string(),
+            range: converter.convert(Range::from(error.span())),
           })
           .collect::<Vec<ValError>>(),
       )

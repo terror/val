@@ -49,6 +49,7 @@ chumsky = { version = "0.13.0", features = ["pratt"] }
 clap = { version = "4.5.60", features = ["derive"] }
 gmp-mpfr-sys = { version = "~1.7", default-features = false, optional = true }
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+thiserror = "2.0.19"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 dirs = "6.0.0"

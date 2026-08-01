@@ -1,8 +1,5 @@
 use super::*;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ParseDecimalError;
-
 #[derive(Clone, Debug)]
 pub enum Number {
   Approx(Float),
@@ -120,14 +117,14 @@ impl Number {
 
   /// # Errors
   ///
-  /// Returns [`ArithmeticError::DivisionByZero`] if `rhs` is zero.
+  /// Returns [`Error::DivisionByZero`] if `rhs` is zero.
   pub fn div(
     &self,
     rhs: &Self,
     config: Config,
-  ) -> std::result::Result<Self, ArithmeticError> {
+  ) -> std::result::Result<Self, Error> {
     if rhs.is_zero() {
-      Err(ArithmeticError::DivisionByZero)
+      Err(Error::DivisionByZero)
     } else if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
       Ok(Self::Exact((lhs / rhs).complete()))
     } else {
@@ -219,15 +216,15 @@ impl Number {
 
   /// # Errors
   ///
-  /// Returns [`ArithmeticError::ZeroToNegativePower`] if `self` is zero and
+  /// Returns [`Error::ZeroToNegativePower`] if `self` is zero and
   /// `rhs` is negative.
   pub fn pow(
     &self,
     rhs: &Self,
     config: Config,
-  ) -> std::result::Result<Self, ArithmeticError> {
+  ) -> std::result::Result<Self, Error> {
     if self.is_zero() && rhs.is_negative() {
-      return Err(ArithmeticError::ZeroToNegativePower);
+      return Err(Error::ZeroToNegativePower);
     }
 
     match (self, rhs) {
@@ -246,14 +243,14 @@ impl Number {
 
   /// # Errors
   ///
-  /// Returns [`ArithmeticError::ModuloByZero`] if `rhs` is zero.
+  /// Returns [`Error::ModuloByZero`] if `rhs` is zero.
   pub fn rem(
     &self,
     rhs: &Self,
     config: Config,
-  ) -> std::result::Result<Self, ArithmeticError> {
+  ) -> std::result::Result<Self, Error> {
     if rhs.is_zero() {
-      return Err(ArithmeticError::ModuloByZero);
+      return Err(Error::ModuloByZero);
     }
 
     Ok(self.sub(&self.div(rhs, config)?.floor().mul(rhs, config), config))
@@ -445,7 +442,7 @@ impl PartialOrd for Number {
 }
 
 impl TryFrom<&str> for Number {
-  type Error = ParseDecimalError;
+  type Error = Error;
 
   fn try_from(s: &str) -> std::result::Result<Self, Self::Error> {
     let s = s.trim();
@@ -459,14 +456,14 @@ impl TryFrom<&str> for Number {
     let (integer, fraction) = s.split_once('.').unwrap_or((s, ""));
 
     if integer.is_empty() && fraction.is_empty() {
-      return Err(ParseDecimalError);
+      return Err(Error::InvalidDecimal);
     }
 
     let mut numerator = Integer::from(0);
 
     for b in integer.bytes().chain(fraction.bytes()) {
       if !b.is_ascii_digit() {
-        return Err(ParseDecimalError);
+        return Err(Error::InvalidDecimal);
       }
 
       numerator *= 10;
@@ -478,7 +475,7 @@ impl TryFrom<&str> for Number {
     }
 
     let exponent =
-      u32::try_from(fraction.len()).map_err(|_| ParseDecimalError)?;
+      u32::try_from(fraction.len()).map_err(|_| Error::InvalidDecimal)?;
 
     Ok(Self::Exact(Rational::from((
       numerator,
@@ -564,6 +561,13 @@ mod tests {
   }
 
   #[test]
+  fn invalid_decimal_returns_error() {
+    for value in [".", "foo"] {
+      assert_eq!(Number::try_from(value), Err(Error::InvalidDecimal));
+    }
+  }
+
+  #[test]
   fn list_indexes_integer() {
     assert_eq!(
       Number::try_from("1").unwrap().to_non_negative_usize(),
@@ -607,17 +611,17 @@ mod tests {
 
     assert_eq!(
       Number::from(1_i64).div(&zero, Config::default()),
-      Err(ArithmeticError::DivisionByZero)
+      Err(Error::DivisionByZero)
     );
 
     assert_eq!(
       Number::from(1_i64).rem(&zero, Config::default()),
-      Err(ArithmeticError::ModuloByZero)
+      Err(Error::ModuloByZero)
     );
 
     assert_eq!(
       zero.pow(&Number::from(-1_i64), Config::default()),
-      Err(ArithmeticError::ZeroToNegativePower)
+      Err(Error::ZeroToNegativePower)
     );
   }
 

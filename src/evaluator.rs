@@ -174,7 +174,7 @@ impl<'a> Evaluator<'a> {
         lhs_num
           .div(rhs_num, self.environment.config)
           .map(Value::Number)
-          .map_err(|error| Error::new(rhs.1, error.to_string()))
+          .map_err(|error| error.with_span(rhs.1))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.evaluate_expression(lhs)? == self.evaluate_expression(rhs)?,
@@ -246,7 +246,7 @@ impl<'a> Evaluator<'a> {
         lhs_num
           .rem(rhs_num, self.environment.config)
           .map(Value::Number)
-          .map_err(|error| Error::new(rhs.1, error.to_string()))
+          .map_err(|error| error.with_span(rhs.1))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
@@ -269,7 +269,7 @@ impl<'a> Evaluator<'a> {
         lhs_num
           .pow(rhs_num, self.environment.config)
           .map(Value::Number)
-          .map_err(|error| Error::new(rhs.1, error.to_string()))
+          .map_err(|error| error.with_span(rhs.1))
       }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
