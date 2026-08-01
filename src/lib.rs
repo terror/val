@@ -9,6 +9,7 @@ use {
   rug::{
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
+    integer::MiniInteger,
     ops::Pow,
   },
   std::{
