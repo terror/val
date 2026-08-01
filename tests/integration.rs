@@ -981,7 +981,7 @@ fn division_by_zero() -> Result {
   Test::new()?
     .program("println(5 / 0)")
     .expected_status(1)
-    .expected_stderr(Contains("Division by zero"))
+    .expected_stderr(Contains("division by zero"))
     .run()
 }
 
@@ -2477,7 +2477,7 @@ fn modulo_by_zero() -> Result {
   Test::new()?
     .program("println(5 % 0)")
     .expected_status(1)
-    .expected_stderr(Contains("Modulo by zero"))
+    .expected_stderr(Contains("modulo by zero"))
     .run()
 }
 
@@ -2955,7 +2955,7 @@ fn power() -> Result {
   Test::new()?
     .program("println(0 ^ -1)")
     .expected_status(1)
-    .expected_stderr(Contains("Zero cannot be raised to a negative power"))
+    .expected_stderr(Contains("zero cannot be raised to a negative power"))
     .run()
 }
 

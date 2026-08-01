@@ -269,7 +269,7 @@ fn acsc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let reciprocal = Number::from(1_i64)
     .div(argument, payload.config)
-    .map_err(|error| Error::new(payload.span, error.to_string()))?;
+    .map_err(|error| error.with_span(payload.span))?;
 
   Ok(Value::Number(reciprocal.asin(payload.config)))
 }
@@ -304,7 +304,7 @@ fn asec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 
   let reciprocal = Number::from(1_i64)
     .div(argument, payload.config)
-    .map_err(|error| Error::new(payload.span, error.to_string()))?;
+    .map_err(|error| error.with_span(payload.span))?;
 
   Ok(Value::Number(reciprocal.acos(payload.config)))
 }
@@ -403,7 +403,7 @@ fn cot<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Number::from(1_i64)
     .div(&tan, payload.config)
     .map(Value::Number)
-    .map_err(|error| Error::new(payload.span, error.to_string()))
+    .map_err(|error| error.with_span(payload.span))
 }
 
 fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -421,7 +421,7 @@ fn csc<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Number::from(1_i64)
     .div(&sin, payload.config)
     .map(Value::Number)
-    .map_err(|error| Error::new(payload.span, error.to_string()))
+    .map_err(|error| error.with_span(payload.span))
 }
 
 fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -775,7 +775,7 @@ fn sec<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
   Number::from(1_i64)
     .div(&cos, payload.config)
     .map(Value::Number)
-    .map_err(|error| Error::new(payload.span, error.to_string()))
+    .map_err(|error| error.with_span(payload.span))
 }
 
 fn sin<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {

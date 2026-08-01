@@ -15,10 +15,7 @@ impl<'a> Value<'a> {
     if let Value::Boolean(x) = self {
       Ok(*x)
     } else {
-      Err(Error {
-        span,
-        message: format!("'{self}' is not a boolean"),
-      })
+      Err(Error::new(span, format!("'{self}' is not a boolean")))
     }
   }
 
@@ -47,10 +44,7 @@ impl<'a> Value<'a> {
   pub(crate) fn into_list(self, span: Span) -> Result<Vec<Value<'a>>, Error> {
     match self {
       Value::List(x) => Ok(x),
-      value => Err(Error {
-        span,
-        message: format!("'{value}' is not a list"),
-      }),
+      value => Err(Error::new(span, format!("'{value}' is not a list"))),
     }
   }
 
@@ -58,10 +52,7 @@ impl<'a> Value<'a> {
     if let Value::List(x) = self {
       Ok(x)
     } else {
-      Err(Error {
-        span,
-        message: format!("'{self}' is not a list"),
-      })
+      Err(Error::new(span, format!("'{self}' is not a list")))
     }
   }
 
@@ -69,10 +60,7 @@ impl<'a> Value<'a> {
     if let Value::Number(x) = self {
       Ok(x)
     } else {
-      Err(Error {
-        span,
-        message: format!("'{self}' is not a number"),
-      })
+      Err(Error::new(span, format!("'{self}' is not a number")))
     }
   }
 
@@ -80,10 +68,7 @@ impl<'a> Value<'a> {
     if let Value::String(x) = self {
       Ok(x.as_ref())
     } else {
-      Err(Error {
-        span,
-        message: format!("'{self}' is not a string"),
-      })
+      Err(Error::new(span, format!("'{self}' is not a string")))
     }
   }
 
