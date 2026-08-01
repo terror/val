@@ -64,10 +64,15 @@ impl Decimal {
   pub(crate) fn from_rational(number: &Rational) -> Option<Self> {
     let mut denominator = number.denom().clone();
 
-    let (twos, fives) = (
-      Self::remove_factor(&mut denominator, 2),
-      Self::remove_factor(&mut denominator, 5),
-    );
+    let twos = usize::try_from(
+      denominator.remove_factor_mut(&MiniInteger::from(2).borrow()),
+    )
+    .unwrap();
+
+    let fives = usize::try_from(
+      denominator.remove_factor_mut(&MiniInteger::from(5).borrow()),
+    )
+    .unwrap();
 
     if denominator != 1 {
       return None;
@@ -108,17 +113,6 @@ impl Decimal {
       negative,
       point,
     }
-  }
-
-  fn remove_factor(number: &mut Integer, factor: u32) -> usize {
-    let mut count = 0;
-
-    while number.is_divisible_u(factor) {
-      *number /= factor;
-      count += 1;
-    }
-
-    count
   }
 
   fn scientific_string(&self, exponent: i64) -> String {
