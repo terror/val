@@ -268,10 +268,19 @@ impl Number {
 
     match (self, rhs) {
       (Self::Exact(lhs), Self::Exact(exponent)) => {
-        if exponent.is_integer()
-          && let Some(exponent) = exponent.numer().to_i32()
-        {
-          return Ok(Self::Exact(lhs.clone().pow(exponent)));
+        if exponent.is_integer() {
+          if let Some(exponent) = exponent.numer().to_i32() {
+            return Ok(Self::Exact(lhs.clone().pow(exponent)));
+          }
+
+          return Ok(Self::Approx(
+            Float::with_val_round(
+              config.precision(),
+              self.to_float(config).pow(exponent.numer()),
+              config.rounding_mode,
+            )
+            .0,
+          ));
         }
 
         Ok(self.approx_pow(rhs, config))
@@ -841,6 +850,19 @@ mod tests {
 
     case(Round::Down, true);
     case(Round::Up, false);
+  }
+
+  #[test]
+  fn power_preserves_large_exact_exponent() {
+    let config = Config {
+      precision: 2,
+      ..Config::default()
+    };
+
+    assert_eq!(
+      Number::from(-1_i64).pow(&Number::from(2_147_483_649_i64), config),
+      Ok(Number::Approx(Float::with_val(2, -1)))
+    );
   }
 
   #[test]
