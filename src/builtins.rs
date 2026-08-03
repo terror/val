@@ -433,28 +433,33 @@ fn e<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
 }
 
 fn exit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.is_empty() {
-    process::exit(0);
-  }
+  let code = if payload.arguments.is_empty() {
+    0
+  } else {
+    let Some(code) = payload.arguments[0]
+      .number(payload.span)?
+      .to_non_negative_usize()
+    else {
+      return Err(Error::new(
+        payload.span,
+        "Argument to `exit` must be a non-negative finite number",
+      ));
+    };
 
-  let Some(code) = payload.arguments[0]
-    .number(payload.span)?
-    .to_non_negative_usize()
-  else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `exit` must be a non-negative finite number",
-    ));
+    let Ok(code) = i32::try_from(code) else {
+      return Err(Error::new(
+        payload.span,
+        "Argument to `exit` must fit in a 32-bit signed integer",
+      ));
+    };
+
+    code
   };
 
-  let Ok(code) = i32::try_from(code) else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `exit` must fit in a 32-bit signed integer",
-    ));
-  };
-
-  process::exit(code);
+  Err(Error::Exit {
+    code,
+    span: payload.span,
+  })
 }
 
 fn float<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
@@ -692,28 +697,33 @@ fn println<'a>(
 }
 
 fn quit<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {
-  if payload.arguments.is_empty() {
-    process::exit(0);
-  }
+  let code = if payload.arguments.is_empty() {
+    0
+  } else {
+    let Some(code) = payload.arguments[0]
+      .number(payload.span)?
+      .to_non_negative_usize()
+    else {
+      return Err(Error::new(
+        payload.span,
+        "Argument to `quit` must be a non-negative finite number",
+      ));
+    };
 
-  let Some(code) = payload.arguments[0]
-    .number(payload.span)?
-    .to_non_negative_usize()
-  else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `quit` must be a non-negative finite number",
-    ));
+    let Ok(code) = i32::try_from(code) else {
+      return Err(Error::new(
+        payload.span,
+        "Argument to `quit` must fit in a 32-bit signed integer",
+      ));
+    };
+
+    code
   };
 
-  let Ok(code) = i32::try_from(code) else {
-    return Err(Error::new(
-      payload.span,
-      "Argument to `quit` must fit in a 32-bit signed integer",
-    ));
-  };
-
-  process::exit(code);
+  Err(Error::Exit {
+    code,
+    span: payload.span,
+  })
 }
 
 fn range<'a>(payload: &BuiltinFunctionPayload<'a>) -> Result<Value<'a>, Error> {

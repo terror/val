@@ -106,16 +106,22 @@ impl<'a> Evaluator<'a> {
   pub fn evaluate(
     &mut self,
     ast: &Spanned<Program>,
-  ) -> Result<Value<'a>, Error> {
+  ) -> Result<Evaluation<'a>, Error> {
     let (node, _) = ast;
 
-    match node {
-      Program::Statements(statements) => {
-        match self.evaluate_statements(statements)? {
-          Completion::Return(value) | Completion::Value(value) => Ok(value),
-          Completion::Break | Completion::Continue => Ok(Value::Null),
-        }
-      }
+    let result = match node {
+      Program::Statements(statements) => self
+        .evaluate_statements(statements)
+        .map(|completion| match completion {
+          Completion::Return(value) | Completion::Value(value) => value,
+          Completion::Break | Completion::Continue => Value::Null,
+        }),
+    };
+
+    match result {
+      Ok(value) => Ok(Evaluation::Value(value)),
+      Err(Error::Exit { code, span }) => Ok(Evaluation::Exit { code, span }),
+      Err(error) => Err(error),
     }
   }
 
@@ -554,5 +560,33 @@ impl<'a> From<Environment<'a>> for Evaluator<'a> {
       environment,
       context: Context::default(),
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn exit_is_evaluation_outcome() {
+    #[track_caller]
+    fn case(source: &str, expected: i32) {
+      let ast = parse(source).unwrap();
+
+      let mut evaluator = Evaluator::from(Environment::new(Config::default()));
+
+      let Evaluation::Exit { code, .. } = evaluator.evaluate(&ast).unwrap()
+      else {
+        panic!("expected exit outcome");
+      };
+
+      assert_eq!(code, expected);
+    }
+
+    case("exit()", 0);
+    case("exit(42)", 42);
+    case("fn foo() { exit(1) }\nfoo()", 1);
+    case("quit()", 0);
+    case("quit(1)", 1);
   }
 }
