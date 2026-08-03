@@ -22,17 +22,27 @@ impl Number {
 
   #[must_use]
   pub fn add(&self, rhs: &Self, config: Config) -> Self {
-    if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
-      Self::Exact((lhs + rhs).complete())
-    } else {
-      Self::Approx(
+    match (self, rhs) {
+      (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
         Float::with_val_round(
           config.precision(),
-          &self.to_float(config) + &rhs.to_float(config),
+          lhs + rhs,
           config.rounding_mode,
         )
         .0,
-      )
+      ),
+      (Self::Approx(lhs), Self::Exact(rhs))
+      | (Self::Exact(rhs), Self::Approx(lhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs + rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Exact(lhs), Self::Exact(rhs)) => {
+        Self::Exact((lhs + rhs).complete())
+      }
     }
   }
 
@@ -125,17 +135,36 @@ impl Number {
   ) -> std::result::Result<Self, Error> {
     if rhs.is_zero() {
       Err(Error::DivisionByZero)
-    } else if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
-      Ok(Self::Exact((lhs / rhs).complete()))
     } else {
-      Ok(Self::Approx(
-        Float::with_val_round(
-          config.precision(),
-          &self.to_float(config) / &rhs.to_float(config),
-          config.rounding_mode,
-        )
-        .0,
-      ))
+      Ok(match (self, rhs) {
+        (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            lhs / rhs,
+            config.rounding_mode,
+          )
+          .0,
+        ),
+        (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            lhs / rhs,
+            config.rounding_mode,
+          )
+          .0,
+        ),
+        (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            lhs / rhs,
+            config.rounding_mode,
+          )
+          .0,
+        ),
+        (Self::Exact(lhs), Self::Exact(rhs)) => {
+          Self::Exact((lhs / rhs).complete())
+        }
+      })
     }
   }
 
@@ -192,17 +221,27 @@ impl Number {
 
   #[must_use]
   pub fn mul(&self, rhs: &Self, config: Config) -> Self {
-    if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
-      Self::Exact((lhs * rhs).complete())
-    } else {
-      Self::Approx(
+    match (self, rhs) {
+      (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
         Float::with_val_round(
           config.precision(),
-          &self.to_float(config) * &rhs.to_float(config),
+          lhs * rhs,
           config.rounding_mode,
         )
         .0,
-      )
+      ),
+      (Self::Approx(lhs), Self::Exact(rhs))
+      | (Self::Exact(rhs), Self::Approx(lhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs * rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Exact(lhs), Self::Exact(rhs)) => {
+        Self::Exact((lhs * rhs).complete())
+      }
     }
   }
 
@@ -373,17 +412,34 @@ impl Number {
 
   #[must_use]
   pub fn sub(&self, rhs: &Self, config: Config) -> Self {
-    if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs) {
-      Self::Exact((lhs - rhs).complete())
-    } else {
-      Self::Approx(
+    match (self, rhs) {
+      (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
         Float::with_val_round(
           config.precision(),
-          &self.to_float(config) - &rhs.to_float(config),
+          lhs - rhs,
           config.rounding_mode,
         )
         .0,
-      )
+      ),
+      (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs - rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+        -Float::with_val_round(
+          config.precision(),
+          rhs - lhs,
+          config.rounding_mode.reverse(),
+        )
+        .0,
+      ),
+      (Self::Exact(lhs), Self::Exact(rhs)) => {
+        Self::Exact((lhs - rhs).complete())
+      }
     }
   }
 
@@ -729,6 +785,62 @@ mod tests {
 
     assert!(approx < greater);
     assert!(greater > approx);
+  }
+
+  #[test]
+  fn mixed_exact_approx_operations_round_once() {
+    #[track_caller]
+    fn case(actual: &Number, expected: f64) {
+      let expected = Number::Approx(Float::with_val(2, expected));
+      assert_eq!(actual, &expected);
+    }
+
+    let config = Config {
+      precision: 2,
+      ..Config::default()
+    };
+
+    let approx = |value| Number::Approx(Float::with_val(2, value));
+
+    let exact = |numerator, denominator| {
+      Number::Exact(Rational::from((numerator, denominator)))
+    };
+
+    case(&approx(1.0).add(&exact(13, 50), config), 1.5);
+    case(&exact(13, 50).add(&approx(1.0), config), 1.5);
+
+    case(&approx(1.0).sub(&exact(9, 25), config), 0.75);
+    case(&exact(9, 25).sub(&approx(1.0), config), -0.75);
+
+    case(&approx(1.5).mul(&exact(21, 50), config), 0.75);
+    case(&exact(21, 50).mul(&approx(1.5), config), 0.75);
+
+    case(&approx(1.0).div(&exact(13, 8), config).unwrap(), 0.5);
+    case(&exact(9, 10).div(&approx(1.5), config).unwrap(), 0.5);
+  }
+
+  #[test]
+  fn mixed_exact_approx_subtraction_signed_zero() {
+    #[track_caller]
+    fn case(rounding_mode: Round, negative: bool) {
+      let config = Config {
+        precision: 2,
+        rounding_mode,
+        ..Config::default()
+      };
+
+      let Number::Approx(result) =
+        Number::from(1_i64).sub(&Number::Approx(Float::with_val(2, 1)), config)
+      else {
+        panic!("expected approximate number");
+      };
+
+      assert!(result.is_zero());
+      assert_eq!(result.is_sign_negative(), negative);
+    }
+
+    case(Round::Down, true);
+    case(Round::Up, false);
   }
 
   #[test]
