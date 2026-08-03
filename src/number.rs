@@ -31,15 +31,8 @@ impl Number {
         )
         .0,
       ),
-      (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
-        Float::with_val_round(
-          config.precision(),
-          lhs + rhs,
-          config.rounding_mode,
-        )
-        .0,
-      ),
-      (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+      (Self::Approx(lhs), Self::Exact(rhs))
+      | (Self::Exact(rhs), Self::Approx(lhs)) => Self::Approx(
         Float::with_val_round(
           config.precision(),
           lhs + rhs,
@@ -237,15 +230,8 @@ impl Number {
         )
         .0,
       ),
-      (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
-        Float::with_val_round(
-          config.precision(),
-          lhs * rhs,
-          config.rounding_mode,
-        )
-        .0,
-      ),
-      (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+      (Self::Approx(lhs), Self::Exact(rhs))
+      | (Self::Exact(rhs), Self::Approx(lhs)) => Self::Approx(
         Float::with_val_round(
           config.precision(),
           lhs * rhs,
@@ -444,10 +430,10 @@ impl Number {
         .0,
       ),
       (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
-        Float::with_val_round(
+        -Float::with_val_round(
           config.precision(),
-          lhs - rhs,
-          config.rounding_mode,
+          rhs - lhs,
+          config.rounding_mode.reverse(),
         )
         .0,
       ),
@@ -831,6 +817,30 @@ mod tests {
 
     case(&approx(1.0).div(&exact(13, 8), config).unwrap(), 0.5);
     case(&exact(9, 10).div(&approx(1.5), config).unwrap(), 0.5);
+  }
+
+  #[test]
+  fn mixed_exact_approx_subtraction_signed_zero() {
+    #[track_caller]
+    fn case(rounding_mode: Round, negative: bool) {
+      let config = Config {
+        precision: 2,
+        rounding_mode,
+        ..Config::default()
+      };
+
+      let Number::Approx(result) =
+        Number::from(1_i64).sub(&Number::Approx(Float::with_val(2, 1)), config)
+      else {
+        panic!("expected approximate number");
+      };
+
+      assert!(result.is_zero());
+      assert_eq!(result.is_sign_negative(), negative);
+    }
+
+    case(Round::Down, true);
+    case(Round::Up, false);
   }
 
   #[test]
