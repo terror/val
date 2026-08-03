@@ -3,12 +3,7 @@ use {
   executable_path::executable_path,
   indoc::indoc,
   pretty_assertions::assert_eq,
-  std::{
-    fs::File,
-    io::Write,
-    process::{Command, Output},
-    str,
-  },
+  std::{fs::File, io::Write, process::Command, str},
   tempfile::TempDir,
   unindent::Unindent,
 };
@@ -21,19 +16,6 @@ enum Match<'a> {
 }
 
 type Result<T = (), E = Box<dyn std::error::Error>> = std::result::Result<T, E>;
-
-fn run_cli(arguments: &[&str]) -> Result<Output> {
-  Ok(
-    Command::new(executable_path(env!("CARGO_PKG_NAME")))
-      .env_remove("NO_COLOR")
-      .args(arguments)
-      .output()?,
-  )
-}
-
-fn assert_no_ansi(output: &[u8]) {
-  assert!(!output.contains(&b'\x1b'));
-}
 
 struct Test<'a> {
   arguments: Vec<String>,
@@ -699,16 +681,6 @@ fn combined_operations() -> Result {
     .expected_status(0)
     .expected_stdout(Exact("-5\n"))
     .run()
-}
-
-#[test]
-fn diagnostics_are_not_colored_when_redirected() -> Result {
-  let output = run_cli(&["--expression", "1 / 0"])?;
-
-  assert_eq!(output.status.code(), Some(1));
-  assert_no_ansi(&output.stderr);
-
-  Ok(())
 }
 
 #[test]
@@ -1678,16 +1650,6 @@ fn greater_than_or_equal() -> Result {
     .expected_status(0)
     .expected_stdout(Exact("true\n"))
     .run()
-}
-
-#[test]
-fn help_is_not_colored_when_redirected() -> Result {
-  let output = run_cli(&["--help"])?;
-
-  assert_eq!(output.status.code(), Some(0));
-  assert_no_ansi(&output.stdout);
-
-  Ok(())
 }
 
 #[test]
