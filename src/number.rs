@@ -689,6 +689,7 @@ mod tests {
     };
 
     let approx = |value| Number::Approx(Float::with_val(2, value));
+
     let exact = |numerator, denominator| {
       Number::Exact(Rational::from((numerator, denominator)))
     };
