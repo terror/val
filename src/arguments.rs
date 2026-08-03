@@ -17,13 +17,6 @@ use super::*;
 )]
 pub(crate) struct Arguments {
   #[clap(
-    long,
-    value_enum,
-    default_value = "auto",
-    help = "When to use color in output"
-  )]
-  color: ColorChoice,
-  #[clap(
     short,
     long,
     value_parser = clap::value_parser!(NonZeroUsize),
@@ -86,10 +79,7 @@ impl Arguments {
         Ok(_) => Ok(()),
         Err(error) => {
           error
-            .report_with_color(
-              &filename,
-              color_enabled(self.color, io::stderr().is_terminal()),
-            )
+            .report(&filename)
             .eprint((filename.as_str(), Source::from(content)))?;
 
           process::exit(1);
@@ -98,10 +88,7 @@ impl Arguments {
       Err(errors) => {
         for error in errors {
           error
-            .report_with_color(
-              &filename,
-              color_enabled(self.color, io::stderr().is_terminal()),
-            )
+            .report(&filename)
             .eprint((filename.as_str(), Source::from(&content)))?;
         }
 
@@ -127,10 +114,7 @@ impl Arguments {
         }
         Err(error) => {
           error
-            .report_with_color(
-              "<expression>",
-              color_enabled(self.color, io::stderr().is_terminal()),
-            )
+            .report("<expression>")
             .eprint(("<expression>", Source::from(value)))?;
 
           process::exit(1);
@@ -139,10 +123,7 @@ impl Arguments {
       Err(errors) => {
         for error in errors {
           error
-            .report_with_color(
-              "<expression>",
-              color_enabled(self.color, io::stderr().is_terminal()),
-            )
+            .report("<expression>")
             .eprint(("<expression>", Source::from(&value)))?;
         }
 
@@ -155,11 +136,11 @@ impl Arguments {
   fn read(&self) -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
-    let color = color_enabled(self.color, io::stdout().is_terminal());
-    let color_mode = match self.color {
-      ColorChoice::Always => ColorMode::Forced,
-      ColorChoice::Auto if color => ColorMode::Enabled,
-      ColorChoice::Auto | ColorChoice::Never => ColorMode::Disabled,
+    let color = color_enabled(io::stdout().is_terminal());
+    let color_mode = if color {
+      ColorMode::Enabled
+    } else {
+      ColorMode::Disabled
     };
 
     let editor_config = Builder::new()
@@ -190,10 +171,7 @@ impl Arguments {
             Ok(_) => {}
             Err(error) => {
               error
-                .report_with_color(
-                  &filename,
-                  color_enabled(self.color, io::stderr().is_terminal()),
-                )
+                .report(&filename)
                 .eprint((filename.as_str(), Source::from(content)))?;
 
               process::exit(1);
@@ -202,10 +180,7 @@ impl Arguments {
           Err(errors) => {
             for error in errors {
               error
-                .report_with_color(
-                  &filename,
-                  color_enabled(self.color, io::stderr().is_terminal()),
-                )
+                .report(&filename)
                 .eprint((filename.as_str(), Source::from(&content)))?;
             }
 
@@ -228,19 +203,13 @@ impl Arguments {
           }
           Ok(_) => {}
           Err(error) => error
-            .report_with_color(
-              "<input>",
-              color_enabled(self.color, io::stderr().is_terminal()),
-            )
+            .report("<input>")
             .eprint(("<input>", Source::from(&line)))?,
         },
         Err(errors) => {
           for error in errors {
             error
-              .report_with_color(
-                "<input>",
-                color_enabled(self.color, io::stderr().is_terminal()),
-              )
+              .report("<input>")
               .eprint(("<input>", Source::from(&line)))?;
           }
         }
@@ -291,19 +260,6 @@ mod tests {
       ])
       .is_err()
     );
-  }
-
-  #[test]
-  fn color() {
-    #[track_caller]
-    fn case(arguments: Vec<&str>, expected: ColorChoice) {
-      assert_eq!(Arguments::parse_from(arguments).color, expected);
-    }
-
-    case(vec!["program"], ColorChoice::Auto);
-    case(vec!["program", "--color", "auto"], ColorChoice::Auto);
-    case(vec!["program", "--color", "always"], ColorChoice::Always);
-    case(vec!["program", "--color", "never"], ColorChoice::Never);
   }
 
   #[test]

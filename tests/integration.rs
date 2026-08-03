@@ -702,25 +702,13 @@ fn combined_operations() -> Result {
 }
 
 #[test]
-fn color_modes() -> Result {
-  #[track_caller]
-  fn case(arguments: &[&str], colored: bool) -> Result {
-    let output = run_cli(arguments)?;
+fn diagnostics_are_not_colored_when_redirected() -> Result {
+  let output = run_cli(&["--expression", "1 / 0"])?;
 
-    assert_eq!(output.status.code(), Some(1));
+  assert_eq!(output.status.code(), Some(1));
+  assert_no_ansi(&output.stderr);
 
-    if colored {
-      assert!(output.stderr.contains(&b'\x1b'));
-    } else {
-      assert_no_ansi(&output.stderr);
-    }
-
-    Ok(())
-  }
-
-  case(&["--expression", "1 / 0"], false)?;
-  case(&["--color", "never", "--expression", "1 / 0"], false)?;
-  case(&["--color", "always", "--expression", "1 / 0"], true)
+  Ok(())
 }
 
 #[test]
@@ -1693,25 +1681,13 @@ fn greater_than_or_equal() -> Result {
 }
 
 #[test]
-fn help_color_modes() -> Result {
-  #[track_caller]
-  fn case(arguments: &[&str], colored: bool) -> Result {
-    let output = run_cli(arguments)?;
+fn help_is_not_colored_when_redirected() -> Result {
+  let output = run_cli(&["--help"])?;
 
-    assert_eq!(output.status.code(), Some(0));
+  assert_eq!(output.status.code(), Some(0));
+  assert_no_ansi(&output.stdout);
 
-    if colored {
-      assert!(output.stdout.contains(&b'\x1b'));
-    } else {
-      assert_no_ansi(&output.stdout);
-    }
-
-    Ok(())
-  }
-
-  case(&["--help"], false)?;
-  case(&["--color", "never", "--help"], false)?;
-  case(&["--color", "always", "--help"], true)
+  Ok(())
 }
 
 #[test]

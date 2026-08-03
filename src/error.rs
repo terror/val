@@ -25,16 +25,7 @@ impl Error {
   pub fn report<'a>(&self, id: &'a str) -> Report<'a, (&'a str, Range<usize>)> {
     let no_color =
       env::var_os("NO_COLOR").is_some_and(|value| !value.is_empty());
-
-    self.report_with_color(id, io::stderr().is_terminal() && !no_color)
-  }
-
-  #[must_use]
-  pub fn report_with_color<'a>(
-    &self,
-    id: &'a str,
-    color: bool,
-  ) -> Report<'a, (&'a str, Range<usize>)> {
+    let color = io::stderr().is_terminal() && !no_color;
     let span_range = self.span().into_range();
 
     let mut report = Report::build(
