@@ -9,7 +9,7 @@ use {
   serde_wasm_bindgen::to_value,
   std::num::NonZeroUsize,
   val::{
-    Environment, Evaluator, RoundingMode, Span,
+    Environment, Evaluation, Evaluator, RoundingMode, Span,
     ast::{AssignmentTarget, Expression, Program, Statement},
   },
   wasm_bindgen::prelude::*,
@@ -67,7 +67,17 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
       }));
 
       match evaluator.evaluate(&ast) {
-        Ok(value) => Ok(to_value(&value.to_string()).unwrap()),
+        Ok(Evaluation::Exit { code, span }) => Err(
+          to_value(&[ValError {
+            kind: ErrorKind::Exit,
+            message: format!("exit requested with code {code}"),
+            range: converter.convert(Range::from(span)),
+          }])
+          .unwrap(),
+        ),
+        Ok(Evaluation::Value(value)) => {
+          Ok(to_value(&value.to_string()).unwrap())
+        }
         Err(error) => Err(
           to_value(&[ValError {
             kind: ErrorKind::Evaluator,

@@ -4,6 +4,8 @@ use super::*;
 pub enum Error {
   #[error("division by zero")]
   DivisionByZero,
+  #[error("exit requested with code {code}")]
+  Exit { code: i32, span: Span },
   #[error("invalid decimal")]
   InvalidDecimal,
   #[error("{0}")]
@@ -44,7 +46,7 @@ impl Error {
   #[must_use]
   pub fn span(&self) -> Span {
     match self {
-      Self::Spanned { span, .. } => *span,
+      Self::Exit { span, .. } | Self::Spanned { span, .. } => *span,
       _ => Span::from(0..0),
     }
   }
@@ -52,6 +54,7 @@ impl Error {
   #[must_use]
   pub fn with_span(self, span: Span) -> Self {
     match self {
+      Self::Exit { code, .. } => Self::Exit { code, span },
       Self::Spanned { error, .. } => Self::Spanned { error, span },
       error => Self::Spanned {
         error: Box::new(error),

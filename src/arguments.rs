@@ -76,7 +76,8 @@ impl Arguments {
 
     match parse(&content) {
       Ok(ast) => match evaluator.evaluate(&ast) {
-        Ok(_) => Ok(()),
+        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+        Ok(Evaluation::Value(_)) => Ok(()),
         Err(error) => {
           error
             .report(&filename)
@@ -103,7 +104,8 @@ impl Arguments {
 
     match parse(&value) {
       Ok(ast) => match evaluator.evaluate(&ast) {
-        Ok(value) => {
+        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+        Ok(Evaluation::Value(value)) => {
           if let Value::Null = value {
             return Ok(());
           }
@@ -161,7 +163,8 @@ impl Arguments {
 
         match parse(&content) {
           Ok(ast) => match evaluator.evaluate(&ast) {
-            Ok(_) => {}
+            Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+            Ok(Evaluation::Value(_)) => {}
             Err(error) => {
               error
                 .report(&filename)
@@ -191,10 +194,11 @@ impl Arguments {
 
       match parse(&line) {
         Ok(ast) => match evaluator.evaluate(&ast) {
-          Ok(value) if !matches!(value, Value::Null) => {
+          Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+          Ok(Evaluation::Value(value)) if !matches!(value, Value::Null) => {
             println!("{}", value.display(Into::<Config>::into(self)));
           }
-          Ok(_) => {}
+          Ok(Evaluation::Value(_)) => {}
           Err(error) => error
             .report("<input>")
             .eprint(("<input>", Source::from(&line)))?,

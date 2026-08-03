@@ -20,7 +20,6 @@ use {
     fmt::{self, Display, Formatter},
     num::NonZeroUsize,
     ops::Range,
-    process,
     rc::Rc,
     str::FromStr,
   },
@@ -31,9 +30,9 @@ pub use crate::{
   builtin::Builtin, builtin_arity::BuiltinArity,
   builtin_function::BuiltinFunction,
   builtin_function_payload::BuiltinFunctionPayload, completion::Completion,
-  config::Config, environment::Environment, error::Error, evaluator::Evaluator,
-  function::Function, number::Number, parser::parse,
-  rounding_mode::RoundingMode, value::Value,
+  config::Config, environment::Environment, error::Error,
+  evaluation::Evaluation, evaluator::Evaluator, function::Function,
+  number::Number, parser::parse, rounding_mode::RoundingMode, value::Value,
 };
 
 pub type Span = SimpleSpan<usize>;
@@ -53,6 +52,7 @@ mod context;
 mod decimal;
 mod environment;
 mod error;
+mod evaluation;
 mod evaluator;
 mod frame;
 mod function;

@@ -29,7 +29,7 @@ use {
     str::FromStr,
     thread,
   },
-  val::{Config, Environment, Evaluator, Value, parse},
+  val::{Config, Environment, Evaluation, Evaluator, Value, parse},
 };
 
 mod arguments;

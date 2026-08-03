@@ -3,6 +3,7 @@ use super::*;
 #[derive(Clone, Debug, Serialize)]
 pub enum ErrorKind {
   Evaluator,
+  Exit,
   Parser,
 }
 
