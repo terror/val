@@ -3,6 +3,7 @@ use super::*;
 const COLOR_RESET: &str = "\x1b[0m";
 
 pub(crate) struct Highlighter<'src> {
+  color: bool,
   content: &'src str,
 }
 
@@ -85,6 +86,10 @@ impl<'src> Highlighter<'src> {
   }
 
   pub(crate) fn highlight(&self) -> Cow<'src, str> {
+    if !self.color {
+      return Cow::Borrowed(self.content);
+    }
+
     match parse(self.content) {
       Ok(_) => {
         let spans = self.collect_highlight_spans();
@@ -114,8 +119,8 @@ impl<'src> Highlighter<'src> {
     }
   }
 
-  pub(crate) fn new(content: &'src str) -> Self {
-    Self { content }
+  pub(crate) fn new(content: &'src str, color: bool) -> Self {
+    Self { color, content }
   }
 
   fn next_non_padding_char(&self, start: usize) -> Option<char> {
@@ -282,7 +287,7 @@ mod tests {
 
   #[test]
   fn assignment_operator_is_not_index_comparison() {
-    let highlighter = Highlighter::new("foo[bar == baz] = 1");
+    let highlighter = Highlighter::new("foo[bar == baz] = 1", true);
 
     assert_eq!(
       highlighter.collect_highlight_spans(),
@@ -300,8 +305,15 @@ mod tests {
   }
 
   #[test]
+  fn color_can_be_disabled() {
+    let highlighter = Highlighter::new("foo", false);
+
+    assert_eq!(highlighter.highlight(), "foo");
+  }
+
+  #[test]
   fn comments() {
-    let highlighter = Highlighter::new("x = 1 // foo\n// bar");
+    let highlighter = Highlighter::new("x = 1 // foo\n// bar", true);
 
     assert_eq!(
       highlighter.collect_highlight_spans(),
@@ -317,7 +329,7 @@ mod tests {
 
   #[test]
   fn function_and_identifier_spans_are_direct() {
-    let highlighter = Highlighter::new("fn foo(foo) { foo(foo, 1) }");
+    let highlighter = Highlighter::new("fn foo(foo) { foo(foo, 1) }", true);
 
     assert_eq!(
       highlighter.collect_highlight_spans(),
@@ -341,7 +353,7 @@ mod tests {
 
   #[test]
   fn string_contents_are_not_highlighted_as_tokens() {
-    let highlighter = Highlighter::new("\"if\" + 'else'");
+    let highlighter = Highlighter::new("\"if\" + 'else'", true);
 
     assert_eq!(
       highlighter.collect_highlight_spans(),

@@ -75,6 +75,7 @@ Arguments:
   [FILENAME]  File to evaluate
 
 Options:
+      --color <COLOR>                  When to use color in output [default: auto]
   -d, --digits <DIGITS>                Decimal digits to display for approximate numbers [default: 16]
   -e, --expression <EXPRESSION>        Expression to evaluate
   -l, --load <LOAD>                    Load files before entering the REPL
@@ -84,6 +85,10 @@ Options:
   -h, --help                           Print help
   -V, --version                        Print version
 ```
+
+Color output defaults to `auto`, which enables it for terminal output only. The
+`NO_COLOR` environment variable disables automatic color; use `--color always`
+or `--color never` to override the default.
 
 Running **val** on its own will spawn a repl (read–eval–print loop) environment,
 where you can evaluate arbitrary **val** code and see its output immediately. We

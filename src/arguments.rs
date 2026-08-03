@@ -10,12 +10,19 @@ use super::*;
 
 {about}
 
-\x1b[1;4mUsage\x1b[0m: {usage}
+{usage-heading}: {usage}
 
 {all-args}{after-help}
 "
 )]
 pub(crate) struct Arguments {
+  #[clap(
+    long,
+    value_enum,
+    default_value = "auto",
+    help = "When to use color in output"
+  )]
+  color: ColorChoice,
   #[clap(
     short,
     long,
@@ -79,7 +86,10 @@ impl Arguments {
         Ok(_) => Ok(()),
         Err(error) => {
           error
-            .report(&filename)
+            .report_with_color(
+              &filename,
+              color_enabled(self.color, io::stderr().is_terminal()),
+            )
             .eprint((filename.as_str(), Source::from(content)))?;
 
           process::exit(1);
@@ -88,7 +98,10 @@ impl Arguments {
       Err(errors) => {
         for error in errors {
           error
-            .report(&filename)
+            .report_with_color(
+              &filename,
+              color_enabled(self.color, io::stderr().is_terminal()),
+            )
             .eprint((filename.as_str(), Source::from(&content)))?;
         }
 
@@ -114,7 +127,10 @@ impl Arguments {
         }
         Err(error) => {
           error
-            .report("<expression>")
+            .report_with_color(
+              "<expression>",
+              color_enabled(self.color, io::stderr().is_terminal()),
+            )
             .eprint(("<expression>", Source::from(value)))?;
 
           process::exit(1);
@@ -123,7 +139,10 @@ impl Arguments {
       Err(errors) => {
         for error in errors {
           error
-            .report("<expression>")
+            .report_with_color(
+              "<expression>",
+              color_enabled(self.color, io::stderr().is_terminal()),
+            )
             .eprint(("<expression>", Source::from(&value)))?;
         }
 
@@ -136,8 +155,15 @@ impl Arguments {
   fn read(&self) -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
+    let color = color_enabled(self.color, io::stdout().is_terminal());
+    let color_mode = match self.color {
+      ColorChoice::Always => ColorMode::Forced,
+      ColorChoice::Auto if color => ColorMode::Enabled,
+      ColorChoice::Auto | ColorChoice::Never => ColorMode::Disabled,
+    };
+
     let editor_config = Builder::new()
-      .color_mode(ColorMode::Enabled)
+      .color_mode(color_mode)
       .edit_mode(EditMode::Emacs)
       .history_ignore_space(true)
       .completion_type(CompletionType::Circular)
@@ -147,7 +173,7 @@ impl Arguments {
     let mut editor =
       Editor::<Prompt, DefaultHistory>::with_config(editor_config)?;
 
-    editor.set_helper(Some(Prompt::new()));
+    editor.set_helper(Some(Prompt::new(color)));
     editor.load_history(&history).ok();
 
     let mut evaluator =
@@ -164,7 +190,10 @@ impl Arguments {
             Ok(_) => {}
             Err(error) => {
               error
-                .report(&filename)
+                .report_with_color(
+                  &filename,
+                  color_enabled(self.color, io::stderr().is_terminal()),
+                )
                 .eprint((filename.as_str(), Source::from(content)))?;
 
               process::exit(1);
@@ -173,7 +202,10 @@ impl Arguments {
           Err(errors) => {
             for error in errors {
               error
-                .report(&filename)
+                .report_with_color(
+                  &filename,
+                  color_enabled(self.color, io::stderr().is_terminal()),
+                )
                 .eprint((filename.as_str(), Source::from(&content)))?;
             }
 
@@ -196,13 +228,19 @@ impl Arguments {
           }
           Ok(_) => {}
           Err(error) => error
-            .report("<input>")
+            .report_with_color(
+              "<input>",
+              color_enabled(self.color, io::stderr().is_terminal()),
+            )
             .eprint(("<input>", Source::from(&line)))?,
         },
         Err(errors) => {
           for error in errors {
             error
-              .report("<input>")
+              .report_with_color(
+                "<input>",
+                color_enabled(self.color, io::stderr().is_terminal()),
+              )
               .eprint(("<input>", Source::from(&line)))?;
           }
         }
@@ -253,6 +291,19 @@ mod tests {
       ])
       .is_err()
     );
+  }
+
+  #[test]
+  fn color() {
+    #[track_caller]
+    fn case(arguments: Vec<&str>, expected: ColorChoice) {
+      assert_eq!(Arguments::parse_from(arguments).color, expected);
+    }
+
+    case(vec!["program"], ColorChoice::Auto);
+    case(vec!["program", "--color", "auto"], ColorChoice::Auto);
+    case(vec!["program", "--color", "always"], ColorChoice::Always);
+    case(vec!["program", "--color", "never"], ColorChoice::Never);
   }
 
   #[test]
