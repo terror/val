@@ -253,33 +253,10 @@ impl Number {
       return Err(Error::ModuloByZero);
     }
 
-    let exact =
-      |lhs: &Rational, rhs: &Rational| (lhs / rhs).complete().rem_floor() * rhs;
-
-    let approximate = || {
-      Self::Approx(
-        Float::with_val_round(
-          config.precision(),
-          &self.to_float(config) % &rhs.to_float(config),
-          config.rounding_mode,
-        )
-        .0,
-      )
-    };
-
-    let rounded = |remainder: Rational| {
-      Self::Approx(
-        Float::with_val_round(
-          config.precision(),
-          remainder,
-          config.rounding_mode,
-        )
-        .0,
-      )
-    };
-
     match (self, rhs) {
-      (Self::Exact(lhs), Self::Exact(rhs)) => Ok(Self::Exact(exact(lhs, rhs))),
+      (Self::Exact(lhs), Self::Exact(rhs)) => {
+        Ok(Self::Exact((lhs / rhs).complete().rem_floor() * rhs))
+      }
       (Self::Approx(lhs), Self::Approx(rhs))
         if lhs.is_finite() && rhs.is_finite() =>
       {
@@ -306,21 +283,62 @@ impl Number {
 
         Ok(Self::Approx(remainder))
       }
-      (Self::Exact(lhs), Self::Approx(rhs)) if rhs.is_finite() => {
+      (Self::Exact(lhs), rhs_number @ Self::Approx(rhs)) if rhs.is_finite() => {
         if let Some(rhs) = rhs.to_rational() {
-          Ok(rounded(exact(lhs, &rhs)))
+          let remainder = (lhs / &rhs).complete().rem_floor() * &rhs;
+
+          Ok(Self::Approx(
+            Float::with_val_round(
+              config.precision(),
+              remainder,
+              config.rounding_mode,
+            )
+            .0,
+          ))
         } else {
-          Ok(approximate())
+          Ok(Self::Approx(
+            Float::with_val_round(
+              config.precision(),
+              &self.to_float(config) % &rhs_number.to_float(config),
+              config.rounding_mode,
+            )
+            .0,
+          ))
         }
       }
-      (Self::Approx(lhs), Self::Exact(rhs)) if lhs.is_finite() => {
+      (lhs_number @ Self::Approx(lhs), rhs_number @ Self::Exact(rhs))
+        if lhs.is_finite() =>
+      {
         if let Some(lhs) = lhs.to_rational() {
-          Ok(rounded(exact(&lhs, rhs)))
+          let remainder = (&lhs / rhs).complete().rem_floor() * rhs;
+
+          Ok(Self::Approx(
+            Float::with_val_round(
+              config.precision(),
+              remainder,
+              config.rounding_mode,
+            )
+            .0,
+          ))
         } else {
-          Ok(approximate())
+          Ok(Self::Approx(
+            Float::with_val_round(
+              config.precision(),
+              &lhs_number.to_float(config) % &rhs_number.to_float(config),
+              config.rounding_mode,
+            )
+            .0,
+          ))
         }
       }
-      _ => Ok(approximate()),
+      _ => Ok(Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          &self.to_float(config) % &rhs.to_float(config),
+          config.rounding_mode,
+        )
+        .0,
+      )),
     }
   }
 
