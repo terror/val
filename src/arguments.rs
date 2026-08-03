@@ -10,7 +10,7 @@ use super::*;
 
 {about}
 
-\x1b[1;4mUsage\x1b[0m: {usage}
+{usage-heading}: {usage}
 
 {all-args}{after-help}
 "

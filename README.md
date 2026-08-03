@@ -85,6 +85,9 @@ Options:
   -V, --version                        Print version
 ```
 
+Color output is enabled for terminal output only. Set the `NO_COLOR` environment
+variable to a non-empty value to disable it.
+
 Running **val** on its own will spawn a repl (read–eval–print loop) environment,
 where you can evaluate arbitrary **val** code and see its output immediately. We
 use [rustyline](https://github.com/kkawakam/rustyline) for its implementation,
