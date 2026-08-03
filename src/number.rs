@@ -253,7 +253,75 @@ impl Number {
       return Err(Error::ModuloByZero);
     }
 
-    Ok(self.sub(&self.div(rhs, config)?.floor().mul(rhs, config), config))
+    let exact =
+      |lhs: &Rational, rhs: &Rational| (lhs / rhs).complete().rem_floor() * rhs;
+
+    let approximate = || {
+      Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          &self.to_float(config) % &rhs.to_float(config),
+          config.rounding_mode,
+        )
+        .0,
+      )
+    };
+
+    let rounded = |remainder: Rational| {
+      Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          remainder,
+          config.rounding_mode,
+        )
+        .0,
+      )
+    };
+
+    match (self, rhs) {
+      (Self::Exact(lhs), Self::Exact(rhs)) => Ok(Self::Exact(exact(lhs, rhs))),
+      (Self::Approx(lhs), Self::Approx(rhs))
+        if lhs.is_finite() && rhs.is_finite() =>
+      {
+        let precision = lhs.prec().max(rhs.prec());
+        let remainder = Float::with_val(precision, lhs % rhs);
+
+        let remainder = if !remainder.is_zero()
+          && remainder.is_sign_negative() != rhs.is_sign_negative()
+        {
+          Float::with_val_round(
+            config.precision(),
+            &remainder + rhs,
+            config.rounding_mode,
+          )
+          .0
+        } else {
+          Float::with_val_round(
+            config.precision(),
+            remainder,
+            config.rounding_mode,
+          )
+          .0
+        };
+
+        Ok(Self::Approx(remainder))
+      }
+      (Self::Exact(lhs), Self::Approx(rhs)) if rhs.is_finite() => {
+        if let Some(rhs) = rhs.to_rational() {
+          Ok(rounded(exact(lhs, &rhs)))
+        } else {
+          Ok(approximate())
+        }
+      }
+      (Self::Approx(lhs), Self::Exact(rhs)) if lhs.is_finite() => {
+        if let Some(lhs) = lhs.to_rational() {
+          Ok(rounded(exact(&lhs, rhs)))
+        } else {
+          Ok(approximate())
+        }
+      }
+      _ => Ok(approximate()),
+    }
   }
 
   #[must_use]
@@ -489,16 +557,56 @@ mod tests {
   use {super::*, pretty_assertions::assert_eq, rug::float::Special};
 
   #[test]
-  fn display_approx_configured_digits() {
-    let number = Number::from(2_i64)
-      .to_approx(Config::default())
-      .div(&Number::from(5_555_222_222_222_i64), Config::default())
-      .unwrap();
+  fn approx_remainder_preserves_operand_values() {
+    #[track_caller]
+    fn case(lhs: &Number, rhs: &Number, expected: i32) {
+      let config = Config {
+        precision: 4,
+        ..Config::default()
+      };
 
+      assert_eq!(
+        lhs.rem(rhs, config),
+        Ok(Number::Approx(Float::with_val(4, expected)))
+      );
+    }
+
+    case(
+      &Number::Exact(Rational::from((31, 32))),
+      &Number::Approx(Float::with_val(4, 1)),
+      1,
+    );
+
+    case(
+      &Number::Approx(Float::with_val(5, 31)),
+      &Number::from(32_i64),
+      32,
+    );
+
+    case(
+      &Number::Approx(Float::with_val(5, 31)),
+      &Number::Approx(Float::with_val(5, 32)),
+      32,
+    );
+
+    case(
+      &Number::Approx(Float::with_val(4, -5)),
+      &Number::Approx(Float::with_val(4, 3)),
+      1,
+    );
+  }
+
+  #[test]
+  fn display_approx_configured_digits() {
     let config = Config {
       digits: NonZeroUsize::new(4).unwrap(),
       ..Config::default()
     };
+
+    let number = Number::from(2_i64)
+      .to_approx(Config::default())
+      .div(&Number::from(5_555_222_222_222_i64), Config::default())
+      .unwrap();
 
     assert_eq!(number.display(config), "3.6e-13");
   }
