@@ -2460,6 +2460,13 @@ fn mixed_type_comparisons() -> Result {
 #[test]
 fn modulo() -> Result {
   Test::new()?
+    .argument("--precision=4")
+    .program("println((31 / 32) % float(1))")
+    .expected_status(0)
+    .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
     .program("println(7 % 4)")
     .expected_status(0)
     .expected_stdout(Exact("3\n"))
