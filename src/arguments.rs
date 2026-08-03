@@ -136,15 +136,8 @@ impl Arguments {
   fn read(&self) -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
-    let color = color_enabled(io::stdout().is_terminal());
-    let color_mode = if color {
-      ColorMode::Enabled
-    } else {
-      ColorMode::Disabled
-    };
-
     let editor_config = Builder::new()
-      .color_mode(color_mode)
+      .color_mode(ColorMode::Enabled)
       .edit_mode(EditMode::Emacs)
       .history_ignore_space(true)
       .completion_type(CompletionType::Circular)
@@ -154,7 +147,7 @@ impl Arguments {
     let mut editor =
       Editor::<Prompt, DefaultHistory>::with_config(editor_config)?;
 
-    editor.set_helper(Some(Prompt::new(color)));
+    editor.set_helper(Some(Prompt::new()));
     editor.load_history(&history).ok();
 
     let mut evaluator =

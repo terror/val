@@ -21,10 +21,8 @@ use {
   std::{
     backtrace::BacktraceStatus,
     borrow::{Cow, Cow::Owned},
-    env,
     fmt::{self, Display, Formatter},
     fs,
-    io::{self, IsTerminal},
     num::{NonZeroU32, NonZeroUsize},
     path::PathBuf,
     process,
@@ -87,29 +85,5 @@ fn main() {
     }
 
     process::exit(1);
-  }
-}
-
-fn color_enabled(terminal: bool) -> bool {
-  color_enabled_with_no_color(terminal, no_color())
-}
-
-fn color_enabled_with_no_color(terminal: bool, no_color: bool) -> bool {
-  terminal && !no_color
-}
-
-fn no_color() -> bool {
-  env::var_os("NO_COLOR").is_some_and(|value| !value.is_empty())
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn no_color() {
-    assert!(color_enabled_with_no_color(true, false));
-    assert!(!color_enabled_with_no_color(false, false));
-    assert!(!color_enabled_with_no_color(true, true));
   }
 }

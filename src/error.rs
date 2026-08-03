@@ -23,34 +23,20 @@ impl Error {
 
   #[must_use]
   pub fn report<'a>(&self, id: &'a str) -> Report<'a, (&'a str, Range<usize>)> {
-    let no_color =
-      env::var_os("NO_COLOR").is_some_and(|value| !value.is_empty());
-    let color = io::stderr().is_terminal() && !no_color;
     let span_range = self.span().into_range();
 
     let mut report = Report::build(
-      if color {
-        ReportKind::Custom("error", Color::Red)
-      } else {
-        ReportKind::Error
-      },
+      ReportKind::Custom("error", Color::Red),
       (id, span_range.clone()),
     )
-    .with_config(
-      ariadne::Config::new()
-        .with_color(color)
-        .with_index_type(IndexType::Byte),
-    )
+    .with_config(ariadne::Config::new().with_index_type(IndexType::Byte))
     .with_message(self.to_string());
 
-    let label = Label::new((id, span_range)).with_message(self.to_string());
-    let label = if color {
-      label.with_color(Color::Red)
-    } else {
-      label
-    };
-
-    report = report.with_label(label);
+    report = report.with_label(
+      Label::new((id, span_range))
+        .with_message(self.to_string())
+        .with_color(Color::Red),
+    );
 
     report.finish()
   }

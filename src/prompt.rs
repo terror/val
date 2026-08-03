@@ -1,15 +1,13 @@
 use super::*;
 
 pub(crate) struct Prompt {
-  color: bool,
   completer: FilenameCompleter,
   hinter: HistoryHinter,
 }
 
 impl Prompt {
-  pub(crate) fn new(color: bool) -> Self {
+  pub(crate) fn new() -> Self {
     Self {
-      color,
       completer: FilenameCompleter::new(),
       hinter: HistoryHinter::new(),
     }
@@ -41,7 +39,7 @@ impl Hinter for Prompt {
 
 impl RustylineHighlighter for Prompt {
   fn highlight<'l>(&self, line: &'l str, _pos: usize) -> Cow<'l, str> {
-    Highlighter::new(line, self.color).highlight()
+    Highlighter::new(line).highlight()
   }
 
   fn highlight_char(&self, _: &str, _: usize, _: CmdKind) -> bool {
@@ -49,11 +47,7 @@ impl RustylineHighlighter for Prompt {
   }
 
   fn highlight_hint<'h>(&self, hint: &'h str) -> Cow<'h, str> {
-    if self.color {
-      Owned(format!("\x1b[90m{hint}\x1b[0m"))
-    } else {
-      Cow::Borrowed(hint)
-    }
+    Owned(format!("\x1b[90m{hint}\x1b[0m"))
   }
 }
 
