@@ -23,15 +23,30 @@ impl Number {
   #[must_use]
   pub fn add(&self, rhs: &Self, config: Config) -> Self {
     match (self, rhs) {
-      (Self::Approx(lhs), Self::Approx(rhs)) => {
-        Self::rounded_approx(lhs + rhs, config)
-      }
-      (Self::Approx(lhs), Self::Exact(rhs)) => {
-        Self::rounded_approx(lhs + rhs, config)
-      }
-      (Self::Exact(lhs), Self::Approx(rhs)) => {
-        Self::rounded_approx(lhs + rhs, config)
-      }
+      (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs + rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs + rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs + rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
       (Self::Exact(lhs), Self::Exact(rhs)) => {
         Self::Exact((lhs + rhs).complete())
       }
@@ -129,15 +144,30 @@ impl Number {
       Err(Error::DivisionByZero)
     } else {
       Ok(match (self, rhs) {
-        (Self::Approx(lhs), Self::Approx(rhs)) => {
-          Self::rounded_approx(lhs / rhs, config)
-        }
-        (Self::Approx(lhs), Self::Exact(rhs)) => {
-          Self::rounded_approx(lhs / rhs, config)
-        }
-        (Self::Exact(lhs), Self::Approx(rhs)) => {
-          Self::rounded_approx(lhs / rhs, config)
-        }
+        (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            lhs / rhs,
+            config.rounding_mode,
+          )
+          .0,
+        ),
+        (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            lhs / rhs,
+            config.rounding_mode,
+          )
+          .0,
+        ),
+        (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            lhs / rhs,
+            config.rounding_mode,
+          )
+          .0,
+        ),
         (Self::Exact(lhs), Self::Exact(rhs)) => {
           Self::Exact((lhs / rhs).complete())
         }
@@ -199,15 +229,30 @@ impl Number {
   #[must_use]
   pub fn mul(&self, rhs: &Self, config: Config) -> Self {
     match (self, rhs) {
-      (Self::Approx(lhs), Self::Approx(rhs)) => {
-        Self::rounded_approx(lhs * rhs, config)
-      }
-      (Self::Approx(lhs), Self::Exact(rhs)) => {
-        Self::rounded_approx(lhs * rhs, config)
-      }
-      (Self::Exact(lhs), Self::Approx(rhs)) => {
-        Self::rounded_approx(lhs * rhs, config)
-      }
+      (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs * rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs * rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs * rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
       (Self::Exact(lhs), Self::Exact(rhs)) => {
         Self::Exact((lhs * rhs).complete())
       }
@@ -264,15 +309,6 @@ impl Number {
     Ok(self.sub(&self.div(rhs, config)?.floor().mul(rhs, config), config))
   }
 
-  fn rounded_approx<T>(value: T, config: Config) -> Self
-  where
-    Float: rug::ops::AssignRound<T, Round = Round, Ordering = Ordering>,
-  {
-    Self::Approx(
-      Float::with_val_round(config.precision(), value, config.rounding_mode).0,
-    )
-  }
-
   #[must_use]
   pub fn sin(&self, config: Config) -> Self {
     self.approx_unary(config, Float::sin_round)
@@ -305,15 +341,30 @@ impl Number {
   #[must_use]
   pub fn sub(&self, rhs: &Self, config: Config) -> Self {
     match (self, rhs) {
-      (Self::Approx(lhs), Self::Approx(rhs)) => {
-        Self::rounded_approx(lhs - rhs, config)
-      }
-      (Self::Approx(lhs), Self::Exact(rhs)) => {
-        Self::rounded_approx(lhs - rhs, config)
-      }
-      (Self::Exact(lhs), Self::Approx(rhs)) => {
-        Self::rounded_approx(lhs - rhs, config)
-      }
+      (Self::Approx(lhs), Self::Approx(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs - rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Approx(lhs), Self::Exact(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs - rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
+      (Self::Exact(lhs), Self::Approx(rhs)) => Self::Approx(
+        Float::with_val_round(
+          config.precision(),
+          lhs - rhs,
+          config.rounding_mode,
+        )
+        .0,
+      ),
       (Self::Exact(lhs), Self::Exact(rhs)) => {
         Self::Exact((lhs - rhs).complete())
       }
