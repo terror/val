@@ -69,14 +69,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Remove Broken WSL bash executable
-      if: ${{ matrix.os == 'windows-latest' }}
-      shell: cmd
-      run: |
-        takeown /F C:\Windows\System32\bash.exe
-        icacls C:\Windows\System32\bash.exe /grant administrators:F
-        del C:\Windows\System32\bash.exe
-
     - name: Install AArch64 Toolchain
       if: ${{ matrix.target == 'aarch64-unknown-linux-musl' }}
       run: |
