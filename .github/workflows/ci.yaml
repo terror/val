@@ -94,14 +94,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Remove Broken WSL bash executable
-      if: ${{ matrix.os == 'windows-latest' }}
-      shell: cmd
-      run: |
-        takeown /F C:\Windows\System32\bash.exe
-        icacls C:\Windows\System32\bash.exe /grant administrators:F
-        del C:\Windows\System32\bash.exe
-
     - uses: msys2/setup-msys2@v2
       if: ${{ matrix.os == 'windows-latest' }}
       with:
