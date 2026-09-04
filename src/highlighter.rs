@@ -225,6 +225,18 @@ impl<'src> Highlighter<'src> {
       }
     }
 
+    if matches!(bytes.get(end), Some(b'e' | b'E')) {
+      end += 1;
+
+      if matches!(bytes.get(end), Some(b'+' | b'-')) {
+        end += 1;
+      }
+
+      while end < bytes.len() && bytes[end].is_ascii_digit() {
+        end += 1;
+      }
+    }
+
     end
   }
 
@@ -337,6 +349,21 @@ mod tests {
         HighlightSpan::new(26, 27, HighlightKind::Operator),
       ]
     );
+  }
+
+  #[test]
+  fn scientific_notation() {
+    #[track_caller]
+    fn case(source: &str) {
+      assert_eq!(
+        Highlighter::new(source).collect_highlight_spans(),
+        [HighlightSpan::new(0, source.len(), HighlightKind::Number)]
+      );
+    }
+
+    case("1e-05");
+    case("1E+05");
+    case("1.5e2");
   }
 
   #[test]

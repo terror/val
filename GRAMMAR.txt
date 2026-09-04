@@ -8,7 +8,7 @@ tokens
 EOF          = emitted at the end of the input
 IDENTIFIER   = [_\p{XID_Start}]\p{XID_Continue}* # excluding reserved words
 LINE_COMMENT = //[^\n]*
-NUMBER       = (0|[1-9][0-9]*)(\.[0-9]+)?
+NUMBER       = (0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?
 STRING       = "[^"]*"|'[^']*'
 WHITESPACE   = Unicode whitespace
 ```
@@ -120,3 +120,6 @@ padding              : (WHITESPACE | LINE_COMMENT)*
 The reserved words excluded from `IDENTIFIER` are `break`, `continue`, `else`,
 `false`, `fn`, `for`, `if`, `in`, `loop`, `null`, `return`, `true`, and
 `while`.
+
+A `NUMBER` cannot be immediately followed by an identifier continuation
+character.

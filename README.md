@@ -220,6 +220,9 @@ calculations with `--rounding-mode` and `--precision`. `--precision` controls
 binary precision, measured in bits. Use `--digits` or `-d` to control how many
 decimal digits are displayed for approximate numbers.
 
+Number literals support scientific notation, such as `1e-05`, `1E+05`, and
+`1.25e2`, and are represented exactly.
+
 #### Boolean
 
 Boolean values represent truth values:

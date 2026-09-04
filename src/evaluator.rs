@@ -589,4 +589,33 @@ mod tests {
     case("quit()", 0);
     case("quit(1)", 1);
   }
+
+  #[test]
+  fn scientific_notation_round_trip() {
+    #[track_caller]
+    fn case(source: &str, expected: &str) {
+      let config = Config::default();
+
+      let mut evaluator = Evaluator::from(Environment::new(config));
+
+      let Evaluation::Value(value) =
+        evaluator.evaluate(&parse(source).unwrap()).unwrap()
+      else {
+        panic!("expected value");
+      };
+
+      let displayed = value.display(config);
+
+      assert_eq!(displayed, expected);
+
+      assert_eq!(
+        evaluator.evaluate(&parse(&displayed).unwrap()).unwrap(),
+        Evaluation::Value(value)
+      );
+    }
+
+    case("0.00001", "1e-05");
+    case("-0.0000123", "-1.23e-05");
+    case("10000000000000000.5", "1.00000000000000005e+16");
+  }
 }

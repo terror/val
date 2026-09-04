@@ -259,8 +259,18 @@ where
   recursive(|expression| {
     let number = text::int(10)
       .then(just('.').then(text::digits(10)).or_not())
+      .then(
+        one_of("eE")
+          .then(one_of("+-").or_not())
+          .then(text::digits(10))
+          .or_not(),
+      )
       .to_slice()
-      .map(|number| Number::try_from(number).unwrap())
+      .then_ignore(any().filter(text::Char::is_ident_continue).not())
+      .try_map(|number: &str, span| {
+        Number::try_from(number)
+          .map_err(|error| Rich::custom(span, error.to_string()))
+      })
       .map(Expression::Number)
       .map_with(|ast, error| (ast, error.span()));
 
@@ -575,6 +585,30 @@ mod tests {
   }
 
   #[test]
+  fn invalid_number_literals() {
+    #[track_caller]
+    fn case(program: &str) {
+      assert!(parse(program).is_err(), "{program}");
+    }
+
+    case("01");
+    case("1foo");
+    case("1e");
+    case("1E+");
+    case("1e-");
+    case("1e--2");
+    case("1e+-2");
+    case("1e+ 2");
+    case("1e.2");
+    case("1e2e3");
+    case("1e2foo");
+    case("1e4294967296");
+    case("1e-4294967296");
+    case("1e9223372036854775808");
+    case("1.0e-9223372036854775808");
+  }
+
+  #[test]
   fn invalid_operator() {
     Test::new()
       .program("2 +* 3")
@@ -639,7 +673,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![Error::new(
         SimpleSpan::from(6..6),
-        "found end of input expected any, '.', '(', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
+        "found end of input expected any, '.', 'e', 'E', '(', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
       )])
       .run();
   }
@@ -772,6 +806,22 @@ mod tests {
       .program("return")
       .ast("statements(return())")
       .run();
+  }
+
+  #[test]
+  fn scientific_notation() {
+    #[track_caller]
+    fn case(program: &str, number: &str) {
+      Test::new()
+        .program(program)
+        .ast(&format!("statements(expression(number({number})))"))
+        .run();
+    }
+
+    case("1e-05", "1e-05");
+    case("1E+05", "100000");
+    case("1.5e2", "150");
+    case("1e0", "1");
   }
 
   #[test]
