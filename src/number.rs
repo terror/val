@@ -604,6 +604,15 @@ impl TryFrom<&str> for Number {
       .or_else(|| s.strip_prefix('+').map(|s| (false, s)))
       .unwrap_or((false, s));
 
+    let (s, exponent) = if let Some((s, exponent)) = s.split_once(['e', 'E']) {
+      (
+        s,
+        exponent.parse::<i64>().map_err(|_| Error::InvalidDecimal)?,
+      )
+    } else {
+      (s, 0)
+    };
+
     let (integer, fraction) = s.split_once('.').unwrap_or((s, ""));
 
     if integer.is_empty() && fraction.is_empty() {
@@ -625,13 +634,22 @@ impl TryFrom<&str> for Number {
       numerator = -numerator;
     }
 
-    let exponent =
-      u32::try_from(fraction.len()).map_err(|_| Error::InvalidDecimal)?;
+    let exponent = exponent
+      .checked_sub(
+        i64::try_from(fraction.len()).map_err(|_| Error::InvalidDecimal)?,
+      )
+      .ok_or(Error::InvalidDecimal)?;
 
-    Ok(Self::Exact(Rational::from((
-      numerator,
-      Integer::from(10).pow(exponent),
-    ))))
+    let scale = Integer::from(10).pow(
+      u32::try_from(exponent.unsigned_abs())
+        .map_err(|_| Error::InvalidDecimal)?,
+    );
+
+    Ok(Self::Exact(if exponent.is_negative() {
+      Rational::from((numerator, scale))
+    } else {
+      Rational::from(numerator * scale)
+    }))
   }
 }
 
@@ -753,9 +771,26 @@ mod tests {
 
   #[test]
   fn invalid_decimal_returns_error() {
-    for value in [".", "foo"] {
+    #[track_caller]
+    fn case(value: &str) {
       assert_eq!(Number::try_from(value), Err(Error::InvalidDecimal));
     }
+
+    case(".");
+    case("foo");
+    case("e1");
+    case("1e");
+    case("1e+");
+    case("1e-");
+    case("1e--2");
+    case("1e+-2");
+    case("1e1.5");
+    case("1e2e3");
+    case("1e 2");
+    case("1e4294967296");
+    case("1e-4294967296");
+    case("1e9223372036854775808");
+    case("1.0e-9223372036854775808");
   }
 
   #[test]
@@ -863,6 +898,29 @@ mod tests {
       Number::from(-1_i64).pow(&Number::from(2_147_483_649_i64), config),
       Ok(Number::Approx(Float::with_val(2, -1)))
     );
+  }
+
+  #[test]
+  fn scientific_notation() {
+    #[track_caller]
+    fn case(value: &str, numerator: i64, denominator: i64) {
+      let Number::Exact(number) = Number::try_from(value).unwrap() else {
+        panic!("expected exact number");
+      };
+
+      assert_eq!(number, Rational::from((numerator, denominator)));
+    }
+
+    case("1e-05", 1, 100_000);
+    case("1E5", 100_000, 1);
+    case("1e+05", 100_000, 1);
+    case("1.25e1", 25, 2);
+    case("1.25e-1", 1, 8);
+    case("1.25e2", 125, 1);
+    case("-1e2", -100, 1);
+    case("+1e0", 1, 1);
+    case("0e0", 0, 1);
+    case("9007199254740993e0", 9_007_199_254_740_993, 1);
   }
 
   #[test]

@@ -2993,6 +2993,23 @@ fn range_stops_before_overflow() -> Result {
 }
 
 #[test]
+fn scientific_notation() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = 1e-05
+      println(foo == 0.00001)
+      println(1E+05 * foo)
+      println(1.25e2 + 1e1)
+      println(-1e-1 + 2e-1 == 0.1)
+      println(1e2-3)
+      "
+    })
+    .expected_stdout(Exact("true\n1\n135\ntrue\n97\n"))
+    .run()
+}
+
+#[test]
 fn secant() -> Result {
   Test::new()?
     .program("println(sec(0))")
