@@ -122,8 +122,7 @@ where
   P: Parser<'a, &'a str, Spanned<Statement>, ParserError<'a>> + Clone,
 {
   statement
-    .then(padded_parser(just(';')).or_not())
-    .map(|(statement, _)| statement)
+    .then_ignore(padded_parser(just(';')).or_not())
     .repeated()
     .collect::<Vec<_>>()
 }
@@ -156,8 +155,7 @@ fn statement_parser<'a>()
     let assignment_statement = assignment_target
       .then_ignore(padded_parser(just('=')))
       .then(expression.clone())
-      .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs))
-      .map_with(|ast, error| (ast, error.span()));
+      .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs));
 
     let function_statement = keyword_parser("fn")
       .ignore_then(identifier_parser())
@@ -166,13 +164,9 @@ fn statement_parser<'a>()
           .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
       )
       .then(statement_block.clone())
-      .map(|((name, params), body)| Statement::Function(name, params, body))
-      .map_with(|ast, error| (ast, error.span()));
+      .map(|((name, params), body)| Statement::Function(name, params, body));
 
-    let block_statement = statement_block
-      .clone()
-      .map(Statement::Block)
-      .map_with(|ast, error| (ast, error.span()));
+    let block_statement = statement_block.clone().map(Statement::Block);
 
     let condition_parser = expression
       .clone()
@@ -188,44 +182,34 @@ fn statement_parser<'a>()
       )
       .map(|((condition, then_branch), else_branch)| {
         Statement::If(condition, then_branch, else_branch)
-      })
-      .map_with(|ast, error| (ast, error.span()));
+      });
 
     let while_statement = keyword_parser("while")
       .ignore_then(condition_parser)
       .then(statement_block.clone())
-      .map(|(condition, body)| Statement::While(condition, body))
-      .map_with(|ast, error| (ast, error.span()));
+      .map(|(condition, body)| Statement::While(condition, body));
 
     let for_statement = keyword_parser("for")
       .ignore_then(identifier_parser())
       .then_ignore(keyword_parser("in"))
       .then(expression.clone())
       .then(statement_block.clone())
-      .map(|((name, iterable), body)| Statement::For(name, iterable, body))
-      .map_with(|ast, error| (ast, error.span()));
+      .map(|((name, iterable), body)| Statement::For(name, iterable, body));
 
     let loop_statement = keyword_parser("loop")
       .ignore_then(statement_block.clone())
-      .map(Statement::Loop)
-      .map_with(|ast, error| (ast, error.span()));
+      .map(Statement::Loop);
 
     let return_statement = keyword_parser("return")
       .ignore_then(expression.clone().or_not())
-      .map(Statement::Return)
-      .map_with(|ast, error| (ast, error.span()));
+      .map(Statement::Return);
 
-    let break_statement = keyword_parser("break")
-      .map(|()| Statement::Break)
-      .map_with(|ast, error| (ast, error.span()));
+    let break_statement = keyword_parser("break").map(|()| Statement::Break);
 
-    let continue_statement = keyword_parser("continue")
-      .map(|()| Statement::Continue)
-      .map_with(|ast, error| (ast, error.span()));
+    let continue_statement =
+      keyword_parser("continue").map(|()| Statement::Continue);
 
-    let expression_statement = expression
-      .map(Statement::Expression)
-      .map_with(|ast, error| (ast, error.span()));
+    let expression_statement = expression.map(Statement::Expression);
 
     choice((
       assignment_statement,
@@ -240,6 +224,7 @@ fn statement_parser<'a>()
       continue_statement,
       expression_statement,
     ))
+    .map_with(|ast, error| (ast, error.span()))
     .padded_by(padding_parser())
     .boxed()
   })
