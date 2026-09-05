@@ -1,8 +1,8 @@
 use super::*;
 
-pub struct BuiltinFunctionPayload<'src> {
-  pub arguments: Vec<Value<'src>>,
+pub struct BuiltinFunctionPayload {
+  pub arguments: Vec<Value>,
   pub config: Config,
-  pub name: &'src str,
+  pub name: &'static str,
   pub span: Span,
 }

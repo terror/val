@@ -26,7 +26,7 @@ builtin! {
             }
           }
 
-          Ok(Value::String(Cow::Owned(input)))
+          Ok(Value::String(input))
         }
         Err(e) => Err(Error::new(
           payload.span,

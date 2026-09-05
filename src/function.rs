@@ -1,30 +1,28 @@
 use super::*;
 
 #[derive(Clone, Debug)]
-pub enum Function<'src> {
+pub enum Function {
   Builtin {
     arity: BuiltinArity,
-    function: for<'call> fn(
-      &BuiltinFunctionPayload<'call>,
-    ) -> Result<Value<'call>, Error>,
-    name: &'src str,
+    function: fn(&BuiltinFunctionPayload) -> Result<Value, Error>,
+    name: &'static str,
   },
   UserDefined {
     body: Vec<Spanned<Statement>>,
-    environment: Environment<'src>,
+    environment: Environment,
     identity: Rc<()>,
     name: Option<String>,
     parameters: Vec<String>,
   },
 }
 
-impl<'src> Function<'src> {
+impl Function {
   pub(crate) fn call(
     &self,
-    arguments: Vec<Value<'src>>,
+    arguments: Vec<Value>,
     config: Config,
     span: Span,
-  ) -> Result<Value<'src>, Error> {
+  ) -> Result<Value, Error> {
     match self {
       Self::Builtin { function, name, .. } => {
         function(&BuiltinFunctionPayload {
@@ -96,7 +94,7 @@ impl<'src> Function<'src> {
   }
 }
 
-impl PartialEq for Function<'_> {
+impl PartialEq for Function {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Self::Builtin { name: a, .. }, Self::Builtin { name: b, .. }) => a == b,

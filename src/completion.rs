@@ -1,8 +1,8 @@
 use super::*;
 
-pub enum Completion<'a> {
+pub enum Completion {
   Break,
   Continue,
-  Return(Value<'a>),
-  Value(Value<'a>),
+  Return(Value),
+  Value(Value),
 }

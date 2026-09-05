@@ -1,15 +1,15 @@
 use super::*;
 
-pub struct Evaluator<'a> {
+pub struct Evaluator {
   pub(crate) context: Context,
-  pub(crate) environment: Environment<'a>,
+  pub(crate) environment: Environment,
 }
 
-impl<'a> Evaluator<'a> {
+impl Evaluator {
   fn assign(
     &mut self,
     target: &Spanned<AssignmentTarget>,
-    value: Value<'a>,
+    value: Value,
   ) -> Result<(), Error> {
     match &target.0 {
       AssignmentTarget::Identifier(name) => {
@@ -41,11 +41,11 @@ impl<'a> Evaluator<'a> {
   fn assign_indices(
     &mut self,
     name: &str,
-    value: Value<'a>,
+    value: Value,
     indices: &[&Spanned<Expression>],
-    assigned: Value<'a>,
+    assigned: Value,
     span: Span,
-  ) -> Result<Value<'a>, Error> {
+  ) -> Result<Value, Error> {
     let Some((index, rest)) = indices.split_first() else {
       return Ok(assigned);
     };
@@ -106,7 +106,7 @@ impl<'a> Evaluator<'a> {
   pub fn evaluate(
     &mut self,
     ast: &Spanned<Program>,
-  ) -> Result<Evaluation<'a>, Error> {
+  ) -> Result<Evaluation, Error> {
     let (node, _) = ast;
 
     let result = match node {
@@ -128,7 +128,7 @@ impl<'a> Evaluator<'a> {
   fn evaluate_expression(
     &mut self,
     ast: &Spanned<Expression>,
-  ) -> Result<Value<'a>, Error> {
+  ) -> Result<Value, Error> {
     let (node, span) = ast;
 
     match node {
@@ -142,20 +142,18 @@ impl<'a> Evaluator<'a> {
           (Value::Number(a), Value::Number(b)) => {
             Ok(Value::Number(a.add(&b, self.environment.config)))
           }
-          (Value::String(a), Value::String(b)) => {
-            let mut result = a.into_owned();
-            result.push_str(&b);
-            Ok(Value::String(Cow::Owned(result)))
+          (Value::String(mut a), Value::String(b)) => {
+            a.push_str(&b);
+            Ok(Value::String(a))
           }
-          (Value::String(a), rhs) => {
-            let mut result = a.into_owned();
-            result.push_str(&rhs.display(self.environment.config));
-            Ok(Value::String(Cow::Owned(result)))
+          (Value::String(mut a), rhs) => {
+            a.push_str(&rhs.display(self.environment.config));
+            Ok(Value::String(a))
           }
           (lhs, Value::String(b)) => {
             let mut result = lhs.display(self.environment.config);
             result.push_str(&b);
-            Ok(Value::String(Cow::Owned(result)))
+            Ok(Value::String(result))
           }
           (Value::List(mut a), Value::List(b)) => {
             a.extend(b);
@@ -354,9 +352,7 @@ impl<'a> Evaluator<'a> {
       }
       Expression::Null => Ok(Value::Null),
       Expression::Number(number) => Ok(Value::Number(number.clone())),
-      Expression::String(string) => {
-        Ok(Value::String(Cow::Owned(string.clone())))
-      }
+      Expression::String(string) => Ok(Value::String(string.clone())),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => Ok(Value::Number(
         self.evaluate_expression(rhs)?.number(rhs.1)?.neg(),
       )),
@@ -382,7 +378,7 @@ impl<'a> Evaluator<'a> {
   pub(crate) fn evaluate_statement(
     &mut self,
     statement: &Spanned<Statement>,
-  ) -> Result<Completion<'a>, Error> {
+  ) -> Result<Completion, Error> {
     let (node, span) = statement;
 
     match node {
@@ -534,7 +530,7 @@ impl<'a> Evaluator<'a> {
   pub(crate) fn evaluate_statements(
     &mut self,
     statements: &[Spanned<Statement>],
-  ) -> Result<Completion<'a>, Error> {
+  ) -> Result<Completion, Error> {
     let mut result = Value::Null;
 
     for statement in statements {
@@ -554,8 +550,8 @@ impl<'a> Evaluator<'a> {
   }
 }
 
-impl<'a> From<Environment<'a>> for Evaluator<'a> {
-  fn from(environment: Environment<'a>) -> Self {
+impl From<Environment> for Evaluator {
+  fn from(environment: Environment) -> Self {
     Self {
       environment,
       context: Context::default(),

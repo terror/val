@@ -12,7 +12,6 @@ use {
     ops::{Pow, PowAssignRound},
   },
   std::{
-    borrow::Cow,
     cell::RefCell,
     cmp::Ordering,
     collections::HashMap,

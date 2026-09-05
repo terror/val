@@ -11,7 +11,7 @@ builtin! {
         Value::Number(number) => {
           Ok(Value::Number(number.to_approx(payload.config)))
         }
-        Value::String(s) => Number::try_from(s.as_ref())
+        Value::String(s) => Number::try_from(s.as_str())
           .map(|number| Value::Number(number.to_approx(payload.config)))
           .map_err(|_| {
             Error::new(payload.span, format!("Cannot convert '{s}' to float"))

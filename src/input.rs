@@ -6,10 +6,10 @@ pub(crate) struct Input<'a> {
 }
 
 impl Input<'_> {
-  pub(crate) fn evaluate<'a>(
+  pub(crate) fn evaluate(
     &self,
-    evaluator: &mut Evaluator<'a>,
-  ) -> Result<Evaluation<'a>, Vec<Error>> {
+    evaluator: &mut Evaluator,
+  ) -> Result<Evaluation, Vec<Error>> {
     let ast = parse(self.text)?;
 
     evaluator.evaluate(&ast).map_err(|error| vec![error])
