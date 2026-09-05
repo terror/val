@@ -316,53 +316,37 @@ impl Number {
 
         Ok(Self::Approx(remainder))
       }
-      (Self::Exact(lhs), rhs_number @ Self::Approx(rhs)) if rhs.is_finite() => {
-        if let Some(rhs) = rhs.to_rational() {
-          let remainder = (lhs / &rhs).complete().rem_floor() * &rhs;
+      (Self::Exact(lhs), Self::Approx(rhs)) if rhs.is_finite() => {
+        let Some(rhs) = rhs.to_rational() else {
+          unreachable!();
+        };
 
-          Ok(Self::Approx(
-            Float::with_val_round(
-              config.precision(),
-              remainder,
-              config.rounding_mode,
-            )
-            .0,
-          ))
-        } else {
-          Ok(Self::Approx(
-            Float::with_val_round(
-              config.precision(),
-              &self.to_float(config) % &rhs_number.to_float(config),
-              config.rounding_mode,
-            )
-            .0,
-          ))
-        }
+        let remainder = (lhs / &rhs).complete().rem_floor() * &rhs;
+
+        Ok(Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            remainder,
+            config.rounding_mode,
+          )
+          .0,
+        ))
       }
-      (lhs_number @ Self::Approx(lhs), rhs_number @ Self::Exact(rhs))
-        if lhs.is_finite() =>
-      {
-        if let Some(lhs) = lhs.to_rational() {
-          let remainder = (&lhs / rhs).complete().rem_floor() * rhs;
+      (Self::Approx(lhs), Self::Exact(rhs)) if lhs.is_finite() => {
+        let Some(lhs) = lhs.to_rational() else {
+          unreachable!();
+        };
 
-          Ok(Self::Approx(
-            Float::with_val_round(
-              config.precision(),
-              remainder,
-              config.rounding_mode,
-            )
-            .0,
-          ))
-        } else {
-          Ok(Self::Approx(
-            Float::with_val_round(
-              config.precision(),
-              &lhs_number.to_float(config) % &rhs_number.to_float(config),
-              config.rounding_mode,
-            )
-            .0,
-          ))
-        }
+        let remainder = (&lhs / rhs).complete().rem_floor() * rhs;
+
+        Ok(Self::Approx(
+          Float::with_val_round(
+            config.precision(),
+            remainder,
+            config.rounding_mode,
+          )
+          .0,
+        ))
       }
       _ => Ok(Self::Approx(
         Float::with_val_round(
