@@ -11,10 +11,7 @@ builtin! {
       let code = if payload.arguments.is_empty() {
         0
       } else {
-        let Some(code) = payload.arguments[0]
-          .number(payload.span)?
-          .to_non_negative_usize()
-        else {
+        let Some(code) = payload.number(0)?.to_non_negative_usize() else {
           return Err(Error::new(
             payload.span,
             format!("Argument to `{name}` must be a non-negative finite number"),

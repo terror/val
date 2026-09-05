@@ -5,7 +5,7 @@ builtin! {
     name: "acot",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      let argument = payload.arguments[0].number(payload.span)?;
+      let argument = payload.number(0)?;
 
       let pi_div_2 = Number::Approx(
         Float::with_val_round(

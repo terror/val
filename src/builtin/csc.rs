@@ -5,9 +5,7 @@ builtin! {
     name: "csc",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      let sin = payload.arguments[0]
-        .number(payload.span)?
-        .sin(payload.config);
+      let sin = payload.number(0)?.sin(payload.config);
 
       if sin.is_zero() {
         return Err(Error::new(

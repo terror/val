@@ -5,11 +5,7 @@ builtin! {
     name: "arc",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      Ok(Value::Number(
-        payload.arguments[0]
-          .number(payload.span)?
-          .atan(payload.config),
-      ))
+      Ok(Value::Number(payload.number(0)?.atan(payload.config)))
     }
   }
 }
