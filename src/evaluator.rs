@@ -156,7 +156,11 @@ impl Evaluator {
           )),
         }
       }
-      Expression::BinaryOp(BinaryOp::Divide, lhs, rhs) => {
+      Expression::BinaryOp(
+        op @ (BinaryOp::Divide | BinaryOp::Modulo | BinaryOp::Power),
+        lhs,
+        rhs,
+      ) => {
         let (lhs_val, rhs_val) = (
           self.evaluate_expression(lhs)?,
           self.evaluate_expression(rhs)?,
@@ -165,10 +169,14 @@ impl Evaluator {
         let (lhs_num, rhs_num) =
           (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
 
-        lhs_num
-          .div(rhs_num, self.environment.config)
-          .map(Value::Number)
-          .map_err(|error| error.with_span(rhs.1))
+        match op {
+          BinaryOp::Divide => lhs_num.div(rhs_num, self.environment.config),
+          BinaryOp::Modulo => lhs_num.rem(rhs_num, self.environment.config),
+          BinaryOp::Power => lhs_num.pow(rhs_num, self.environment.config),
+          _ => unreachable!(),
+        }
+        .map(Value::Number)
+        .map_err(|error| error.with_span(rhs.1))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.evaluate_expression(lhs)? == self.evaluate_expression(rhs)?,
@@ -228,20 +236,6 @@ impl Evaluator {
             || self.evaluate_expression(rhs)?.boolean(rhs.1)?,
         ))
       }
-      Expression::BinaryOp(BinaryOp::Modulo, lhs, rhs) => {
-        let (lhs_val, rhs_val) = (
-          self.evaluate_expression(lhs)?,
-          self.evaluate_expression(rhs)?,
-        );
-
-        let (lhs_num, rhs_num) =
-          (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
-
-        lhs_num
-          .rem(rhs_num, self.environment.config)
-          .map(Value::Number)
-          .map_err(|error| error.with_span(rhs.1))
-      }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
           self.evaluate_expression(rhs)?.number(rhs.1)?,
@@ -251,20 +245,6 @@ impl Evaluator {
       Expression::BinaryOp(BinaryOp::NotEqual, lhs, rhs) => Ok(Value::Boolean(
         self.evaluate_expression(lhs)? != self.evaluate_expression(rhs)?,
       )),
-      Expression::BinaryOp(BinaryOp::Power, lhs, rhs) => {
-        let (lhs_val, rhs_val) = (
-          self.evaluate_expression(lhs)?,
-          self.evaluate_expression(rhs)?,
-        );
-
-        let (lhs_num, rhs_num) =
-          (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
-
-        lhs_num
-          .pow(rhs_num, self.environment.config)
-          .map(Value::Number)
-          .map_err(|error| error.with_span(rhs.1))
-      }
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
         self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
           self.evaluate_expression(rhs)?.number(rhs.1)?,
