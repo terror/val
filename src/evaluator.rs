@@ -80,16 +80,6 @@ impl Evaluator {
     Ok(Value::List(list))
   }
 
-  pub(crate) fn enter_function<T>(
-    &mut self,
-    f: impl FnOnce(&mut Self) -> Result<T, Error>,
-  ) -> Result<T, Error> {
-    self.context.enter_function();
-    let result = f(self);
-    self.context.exit_function();
-    result
-  }
-
   fn enter_loop<T>(
     &mut self,
     f: impl FnOnce(&mut Self) -> Result<T, Error>,
@@ -528,6 +518,13 @@ impl Evaluator {
     }
 
     Ok(Completion::Value(result))
+  }
+
+  pub(crate) fn for_function(environment: Environment) -> Self {
+    Self {
+      context: Context::for_function(),
+      environment,
+    }
   }
 }
 

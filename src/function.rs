@@ -49,12 +49,12 @@ impl Function {
           call_environment.add_symbol(parameter, argument);
         }
 
-        Evaluator::from(call_environment).enter_function(|evaluator| {
-          match evaluator.evaluate_statements(body)? {
-            Completion::Return(value) | Completion::Value(value) => Ok(value),
-            Completion::Break | Completion::Continue => Ok(Value::Null),
-          }
-        })
+        match Evaluator::for_function(call_environment)
+          .evaluate_statements(body)?
+        {
+          Completion::Return(value) | Completion::Value(value) => Ok(value),
+          Completion::Break | Completion::Continue => Ok(Value::Null),
+        }
       }
     }
   }
@@ -67,19 +67,7 @@ impl Function {
     match self {
       Self::Builtin { arity, name, .. } => arity.check(name, len, span),
       Self::UserDefined { parameters, .. } => {
-        if parameters.len() == len {
-          return Ok(());
-        }
-
-        Err(Error::new(
-          span,
-          format!(
-            "Function `{}` expects {} arguments, got {}",
-            self.name(),
-            parameters.len(),
-            len
-          ),
-        ))
+        BuiltinArity::Exact(parameters.len()).check(self.name(), len, span)
       }
     }
   }

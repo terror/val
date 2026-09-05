@@ -1,28 +1,27 @@
 #[derive(Default)]
 pub(crate) struct Context {
-  function_depth: usize,
+  inside_function: bool,
   loop_depth: usize,
 }
 
 impl Context {
-  pub(crate) fn enter_function(&mut self) {
-    self.function_depth += 1;
-  }
-
   pub(crate) fn enter_loop(&mut self) {
     self.loop_depth += 1;
-  }
-
-  pub(crate) fn exit_function(&mut self) {
-    self.function_depth -= 1;
   }
 
   pub(crate) fn exit_loop(&mut self) {
     self.loop_depth -= 1;
   }
 
+  pub(crate) fn for_function() -> Self {
+    Self {
+      inside_function: true,
+      ..Self::default()
+    }
+  }
+
   pub(crate) fn inside_function(&self) -> bool {
-    self.function_depth > 0
+    self.inside_function
   }
 
   pub(crate) fn inside_loop(&self) -> bool {
