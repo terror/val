@@ -726,6 +726,16 @@ fn configured_digits_in_concatenation() -> Result {
 }
 
 #[test]
+fn configured_digits_maximum() -> Result {
+  Test::new()?
+    .argument("--digits")
+    .argument(&usize::MAX.to_string())
+    .program("println(0.5)")
+    .expected_stdout(Exact("0.5\n"))
+    .run()
+}
+
+#[test]
 fn continue_in_if_outside_loop() -> Result {
   Test::new()?
     .program(indoc! {
