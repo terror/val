@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Value {
   Boolean(bool),
   Function(Function),
@@ -87,21 +87,5 @@ impl Value {
 impl Display for Value {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     f.write_str(&self.display(Config::default()))
-  }
-}
-
-impl PartialEq for Value {
-  fn eq(&self, other: &Self) -> bool {
-    match (self, other) {
-      (Value::Boolean(a), Value::Boolean(b)) => a == b,
-      (Value::Function(a), Value::Function(b)) => a == b,
-      (Value::List(a), Value::List(b)) => {
-        a.len() == b.len() && a.iter().zip(b.iter()).all(|(a, b)| a == b)
-      }
-      (Value::Null, Value::Null) => true,
-      (Value::Number(a), Value::Number(b)) => a == b,
-      (Value::String(a), Value::String(b)) => a == b,
-      _ => false,
-    }
   }
 }
