@@ -2836,34 +2836,10 @@ fn range_stops_before_overflow() -> Result {
 
 #[test]
 fn reduce() -> Result {
-  #[track_caller]
-  fn case(program: &str, expected: &str) -> Result {
-    Test::new()?
-      .program(program)
-      .expected_stdout(Exact(expected))
-      .run()
-  }
-
-  case(
-    "println(reduce([1, 2, 3], fn(foo, bar) { foo - bar }, 10))",
-    "4\n",
-  )?;
-  case(
-    "println(reduce([1/3, 1/3, 1/3], fn(foo, bar) { foo + bar }, 0))",
-    "1\n",
-  )?;
-  case(
-    "println(reduce(['foo', 'bar'], append, []))",
-    "['foo', 'bar']\n",
-  )?;
-  case(
-    "println(reduce(['foo', 'bar'], println, null))",
-    "null foo\nnull bar\nnull\n",
-  )?;
-  case(
-    "foo = fn(bar, baz) { exit(1) }\nbar = [null, true, 'foo', [1], foo]\nprintln(reduce([], foo, bar) == bar)",
-    "true\n",
-  )
+  Test::new()?
+    .program("println(reduce([1, 2, 3], fn(foo, bar) { foo - bar }, 10))")
+    .expected_stdout(Exact("4\n"))
+    .run()
 }
 
 #[test]
@@ -2881,6 +2857,20 @@ fn reduce_callback_closure() -> Result {
       "
     })
     .expected_stdout(Exact("6 123 [1, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn reduce_empty_list_returns_initial_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn(bar, baz) { exit(1) }
+      bar = [null, true, 'foo', [1], foo]
+      println(reduce([], foo, bar) == bar)
+      "
+    })
+    .expected_stdout(Exact("true\n"))
     .run()
 }
 
@@ -2914,10 +2904,39 @@ fn reduce_errors() -> Result {
 }
 
 #[test]
+fn reduce_exact_arithmetic() -> Result {
+  Test::new()?
+    .program("println(reduce([1/3, 1/3, 1/3], fn(foo, bar) { foo + bar }, 0))")
+    .expected_stdout(Exact("1\n"))
+    .run()
+}
+
+#[test]
 fn reduce_exit() -> Result {
   Test::new()?
-    .program("reduce([7, 8], fn(foo, bar) { exit(bar) }, 0)\nprintln('foo')")
+    .program(indoc! {
+      "
+      reduce([7, 8], fn(foo, bar) { exit(bar) }, 0)
+      println('foo')
+      "
+    })
     .expected_status(7)
+    .run()
+}
+
+#[test]
+fn reduce_with_builtin_callback() -> Result {
+  Test::new()?
+    .program("println(reduce(['foo', 'bar'], append, []))")
+    .expected_stdout(Exact("['foo', 'bar']\n"))
+    .run()
+}
+
+#[test]
+fn reduce_with_variadic_callback() -> Result {
+  Test::new()?
+    .program("println(reduce(['foo', 'bar'], println, null))")
+    .expected_stdout(Exact("null foo\nnull bar\nnull\n"))
     .run()
 }
 
