@@ -15,17 +15,15 @@ const RESERVED_WORDS: [&str; 13] = [
 ///
 /// Returns parser errors when input cannot be parsed into a complete program.
 pub fn parse(input: &str) -> Result<Spanned<Program>, Vec<Error>> {
-  let result = program_parser().parse(input);
-
-  match result.into_output_errors() {
-    (Some(ast), errors) if errors.is_empty() => Ok(ast),
-    (_, errors) => Err(
+  program_parser()
+    .parse(input)
+    .into_result()
+    .map_err(|errors| {
       errors
         .into_iter()
         .map(|error| Error::new(error.span().to_owned(), error.to_string()))
-        .collect(),
-    ),
-  }
+        .collect()
+    })
 }
 
 fn program_parser<'a>()
