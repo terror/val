@@ -2308,6 +2308,87 @@ fn loop_with_continue() -> Result {
 }
 
 #[test]
+fn map() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_stdout(Exact(expected))
+      .run()
+  }
+
+  case("println(map([1, 2, 3], fn(foo) { foo^2 }))", "[1, 4, 9]\n")?;
+  case("println(map([-1, 2], abs))", "[1, 2]\n")?;
+  case(
+    "println(map(['foo', 'bar'], println))",
+    "foo\nbar\n[null, null]\n",
+  )?;
+  case("println(map([], fn(foo) { exit(1) }))", "[]\n")?;
+  case(
+    "foo = fn(bar) { bar }\nbar = [null, true, 'foo', [1], foo]\nprintln(map(bar, foo) == bar)",
+    "true\n",
+  )
+}
+
+#[test]
+fn map_callback_closure() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = 0
+      bar = [1, 2, 3]
+      baz = map(bar, fn(qux) {
+        foo = foo * 10 + qux
+        return foo
+      })
+      println(baz, foo, bar)
+      "
+    })
+    .expected_stdout(Exact("[1, 12, 123] 123 [1, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn map_errors() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_status(1)
+      .expected_stderr(Contains(expected))
+      .run()
+  }
+
+  case("map([])", "Function `map` expects 2 arguments, got 1")?;
+  case("map('foo', abs)", "'foo' is not a list")?;
+  case("map([], 'foo')", "'foo' is not a function")?;
+  case(
+    "map([], fn() {})",
+    "Function `<anonymous>` expects 0 arguments, got 1",
+  )?;
+  case(
+    "map([], append)",
+    "Function `append` expects 2 arguments, got 1",
+  )?;
+  case("map(['foo'], abs)", "'foo' is not a number")?;
+  case("map([1], fn(foo) { 1 / 0 })", "division by zero")
+}
+
+#[test]
+fn map_exit() -> Result {
+  #[track_caller]
+  fn case(callback: &str) -> Result {
+    Test::new()?
+      .program(&format!("map([7, 8], {callback})\nprintln('foo')"))
+      .expected_status(7)
+      .run()
+  }
+
+  case("exit")?;
+  case("fn(foo) { exit(foo) }")
+}
+
+#[test]
 fn mixed_type_comparisons() -> Result {
   Test::new()?
     .program("println(\"true\" == true)")
