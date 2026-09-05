@@ -5,11 +5,7 @@ builtin! {
     name: "cos",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      Ok(Value::Number(
-        payload.arguments[0]
-          .number(payload.span)?
-          .cos(payload.config),
-      ))
+      Ok(Value::Number(payload.number(0)?.cos(payload.config)))
     }
   }
 }

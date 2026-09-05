@@ -5,7 +5,7 @@ builtin! {
     name: "asin",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      let argument = payload.arguments[0].number(payload.span)?;
+      let argument = payload.number(0)?;
 
       if argument < &Number::from(-1_i64) || argument > &Number::from(1_i64) {
         return Err(Error::new(

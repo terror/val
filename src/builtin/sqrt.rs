@@ -5,7 +5,7 @@ builtin! {
     name: "sqrt",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      let number = payload.arguments[0].number(payload.span)?;
+      let number = payload.number(0)?;
 
       if number.is_negative() {
         return Err(Error::new(

@@ -5,9 +5,7 @@ builtin! {
     name: "cot",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      let tan = payload.arguments[0]
-        .number(payload.span)?
-        .tan(payload.config);
+      let tan = payload.number(0)?.tan(payload.config);
 
       if tan.is_zero() {
         return Err(Error::new(

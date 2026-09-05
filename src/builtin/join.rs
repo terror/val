@@ -11,10 +11,7 @@ builtin! {
 
       let joined_string = list
         .iter()
-        .map(|value| match value {
-          Value::String(s) => s.clone(),
-          _ => value.display(payload.config),
-        })
+        .map(|value| value.display(payload.config))
         .collect::<Vec<_>>()
         .join(delimiter);
 
