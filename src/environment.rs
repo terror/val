@@ -114,22 +114,28 @@ impl<'src> Environment<'src> {
       frame: Rc::new(RefCell::new(Frame::default())),
     };
 
-    for builtin in BUILTINS {
-      match builtin {
-        Builtin::Constant { value, .. } => {
-          environment.add_symbol(builtin.name(), Value::Number(value(config)));
-        }
-        Builtin::Function {
-          arity, function, ..
-        } => {
-          environment.add_function(
-            builtin.name(),
-            Function::Builtin {
-              arity: *arity,
-              function: *function,
-              name: builtin.name(),
-            },
-          );
+    for builtin in inventory::iter::<&dyn Builtin> {
+      for name in once(builtin.name()).chain(builtin.aliases().iter().copied())
+      {
+        match builtin.value(config) {
+          Value::Function(Function::Builtin {
+            arity, function, ..
+          }) => {
+            environment.add_function(
+              name,
+              Function::Builtin {
+                arity,
+                function,
+                name,
+              },
+            );
+          }
+          Value::Function(function) => {
+            environment.add_function(name, function);
+          }
+          value => {
+            environment.add_symbol(name, value);
+          }
         }
       }
     }

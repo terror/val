@@ -1067,28 +1067,38 @@ fn exact_rational_arithmetic() -> Result {
 }
 
 #[test]
-fn exit_or_quit() -> Result {
-  Test::new()?.program("exit()").expected_status(0).run()?;
-  Test::new()?.program("quit()").expected_status(0).run()?;
+fn exit() -> Result {
+  #[track_caller]
+  fn case(name: &str) -> Result {
+    Test::new()?
+      .program(&format!("{name}()"))
+      .expected_status(0)
+      .run()?;
 
-  Test::new()?.program("exit(1)").expected_status(1).run()?;
-  Test::new()?.program("quit(1)").expected_status(1).run()?;
+    Test::new()?
+      .program(&format!("{name}(1)"))
+      .expected_status(1)
+      .run()?;
 
-  Test::new()?
-    .program("exit(1, 2)")
-    .expected_status(1)
-    .expected_stderr(Contains(
-      "Function `exit` expects 0 or 1 arguments, got 2",
-    ))
-    .run()?;
+    Test::new()?
+      .program(&format!("{name}(1, 2)"))
+      .expected_status(1)
+      .expected_stderr(Contains(&format!(
+        "Function `{name}` expects 0 or 1 arguments, got 2"
+      )))
+      .run()?;
 
-  Test::new()?
-    .program("quit(1, 2)")
-    .expected_status(1)
-    .expected_stderr(Contains(
-      "Function `quit` expects 0 or 1 arguments, got 2",
-    ))
-    .run()
+    Test::new()?
+      .program(&format!("{name}(-1)"))
+      .expected_status(1)
+      .expected_stderr(Contains(&format!(
+        "Argument to `{name}` must be a non-negative finite number"
+      )))
+      .run()
+  }
+
+  case("exit")?;
+  case("quit")
 }
 
 #[test]
