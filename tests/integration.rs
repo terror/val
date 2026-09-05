@@ -2835,6 +2835,112 @@ fn range_stops_before_overflow() -> Result {
 }
 
 #[test]
+fn reduce() -> Result {
+  Test::new()?
+    .program("println(reduce([1, 2, 3], fn(foo, bar) { foo - bar }, 10))")
+    .expected_stdout(Exact("4\n"))
+    .run()
+}
+
+#[test]
+fn reduce_callback_closure() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = 0
+      bar = [1, 2, 3]
+      baz = reduce(bar, fn(qux, quux) {
+        foo = foo * 10 + quux
+        return qux + quux
+      }, 0)
+      println(baz, foo, bar)
+      "
+    })
+    .expected_stdout(Exact("6 123 [1, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn reduce_empty_list_returns_initial_value() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn(bar, baz) { exit(1) }
+      bar = [null, true, 'foo', [1], foo]
+      println(reduce([], foo, bar) == bar)
+      "
+    })
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn reduce_errors() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_status(1)
+      .expected_stderr(Contains(expected))
+      .run()
+  }
+
+  case(
+    "reduce([], append)",
+    "Function `reduce` expects 3 arguments, got 2",
+  )?;
+  case("reduce('foo', append, [])", "'foo' is not a list")?;
+  case("reduce([], 'foo', [])", "'foo' is not a function")?;
+  case(
+    "reduce([], fn(foo) {}, 0)",
+    "Function `<anonymous>` expects 1 argument, got 2",
+  )?;
+  case(
+    "reduce([], abs, 0)",
+    "Function `abs` expects 1 argument, got 2",
+  )?;
+  case("reduce([1], append, 'foo')", "'foo' is not a list")?;
+  case("reduce([1], fn(foo, bar) { 1 / 0 }, 0)", "division by zero")
+}
+
+#[test]
+fn reduce_exact_arithmetic() -> Result {
+  Test::new()?
+    .program("println(reduce([1/3, 1/3, 1/3], fn(foo, bar) { foo + bar }, 0))")
+    .expected_stdout(Exact("1\n"))
+    .run()
+}
+
+#[test]
+fn reduce_exit() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      reduce([7, 8], fn(foo, bar) { exit(bar) }, 0)
+      println('foo')
+      "
+    })
+    .expected_status(7)
+    .run()
+}
+
+#[test]
+fn reduce_with_builtin_callback() -> Result {
+  Test::new()?
+    .program("println(reduce(['foo', 'bar'], append, []))")
+    .expected_stdout(Exact("['foo', 'bar']\n"))
+    .run()
+}
+
+#[test]
+fn reduce_with_variadic_callback() -> Result {
+  Test::new()?
+    .program("println(reduce(['foo', 'bar'], println, null))")
+    .expected_stdout(Exact("null foo\nnull bar\nnull\n"))
+    .run()
+}
+
+#[test]
 fn scientific_notation() -> Result {
   Test::new()?
     .program(indoc! {

@@ -366,6 +366,7 @@ if (index == null) {
 |                   | `sum(list)`         | Sum list elements                  | `sum([1,2,3])`           |
 |                   | `append(list, val)` | Add element to end of list         | `append([1,2], 3)`       |
 |                   | `range(a, b[, s])`  | List from a to b, stepping by s    | `range(0, 10)`           |
+|                   | `reduce(list, f, initial)` | Fold left with f(accumulator, element) | `reduce([1,2,3], fn(a,b) { a+b }, 0)` |
 | **Conversion**    | `int(x)`            | Convert to integer                 | `int("42")`              |
 |                   | `float(x)`          | Convert to float                   | `float("3.14")`          |
 |                   | `bool(x)`           | Convert to boolean                 | `bool(1)`                |
