@@ -10,33 +10,13 @@ impl Environment {
   pub fn add_function(&self, name: &str, function: Function) {
     let mut frame = self.frame.borrow_mut();
 
-    if let Some(symbol) = frame.symbols.get_mut(name) {
-      symbol.function = Some(function);
-    } else {
-      frame.symbols.insert(
-        name.to_owned(),
-        Symbol {
-          function: Some(function),
-          value: None,
-        },
-      );
-    }
+    frame.symbols.entry(name.to_owned()).or_default().function = Some(function);
   }
 
   pub fn add_symbol(&self, name: &str, value: Value) {
     let mut frame = self.frame.borrow_mut();
 
-    if let Some(symbol) = frame.symbols.get_mut(name) {
-      symbol.value = Some(value);
-    } else {
-      frame.symbols.insert(
-        name.to_owned(),
-        Symbol {
-          function: None,
-          value: Some(value),
-        },
-      );
-    }
+    frame.symbols.entry(name.to_owned()).or_default().value = Some(value);
   }
 
   fn assign_existing_symbol(
