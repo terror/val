@@ -5,6 +5,7 @@ use {
   highlight_kind::HighlightKind,
   highlight_span::HighlightSpan,
   highlighter::Highlighter,
+  input::Input,
   prompt::Prompt,
   rounding_mode::RoundingMode,
   rug::float::Round,
@@ -23,19 +24,21 @@ use {
     borrow::{Cow, Cow::Owned},
     fmt::{self, Display, Formatter},
     fs,
+    io::{self, Write},
     num::{NonZeroU32, NonZeroUsize},
     path::PathBuf,
     process,
     str::FromStr,
     thread,
   },
-  val::{Config, Environment, Evaluation, Evaluator, Value, parse},
+  val::{Config, Environment, Error, Evaluation, Evaluator, Value, parse},
 };
 
 mod arguments;
 mod highlight_kind;
 mod highlight_span;
 mod highlighter;
+mod input;
 mod prompt;
 mod rounding_mode;
 

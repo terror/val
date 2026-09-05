@@ -69,65 +69,45 @@ impl Arguments {
   fn eval(&self, filename: &PathBuf) -> Result {
     let content = fs::read_to_string(filename)?;
 
-    let filename = filename.to_string_lossy().to_string();
+    let input = Input {
+      name: &filename.to_string_lossy(),
+      text: &content,
+    };
 
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match parse(&content) {
-      Ok(ast) => match evaluator.evaluate(&ast) {
-        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-        Ok(Evaluation::Value(_)) => Ok(()),
-        Err(error) => {
-          error
-            .report(&filename)
-            .eprint((filename.as_str(), Source::from(content)))?;
-
-          process::exit(1);
-        }
-      },
+    match input.evaluate(&mut evaluator) {
+      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+      Ok(Evaluation::Value(_)) => Ok(()),
       Err(errors) => {
-        for error in errors {
-          error
-            .report(&filename)
-            .eprint((filename.as_str(), Source::from(&content)))?;
-        }
+        input.report(&errors, io::stderr())?;
 
         process::exit(1);
       }
     }
   }
 
-  fn evaluate_expression(&self, value: String) -> Result {
+  fn evaluate_expression(&self, text: &str) -> Result {
+    let input = Input {
+      name: "<expression>",
+      text,
+    };
+
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match parse(&value) {
-      Ok(ast) => match evaluator.evaluate(&ast) {
-        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-        Ok(Evaluation::Value(value)) => {
-          if let Value::Null = value {
-            return Ok(());
-          }
-
+    match input.evaluate(&mut evaluator) {
+      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+      Ok(Evaluation::Value(value)) => {
+        if !matches!(value, Value::Null) {
           println!("{}", value.display(Into::<Config>::into(self)));
-
-          Ok(())
         }
-        Err(error) => {
-          error
-            .report("<expression>")
-            .eprint(("<expression>", Source::from(value)))?;
 
-          process::exit(1);
-        }
-      },
+        Ok(())
+      }
       Err(errors) => {
-        for error in errors {
-          error
-            .report("<expression>")
-            .eprint(("<expression>", Source::from(&value)))?;
-        }
+        input.report(&errors, io::stderr())?;
 
         process::exit(1);
       }
@@ -159,26 +139,16 @@ impl Arguments {
       for filename in filenames {
         let content = fs::read_to_string(filename)?;
 
-        let filename = filename.to_string_lossy().to_string();
+        let input = Input {
+          name: &filename.to_string_lossy(),
+          text: &content,
+        };
 
-        match parse(&content) {
-          Ok(ast) => match evaluator.evaluate(&ast) {
-            Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-            Ok(Evaluation::Value(_)) => {}
-            Err(error) => {
-              error
-                .report(&filename)
-                .eprint((filename.as_str(), Source::from(content)))?;
-
-              process::exit(1);
-            }
-          },
+        match input.evaluate(&mut evaluator) {
+          Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+          Ok(Evaluation::Value(_)) => {}
           Err(errors) => {
-            for error in errors {
-              error
-                .report(&filename)
-                .eprint((filename.as_str(), Source::from(&content)))?;
-            }
+            input.report(&errors, io::stderr())?;
 
             process::exit(1);
           }
@@ -192,24 +162,18 @@ impl Arguments {
       editor.add_history_entry(&line)?;
       editor.save_history(&history)?;
 
-      match parse(&line) {
-        Ok(ast) => match evaluator.evaluate(&ast) {
-          Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-          Ok(Evaluation::Value(value)) if !matches!(value, Value::Null) => {
-            println!("{}", value.display(Into::<Config>::into(self)));
-          }
-          Ok(Evaluation::Value(_)) => {}
-          Err(error) => error
-            .report("<input>")
-            .eprint(("<input>", Source::from(&line)))?,
-        },
-        Err(errors) => {
-          for error in errors {
-            error
-              .report("<input>")
-              .eprint(("<input>", Source::from(&line)))?;
-          }
+      let input = Input {
+        name: "<input>",
+        text: &line,
+      };
+
+      match input.evaluate(&mut evaluator) {
+        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+        Ok(Evaluation::Value(value)) if !matches!(value, Value::Null) => {
+          println!("{}", value.display(Into::<Config>::into(self)));
         }
+        Ok(Evaluation::Value(_)) => {}
+        Err(errors) => input.report(&errors, io::stderr())?,
       }
     }
   }
@@ -217,7 +181,7 @@ impl Arguments {
   pub(crate) fn run(self) -> Result {
     match (&self.filename, &self.expression) {
       (Some(filename), _) => self.eval(filename),
-      (_, Some(expression)) => self.evaluate_expression(expression.clone()),
+      (_, Some(expression)) => self.evaluate_expression(expression),
       _ => {
         #[cfg(not(target_family = "wasm"))]
         {
