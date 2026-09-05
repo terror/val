@@ -2309,25 +2309,10 @@ fn loop_with_continue() -> Result {
 
 #[test]
 fn map() -> Result {
-  #[track_caller]
-  fn case(program: &str, expected: &str) -> Result {
-    Test::new()?
-      .program(program)
-      .expected_stdout(Exact(expected))
-      .run()
-  }
-
-  case("println(map([1, 2, 3], fn(foo) { foo^2 }))", "[1, 4, 9]\n")?;
-  case("println(map([-1, 2], abs))", "[1, 2]\n")?;
-  case(
-    "println(map(['foo', 'bar'], println))",
-    "foo\nbar\n[null, null]\n",
-  )?;
-  case("println(map([], fn(foo) { exit(1) }))", "[]\n")?;
-  case(
-    "foo = fn(bar) { bar }\nbar = [null, true, 'foo', [1], foo]\nprintln(map(bar, foo) == bar)",
-    "true\n",
-  )
+  Test::new()?
+    .program("println(map([1, 2, 3], fn(foo) { foo^2 }))")
+    .expected_stdout(Exact("[1, 4, 9]\n"))
+    .run()
 }
 
 #[test]
@@ -2345,6 +2330,14 @@ fn map_callback_closure() -> Result {
       "
     })
     .expected_stdout(Exact("[1, 12, 123] 123 [1, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn map_empty_list() -> Result {
+  Test::new()?
+    .program("println(map([], fn(foo) { exit(1) }))")
+    .expected_stdout(Exact("[]\n"))
     .run()
 }
 
@@ -2375,17 +2368,59 @@ fn map_errors() -> Result {
 }
 
 #[test]
-fn map_exit() -> Result {
-  #[track_caller]
-  fn case(callback: &str) -> Result {
-    Test::new()?
-      .program(&format!("map([7, 8], {callback})\nprintln('foo')"))
-      .expected_status(7)
-      .run()
-  }
+fn map_exit_from_builtin_callback() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      map([7, 8], exit)
+      println('foo')
+      "
+    })
+    .expected_status(7)
+    .run()
+}
 
-  case("exit")?;
-  case("fn(foo) { exit(foo) }")
+#[test]
+fn map_exit_from_user_callback() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      map([7, 8], fn(foo) { exit(foo) })
+      println('foo')
+      "
+    })
+    .expected_status(7)
+    .run()
+}
+
+#[test]
+fn map_preserves_values() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn(bar) { bar }
+      bar = [null, true, 'foo', [1], foo]
+      println(map(bar, foo) == bar)
+      "
+    })
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn map_with_builtin_callback() -> Result {
+  Test::new()?
+    .program("println(map([-1, 2], abs))")
+    .expected_stdout(Exact("[1, 2]\n"))
+    .run()
+}
+
+#[test]
+fn map_with_variadic_callback() -> Result {
+  Test::new()?
+    .program("println(map(['foo', 'bar'], println))")
+    .expected_stdout(Exact("foo\nbar\n[null, null]\n"))
+    .run()
 }
 
 #[test]
