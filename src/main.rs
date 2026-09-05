@@ -1,6 +1,5 @@
 use {
   arguments::Arguments,
-  ariadne::Source,
   clap::Parser,
   highlight_kind::HighlightKind,
   highlight_span::HighlightSpan,
@@ -22,14 +21,16 @@ use {
     backtrace::BacktraceStatus,
     borrow::{Cow, Cow::Owned},
     fmt::{self, Display, Formatter},
-    fs,
+    fs, io,
     num::{NonZeroU32, NonZeroUsize},
     path::PathBuf,
     process,
     str::FromStr,
     thread,
   },
-  val::{Config, Environment, Evaluation, Evaluator, Value, parse},
+  val::{
+    Config, Environment, Error, Evaluation, Evaluator, Source, Value, parse,
+  },
 };
 
 mod arguments;

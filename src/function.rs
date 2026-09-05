@@ -13,6 +13,7 @@ pub enum Function<'src> {
     identity: Rc<()>,
     name: Option<String>,
     parameters: Vec<String>,
+    source: Option<Source>,
   },
 }
 
@@ -36,6 +37,7 @@ impl<'src> Function<'src> {
         environment,
         name,
         parameters,
+        source,
         ..
       } => {
         let call_environment = Environment::with_parent(environment.clone());
@@ -48,7 +50,11 @@ impl<'src> Function<'src> {
           call_environment.add_symbol(parameter, argument);
         }
 
-        Evaluator::from(call_environment).enter_function(|evaluator| {
+        Evaluator {
+          source: source.clone(),
+          ..Evaluator::from(call_environment)
+        }
+        .enter_function(|evaluator| {
           match evaluator.evaluate_statements(body)? {
             Completion::Return(value) | Completion::Value(value) => Ok(value),
             Completion::Break | Completion::Continue => Ok(Value::Null),

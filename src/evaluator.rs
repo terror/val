@@ -3,6 +3,7 @@ use super::*;
 pub struct Evaluator<'a> {
   pub(crate) context: Context,
   pub(crate) environment: Environment<'a>,
+  pub(crate) source: Option<Source>,
 }
 
 impl<'a> Evaluator<'a> {
@@ -85,7 +86,8 @@ impl<'a> Evaluator<'a> {
     f: impl FnOnce(&mut Self) -> Result<T, Error>,
   ) -> Result<T, Error> {
     self.context.enter_function();
-    let result = f(self);
+    let result =
+      f(self).map_err(|error| error.with_source(self.source.as_ref()));
     self.context.exit_function();
     result
   }
@@ -118,10 +120,12 @@ impl<'a> Evaluator<'a> {
         }),
     };
 
+    let source = self.source.take();
+
     match result {
       Ok(value) => Ok(Evaluation::Value(value)),
       Err(Error::Exit { code, span }) => Ok(Evaluation::Exit { code, span }),
-      Err(error) => Err(error),
+      Err(error) => Err(error.with_source(source.as_ref())),
     }
   }
 
@@ -291,6 +295,7 @@ impl<'a> Evaluator<'a> {
           identity: Rc::new(()),
           name: None,
           parameters: parameters.clone(),
+          source: self.source.clone(),
         }))
       }
       Expression::FunctionCall(function, arguments) => {
@@ -455,6 +460,7 @@ impl<'a> Evaluator<'a> {
           identity: Rc::new(()),
           name: Some(name.clone()),
           parameters: params.clone(),
+          source: self.source.clone(),
         };
 
         self.environment.add_function(name, function.clone());
@@ -552,6 +558,10 @@ impl<'a> Evaluator<'a> {
 
     Ok(Completion::Value(result))
   }
+
+  pub fn set_source(&mut self, source: Source) {
+    self.source = Some(source);
+  }
 }
 
 impl<'a> From<Environment<'a>> for Evaluator<'a> {
@@ -559,6 +569,7 @@ impl<'a> From<Environment<'a>> for Evaluator<'a> {
     Self {
       environment,
       context: Context::default(),
+      source: None,
     }
   }
 }
@@ -617,5 +628,25 @@ mod tests {
     case("0.00001", "1e-05");
     case("-0.0000123", "-1.23e-05");
     case("10000000000000000.5", "1.00000000000000005e+16");
+  }
+
+  #[test]
+  fn source_only_applies_to_next_evaluation() {
+    #[track_caller]
+    fn case(text: &str) {
+      let mut evaluator = Evaluator::from(Environment::new(Config::default()));
+
+      evaluator.set_source(Source::new("foo.val", text));
+
+      let _ = evaluator.evaluate(&parse(text).unwrap());
+
+      let error = evaluator.evaluate(&parse("bar").unwrap()).unwrap_err();
+
+      assert_eq!(error.origin(), None);
+    }
+
+    case("1");
+    case("foo");
+    case("exit()");
   }
 }

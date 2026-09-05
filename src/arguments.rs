@@ -67,30 +67,18 @@ pub(crate) struct Arguments {
 
 impl Arguments {
   fn eval(&self, filename: &PathBuf) -> Result {
-    let content = fs::read_to_string(filename)?;
-
-    let filename = filename.to_string_lossy().to_string();
+    let source =
+      Source::new(filename.to_string_lossy(), fs::read_to_string(filename)?);
 
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match parse(&content) {
-      Ok(ast) => match evaluator.evaluate(&ast) {
-        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-        Ok(Evaluation::Value(_)) => Ok(()),
-        Err(error) => {
-          error
-            .report(&filename)
-            .eprint((filename.as_str(), Source::from(content)))?;
-
-          process::exit(1);
-        }
-      },
+    match Self::evaluate(&mut evaluator, &source) {
+      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+      Ok(Evaluation::Value(_)) => Ok(()),
       Err(errors) => {
         for error in errors {
-          error
-            .report(&filename)
-            .eprint((filename.as_str(), Source::from(&content)))?;
+          Self::report(&error, &source, io::stderr())?;
         }
 
         process::exit(1);
@@ -98,35 +86,37 @@ impl Arguments {
     }
   }
 
+  fn evaluate<'a>(
+    evaluator: &mut Evaluator<'a>,
+    source: &Source,
+  ) -> Result<Evaluation<'a>, Vec<Error>> {
+    let ast = parse(source.text())?;
+
+    evaluator.set_source(source.clone());
+
+    evaluator.evaluate(&ast).map_err(|error| vec![error])
+  }
+
   fn evaluate_expression(&self, value: String) -> Result {
+    let source = Source::new("<expression>", value);
+
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match parse(&value) {
-      Ok(ast) => match evaluator.evaluate(&ast) {
-        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-        Ok(Evaluation::Value(value)) => {
-          if let Value::Null = value {
-            return Ok(());
-          }
-
-          println!("{}", value.display(Into::<Config>::into(self)));
-
-          Ok(())
+    match Self::evaluate(&mut evaluator, &source) {
+      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+      Ok(Evaluation::Value(value)) => {
+        if let Value::Null = value {
+          return Ok(());
         }
-        Err(error) => {
-          error
-            .report("<expression>")
-            .eprint(("<expression>", Source::from(value)))?;
 
-          process::exit(1);
-        }
-      },
+        println!("{}", value.display(Into::<Config>::into(self)));
+
+        Ok(())
+      }
       Err(errors) => {
         for error in errors {
-          error
-            .report("<expression>")
-            .eprint(("<expression>", Source::from(&value)))?;
+          Self::report(&error, &source, io::stderr())?;
         }
 
         process::exit(1);
@@ -157,27 +147,17 @@ impl Arguments {
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
-        let content = fs::read_to_string(filename)?;
+        let source = Source::new(
+          filename.to_string_lossy(),
+          fs::read_to_string(filename)?,
+        );
 
-        let filename = filename.to_string_lossy().to_string();
-
-        match parse(&content) {
-          Ok(ast) => match evaluator.evaluate(&ast) {
-            Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-            Ok(Evaluation::Value(_)) => {}
-            Err(error) => {
-              error
-                .report(&filename)
-                .eprint((filename.as_str(), Source::from(content)))?;
-
-              process::exit(1);
-            }
-          },
+        match Self::evaluate(&mut evaluator, &source) {
+          Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+          Ok(Evaluation::Value(_)) => {}
           Err(errors) => {
             for error in errors {
-              error
-                .report(&filename)
-                .eprint((filename.as_str(), Source::from(&content)))?;
+              Self::report(&error, &source, io::stderr())?;
             }
 
             process::exit(1);
@@ -192,26 +172,32 @@ impl Arguments {
       editor.add_history_entry(&line)?;
       editor.save_history(&history)?;
 
-      match parse(&line) {
-        Ok(ast) => match evaluator.evaluate(&ast) {
-          Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-          Ok(Evaluation::Value(value)) if !matches!(value, Value::Null) => {
-            println!("{}", value.display(Into::<Config>::into(self)));
-          }
-          Ok(Evaluation::Value(_)) => {}
-          Err(error) => error
-            .report("<input>")
-            .eprint(("<input>", Source::from(&line)))?,
-        },
+      let source = Source::new("<input>", line);
+
+      match Self::evaluate(&mut evaluator, &source) {
+        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+        Ok(Evaluation::Value(value)) if !matches!(value, Value::Null) => {
+          println!("{}", value.display(Into::<Config>::into(self)));
+        }
+        Ok(Evaluation::Value(_)) => {}
         Err(errors) => {
           for error in errors {
-            error
-              .report("<input>")
-              .eprint(("<input>", Source::from(&line)))?;
+            Self::report(&error, &source, io::stderr())?;
           }
         }
       }
     }
+  }
+
+  fn report(error: &Error, source: &Source, writer: impl io::Write) -> Result {
+    let source = error.origin().unwrap_or(source);
+
+    error.report(source.name()).write(
+      (source.name(), ariadne::Source::from(source.text())),
+      writer,
+    )?;
+
+    Ok(())
   }
 
   pub(crate) fn run(self) -> Result {
@@ -299,6 +285,145 @@ mod tests {
   }
 
   #[test]
+  fn error_sources() {
+    #[track_caller]
+    fn case(inputs: &[(&str, &str)], expected: usize, span: &str) {
+      let sources = inputs
+        .iter()
+        .map(|(name, text)| Source::new(*name, *text))
+        .collect::<Vec<_>>();
+
+      let (source, definitions) = sources.split_last().unwrap();
+
+      let mut evaluator = Evaluator::from(Environment::new(Config::default()));
+
+      for source in definitions {
+        Arguments::evaluate(&mut evaluator, source).unwrap();
+      }
+
+      let errors = Arguments::evaluate(&mut evaluator, source).unwrap_err();
+
+      let [error] = errors.as_slice() else {
+        panic!("expected one error");
+      };
+
+      let expected = &sources[expected];
+
+      assert_eq!(error.origin(), Some(expected));
+      assert_eq!(
+        expected
+          .text()
+          .get(error.span().into_range())
+          .map(str::trim),
+        Some(span)
+      );
+
+      let mut report = Vec::new();
+
+      Arguments::report(error, source, &mut report).unwrap();
+
+      let report = String::from_utf8(report).unwrap();
+
+      assert!(report.contains(expected.name()), "{report}");
+      assert!(report.contains(expected.text()), "{report}");
+    }
+
+    case(
+      &[("<input>", "fn foo() { bar }"), ("<input>", "foo()")],
+      0,
+      "bar",
+    );
+    case(
+      &[
+        ("<input>", "fn foo() { bar }"),
+        ("<input>", "foo(); 'éééééééé'"),
+      ],
+      0,
+      "bar",
+    );
+    case(
+      &[
+        ("foo.val", "fn foo() { bar }"),
+        ("bar.val", "fn baz() { foo() }"),
+        ("<input>", "baz()"),
+      ],
+      0,
+      "bar",
+    );
+    case(
+      &[
+        ("foo.val", "fn foo() { bar }"),
+        ("bar.val", "foo(); 'éééééééé'"),
+      ],
+      0,
+      "bar",
+    );
+    case(
+      &[
+        ("foo.val", "fn foo() { fn() { bar } }"),
+        ("<input>", "baz = foo()"),
+        ("<input>", "baz()"),
+      ],
+      0,
+      "bar",
+    );
+    case(
+      &[("<input>", "foo = [fn() { bar }]"), ("<input>", "foo[0]()")],
+      0,
+      "bar",
+    );
+    case(
+      &[
+        ("foo.val", "fn foo(bar) { bar() }"),
+        ("<input>", "foo(fn() { baz })"),
+      ],
+      1,
+      "baz",
+    );
+    case(
+      &[("<input>", "fn foo() { 'é'; bar }"), ("<input>", "foo()")],
+      0,
+      "bar",
+    );
+    case(
+      &[("foo.val", "fn foo() { bar }"), ("<input>", "foo(1)")],
+      1,
+      "foo(1)",
+    );
+    case(
+      &[("foo.val", "fn foo(bar) { bar }"), ("<input>", "foo(baz)")],
+      1,
+      "baz",
+    );
+    case(
+      &[("foo.val", "fn foo() {}"), ("<input>", "sqrt(-1)")],
+      1,
+      "sqrt(-1)",
+    );
+  }
+
+  #[test]
+  fn exit_preserves_control_flow() {
+    #[track_caller]
+    fn case(definition: &str) {
+      let mut evaluator = Evaluator::from(Environment::new(Config::default()));
+
+      Arguments::evaluate(&mut evaluator, &Source::new("foo.val", definition))
+        .unwrap();
+
+      let result =
+        Arguments::evaluate(&mut evaluator, &Source::new("<input>", "foo()"))
+          .unwrap();
+
+      assert!(matches!(result, Evaluation::Exit { code: 1, .. }));
+    }
+
+    case("fn foo() { exit(1) }");
+    case("fn foo() { quit(1) }");
+    case("fn bar() { exit(1) }; fn foo() { bar() }");
+  }
+
+  #[test]
   fn expression_only() {
     let arguments =
       Arguments::parse_from(vec!["program", "--expression", "1 + 2"]);
@@ -363,5 +488,30 @@ mod tests {
 
       assert!(result.is_err());
     }
+  }
+
+  #[test]
+  fn parser_error_uses_current_source() {
+    let mut evaluator = Evaluator::from(Environment::new(Config::default()));
+
+    Arguments::evaluate(
+      &mut evaluator,
+      &Source::new("foo.val", "fn foo() { bar }"),
+    )
+    .unwrap();
+
+    let source = Source::new("<input>", "'éééééééé'; (");
+
+    let errors = Arguments::evaluate(&mut evaluator, &source).unwrap_err();
+    let mut report = Vec::new();
+
+    for error in errors {
+      Arguments::report(&error, &source, &mut report).unwrap();
+    }
+
+    let report = String::from_utf8(report).unwrap();
+
+    assert!(report.contains(source.name()), "{report}");
+    assert!(report.contains(source.text()), "{report}");
   }
 }
