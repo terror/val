@@ -8,8 +8,6 @@ pub(crate) struct Highlighter<'src> {
 
 impl<'src> Highlighter<'src> {
   fn apply_color_spans(&self, spans: &[HighlightSpan]) -> Cow<'src, str> {
-    let spans = self.normalize_spans(spans);
-
     if spans.is_empty() {
       return Cow::Borrowed(self.content);
     }
@@ -138,38 +136,6 @@ impl<'src> Highlighter<'src> {
     }
 
     self.content[cursor..].chars().next()
-  }
-
-  fn normalize_spans(&self, spans: &[HighlightSpan]) -> Vec<HighlightSpan> {
-    let mut spans = spans
-      .iter()
-      .copied()
-      .filter(|span| span.start < span.end && span.end <= self.content.len())
-      .collect::<Vec<_>>();
-
-    spans.sort_by_key(|span| (span.start, span.end));
-
-    let mut normalized = Vec::<HighlightSpan>::new();
-
-    for span in spans {
-      if let Some(last) = normalized.last_mut() {
-        if last.start == span.start && last.end == span.end {
-          *last = span;
-        } else if span.start < last.end {
-          let span = HighlightSpan::new(last.end, span.end, span.kind);
-
-          if span.start < span.end {
-            normalized.push(span);
-          }
-        } else {
-          normalized.push(span);
-        }
-      } else {
-        normalized.push(span);
-      }
-    }
-
-    normalized
   }
 
   fn scan_comment(&self, start: usize) -> Option<usize> {
