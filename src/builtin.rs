@@ -105,6 +105,7 @@ mod cot;
 mod csc;
 mod e;
 mod exit;
+mod filter;
 mod float;
 mod floor;
 mod gcd;

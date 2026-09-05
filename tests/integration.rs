@@ -1057,6 +1057,91 @@ fn fibonacci_function() -> Result {
 }
 
 #[test]
+fn filter() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_stdout(Exact(expected))
+      .run()
+  }
+
+  case(
+    "println(filter([1, 2, 3, 4], fn(foo) { foo%2 == 0 }))",
+    "[2, 4]\n",
+  )?;
+  case("println(filter([0, 1, 2], bool))", "[1, 2]\n")?;
+  case("println(filter([], fn(foo) { exit(1) }))", "[]\n")?;
+  case(
+    "foo = fn(bar) { true }\nbar = [null, true, 'foo', [1], foo]\nprintln(filter(bar, foo) == bar)",
+    "true\n",
+  )?;
+  case(
+    "println(filter([[1], [2]], fn(foo) { foo[0] = 3; true }))",
+    "[[1], [2]]\n",
+  )
+}
+
+#[test]
+fn filter_callback_closure() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = 0
+      bar = [1, 2, 3]
+      baz = filter(bar, fn(qux) {
+        foo = foo * 10 + qux
+        return qux%2 == 1
+      })
+      println(baz, foo, bar)
+      "
+    })
+    .expected_stdout(Exact("[1, 3] 123 [1, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn filter_errors() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_status(1)
+      .expected_stderr(Contains(expected))
+      .run()
+  }
+
+  case("filter([])", "Function `filter` expects 2 arguments, got 1")?;
+  case("filter('foo', bool)", "'foo' is not a list")?;
+  case("filter([], 'foo')", "'foo' is not a function")?;
+  case(
+    "filter([], fn() {})",
+    "Function `<anonymous>` expects 0 arguments, got 1",
+  )?;
+  case(
+    "filter([], append)",
+    "Function `append` expects 2 arguments, got 1",
+  )?;
+  case("filter([1], abs)", "'1' is not a boolean")?;
+  case("filter(['foo'], abs)", "'foo' is not a number")?;
+  case("filter([1], fn(foo) { 1 / 0 })", "division by zero")
+}
+
+#[test]
+fn filter_exit() -> Result {
+  #[track_caller]
+  fn case(callback: &str) -> Result {
+    Test::new()?
+      .program(&format!("filter([7, 8], {callback})\nprintln('foo')"))
+      .expected_status(7)
+      .run()
+  }
+
+  case("exit")?;
+  case("fn(foo) { exit(foo) }")
+}
+
+#[test]
 fn finding_first_even_number() -> Result {
   Test::new()?
     .program(indoc! {

@@ -365,6 +365,7 @@ if (index == null) {
 | **Collections**   | `len(x)`            | Length of list or string           | `len("hello")`           |
 |                   | `sum(list)`         | Sum list elements                  | `sum([1,2,3])`           |
 |                   | `append(list, val)` | Add element to end of list         | `append([1,2], 3)`       |
+|                   | `filter(list, f)`   | Keep elements where f returns true | `filter([1,2,3], fn(x) { x%2 == 0 })` |
 |                   | `range(a, b[, s])`  | List from a to b, stepping by s    | `range(0, 10)`           |
 | **Conversion**    | `int(x)`            | Convert to integer                 | `int("42")`              |
 |                   | `float(x)`          | Convert to float                   | `float("3.14")`          |
