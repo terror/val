@@ -10,7 +10,7 @@ use {
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
     integer::MiniInteger,
-    ops::Pow,
+    ops::{Pow, PowAssignRound},
   },
   std::{
     borrow::Cow,

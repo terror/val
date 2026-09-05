@@ -47,14 +47,12 @@ impl Number {
   }
 
   fn approx_pow(&self, rhs: &Self, config: Config) -> Self {
-    Self::Approx(
-      Float::with_val_round(
-        config.precision(),
-        self.to_float(config).pow(rhs.to_float(config)),
-        config.rounding_mode,
-      )
-      .0,
-    )
+    self.approx_unary(config, |lhs, round| match rhs {
+      Self::Exact(rhs) if rhs.is_integer() => {
+        lhs.pow_assign_round(rhs.numer(), round)
+      }
+      _ => lhs.pow_assign_round(rhs.to_float(config), round),
+    })
   }
 
   fn approx_unary(
@@ -266,27 +264,14 @@ impl Number {
       return Err(Error::ZeroToNegativePower);
     }
 
-    match (self, rhs) {
-      (Self::Exact(lhs), Self::Exact(exponent)) => {
-        if exponent.is_integer() {
-          if let Some(exponent) = exponent.numer().to_i32() {
-            return Ok(Self::Exact(lhs.clone().pow(exponent)));
-          }
-
-          return Ok(Self::Approx(
-            Float::with_val_round(
-              config.precision(),
-              self.to_float(config).pow(exponent.numer()),
-              config.rounding_mode,
-            )
-            .0,
-          ));
-        }
-
-        Ok(self.approx_pow(rhs, config))
-      }
-      _ => Ok(self.approx_pow(rhs, config)),
+    if let (Self::Exact(lhs), Self::Exact(rhs)) = (self, rhs)
+      && rhs.is_integer()
+      && let Some(rhs) = rhs.numer().to_i32()
+    {
+      return Ok(Self::Exact(lhs.clone().pow(rhs)));
     }
+
+    Ok(self.approx_pow(rhs, config))
   }
 
   /// # Errors
@@ -889,14 +874,57 @@ mod tests {
 
   #[test]
   fn power_preserves_large_exact_exponent() {
-    let config = Config {
-      precision: 2,
-      ..Config::default()
-    };
+    #[track_caller]
+    fn case(lhs: &Number, exponent: &str) {
+      let config = Config {
+        precision: 53,
+        ..Config::default()
+      };
 
-    assert_eq!(
-      Number::from(-1_i64).pow(&Number::from(2_147_483_649_i64), config),
-      Ok(Number::Approx(Float::with_val(2, -1)))
+      assert_eq!(
+        lhs.pow(&Number::try_from(exponent).unwrap(), config),
+        Ok(Number::Approx(Float::with_val(53, -1)))
+      );
+    }
+
+    case(&Number::from(-1_i64), "9007199254740993");
+
+    let lhs = Number::Approx(Float::with_val(53, -1));
+
+    case(&lhs, "9007199254740993");
+    case(&lhs, "-9007199254740993");
+    case(&lhs, "18446744073709551617");
+  }
+
+  #[test]
+  fn power_rounds_with_configured_mode() {
+    #[track_caller]
+    fn case(lhs: &Number, rhs: &Number, rounding_mode: Round, expected: f64) {
+      let config = Config {
+        precision: 2,
+        rounding_mode,
+        ..Config::default()
+      };
+
+      let Number::Approx(number) = lhs.pow(rhs, config).unwrap() else {
+        panic!("expected approximate number");
+      };
+
+      assert_eq!(number, expected);
+      assert_eq!(number.prec(), config.precision());
+    }
+
+    let lhs = Number::Approx(Float::with_val(2, 1.5));
+
+    case(&lhs, &Number::from(2_i64), Round::Up, 3.0);
+
+    case(&lhs, &Number::Approx(Float::with_val(2, 2)), Round::Up, 3.0);
+
+    case(
+      &Number::from(2_i64),
+      &Number::Exact(Rational::from((1, 2))),
+      Round::Down,
+      1.0,
     );
   }
 
