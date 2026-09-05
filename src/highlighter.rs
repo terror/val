@@ -207,7 +207,7 @@ impl<'src> Highlighter<'src> {
   }
 
   fn scan_operator(&self, start: usize) -> Option<usize> {
-    for operator in [">=", "<=", "==", "!=", "&&", "||"] {
+    for operator in [">=", "<=", "==", "!=", "&&", "||", "|>"] {
       if self.content[start..].starts_with(operator) {
         return Some(start + operator.len());
       }
@@ -313,6 +313,20 @@ mod tests {
         HighlightSpan::new(23, 24, HighlightKind::Number),
         HighlightSpan::new(24, 25, HighlightKind::Operator),
         HighlightSpan::new(26, 27, HighlightKind::Operator),
+      ]
+    );
+  }
+
+  #[test]
+  fn pipe_operator() {
+    assert_eq!(
+      Highlighter::new("1 |> foo()").collect_highlight_spans(),
+      [
+        HighlightSpan::new(0, 1, HighlightKind::Number),
+        HighlightSpan::new(2, 4, HighlightKind::Operator),
+        HighlightSpan::new(5, 8, HighlightKind::Function),
+        HighlightSpan::new(8, 9, HighlightKind::Operator),
+        HighlightSpan::new(9, 10, HighlightKind::Operator),
       ]
     );
   }

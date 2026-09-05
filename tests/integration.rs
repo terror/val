@@ -2781,6 +2781,173 @@ fn operator_precedence() -> Result {
 }
 
 #[test]
+fn pipe_operator() -> Result {
+  Test::new()?
+    .program("25 |> sqrt() |> println()")
+    .expected_stdout(Exact("5\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_arithmetic_precedence() -> Result {
+  Test::new()?
+    .program("1 + 2 * 4 |> sqrt() |> println()")
+    .expected_stdout(Exact("3\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_builtin_function_and_constant() -> Result {
+  Test::new()?
+    .program("(1 |> e()) == e(1) |> println()")
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_evaluation_order() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo() {
+        println('foo')
+        fn(bar, baz) { bar + baz }
+      }
+
+      fn bar() {
+        println('bar')
+        2
+      }
+
+      fn baz() {
+        println('baz')
+        3
+      }
+
+      bar() |> foo()(baz()) |> println()
+      "
+    })
+    .expected_stdout(Exact("foo\nbar\nbaz\n5\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_function_returning_callee() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn(bar) {
+        fn(baz, bob) {
+          bar + baz * bob
+        }
+      }
+
+      2 |> foo(3)(4) |> println()
+      "
+    })
+    .expected_stdout(Exact("11\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_invalid_calls() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_status(1)
+      .expected_stdout(Empty)
+      .expected_stderr(Contains(expected))
+      .run()
+  }
+
+  case("println('bar') |> foo()", "Function `foo` is not defined")?;
+  case(
+    indoc! {
+      "
+      foo = 1
+      println('bar') |> foo()
+      "
+    },
+    "`foo` is not a function",
+  )?;
+  case("println('bar') |> ['foo'][0]()", "'foo' is not a function")?;
+  case(
+    "println('bar') |> abs(println('baz'))",
+    "Function `abs` expects 1 argument, got 2",
+  )?;
+  case(
+    indoc! {
+      "
+      fn foo() {}
+      println('bar') |> foo()
+      "
+    },
+    "Function `foo` expects 0 arguments, got 1",
+  )
+}
+
+#[test]
+fn pipe_operator_list_callee() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = [fn(bar, baz) { bar - baz }]
+      5 |> foo[0](2) |> println()
+      "
+    })
+    .expected_stdout(Exact("3\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_logical_precedence() -> Result {
+  Test::new()?
+    .program("false || true && 1 < 2 == true |> println()")
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_multiline() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      25
+      // foo
+      |> sqrt()
+      |> println()
+      "
+    })
+    .expected_stdout(Exact("5\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_nested_argument() -> Result {
+  Test::new()?
+    .program("[1, 2] |> append(9 |> sqrt()) |> println()")
+    .expected_stdout(Exact("[1, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_parenthesized() -> Result {
+  Test::new()?
+    .program("println((25 |> sqrt()) + 1)")
+    .expected_stdout(Exact("6\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_with_arguments() -> Result {
+  Test::new()?
+    .program("[1, 2] |> append(3) |> sum() |> println()")
+    .expected_stdout(Exact("6\n"))
+    .run()
+}
+
+#[test]
 fn power() -> Result {
   Test::new()?
     .program("println(2 ^ 3)")

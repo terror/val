@@ -70,7 +70,9 @@ while                : 'while' '(' expression ')' block
 
 parameters           : IDENTIFIER (',' IDENTIFIER)*
 
-expression           : logical_or
+expression           : pipeline
+
+pipeline             : logical_or ('|>' logical_or)*
 
 logical_or           : logical_and ('||' logical_and)*
 
@@ -123,3 +125,7 @@ The reserved words excluded from `IDENTIFIER` are `break`, `continue`, `else`,
 
 A `NUMBER` cannot be immediately followed by an identifier continuation
 character.
+
+Each expression following `|>` must be a function call. A pipeline inserts
+its left operand as the first argument of that call and associates left to
+right. All other operators bind more tightly than `|>`.
