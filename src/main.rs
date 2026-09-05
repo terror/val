@@ -7,8 +7,6 @@ use {
   highlighter::Highlighter,
   input::Input,
   prompt::Prompt,
-  rounding_mode::RoundingMode,
-  rug::float::Round,
   rustyline::{
     Context, Editor, Helper,
     completion::{Completer, FilenameCompleter, Pair},
@@ -22,16 +20,16 @@ use {
   std::{
     backtrace::BacktraceStatus,
     borrow::{Cow, Cow::Owned},
-    fmt::{self, Display, Formatter},
     fs,
     io::{self, Write},
     num::{NonZeroU32, NonZeroUsize},
     path::PathBuf,
-    process,
-    str::FromStr,
-    thread,
+    process, thread,
   },
-  val::{Config, Environment, Error, Evaluation, Evaluator, Value, parse},
+  val::{
+    Config, Environment, Error, Evaluation, Evaluator, RoundingMode, Value,
+    parse,
+  },
 };
 
 mod arguments;
@@ -40,7 +38,6 @@ mod highlight_span;
 mod highlighter;
 mod input;
 mod prompt;
-mod rounding_mode;
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
