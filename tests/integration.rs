@@ -1058,28 +1058,10 @@ fn fibonacci_function() -> Result {
 
 #[test]
 fn filter() -> Result {
-  #[track_caller]
-  fn case(program: &str, expected: &str) -> Result {
-    Test::new()?
-      .program(program)
-      .expected_stdout(Exact(expected))
-      .run()
-  }
-
-  case(
-    "println(filter([1, 2, 3, 4], fn(foo) { foo%2 == 0 }))",
-    "[2, 4]\n",
-  )?;
-  case("println(filter([0, 1, 2], bool))", "[1, 2]\n")?;
-  case("println(filter([], fn(foo) { exit(1) }))", "[]\n")?;
-  case(
-    "foo = fn(bar) { true }\nbar = [null, true, 'foo', [1], foo]\nprintln(filter(bar, foo) == bar)",
-    "true\n",
-  )?;
-  case(
-    "println(filter([[1], [2]], fn(foo) { foo[0] = 3; true }))",
-    "[[1], [2]]\n",
-  )
+  Test::new()?
+    .program("println(filter([1, 2, 3, 4], fn(foo) { foo%2 == 0 }))")
+    .expected_stdout(Exact("[2, 4]\n"))
+    .run()
 }
 
 #[test]
@@ -1097,6 +1079,14 @@ fn filter_callback_closure() -> Result {
       "
     })
     .expected_stdout(Exact("[1, 3] 123 [1, 2, 3]\n"))
+    .run()
+}
+
+#[test]
+fn filter_empty_list() -> Result {
+  Test::new()?
+    .program("println(filter([], fn(foo) { exit(1) }))")
+    .expected_stdout(Exact("[]\n"))
     .run()
 }
 
@@ -1128,17 +1118,66 @@ fn filter_errors() -> Result {
 }
 
 #[test]
-fn filter_exit() -> Result {
-  #[track_caller]
-  fn case(callback: &str) -> Result {
-    Test::new()?
-      .program(&format!("filter([7, 8], {callback})\nprintln('foo')"))
-      .expected_status(7)
-      .run()
-  }
+fn filter_exit_from_builtin_callback() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      filter([7, 8], exit)
+      println('foo')
+      "
+    })
+    .expected_status(7)
+    .run()
+}
 
-  case("exit")?;
-  case("fn(foo) { exit(foo) }")
+#[test]
+fn filter_exit_from_user_callback() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      filter([7, 8], fn(foo) { exit(foo) })
+      println('foo')
+      "
+    })
+    .expected_status(7)
+    .run()
+}
+
+#[test]
+fn filter_preserves_elements_mutated_by_callback() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(filter([[1], [2]], fn(foo) {
+        foo[0] = 3
+        true
+      }))
+      "
+    })
+    .expected_stdout(Exact("[[1], [2]]\n"))
+    .run()
+}
+
+#[test]
+fn filter_preserves_values() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn(bar) { true }
+      bar = [null, true, 'foo', [1], foo]
+      println(filter(bar, foo) == bar)
+      "
+    })
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
+fn filter_with_builtin_callback() -> Result {
+  Test::new()?
+    .program("println(filter([0, 1, 2], bool))")
+    .expected_stdout(Exact("[1, 2]\n"))
+    .run()
 }
 
 #[test]
