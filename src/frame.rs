@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Debug, Default)]
-pub(crate) struct Frame<'src> {
-  pub(crate) parent: Option<Environment<'src>>,
-  pub(crate) symbols: HashMap<String, Symbol<'src>>,
+pub(crate) struct Frame {
+  pub(crate) parent: Option<Environment>,
+  pub(crate) symbols: HashMap<String, Symbol>,
 }

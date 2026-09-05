@@ -13,7 +13,7 @@ builtin! {
         string
           .split(delimiter)
           .filter(|part| !part.is_empty())
-          .map(|part| Value::String(Cow::Owned(part.to_string())))
+          .map(|part| Value::String(part.to_string()))
           .collect(),
       ))
     }

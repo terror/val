@@ -14,9 +14,9 @@ macro_rules! builtin {
 
     impl $builtin {
       #[allow(clippy::unnecessary_wraps)]
-      fn call<'src>(
-        $payload: &BuiltinFunctionPayload<'src>,
-      ) -> Result<Value<'src>, Error> $body
+      fn call(
+        $payload: &BuiltinFunctionPayload,
+      ) -> Result<Value, Error> $body
     }
 
     impl Builtin for $builtin {
@@ -34,7 +34,7 @@ macro_rules! builtin {
         $name
       }
 
-      fn value<'src>(&self, _: Config) -> Value<'src> {
+      fn value(&self, _: Config) -> Value {
         Value::Function(Function::Builtin {
           arity: $arity,
           function: Self::call,
@@ -74,7 +74,7 @@ macro_rules! builtin {
         $name
       }
 
-      fn value<'src>(&self, config: Config) -> Value<'src> {
+      fn value(&self, config: Config) -> Value {
         Value::Number(Self::constant(config))
       }
     }
@@ -138,5 +138,5 @@ pub trait Builtin: Sync {
 
   fn name(&self) -> &'static str;
 
-  fn value<'src>(&self, config: Config) -> Value<'src>;
+  fn value(&self, config: Config) -> Value;
 }

@@ -1,16 +1,16 @@
 use super::*;
 
 #[derive(Clone, Debug)]
-pub enum Value<'src> {
+pub enum Value {
   Boolean(bool),
-  Function(Function<'src>),
+  Function(Function),
   List(Vec<Self>),
   Null,
   Number(Number),
-  String(Cow<'src, str>),
+  String(String),
 }
 
-impl<'a> Value<'a> {
+impl Value {
   pub(crate) fn boolean(&self, span: Span) -> Result<bool, Error> {
     if let Value::Boolean(x) = self {
       Ok(*x)
@@ -37,18 +37,18 @@ impl<'a> Value<'a> {
       ),
       Value::Null => "null".into(),
       Value::Number(number) => number.display(config),
-      Value::String(string) => string.to_string(),
+      Value::String(string) => string.clone(),
     }
   }
 
-  pub(crate) fn into_list(self, span: Span) -> Result<Vec<Value<'a>>, Error> {
+  pub(crate) fn into_list(self, span: Span) -> Result<Vec<Value>, Error> {
     match self {
       Value::List(x) => Ok(x),
       value => Err(Error::new(span, format!("'{value}' is not a list"))),
     }
   }
 
-  pub(crate) fn list(&self, span: Span) -> Result<&[Value<'a>], Error> {
+  pub(crate) fn list(&self, span: Span) -> Result<&[Value], Error> {
     if let Value::List(x) = self {
       Ok(x)
     } else {
@@ -66,7 +66,7 @@ impl<'a> Value<'a> {
 
   pub(crate) fn string(&self, span: Span) -> Result<&str, Error> {
     if let Value::String(x) = self {
-      Ok(x.as_ref())
+      Ok(x)
     } else {
       Err(Error::new(span, format!("'{self}' is not a string")))
     }
@@ -84,13 +84,13 @@ impl<'a> Value<'a> {
   }
 }
 
-impl Display for Value<'_> {
+impl Display for Value {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     f.write_str(&self.display(Config::default()))
   }
 }
 
-impl PartialEq for Value<'_> {
+impl PartialEq for Value {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Value::Boolean(a), Value::Boolean(b)) => a == b,

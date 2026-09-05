@@ -1,13 +1,13 @@
 use super::*;
 
 #[derive(Clone, Default)]
-pub struct Environment<'src> {
+pub struct Environment {
   pub(crate) config: Config,
-  pub(crate) frame: Rc<RefCell<Frame<'src>>>,
+  pub(crate) frame: Rc<RefCell<Frame>>,
 }
 
-impl<'src> Environment<'src> {
-  pub fn add_function(&self, name: &str, function: Function<'src>) {
+impl Environment {
+  pub fn add_function(&self, name: &str, function: Function) {
     let mut frame = self.frame.borrow_mut();
 
     if let Some(symbol) = frame.symbols.get_mut(name) {
@@ -23,7 +23,7 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub fn add_symbol(&self, name: &str, value: Value<'src>) {
+  pub fn add_symbol(&self, name: &str, value: Value) {
     let mut frame = self.frame.borrow_mut();
 
     if let Some(symbol) = frame.symbols.get_mut(name) {
@@ -42,8 +42,8 @@ impl<'src> Environment<'src> {
   fn assign_existing_symbol(
     &self,
     name: &str,
-    value: Value<'src>,
-  ) -> std::result::Result<(), Value<'src>> {
+    value: Value,
+  ) -> std::result::Result<(), Value> {
     let parent = {
       let mut frame = self.frame.borrow_mut();
 
@@ -62,7 +62,7 @@ impl<'src> Environment<'src> {
     }
   }
 
-  pub(crate) fn assign_symbol(&self, name: &str, value: Value<'src>) {
+  pub(crate) fn assign_symbol(&self, name: &str, value: Value) {
     if let Err(value) = self.assign_existing_symbol(name, value) {
       self.add_symbol(name, value);
     }
@@ -72,7 +72,7 @@ impl<'src> Environment<'src> {
     &self,
     name: &str,
     span: Span,
-  ) -> Result<Function<'src>, Error> {
+  ) -> Result<Function, Error> {
     match self.resolve_function(name) {
       Some(function) => Ok(function),
       None if self.resolve_symbol(name).is_some() => {
@@ -85,7 +85,7 @@ impl<'src> Environment<'src> {
     }
   }
 
-  fn local_function(&self, name: &str) -> Option<Function<'src>> {
+  fn local_function(&self, name: &str) -> Option<Function> {
     let frame = self.frame.borrow();
 
     let symbol = frame.symbols.get(name)?;
@@ -96,7 +96,7 @@ impl<'src> Environment<'src> {
     })
   }
 
-  fn local_symbol(&self, name: &str) -> Option<Value<'src>> {
+  fn local_symbol(&self, name: &str) -> Option<Value> {
     let frame = self.frame.borrow();
 
     let symbol = frame.symbols.get(name)?;
@@ -143,19 +143,19 @@ impl<'src> Environment<'src> {
     environment
   }
 
-  fn resolve_function(&self, name: &str) -> Option<Function<'src>> {
+  fn resolve_function(&self, name: &str) -> Option<Function> {
     self
       .local_function(name)
       .or_else(|| self.frame.borrow().parent.clone()?.resolve_function(name))
   }
 
-  pub(crate) fn resolve_symbol(&self, name: &str) -> Option<Value<'src>> {
+  pub(crate) fn resolve_symbol(&self, name: &str) -> Option<Value> {
     self
       .local_symbol(name)
       .or_else(|| self.frame.borrow().parent.clone()?.resolve_symbol(name))
   }
 
-  pub(crate) fn with_parent(parent: Environment<'src>) -> Self {
+  pub(crate) fn with_parent(parent: Environment) -> Self {
     Self {
       config: parent.config,
       frame: Rc::new(RefCell::new(Frame {
@@ -166,7 +166,7 @@ impl<'src> Environment<'src> {
   }
 }
 
-impl fmt::Debug for Environment<'_> {
+impl fmt::Debug for Environment {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     f.debug_struct("Environment")
       .field("config", &self.config)
