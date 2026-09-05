@@ -16,8 +16,7 @@ builtin! {
         })
       };
 
-      let a = integer(&payload.arguments[0])?.abs();
-      let b = integer(&payload.arguments[1])?.abs();
+      let (a, b) = (integer(&payload.arguments[0])?.abs(), integer(&payload.arguments[1])?.abs());
 
       Ok(Value::Number(Number::from(a.lcm(&b))))
     }
