@@ -568,6 +568,73 @@ mod tests {
   use super::*;
 
   #[test]
+  fn closure_environments_are_reclaimed() {
+    #[track_caller]
+    fn case(source: &str) {
+      for result_first in [false, true] {
+        let mut evaluator = Evaluator::from(Environment::default());
+
+        let frame = Rc::downgrade(&evaluator.environment.frame);
+
+        let result = evaluator.evaluate(&parse(source).unwrap());
+
+        if result_first {
+          drop(result);
+          drop(evaluator);
+        } else {
+          drop(evaluator);
+          drop(result);
+        }
+
+        assert!(frame.upgrade().is_none(), "{source}");
+      }
+    }
+
+    case("fn foo() {}");
+    case("foo = fn() {}");
+    case("foo = [[fn() {}]]");
+    case("fn foo() { fn bar() {}; return bar }; foo()");
+    case("fn foo() {}; bar");
+    case("fn foo() { fn bar() {}; baz }; foo()");
+  }
+
+  #[test]
+  fn discarded_closures_are_reclaimed() {
+    #[track_caller]
+    fn case(source: &str, replacement: &str) {
+      let mut evaluator = Evaluator::from(Environment::default());
+
+      let Evaluation::Value(Value::Function(function)) =
+        evaluator.evaluate(&parse(source).unwrap()).unwrap()
+      else {
+        panic!("expected function");
+      };
+
+      let Function::UserDefined { environment, .. } = &function else {
+        panic!("expected user-defined function");
+      };
+
+      let frame = Rc::downgrade(&environment.frame);
+
+      drop(function);
+
+      evaluator.evaluate(&parse(replacement).unwrap()).unwrap();
+
+      assert!(frame.upgrade().is_none());
+    }
+
+    case(
+      "fn foo() { fn bar() {}; return bar }; baz = foo()",
+      "baz = null",
+    );
+    case(
+      "fn foo() { fn bar() {}; return bar }; baz = [[foo()]]; baz[0][0]",
+      "baz[0][0] = null",
+    );
+    case("fn foo() { fn bar() {}; return bar }; foo()", "null");
+  }
+
+  #[test]
   fn exit_is_evaluation_outcome() {
     #[track_caller]
     fn case(source: &str, expected: i32) {
@@ -588,6 +655,125 @@ mod tests {
     case("fn foo() { exit(1) }\nfoo()", 1);
     case("quit()", 0);
     case("quit(1)", 1);
+  }
+
+  #[test]
+  fn returned_closures_outlive_evaluator() {
+    #[track_caller]
+    fn case(source: &str, expected: &[&str]) {
+      let config = Config::default();
+
+      let mut evaluator = Evaluator::from(Environment::default());
+
+      let root = Rc::downgrade(&evaluator.environment.frame);
+
+      let Evaluation::Value(Value::Function(function)) =
+        evaluator.evaluate(&parse(source).unwrap()).unwrap()
+      else {
+        panic!("expected function");
+      };
+
+      let Function::UserDefined { environment, .. } = &function else {
+        panic!("expected user-defined function");
+      };
+
+      let frame = Rc::downgrade(&environment.frame);
+
+      let cloned = function.clone();
+
+      drop(evaluator);
+      drop(function);
+
+      for expected in expected {
+        assert_eq!(
+          cloned
+            .call(Vec::new(), config, (0..0).into())
+            .unwrap()
+            .to_string(),
+          *expected,
+        );
+      }
+
+      drop(cloned);
+
+      assert!(frame.upgrade().is_none());
+      assert!(root.upgrade().is_none());
+    }
+
+    case(
+      "foo = 0; fn bar() { foo = foo + 1; return foo }",
+      &["1", "2"],
+    );
+    case(
+      "fn foo(bar) { fn baz() { bar = bar + 1; return bar }; return baz }; foo(0)",
+      &["1", "2"],
+    );
+    case(
+      "fn foo(bar) { baz = fn() { bar = bar + 1; return bar }; return baz }; foo(0)",
+      &["1", "2"],
+    );
+    case(
+      "fn foo() { fn bar(baz) { if (baz == 0) { return 1 }; return baz * bar(baz - 1) }; return fn() { return bar(5) } }; foo()",
+      &["120"],
+    );
+  }
+
+  #[test]
+  fn returned_closures_share_environment() {
+    let mut evaluator = Evaluator::from(Environment::default());
+
+    let root = Rc::downgrade(&evaluator.environment.frame);
+
+    let Evaluation::Value(Value::List(mut functions)) = evaluator
+      .evaluate(
+        &parse(
+          "fn foo(bar) { fn baz() { bar = bar + 1; return bar }; return [baz, fn() { return bar }] }; foo(0)",
+        )
+        .unwrap(),
+      )
+      .unwrap()
+    else {
+      panic!("expected list");
+    };
+
+    drop(evaluator);
+
+    let Value::Function(read) = functions.pop().unwrap() else {
+      panic!("expected function");
+    };
+
+    let Value::Function(write) = functions.pop().unwrap() else {
+      panic!("expected function");
+    };
+
+    let Function::UserDefined { environment, .. } = &read else {
+      panic!("expected user-defined function");
+    };
+
+    let frame = Rc::downgrade(&environment.frame);
+
+    assert_eq!(
+      write
+        .call(Vec::new(), Config::default(), (0..0).into())
+        .unwrap()
+        .to_string(),
+      "1",
+    );
+
+    drop(write);
+
+    assert_eq!(
+      read
+        .call(Vec::new(), Config::default(), (0..0).into())
+        .unwrap()
+        .to_string(),
+      "1",
+    );
+
+    drop(read);
+
+    assert!(frame.upgrade().is_none());
+    assert!(root.upgrade().is_none());
   }
 
   #[test]

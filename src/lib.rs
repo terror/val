@@ -3,6 +3,7 @@ use {
   ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   builtins::BUILTINS,
   chumsky::prelude::*,
+  collector::Collector,
   context::Context,
   decimal::Decimal,
   frame::Frame,
@@ -46,6 +47,7 @@ mod builtin_arity;
 mod builtin_function;
 mod builtin_function_payload;
 mod builtins;
+mod collector;
 mod completion;
 mod config;
 mod context;

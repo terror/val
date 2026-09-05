@@ -167,3 +167,9 @@ impl fmt::Debug for Environment<'_> {
       .finish_non_exhaustive()
   }
 }
+
+impl Drop for Environment<'_> {
+  fn drop(&mut self) {
+    Collector::collect(self);
+  }
+}
