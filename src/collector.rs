@@ -65,17 +65,18 @@ impl<'src> Collector<'src> {
       }
 
       candidate.reachable = true;
+
       pending.extend(&candidate.references);
     }
 
-    let garbage = collector
-      .candidates
-      .iter()
-      .filter(|candidate| !candidate.reachable)
-      .map(|candidate| std::mem::take(&mut *candidate.frame.borrow_mut()))
-      .collect::<Vec<_>>();
-
-    drop(garbage);
+    drop(
+      collector
+        .candidates
+        .iter()
+        .filter(|candidate| !candidate.reachable)
+        .map(|candidate| std::mem::take(&mut *candidate.frame.borrow_mut()))
+        .collect::<Vec<_>>(),
+    );
   }
 
   fn environment(&mut self, environment: &Environment<'src>) -> usize {
