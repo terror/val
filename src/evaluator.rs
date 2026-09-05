@@ -19,17 +19,35 @@ impl<'a> Evaluator<'a> {
       AssignmentTarget::ListAccess(_, _) => {
         let (name, name_span) = target.0.root(target.1);
 
-        let indices = target.0.indices();
-
-        let Some(root) = self.environment.resolve_symbol(name) else {
+        let Some(mut root) = self.environment.resolve_symbol(name) else {
           return Err(Error::new(
             name_span,
             format!("Undefined variable `{name}`"),
           ));
         };
 
-        let root =
-          self.assign_indices(name, root, &indices, value, target.1)?;
+        let mut indices = Vec::new();
+
+        for index in target.0.indices() {
+          let current = Self::assignment_value(target, &mut root, &indices)?;
+
+          if !matches!(current, Value::List(_)) {
+            return Err(Error::new(
+              index.1,
+              format!(
+                "'{}' is not a list (found {})",
+                name,
+                current.type_name()
+              ),
+            ));
+          }
+
+          indices.push((self.evaluate_list_index(index)?, index.1));
+
+          root = self.environment.resolve_symbol(name).unwrap();
+        }
+
+        *Self::assignment_value(target, &mut root, &indices)? = value;
 
         self.environment.assign_symbol(name, root);
 
@@ -38,46 +56,34 @@ impl<'a> Evaluator<'a> {
     }
   }
 
-  fn assign_indices(
-    &mut self,
-    name: &str,
-    value: Value<'a>,
-    indices: &[&Spanned<Expression>],
-    assigned: Value<'a>,
-    span: Span,
-  ) -> Result<Value<'a>, Error> {
-    let Some((index, rest)) = indices.split_first() else {
-      return Ok(assigned);
-    };
-
-    let mut list = match value {
-      Value::List(items) => items,
-      other => {
+  fn assignment_value<'value>(
+    target: &Spanned<AssignmentTarget>,
+    mut value: &'value mut Value<'a>,
+    indices: &[Spanned<usize>],
+  ) -> Result<&'value mut Value<'a>, Error> {
+    for (index, span) in indices {
+      let Value::List(list) = value else {
         return Err(Error::new(
-          index.1,
-          format!("'{}' is not a list (found {})", name, other.type_name()),
+          *span,
+          format!(
+            "'{}' is not a list (found {})",
+            target.0.root(target.1).0,
+            value.type_name()
+          ),
         ));
-      }
-    };
+      };
 
-    let index = self.evaluate_list_index(index)?;
+      let length = list.len();
 
-    if index >= list.len() {
-      return Err(Error::new(
-        span,
-        format!(
-          "Index {} out of bounds for list of length {}",
-          index,
-          list.len()
-        ),
-      ));
+      value = list.get_mut(*index).ok_or_else(|| {
+        Error::new(
+          target.1,
+          format!("Index {index} out of bounds for list of length {length}"),
+        )
+      })?;
     }
 
-    let value = std::mem::replace(&mut list[index], Value::Null);
-
-    list[index] = self.assign_indices(name, value, rest, assigned, span)?;
-
-    Ok(Value::List(list))
+    Ok(value)
   }
 
   pub(crate) fn enter_function<T>(

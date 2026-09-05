@@ -6,6 +6,7 @@ use {
   std::{fs::File, io::Write, process::Command, str},
   tempfile::TempDir,
   unindent::Unindent,
+  val::{Config, Environment, Error, Evaluation, Evaluator, parse},
 };
 
 #[derive(Clone, Debug)]
@@ -2242,6 +2243,156 @@ fn list_concatenation() -> Result {
     .expected_status(0)
     .expected_stdout(Exact("[1, 2, 3, 4, 5, 6]\n[1, 2, 3]\n[4, 5, 6]\n[]\n[1, 2, 3, 'a', 'b', 'c', true, false]\n[[1, 2], [3, 4], [5, 6]]\n[0, 1, 2, 3]\n[1, 2, 3, 4]\n"))
     .run()
+}
+
+#[test]
+fn list_element_assignment_errors() {
+  #[track_caller]
+  fn case(
+    setup: &str,
+    assignment: &str,
+    expected_error: Error,
+    expected: Option<&str>,
+  ) {
+    let config = Config::default();
+    let mut evaluator = Evaluator::from(Environment::new(config));
+
+    evaluator.evaluate(&parse(setup).unwrap()).unwrap();
+
+    assert_eq!(
+      evaluator.evaluate(&parse(assignment).unwrap()),
+      Err(expected_error)
+    );
+    let result = evaluator.evaluate(&parse("foo").unwrap());
+
+    if let Some(expected) = expected {
+      let Evaluation::Value(value) = result.unwrap() else {
+        panic!("expected value");
+      };
+
+      assert_eq!(value.display(config), expected);
+    } else {
+      assert_eq!(
+        result,
+        Err(Error::new((0..3).into(), "Undefined variable `foo`"))
+      );
+    }
+  }
+
+  case(
+    "fn bar() { foo = null; return 0 }",
+    "foo[bar()] = 2",
+    Error::new((0..3).into(), "Undefined variable `foo`"),
+    None,
+  );
+  case(
+    "foo = 0; fn bar() { foo = null; return 0 }",
+    "foo[bar()] = 2",
+    Error::new((4..9).into(), "'foo' is not a list (found number)"),
+    Some("0"),
+  );
+  case(
+    "foo = [0]; fn bar() { foo = null; return 0 }",
+    "foo[0][bar()] = 2",
+    Error::new((7..12).into(), "'foo' is not a list (found number)"),
+    Some("[0]"),
+  );
+  case(
+    "foo = []; fn bar() { foo = null; return 0 }",
+    "foo[0][bar()] = 2",
+    Error::new((0..14).into(), "Index 0 out of bounds for list of length 0"),
+    Some("[]"),
+  );
+  case(
+    "foo = [0]; fn bar() { foo = []; return 0 }",
+    "foo[bar()][1 / 0] = 2",
+    Error::new((0..18).into(), "Index 0 out of bounds for list of length 0"),
+    Some("[]"),
+  );
+  case(
+    "foo = [0]; fn bar() { foo = 0; return 0 }",
+    "foo[bar()][1 / 0] = 2",
+    Error::new((4..9).into(), "'foo' is not a list (found number)"),
+    Some("0"),
+  );
+  case(
+    "foo = [[0]]; fn bar() { foo = []; return 0 }",
+    "foo[0][bar()] = 2",
+    Error::new((0..14).into(), "Index 0 out of bounds for list of length 0"),
+    Some("[]"),
+  );
+  case(
+    "foo = [[0]]; fn bar() { foo[0] = 0; return 0 }",
+    "foo[0][bar()] = 2",
+    Error::new((7..12).into(), "'foo' is not a list (found number)"),
+    Some("[0]"),
+  );
+  case(
+    "foo = [0]; fn bar() { foo[0] = 1; return -1 }",
+    "foo[bar()][1 / 0] = 2",
+    Error::new(
+      (4..9).into(),
+      "List index must be a non-negative finite number",
+    ),
+    Some("[1]"),
+  );
+}
+
+#[test]
+fn list_element_assignment_evaluation_order() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = [[0]]
+      bar = []
+      fn baz(value) {
+        bar = bar + [value]
+        return 0
+      }
+      foo[baz(1)][baz(2)] = baz(0)
+      println(bar)
+      "
+    })
+    .expected_stdout(Exact("[0, 1, 2]\n"))
+    .run()
+}
+
+#[test]
+fn list_element_assignment_preserves_side_effects() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_stdout(Exact(expected))
+      .run()
+  }
+
+  case(
+    "foo = [0, 0]; fn bar() { foo[1] = 1; return 0 };
+     foo[bar()] = 2; println(foo)",
+    "[2, 1]\n",
+  )?;
+  case(
+    "foo = [[0, 0], [0, 0]]; fn bar(index) {
+       foo[0][1] = foo[0][1] + 1; foo[1][index] = 1; return 0
+     }; foo[bar(0)][bar(1)] = 2; println(foo)",
+    "[[2, 2], [1, 1]]\n",
+  )?;
+  case(
+    "foo = []; fn bar() { foo = [0, 1]; return 0 };
+     foo[bar()] = 2; println(foo)",
+    "[2, 1]\n",
+  )?;
+  case(
+    "foo = [0]; fn bar() { foo[0] = [0, 1]; return 0 };
+     foo[bar()][0] = 2; println(foo)",
+    "[[2, 1]]\n",
+  )?;
+  case(
+    "foo = [[0]]; fn bar() { foo = [[0, 1], [1]]; return 0 };
+     foo[0][bar()] = 2; println(foo)",
+    "[[2, 1], [1]]\n",
+  )
 }
 
 #[test]
