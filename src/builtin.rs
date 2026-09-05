@@ -117,6 +117,7 @@ mod list;
 mod ln;
 mod log10;
 mod log2;
+mod map;
 mod print;
 mod println;
 mod range;

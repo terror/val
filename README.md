@@ -363,6 +363,7 @@ if (index == null) {
 |                   | `gcd(a, b)`         | Greatest common divisor            | `gcd(12, 8)`             |
 |                   | `lcm(a, b)`         | Least common multiple              | `lcm(4, 6)`              |
 | **Collections**   | `len(x)`            | Length of list or string           | `len("hello")`           |
+|                   | `map(list, f)`      | Apply f to each list element       | `map([1,2,3], fn(x) { x^2 })` |
 |                   | `sum(list)`         | Sum list elements                  | `sum([1,2,3])`           |
 |                   | `append(list, val)` | Add element to end of list         | `append([1,2], 3)`       |
 |                   | `range(a, b[, s])`  | List from a to b, stepping by s    | `range(0, 10)`           |
