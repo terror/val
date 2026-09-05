@@ -1,7 +1,6 @@
 use {
   ariadne::{Color, IndexType, Label, Report, ReportKind},
   ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
-  builtins::BUILTINS,
   chumsky::prelude::*,
   context::Context,
   decimal::Decimal,
@@ -18,6 +17,7 @@ use {
     cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},
+    iter::once,
     num::NonZeroUsize,
     ops::Range,
     rc::Rc,
@@ -28,7 +28,6 @@ use {
 
 pub use crate::{
   builtin::Builtin, builtin_arity::BuiltinArity,
-  builtin_function::BuiltinFunction,
   builtin_function_payload::BuiltinFunctionPayload, completion::Completion,
   config::Config, environment::Environment, error::Error,
   evaluation::Evaluation, evaluator::Evaluator, function::Function,
@@ -43,9 +42,7 @@ type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 pub mod ast;
 mod builtin;
 mod builtin_arity;
-mod builtin_function;
 mod builtin_function_payload;
-mod builtins;
 mod completion;
 mod config;
 mod context;

@@ -4,7 +4,9 @@ use super::*;
 pub enum Function<'src> {
   Builtin {
     arity: BuiltinArity,
-    function: BuiltinFunction,
+    function: for<'call> fn(
+      &BuiltinFunctionPayload<'call>,
+    ) -> Result<Value<'call>, Error>,
     name: &'src str,
   },
   UserDefined {
@@ -24,10 +26,11 @@ impl<'src> Function<'src> {
     span: Span,
   ) -> Result<Value<'src>, Error> {
     match self {
-      Self::Builtin { function, .. } => {
-        function.call(&BuiltinFunctionPayload {
+      Self::Builtin { function, name, .. } => {
+        function(&BuiltinFunctionPayload {
           arguments,
           config,
+          name,
           span,
         })
       }
