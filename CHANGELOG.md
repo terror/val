@@ -1,5 +1,50 @@
 # Changelog
 
+## [0.4.2](https://github.com/terror/val/releases/tag/0.4.2) - 2026-09-04
+
+### Fixed
+
+- Fix configured formatting in concatenation ([#135](https://github.com/terror/val/pull/135) by [terror](https://github.com/terror))
+- Fix frontend dependency vulnerabilities ([#137](https://github.com/terror/val/pull/137) by [terror](https://github.com/terror))
+- Fix repl input leak ([#138](https://github.com/terror/val/pull/138) by [terror](https://github.com/terror))
+- Fix range boundary overflow ([#139](https://github.com/terror/val/pull/139) by [terror](https://github.com/terror))
+- Compare functions by identity ([#142](https://github.com/terror/val/pull/142) by [terror](https://github.com/terror))
+- Publish crate before release tag ([#143](https://github.com/terror/val/pull/143) by [terror](https://github.com/terror))
+- Prevent invalid number arithmetic from panicking ([#144](https://github.com/terror/val/pull/144) by [terror](https://github.com/terror))
+- Respect terminal color preferences ([#148](https://github.com/terror/val/pull/148) by [terror](https://github.com/terror))
+- Make evaluator exits recoverable ([#149](https://github.com/terror/val/pull/149) by [terror](https://github.com/terror))
+- Fix approximate remainder precision ([#150](https://github.com/terror/val/pull/150) by [terror](https://github.com/terror))
+- Fix mixed arithmetic rounding ([#151](https://github.com/terror/val/pull/151) by [terror](https://github.com/terror))
+- Fix large exponent parity ([#152](https://github.com/terror/val/pull/152) by [terror](https://github.com/terror))
+- Remove broken WSL bash workaround ([#156](https://github.com/terror/val/pull/156) by [terror](https://github.com/terror))
+- Fix scientific notation parsing ([#157](https://github.com/terror/val/pull/157) by [terror](https://github.com/terror))
+- Fix exponentiation rounding and exact exponents ([#158](https://github.com/terror/val/pull/158) by [terror](https://github.com/terror))
+
+### Misc
+
+- Track code coverage metrics ([#136](https://github.com/terror/val/pull/136) by [terror](https://github.com/terror))
+- Update grammar to match parser ([#140](https://github.com/terror/val/pull/140) by [terror](https://github.com/terror))
+- Order tests alphabetically ([#141](https://github.com/terror/val/pull/141) by [terror](https://github.com/terror))
+- Reduce evaluator cloning ([#145](https://github.com/terror/val/pull/145) by [terror](https://github.com/terror))
+- Use GMP factor removal for decimals ([#146](https://github.com/terror/val/pull/146) by [terror](https://github.com/terror))
+- Consolidate error types ([#147](https://github.com/terror/val/pull/147) by [terror](https://github.com/terror))
+- Bump clap from 4.6.4 to 4.6.5 ([#153](https://github.com/terror/val/pull/153) by [app/dependabot](https://github.com/app/dependabot))
+- Bump thiserror from 2.0.19 to 2.0.20 ([#154](https://github.com/terror/val/pull/154) by [app/dependabot](https://github.com/app/dependabot))
+- Bump clap from 4.6.5 to 4.6.6 ([#155](https://github.com/terror/val/pull/155) by [app/dependabot](https://github.com/app/dependabot))
+- Flatten WASM AST converter ([#163](https://github.com/terror/val/pull/163) by [terror](https://github.com/terror))
+- Remove unnecessary span normalization ([#164](https://github.com/terror/val/pull/164) by [terror](https://github.com/terror))
+- Register builtins with inventory ([#165](https://github.com/terror/val/pull/165) by [terror](https://github.com/terror))
+- Share command-line evaluation and diagnostics ([#166](https://github.com/terror/val/pull/166) by [terror](https://github.com/terror))
+- Simplify runtime ownership types ([#167](https://github.com/terror/val/pull/167) by [terror](https://github.com/terror))
+- Reuse block evaluation in loops ([#168](https://github.com/terror/val/pull/168) by [terror](https://github.com/terror))
+- Extract statement list formatting ([#169](https://github.com/terror/val/pull/169) by [terror](https://github.com/terror))
+- Derive `PartialEq` for `Value` ([#170](https://github.com/terror/val/pull/170) by [terror](https://github.com/terror))
+- Remove unused web toast dependencies ([#171](https://github.com/terror/val/pull/171) by [terror](https://github.com/terror))
+- Use default entries for environment insertion ([#172](https://github.com/terror/val/pull/172) by [terror](https://github.com/terror))
+- Remove unreachable remainder conversion fallbacks ([#173](https://github.com/terror/val/pull/173) by [terror](https://github.com/terror))
+- Use chumsky `into_result` for parsing ([#174](https://github.com/terror/val/pull/174) by [terror](https://github.com/terror))
+- Use library `RoundingMode` in binary ([#175](https://github.com/terror/val/pull/175) by [terror](https://github.com/terror))
+
 ## [0.4.1](https://github.com/terror/val/releases/tag/0.4.1) - 2026-07-31
 
 ### Fixed
