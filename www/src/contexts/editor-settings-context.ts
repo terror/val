@@ -16,6 +16,41 @@ export const defaultSettings: EditorSettings = {
   tabSize: 2,
 };
 
+export function deserializeSettings(value: string): EditorSettings {
+  const saved: unknown = JSON.parse(value);
+
+  if (saved === null || typeof saved !== 'object' || Array.isArray(saved)) {
+    return defaultSettings;
+  }
+
+  const settings = saved as Record<string, unknown>;
+
+  return {
+    fontSize:
+      typeof settings.fontSize === 'number' &&
+      [12, 14, 16, 18].includes(settings.fontSize)
+        ? settings.fontSize
+        : defaultSettings.fontSize,
+    keybindings:
+      settings.keybindings === 'default' || settings.keybindings === 'vim'
+        ? settings.keybindings
+        : defaultSettings.keybindings,
+    lineNumbers:
+      typeof settings.lineNumbers === 'boolean'
+        ? settings.lineNumbers
+        : defaultSettings.lineNumbers,
+    lineWrapping:
+      typeof settings.lineWrapping === 'boolean'
+        ? settings.lineWrapping
+        : defaultSettings.lineWrapping,
+    tabSize:
+      typeof settings.tabSize === 'number' &&
+      [2, 4, 8].includes(settings.tabSize)
+        ? settings.tabSize
+        : defaultSettings.tabSize,
+  };
+}
+
 type EditorSettingsContextType = {
   settings: EditorSettings;
   updateSettings: (settings: Partial<EditorSettings>) => void;

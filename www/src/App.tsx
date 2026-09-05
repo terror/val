@@ -15,6 +15,7 @@ import { usePersistedDoc } from './hooks/use-persisted-doc';
 import { useValAst } from './hooks/use-val-ast';
 import { useValWasm } from './hooks/use-val-wasm';
 import { examples } from './lib/examples';
+import { storage } from './lib/storage';
 
 const STORAGE_KEY_CODE = 'val-editor-code';
 const STORAGE_KEY_EXAMPLE = 'val-editor-example';
@@ -29,9 +30,10 @@ function App() {
   );
 
   const [currentExample, setCurrentExample] = useState(() => {
-    const savedExample = localStorage.getItem(STORAGE_KEY_EXAMPLE);
+    const savedExample = storage.getItem(STORAGE_KEY_EXAMPLE);
 
-    return savedExample && savedExample in examples
+    return savedExample &&
+      Object.prototype.hasOwnProperty.call(examples, savedExample)
       ? savedExample
       : DEFAULT_EXAMPLE;
   });
@@ -58,11 +60,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
+    storage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
   }, [currentExample]);
 
   const handleExampleChange = (value: string) => {
-    if (!(value in examples)) {
+    if (!Object.prototype.hasOwnProperty.call(examples, value)) {
       return;
     }
 
@@ -95,6 +97,7 @@ function App() {
         <ResizablePanelGroup
           key={panelDirection}
           autoSaveId={`${PANEL_LAYOUT_STORAGE_KEY}:${panelDirection}`}
+          storage={storage}
           direction={panelDirection}
           className='h-full rounded border'
         >

@@ -1,17 +1,14 @@
+import { storage } from '@/lib/storage';
 import { useCallback, useEffect, useState } from 'react';
 
 export function usePersistedDoc(
   key: string,
   fallback: string
 ): [string, (value: string) => void] {
-  const [value, setValue] = useState<string>(() => {
-    const stored = window.localStorage.getItem(key);
-
-    return stored && stored.length > 0 ? stored : fallback;
-  });
+  const [value, setValue] = useState(() => storage.getItem(key) ?? fallback);
 
   useEffect(() => {
-    window.localStorage.setItem(key, value);
+    storage.setItem(key, value);
   }, [key, value]);
 
   return [value, useCallback((next: string) => setValue(next), [])];
