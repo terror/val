@@ -22,6 +22,7 @@ use {
     ops::Range,
     rc::Rc,
     str::FromStr,
+    sync::Arc,
   },
   symbol::Symbol,
 };
@@ -32,7 +33,8 @@ pub use crate::{
   builtin_function_payload::BuiltinFunctionPayload, completion::Completion,
   config::Config, environment::Environment, error::Error,
   evaluation::Evaluation, evaluator::Evaluator, function::Function,
-  number::Number, parser::parse, rounding_mode::RoundingMode, value::Value,
+  number::Number, parser::parse, rounding_mode::RoundingMode, source::Source,
+  value::Value,
 };
 
 pub type Span = SimpleSpan<usize>;
@@ -59,5 +61,6 @@ mod function;
 mod number;
 mod parser;
 mod rounding_mode;
+mod source;
 mod symbol;
 mod value;

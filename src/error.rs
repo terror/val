@@ -13,7 +13,11 @@ pub enum Error {
   #[error("modulo by zero")]
   ModuloByZero,
   #[error("{error}")]
-  Spanned { error: Box<Self>, span: Span },
+  Spanned {
+    error: Box<Self>,
+    origin: Option<Source>,
+    span: Span,
+  },
   #[error("zero cannot be raised to a negative power")]
   ZeroToNegativePower,
 }
@@ -21,6 +25,14 @@ pub enum Error {
 impl Error {
   pub fn new(span: Span, message: impl Into<String>) -> Self {
     Self::Message(message.into()).with_span(span)
+  }
+
+  #[must_use]
+  pub fn origin(&self) -> Option<&Source> {
+    match self {
+      Self::Spanned { origin, .. } => origin.as_ref(),
+      _ => None,
+    }
   }
 
   #[must_use]
@@ -51,13 +63,33 @@ impl Error {
     }
   }
 
+  pub(crate) fn with_source(self, source: Option<&Source>) -> Self {
+    match self {
+      Self::Spanned {
+        error,
+        origin: None,
+        span,
+      } => Self::Spanned {
+        error,
+        origin: source.cloned(),
+        span,
+      },
+      error => error,
+    }
+  }
+
   #[must_use]
   pub fn with_span(self, span: Span) -> Self {
     match self {
       Self::Exit { code, .. } => Self::Exit { code, span },
-      Self::Spanned { error, .. } => Self::Spanned { error, span },
+      Self::Spanned { error, origin, .. } => Self::Spanned {
+        error,
+        origin,
+        span,
+      },
       error => Self::Spanned {
         error: Box::new(error),
+        origin: None,
         span,
       },
     }
