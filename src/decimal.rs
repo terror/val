@@ -15,9 +15,8 @@ impl Decimal {
 
     let exponent = self.point - 1;
 
-    let significant_digits = i64::try_from(significant_digits.get()).unwrap();
-
-    if exponent < -4 || exponent >= significant_digits {
+    if exponent < -4 || i128::from(exponent) >= significant_digits.get() as i128
+    {
       self.scientific_string(exponent)
     } else {
       self.fixed_string()
