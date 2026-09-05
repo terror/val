@@ -30,13 +30,13 @@ impl From<(&Program, &Span)> for AstNode {
         for (statement, span) in statements {
           children.push(Self::from((statement, span)));
         }
-
-        Self {
-          kind: program.kind(),
-          range,
-          children,
-        }
       }
+    }
+
+    Self {
+      kind: program.kind(),
+      range,
+      children,
     }
   }
 }
@@ -53,65 +53,23 @@ impl From<(&Statement, &Span)> for AstNode {
       Statement::Assignment(lhs, rhs) => {
         children.push(Self::from((&lhs.0, &lhs.1)));
         children.push(Self::from((&rhs.0, &rhs.1)));
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
-        }
       }
-      Statement::Block(statements) => {
+      Statement::Block(statements)
+      | Statement::Function(_, _, statements)
+      | Statement::Loop(statements) => {
         for (statement, span) in statements {
           children.push(Self::from((statement, span)));
         }
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
-        }
       }
-      Statement::Break => Self {
-        kind: statement.kind(),
-        range,
-        children,
-      },
-      Statement::Continue => Self {
-        kind: statement.kind(),
-        range,
-        children,
-      },
+      Statement::Break | Statement::Continue => {}
       Statement::Expression(expression) => {
         children.push(Self::from((&expression.0, &expression.1)));
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
-        }
       }
       Statement::For(_, iterable, body) => {
         children.push(Self::from((&iterable.0, &iterable.1)));
 
         for (statement, span) in body {
           children.push(Self::from((statement, span)));
-        }
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
-        }
-      }
-      Statement::Function(_, _, body) => {
-        for (statement, span) in body {
-          children.push(Self::from((statement, span)));
-        }
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
         }
       }
       Statement::If(condition, then_branch, else_branch) => {
@@ -126,33 +84,10 @@ impl From<(&Statement, &Span)> for AstNode {
             children.push(Self::from((statement, span)));
           }
         }
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
-        }
-      }
-      Statement::Loop(body) => {
-        for (statement, span) in body {
-          children.push(Self::from((statement, span)));
-        }
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
-        }
       }
       Statement::Return(expression) => {
         if let Some(expression) = expression {
           children.push(Self::from((&expression.0, &expression.1)));
-        }
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
         }
       }
       Statement::While(condition, body) => {
@@ -161,13 +96,13 @@ impl From<(&Statement, &Span)> for AstNode {
         for (statement, span) in body {
           children.push(Self::from((statement, span)));
         }
-
-        Self {
-          kind: statement.kind(),
-          range,
-          children,
-        }
       }
+    }
+
+    Self {
+      kind: statement.kind(),
+      range,
+      children,
     }
   }
 }
@@ -181,21 +116,17 @@ impl From<(&AssignmentTarget, &Span)> for AstNode {
     let mut children = Vec::new();
 
     match target {
-      AssignmentTarget::Identifier(_) => Self {
-        kind: target.kind(),
-        range,
-        children,
-      },
+      AssignmentTarget::Identifier(_) => {}
       AssignmentTarget::ListAccess(list, index) => {
         children.push(Self::from((&list.0, &list.1)));
         children.push(Self::from((&index.0, &index.1)));
-
-        Self {
-          kind: target.kind(),
-          range,
-          children,
-        }
       }
+    }
+
+    Self {
+      kind: target.kind(),
+      range,
+      children,
     }
   }
 }
@@ -212,27 +143,15 @@ impl From<(&Expression, &Span)> for AstNode {
       Expression::BinaryOp(_, lhs, rhs) => {
         children.push(Self::from((&lhs.0, &lhs.1)));
         children.push(Self::from((&rhs.0, &rhs.1)));
-
-        Self {
-          kind: expression.kind(),
-          range,
-          children,
-        }
       }
-      Expression::Boolean(_) => Self {
-        kind: expression.kind(),
-        range,
-        children,
-      },
+      Expression::Boolean(_)
+      | Expression::Identifier(_)
+      | Expression::Null
+      | Expression::Number(_)
+      | Expression::String(_) => {}
       Expression::Function(_, body) => {
         for (statement, span) in body {
           children.push(Self::from((statement, span)));
-        }
-
-        Self {
-          kind: expression.kind(),
-          range,
-          children,
         }
       }
       Expression::FunctionCall(function, arguments) => {
@@ -241,63 +160,25 @@ impl From<(&Expression, &Span)> for AstNode {
         for (ast, span) in arguments {
           children.push(Self::from((ast, span)));
         }
-
-        Self {
-          kind: expression.kind(),
-          range,
-          children,
-        }
       }
-      Expression::Identifier(_) => Self {
-        kind: expression.kind(),
-        range,
-        children,
-      },
       Expression::List(items) => {
         for (item, span) in items {
           children.push(Self::from((item, span)));
-        }
-
-        Self {
-          kind: expression.kind(),
-          range,
-          children,
         }
       }
       Expression::ListAccess(list, index) => {
         children.push(Self::from((&list.0, &list.1)));
         children.push(Self::from((&index.0, &index.1)));
-
-        Self {
-          kind: expression.kind(),
-          range,
-          children,
-        }
       }
-      Expression::Null => Self {
-        kind: expression.kind(),
-        range,
-        children,
-      },
-      Expression::Number(_) => Self {
-        kind: expression.kind(),
-        range,
-        children,
-      },
-      Expression::String(_) => Self {
-        kind: expression.kind(),
-        range,
-        children,
-      },
       Expression::UnaryOp(_, rhs) => {
         children.push(Self::from((&rhs.0, &rhs.1)));
-
-        Self {
-          kind: expression.kind(),
-          range,
-          children,
-        }
       }
+    }
+
+    Self {
+      kind: expression.kind(),
+      range,
+      children,
     }
   }
 }
