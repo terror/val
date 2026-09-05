@@ -18,15 +18,7 @@ impl Display for Program {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
       Program::Statements(statements) => {
-        write!(
-          f,
-          "statements({})",
-          statements
-            .iter()
-            .map(|s| s.0.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
-        )
+        write!(f, "statements({})", Statement::display_list(statements))
       }
     }
   }
@@ -52,6 +44,14 @@ pub enum Statement {
 }
 
 impl Statement {
+  fn display_list(statements: &[Spanned<Self>]) -> String {
+    statements
+      .iter()
+      .map(|statement| statement.0.to_string())
+      .collect::<Vec<_>>()
+      .join(", ")
+  }
+
   #[must_use]
   pub fn kind(&self) -> String {
     String::from(match self {
@@ -77,15 +77,7 @@ impl Display for Statement {
         write!(f, "assignment({}, {})", lhs.0, rhs.0)
       }
       Statement::Block(statements) => {
-        write!(
-          f,
-          "block({})",
-          statements
-            .iter()
-            .map(|s| s.0.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
-        )
+        write!(f, "block({})", Self::display_list(statements))
       }
       Statement::Break => write!(f, "break"),
       Statement::Continue => write!(f, "continue"),
@@ -98,11 +90,7 @@ impl Display for Statement {
           "for({}, {}, block({}))",
           name,
           iterable.0,
-          body
-            .iter()
-            .map(|s| s.0.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
+          Self::display_list(body)
         )
       }
       Statement::Function(name, params, body) => {
@@ -111,19 +99,11 @@ impl Display for Statement {
           "function({}, [{}], block({}))",
           name,
           params.join(", "),
-          body
-            .iter()
-            .map(|s| s.0.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
+          Self::display_list(body)
         )
       }
       Statement::If(condition, then_branch, else_branch) => {
-        let then_str = then_branch
-          .iter()
-          .map(|s| s.0.to_string())
-          .collect::<Vec<_>>()
-          .join(", ");
+        let then_branch = Self::display_list(then_branch);
 
         match else_branch {
           Some(else_statements) => {
@@ -131,29 +111,17 @@ impl Display for Statement {
               f,
               "if({}, block({}), block({}))",
               condition.0,
-              then_str,
-              else_statements
-                .iter()
-                .map(|s| s.0.to_string())
-                .collect::<Vec<_>>()
-                .join(", ")
+              then_branch,
+              Self::display_list(else_statements)
             )
           }
           None => {
-            write!(f, "if({}, block({}))", condition.0, then_str)
+            write!(f, "if({}, block({}))", condition.0, then_branch)
           }
         }
       }
       Statement::Loop(body) => {
-        write!(
-          f,
-          "loop(block({}))",
-          body
-            .iter()
-            .map(|s| s.0.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
-        )
+        write!(f, "loop(block({}))", Self::display_list(body))
       }
       Statement::Return(expr) => match expr {
         Some(expression) => write!(f, "return({})", expression.0),
@@ -164,11 +132,7 @@ impl Display for Statement {
           f,
           "while({}, block({}))",
           condition.0,
-          body
-            .iter()
-            .map(|s| s.0.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
+          Self::display_list(body)
         )
       }
     }
@@ -324,11 +288,7 @@ impl Display for Expression {
           f,
           "function([{}], block({}))",
           params.join(", "),
-          body
-            .iter()
-            .map(|s| s.0.to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
+          Statement::display_list(body)
         )
       }
       Expression::FunctionCall(function, arguments) => {
