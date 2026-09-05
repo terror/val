@@ -1221,6 +1221,64 @@ fn for_loop_with_break_and_continue() -> Result {
 }
 
 #[test]
+fn fraction_helpers() -> Result {
+  #[track_caller]
+  fn case(expression: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(&format!(
+        "foo = {expression}\nprintln([fraction(foo), numerator(foo), denominator(foo), is_exact(foo)])"
+      ))
+      .expected_stdout(Exact(expected))
+      .run()
+  }
+
+  case("1 / 3", "['1/3', 1, 3, true]\n")?;
+  case("6 / -8", "['-3/4', -3, 4, true]\n")?;
+  case("6 / 3", "['2', 2, 1, true]\n")?;
+  case("0", "['0', 0, 1, true]\n")?;
+  case("0.125", "['1/8', 1, 8, true]\n")?;
+  case(
+    "9007199254740993 / 2",
+    "['9007199254740993/2', 9007199254740993, 2, true]\n",
+  )
+}
+
+#[test]
+fn fraction_helpers_reject_approximate_numbers() -> Result {
+  #[track_caller]
+  fn case(function: &str) -> Result {
+    Test::new()?
+      .program(&format!("{function}(float(1))"))
+      .expected_status(1)
+      .expected_stderr(Contains(&format!(
+        "Arguments to `{function}` must be exact numbers"
+      )))
+      .run()
+  }
+
+  case("fraction")?;
+  case("numerator")?;
+  case("denominator")
+}
+
+#[test]
+fn fraction_helpers_require_numbers() -> Result {
+  #[track_caller]
+  fn case(function: &str) -> Result {
+    Test::new()?
+      .program(&format!("{function}('foo')"))
+      .expected_status(1)
+      .expected_stderr(Contains("'foo' is not a number"))
+      .run()
+  }
+
+  case("fraction")?;
+  case("numerator")?;
+  case("denominator")?;
+  case("is_exact")
+}
+
+#[test]
 fn function_arity_is_checked_before_arguments() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1899,6 +1957,14 @@ fn integer_literals() -> Result {
   Test::new()?
     .program("println(25)")
     .expected_stdout(Exact("25\n"))
+    .run()
+}
+
+#[test]
+fn is_exact_distinguishes_approximate_numbers() -> Result {
+  Test::new()?
+    .program("println(is_exact(float(1)))")
+    .expected_stdout(Exact("false\n"))
     .run()
 }
 
