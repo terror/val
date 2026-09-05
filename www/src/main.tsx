@@ -1,4 +1,3 @@
-import { Toaster } from '@/components/ui/sonner';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -10,7 +9,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <EditorSettingsProvider>
       <App />
-      <Toaster richColors />
     </EditorSettingsProvider>
   </React.StrictMode>
 );
