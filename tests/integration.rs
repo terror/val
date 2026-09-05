@@ -2781,6 +2781,86 @@ fn operator_precedence() -> Result {
 }
 
 #[test]
+fn pipe_operator() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_stdout(Exact(expected))
+      .run()
+  }
+
+  case("25 |> sqrt() |> println()", "5\n")?;
+  case("[1, 2] |> append(3) |> sum() |> println()", "6\n")?;
+  case("1 + 2 * 4 |> sqrt() |> println()", "3\n")?;
+  case("false || true && 1 < 2 == true |> println()", "true\n")?;
+  case("println((25 |> sqrt()) + 1)", "6\n")?;
+  case("(1 |> e()) == e(1) |> println()", "true\n")?;
+  case(
+    "foo = fn(bar) { fn(baz, bob) { bar + baz * bob } }; 2 |> foo(3)(4) |> println()",
+    "11\n",
+  )?;
+  case(
+    "foo = [fn(bar, baz) { bar - baz }]; 5 |> foo[0](2) |> println()",
+    "3\n",
+  )?;
+  case("[1, 2] |> append(9 |> sqrt()) |> println()", "[1, 2, 3]\n")?;
+  case("25\n// foo\n|> sqrt()\n|> println()", "5\n")
+}
+
+#[test]
+fn pipe_operator_evaluation_order() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo() {
+        println('foo')
+        fn(bar, baz) { bar + baz }
+      }
+      fn bar() {
+        println('bar')
+        2
+      }
+      fn baz() {
+        println('baz')
+        3
+      }
+      bar() |> foo()(baz()) |> println()
+      "
+    })
+    .expected_stdout(Exact("foo\nbar\nbaz\n5\n"))
+    .run()
+}
+
+#[test]
+fn pipe_operator_invalid_calls() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_status(1)
+      .expected_stdout(Empty)
+      .expected_stderr(Contains(expected))
+      .run()
+  }
+
+  case("println('bar') |> foo()", "Function `foo` is not defined")?;
+  case(
+    "foo = 1; println('bar') |> foo()",
+    "`foo` is not a function",
+  )?;
+  case("println('bar') |> ['foo'][0]()", "'foo' is not a function")?;
+  case(
+    "println('bar') |> abs(println('baz'))",
+    "Function `abs` expects 1 argument, got 2",
+  )?;
+  case(
+    "fn foo() {}; println('bar') |> foo()",
+    "Function `foo` expects 0 arguments, got 1",
+  )
+}
+
+#[test]
 fn power() -> Result {
   Test::new()?
     .program("println(2 ^ 3)")

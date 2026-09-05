@@ -327,6 +327,29 @@ if (index == null) {
 }
 ```
 
+### Pipelines
+
+Use `|>` to insert a value as the first argument of a function call:
+
+```rust
+25 |> sqrt() |> println()
+[1, 2] |> append(3) |> sum() |> println()
+```
+
+These are shorthand for `println(sqrt(25))` and
+`println(sum(append([1, 2], 3)))`. Pipelines associate from left to right
+and have lower precedence than every other operator, so
+`1 + 2 |> sqrt()` means `sqrt(1 + 2)`. Parenthesize a pipeline to use its
+result in another operation: `(25 |> sqrt()) + 1`.
+
+The expression after `|>` must be a call. Calls through lists and returned
+functions work too: `1 |> functions[0](2)` means `functions[0](1, 2)`,
+and `1 |> make()(2)` means `make()(1, 2)`.
+
+Pipelines follow normal call evaluation: the callee and argument count are
+checked first, then arguments are evaluated once in order, starting with
+the piped expression.
+
 ### Built-ins
 
 **val** offers a many built-in functions and constants:

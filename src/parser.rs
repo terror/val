@@ -335,7 +335,7 @@ where
         (Expression::UnaryOp(op, Box::new(rhs)), error.span())
       };
 
-    atom.pratt((
+    let operand = atom.pratt((
       postfix(
         8,
         arguments,
@@ -416,7 +416,26 @@ where
         padded_parser(just("||")).to(BinaryOp::LogicalOr),
         binary,
       ),
-    ))
+    ));
+
+    let target =
+      operand
+        .clone()
+        .try_map(|(expression, span), _| match expression {
+          Expression::FunctionCall(function, arguments) => {
+            Ok((function, arguments))
+          }
+          _ => Err(Rich::custom(span, "Pipe target must be a function call")),
+        });
+
+    operand.foldl_with(
+      padded_parser(just("|>")).ignore_then(target).repeated(),
+      |lhs, (function, mut arguments), error| {
+        arguments.insert(0, lhs);
+
+        (Expression::FunctionCall(function, arguments), error.span())
+      },
+    )
   })
 }
 
@@ -731,6 +750,85 @@ mod tests {
       .program("!2 + 3")
       .ast("statements(expression(binary_op(+, unary_op(!, number(2)), number(3))))")
       .run();
+  }
+
+  #[test]
+  fn pipe_operator() {
+    #[track_caller]
+    fn case(program: &str, ast: &str) {
+      Test::new().program(program).ast(ast).run();
+    }
+
+    case(
+      "25 |> sqrt() |> println()",
+      "statements(expression(function_call(identifier(println), function_call(identifier(sqrt), number(25)))))",
+    );
+    case(
+      "1 + 2 * 3 |> foo(bar())",
+      "statements(expression(function_call(identifier(foo), binary_op(+, number(1), binary_op(*, number(2), number(3))), function_call(identifier(bar)))))",
+    );
+    case(
+      "false || true && 1 < 2 == true |> foo()",
+      "statements(expression(function_call(identifier(foo), binary_op(||, boolean(false), binary_op(&&, boolean(true), binary_op(==, binary_op(<, number(1), number(2)), boolean(true)))))))",
+    );
+    case(
+      "1 |> foo(2)(3)",
+      "statements(expression(function_call(function_call(identifier(foo), number(2)), number(1), number(3))))",
+    );
+    case(
+      "1 |> foo[0](2)",
+      "statements(expression(function_call(list_access(identifier(foo), number(0)), number(1), number(2))))",
+    );
+    case(
+      "1 |> foo(2 |> bar())",
+      "statements(expression(function_call(identifier(foo), number(1), function_call(identifier(bar), number(2)))))",
+    );
+    case(
+      "(1 |> foo()) + 2",
+      "statements(expression(binary_op(+, function_call(identifier(foo), number(1)), number(2))))",
+    );
+    case(
+      "1\n// foo\n|> bar()\n|> baz()",
+      "statements(expression(function_call(identifier(baz), function_call(identifier(bar), number(1)))))",
+    );
+  }
+
+  #[test]
+  fn pipe_operator_requires_call() {
+    #[track_caller]
+    fn case(program: &str) {
+      let errors = parse(program).unwrap_err();
+
+      assert!(
+        errors.iter().any(|error| {
+          error.to_string() == "Pipe target must be a function call"
+        }),
+        "{program}: {errors:?}",
+      );
+    }
+
+    case("1 |> foo");
+    case("1 |> 2");
+    case("1 |> foo() + 2");
+    case("1 |> foo()[0]");
+  }
+
+  #[test]
+  fn pipe_operator_spans() {
+    let program = parse("1 |> foo(2)").unwrap();
+    let Program::Statements(statements) = program.0;
+    let Statement::Expression((
+      Expression::FunctionCall(function, arguments),
+      span,
+    )) = &statements[0].0
+    else {
+      panic!("expected function call");
+    };
+
+    assert_eq!(*span, SimpleSpan::from(0..11));
+    assert_eq!(function.1, SimpleSpan::from(5..8));
+    assert_eq!(arguments[0].1, SimpleSpan::from(0..1));
+    assert_eq!(arguments[1].1, SimpleSpan::from(9..10));
   }
 
   #[test]
