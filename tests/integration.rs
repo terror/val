@@ -2865,32 +2865,107 @@ fn secant() -> Result {
 }
 
 #[test]
-fn short_lambdas() -> Result {
-  #[track_caller]
-  fn case(program: &str, expected: &str) -> Result {
-    Test::new()?
-      .program(program)
-      .expected_stdout(Exact(expected))
-      .run()
-  }
+fn short_lambda_as_argument() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo(bar, baz) {
+        baz(bar)
+      }
 
-  case("foo = fn(bar) => bar ^ 2; println(foo(5))", "25\n")?;
-  case("println((fn(foo, bar) => foo + bar)(2, 3))", "5\n")?;
-  case(
-    "foo = fn(bar) => fn(baz) => bar + baz; println(foo(2)(3))",
-    "5\n",
-  )?;
-  case("foo = 2; bar = fn() => foo; foo = 3; println(bar())", "3\n")?;
-  case(
-    "foo = fn(bar, baz) { baz(bar) }; println(foo(2, fn(bar) => bar * 3))",
-    "6\n",
-  )?;
-  case(
-    "foo = [fn(bar) => [bar, bar + 1]]; println(foo[0](2)[1])",
-    "3\n",
-  )?;
-  case("foo = fn() => null\nprintln(foo())", "null\n")?;
-  case("foo = fn() => println('bar'); foo()", "bar\n")
+      println(foo(2, fn(bar) => bar * 3))
+      "
+    })
+    .expected_stdout(Exact("6\n"))
+    .run()
+}
+
+#[test]
+fn short_lambda_assignment() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn(bar) => bar ^ 2
+      println(foo(5))
+      "
+    })
+    .expected_stdout(Exact("25\n"))
+    .run()
+}
+
+#[test]
+fn short_lambda_body_calls_function() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn() => println('bar')
+      foo()
+      "
+    })
+    .expected_stdout(Exact("bar\n"))
+    .run()
+}
+
+#[test]
+fn short_lambda_immediate_call() -> Result {
+  Test::new()?
+    .program("println((fn(foo, bar) => foo + bar)(2, 3))")
+    .expected_stdout(Exact("5\n"))
+    .run()
+}
+
+#[test]
+fn short_lambda_in_list() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = [fn(bar) => [bar, bar + 1]]
+      println(foo[0](2)[1])
+      "
+    })
+    .expected_stdout(Exact("3\n"))
+    .run()
+}
+
+#[test]
+fn short_lambda_observes_outer_scope_changes() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = 2
+      bar = fn() => foo
+      foo = 3
+      println(bar())
+      "
+    })
+    .expected_stdout(Exact("3\n"))
+    .run()
+}
+
+#[test]
+fn short_lambda_returns_closure() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn(bar) => fn(baz) => bar + baz
+      println(foo(2)(3))
+      "
+    })
+    .expected_stdout(Exact("5\n"))
+    .run()
+}
+
+#[test]
+fn short_lambda_returns_null() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = fn() => null
+      println(foo())
+      "
+    })
+    .expected_stdout(Exact("null\n"))
+    .run()
 }
 
 #[test]
