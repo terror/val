@@ -36,7 +36,7 @@ pub(crate) struct Arguments {
   #[clap(
     short,
     long,
-    conflicts_with = "filename",
+    conflicts_with_all = ["expression", "filename"],
     help = "Load files before entering the REPL"
   )]
   load: Option<Vec<PathBuf>>,
@@ -294,22 +294,16 @@ mod tests {
   }
 
   #[test]
-  fn load_conflicts_with_filename() {
-    let result = Arguments::try_parse_from(vec![
-      "program",
-      "file.txt",
-      "--load",
-      "prelude.val",
-    ]);
+  fn load_conflicts_with_non_interactive_modes() {
+    #[track_caller]
+    fn case(arguments: &[&str]) {
+      let error = Arguments::try_parse_from(arguments).unwrap_err();
 
-    assert!(result.is_err(), "Parser should reject filename + --load");
+      assert_eq!(error.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
 
-    let error = result.unwrap_err().to_string();
-
-    assert!(
-      error.contains("cannot be used with"),
-      "Error should mention conflicts: {error}"
-    );
+    case(&["val", "foo", "--load", "bar"]);
+    case(&["val", "--load", "foo", "--expression", "1"]);
   }
 
   #[test]
