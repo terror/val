@@ -223,6 +223,15 @@ decimal digits are displayed for approximate numbers.
 Number literals support scientific notation, such as `1e-05`, `1E+05`, and
 `1.25e2`, and are represented exactly.
 
+Use `fraction(x)` to display an exact number as a reduced fraction string, such
+as `fraction(1 / 3)` returning `"1/3"` or `fraction(0.125)` returning `"1/8"`.
+Integers omit the denominator: `fraction(2)` returns `"2"`.
+`numerator(x)` and `denominator(x)` return the reduced fraction's exact integer
+components, with the sign in the numerator and a positive denominator.
+These three functions require exact numbers. `is_exact(x)` accepts any number
+and reports whether it is stored exactly: `is_exact(0.1)` is `true`, while
+`is_exact(float(1))` and `is_exact(pi)` are `false`.
+
 #### Boolean
 
 Boolean values represent truth values:
@@ -362,6 +371,10 @@ if (index == null) {
 |                   | `abs(x)`            | Absolute value                     | `abs(-5)`                |
 |                   | `gcd(a, b)`         | Greatest common divisor            | `gcd(12, 8)`             |
 |                   | `lcm(a, b)`         | Least common multiple              | `lcm(4, 6)`              |
+|                   | `fraction(x)`      | Exact number as a fraction string  | `fraction(1 / 3)`        |
+|                   | `numerator(x)`     | Exact number's reduced numerator   | `numerator(2 / 3)`       |
+|                   | `denominator(x)`   | Exact number's reduced denominator | `denominator(2 / 3)`     |
+|                   | `is_exact(x)`      | Whether a number is stored exactly | `is_exact(0.1)`          |
 | **Collections**   | `len(x)`            | Length of list or string           | `len("hello")`           |
 |                   | `sum(list)`         | Sum list elements                  | `sum([1,2,3])`           |
 |                   | `append(list, val)` | Add element to end of list         | `append([1,2], 3)`       |

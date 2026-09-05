@@ -45,4 +45,14 @@ impl BuiltinFunctionPayload {
   pub(crate) fn number(&self, index: usize) -> Result<&Number, Error> {
     self.arguments[index].number(self.span)
   }
+
+  pub(crate) fn rational(&self, index: usize) -> Result<&Rational, Error> {
+    match self.number(index)? {
+      Number::Exact(number) => Ok(number),
+      Number::Approx(_) => Err(Error::new(
+        self.span,
+        format!("Arguments to `{}` must be exact numbers", self.name),
+      )),
+    }
+  }
 }

@@ -1221,6 +1221,85 @@ fn for_loop_with_break_and_continue() -> Result {
 }
 
 #[test]
+fn fraction_components() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(numerator(6 / -8), denominator(6 / -8))
+      println(numerator(2), denominator(2))
+      println(numerator(0), denominator(0))
+      println(numerator(0.125), denominator(0.125))
+
+      foo = 9007199254740993 / 2
+      println(numerator(foo), denominator(foo))
+      "
+    })
+    .expected_stdout(Exact("-3 4\n2 1\n0 1\n1 8\n9007199254740993 2\n"))
+    .run()
+}
+
+#[test]
+fn fraction_display() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println([fraction(1 / 3)])
+      println(fraction(6 / -8))
+      println(fraction(6 / 3))
+      println(fraction(0))
+      println(fraction(0.125))
+      println(fraction(9007199254740993 / 2))
+      "
+    })
+    .expected_stdout(Exact("['1/3']\n-3/4\n2\n0\n1/8\n9007199254740993/2\n"))
+    .run()
+}
+
+#[test]
+fn fraction_helpers_reject_approximate_numbers() -> Result {
+  Test::new()?
+    .program("fraction(float(1))")
+    .expected_status(1)
+    .expected_stderr(Contains("Arguments to `fraction` must be exact numbers"))
+    .run()?;
+
+  Test::new()?
+    .program("numerator(float(1))")
+    .expected_status(1)
+    .expected_stderr(Contains("Arguments to `numerator` must be exact numbers"))
+    .run()?;
+
+  Test::new()?
+    .program("denominator(float(1))")
+    .expected_status(1)
+    .expected_stderr(Contains(
+      "Arguments to `denominator` must be exact numbers",
+    ))
+    .run()
+}
+
+#[test]
+fn fraction_helpers_require_numbers() -> Result {
+  Test::new()?
+    .program("fraction('foo')")
+    .expected_status(1)
+    .expected_stderr(Contains("'foo' is not a number"))
+    .run()?;
+
+  Test::new()?
+    .program("numerator('foo')")
+    .expected_status(1)
+    .expected_stderr(Contains("'foo' is not a number"))
+    .run()?;
+
+  Test::new()?
+    .program("denominator('foo')")
+    .expected_status(1)
+    .expected_stderr(Contains("'foo' is not a number"))
+    .run()
+}
+
+#[test]
 fn function_arity_is_checked_before_arguments() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1899,6 +1978,30 @@ fn integer_literals() -> Result {
   Test::new()?
     .program("println(25)")
     .expected_stdout(Exact("25\n"))
+    .run()
+}
+
+#[test]
+fn is_exact() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      println(is_exact(1 / 3))
+      println(is_exact(2))
+      println(is_exact(0.125))
+      println(is_exact(float(1)))
+      "
+    })
+    .expected_stdout(Exact("true\ntrue\ntrue\nfalse\n"))
+    .run()
+}
+
+#[test]
+fn is_exact_requires_number() -> Result {
+  Test::new()?
+    .program("is_exact('foo')")
+    .expected_status(1)
+    .expected_stderr(Contains("'foo' is not a number"))
     .run()
 }
 
