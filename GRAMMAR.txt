@@ -106,7 +106,7 @@ null                 : 'null'
 
 list                 : '[' (arguments ','?)? ']'
 
-function_expression  : 'fn' '(' (parameters ','?)? ')' block
+function_expression  : 'fn' '(' (parameters ','?)? ')' (block | '=>' expression)
 
 call                 : '(' (arguments ','?)? ')'
 

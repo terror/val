@@ -294,7 +294,16 @@ where
         comma_separated_parser(identifier_parser())
           .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
       )
-      .then(statement_block.clone())
+      .then(
+        statement_block.clone().or(
+          padded_parser(just("=>"))
+            .ignore_then(expression.clone())
+            .map(|expression: Spanned<Expression>| {
+              let span = expression.1;
+              vec![(Statement::Return(Some(expression)), span)]
+            }),
+        ),
+      )
       .map(|(params, body)| Expression::Function(params, body))
       .map_with(|ast, error| (ast, error.span()));
 
@@ -805,6 +814,66 @@ mod tests {
     case("1E+05", "100000");
     case("1.5e2", "150");
     case("1e0", "1");
+  }
+
+  #[test]
+  fn short_lambda() {
+    #[track_caller]
+    fn case(program: &str, ast: &str) {
+      Test::new().program(program).ast(ast).run();
+    }
+
+    case(
+      "fn(foo) => foo ^ 2 + 1",
+      "statements(expression(function([foo], block(return(binary_op(+, binary_op(^, identifier(foo), number(2)), number(1)))))))",
+    );
+    case(
+      "[fn() => 1, fn(foo,) => foo]",
+      "statements(expression(list(function([], block(return(number(1)))), function([foo], block(return(identifier(foo)))))))",
+    );
+    case(
+      "fn(foo) => fn(bar) => foo + bar",
+      "statements(expression(function([foo], block(return(function([bar], block(return(binary_op(+, identifier(foo), identifier(bar))))))))))",
+    );
+    case(
+      "(fn(foo) => foo)(1)",
+      "statements(expression(function_call(function([foo], block(return(identifier(foo)))), number(1))))",
+    );
+    case(
+      "foo = fn() => 1; bar = 2",
+      "statements(assignment(identifier(foo), function([], block(return(number(1))))), assignment(identifier(bar), number(2)))",
+    );
+  }
+
+  #[test]
+  fn short_lambda_body_is_required() {
+    #[track_caller]
+    fn case(program: &str) {
+      assert!(parse(program).is_err(), "{program}");
+    }
+
+    case("fn() =>");
+    case("fn() => ;");
+    case("fn() => return 1");
+    case("fn() => {}");
+  }
+
+  #[test]
+  fn short_lambda_spans() {
+    let program = parse("fn(foo) => foo + 1").unwrap();
+    let Program::Statements(statements) = program.0;
+    let Statement::Expression((Expression::Function(_, body), span)) =
+      &statements[0].0
+    else {
+      panic!("expected function expression");
+    };
+    let (Statement::Return(Some(expression)), body_span) = &body[0] else {
+      panic!("expected return statement");
+    };
+
+    assert_eq!(*span, SimpleSpan::from(0..18));
+    assert_eq!(*body_span, SimpleSpan::from(11..18));
+    assert_eq!(expression.1, *body_span);
   }
 
   #[test]
