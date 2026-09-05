@@ -1365,6 +1365,25 @@ fn function_calling_builtin() -> Result {
 }
 
 #[test]
+fn function_does_not_inherit_loop_context() -> Result {
+  #[track_caller]
+  fn case(statement: &str) -> Result {
+    Test::new()?
+      .program(&format!(
+        "fn foo() {{ {statement} }}\nfor bar in [0] {{ foo() }}"
+      ))
+      .expected_status(1)
+      .expected_stderr(Contains(&format!(
+        "Cannot use '{statement}' outside of a loop"
+      )))
+      .run()
+  }
+
+  case("break")?;
+  case("continue")
+}
+
+#[test]
 fn function_equality_uses_identity() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1567,19 +1586,29 @@ fn function_with_return_value() -> Result {
 
 #[test]
 fn function_wrong_argument_count() -> Result {
-  Test::new()?
-    .program(indoc! {
-      "
-      fn add(a, b) {
-        return a + b
-      }
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_status(1)
+      .expected_stderr(Contains(expected))
+      .run()
+  }
 
-      println(add(1))
-      "
-    })
-    .expected_status(1)
-    .expected_stderr(Contains("Function `add` expects 2 arguments, got 1"))
-    .run()
+  case(
+    "fn foo(bar, baz) {}\nfoo(1)",
+    "Function `foo` expects 2 arguments, got 1",
+  )?;
+
+  case(
+    "fn foo(bar) {}\nfoo()",
+    "Function `foo` expects 1 argument, got 0",
+  )?;
+
+  case(
+    "(fn(foo) {})(1, 2)",
+    "Function `<anonymous>` expects 1 argument, got 2",
+  )
 }
 
 #[test]
