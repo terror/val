@@ -422,22 +422,15 @@ impl Evaluator {
           for item in list {
             evaluator.environment.add_symbol(name, item);
 
-            for statement in body {
-              let completion = evaluator.evaluate_statement(statement)?;
-
-              match completion {
-                Completion::Break => {
-                  return Ok(Completion::Value(Value::Null));
-                }
-                Completion::Continue => {
-                  result = Value::Null;
-                  break;
-                }
-                Completion::Return(value) => {
-                  return Ok(Completion::Return(value));
-                }
-                Completion::Value(value) => result = value,
+            match evaluator.evaluate_statements(body)? {
+              Completion::Break => {
+                return Ok(Completion::Value(Value::Null));
               }
+              Completion::Continue => result = Value::Null,
+              Completion::Return(value) => {
+                return Ok(Completion::Return(value));
+              }
+              Completion::Value(value) => result = value,
             }
           }
 
@@ -468,18 +461,13 @@ impl Evaluator {
       }
       Statement::Loop(body) => self.enter_loop(|evaluator| {
         loop {
-          for statement in body {
-            let completion = evaluator.evaluate_statement(statement)?;
-
-            match completion {
-              Completion::Break => {
-                return Ok(Completion::Value(Value::Null));
-              }
-              Completion::Continue => break,
-              Completion::Return(value) => {
-                return Ok(Completion::Return(value));
-              }
-              Completion::Value(_) => {}
+          match evaluator.evaluate_statements(body)? {
+            Completion::Break => {
+              return Ok(Completion::Value(Value::Null));
+            }
+            Completion::Continue | Completion::Value(_) => {}
+            Completion::Return(value) => {
+              return Ok(Completion::Return(value));
             }
           }
         }
@@ -502,22 +490,15 @@ impl Evaluator {
             .evaluate_expression(condition)?
             .boolean(condition.1)?
           {
-            for statement in body {
-              let completion = evaluator.evaluate_statement(statement)?;
-
-              match completion {
-                Completion::Break => {
-                  return Ok(Completion::Value(Value::Null));
-                }
-                Completion::Continue => {
-                  result = Value::Null;
-                  break;
-                }
-                Completion::Return(value) => {
-                  return Ok(Completion::Return(value));
-                }
-                Completion::Value(value) => result = value,
+            match evaluator.evaluate_statements(body)? {
+              Completion::Break => {
+                return Ok(Completion::Value(Value::Null));
               }
+              Completion::Continue => result = Value::Null,
+              Completion::Return(value) => {
+                return Ok(Completion::Return(value));
+              }
+              Completion::Value(value) => result = value,
             }
           }
 
