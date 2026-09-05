@@ -299,6 +299,18 @@ println(apply(2, fn(x) {
 }))
 ```
 
+For a single expression, use `=>` to return its value:
+
+```rust
+square = fn(x) => x ^ 2
+println(square(5))
+println(apply(2, fn(x) => x * 3))
+```
+
+The body includes the full expression after `=>`, so `fn(x) => x + 1`
+returns `x + 1`. Parenthesize a short lambda to call it immediately:
+`(fn(x) => x ^ 2)(5)`.
+
 #### Null
 
 Represents the absence of a value.

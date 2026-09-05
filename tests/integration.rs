@@ -2865,6 +2865,35 @@ fn secant() -> Result {
 }
 
 #[test]
+fn short_lambdas() -> Result {
+  #[track_caller]
+  fn case(program: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(program)
+      .expected_stdout(Exact(expected))
+      .run()
+  }
+
+  case("foo = fn(bar) => bar ^ 2; println(foo(5))", "25\n")?;
+  case("println((fn(foo, bar) => foo + bar)(2, 3))", "5\n")?;
+  case(
+    "foo = fn(bar) => fn(baz) => bar + baz; println(foo(2)(3))",
+    "5\n",
+  )?;
+  case("foo = 2; bar = fn() => foo; foo = 3; println(bar())", "3\n")?;
+  case(
+    "foo = fn(bar, baz) { baz(bar) }; println(foo(2, fn(bar) => bar * 3))",
+    "6\n",
+  )?;
+  case(
+    "foo = [fn(bar) => [bar, bar + 1]]; println(foo[0](2)[1])",
+    "3\n",
+  )?;
+  case("foo = fn() => null\nprintln(foo())", "null\n")?;
+  case("foo = fn() => println('bar'); foo()", "bar\n")
+}
+
+#[test]
 fn simple_break() -> Result {
   Test::new()?
     .program(indoc! {

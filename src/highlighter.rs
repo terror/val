@@ -207,7 +207,7 @@ impl<'src> Highlighter<'src> {
   }
 
   fn scan_operator(&self, start: usize) -> Option<usize> {
-    for operator in [">=", "<=", "==", "!=", "&&", "||"] {
+    for operator in [">=", "<=", "==", "!=", "&&", "||", "=>"] {
       if self.content[start..].starts_with(operator) {
         return Some(start + operator.len());
       }
@@ -330,6 +330,21 @@ mod tests {
     case("1e-05");
     case("1E+05");
     case("1.5e2");
+  }
+
+  #[test]
+  fn short_lambda() {
+    assert_eq!(
+      Highlighter::new("fn(foo) => foo").collect_highlight_spans(),
+      [
+        HighlightSpan::new(0, 2, HighlightKind::Keyword),
+        HighlightSpan::new(2, 3, HighlightKind::Operator),
+        HighlightSpan::new(3, 6, HighlightKind::Identifier),
+        HighlightSpan::new(6, 7, HighlightKind::Operator),
+        HighlightSpan::new(8, 10, HighlightKind::Operator),
+        HighlightSpan::new(11, 14, HighlightKind::Identifier),
+      ]
+    );
   }
 
   #[test]
