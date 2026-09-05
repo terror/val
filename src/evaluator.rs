@@ -19,17 +19,35 @@ impl<'a> Evaluator<'a> {
       AssignmentTarget::ListAccess(_, _) => {
         let (name, name_span) = target.0.root(target.1);
 
-        let indices = target.0.indices();
-
-        let Some(root) = self.environment.resolve_symbol(name) else {
+        let Some(mut root) = self.environment.resolve_symbol(name) else {
           return Err(Error::new(
             name_span,
             format!("Undefined variable `{name}`"),
           ));
         };
 
-        let root =
-          self.assign_indices(name, root, &indices, value, target.1)?;
+        let mut indices = Vec::new();
+
+        for index in target.0.indices() {
+          let current = Self::assignment_value(target, &mut root, &indices)?;
+
+          if !matches!(current, Value::List(_)) {
+            return Err(Error::new(
+              index.1,
+              format!(
+                "'{}' is not a list (found {})",
+                name,
+                current.type_name()
+              ),
+            ));
+          }
+
+          indices.push((self.evaluate_list_index(index)?, index.1));
+
+          root = self.environment.resolve_symbol(name).unwrap();
+        }
+
+        *Self::assignment_value(target, &mut root, &indices)? = value;
 
         self.environment.assign_symbol(name, root);
 
@@ -38,46 +56,34 @@ impl<'a> Evaluator<'a> {
     }
   }
 
-  fn assign_indices(
-    &mut self,
-    name: &str,
-    value: Value<'a>,
-    indices: &[&Spanned<Expression>],
-    assigned: Value<'a>,
-    span: Span,
-  ) -> Result<Value<'a>, Error> {
-    let Some((index, rest)) = indices.split_first() else {
-      return Ok(assigned);
-    };
-
-    let mut list = match value {
-      Value::List(items) => items,
-      other => {
+  fn assignment_value<'value>(
+    target: &Spanned<AssignmentTarget>,
+    mut value: &'value mut Value<'a>,
+    indices: &[Spanned<usize>],
+  ) -> Result<&'value mut Value<'a>, Error> {
+    for (index, span) in indices {
+      let Value::List(list) = value else {
         return Err(Error::new(
-          index.1,
-          format!("'{}' is not a list (found {})", name, other.type_name()),
+          *span,
+          format!(
+            "'{}' is not a list (found {})",
+            target.0.root(target.1).0,
+            value.type_name()
+          ),
         ));
-      }
-    };
+      };
 
-    let index = self.evaluate_list_index(index)?;
+      let length = list.len();
 
-    if index >= list.len() {
-      return Err(Error::new(
-        span,
-        format!(
-          "Index {} out of bounds for list of length {}",
-          index,
-          list.len()
-        ),
-      ));
+      value = list.get_mut(*index).ok_or_else(|| {
+        Error::new(
+          target.1,
+          format!("Index {index} out of bounds for list of length {length}"),
+        )
+      })?;
     }
 
-    let value = std::mem::replace(&mut list[index], Value::Null);
-
-    list[index] = self.assign_indices(name, value, rest, assigned, span)?;
-
-    Ok(Value::List(list))
+    Ok(value)
   }
 
   pub(crate) fn enter_function<T>(
@@ -588,6 +594,159 @@ mod tests {
     case("fn foo() { exit(1) }\nfoo()", 1);
     case("quit()", 0);
     case("quit(1)", 1);
+  }
+
+  #[test]
+  fn indexed_assignment_errors() {
+    #[track_caller]
+    fn case(
+      setup: &str,
+      assignment: &str,
+      expected_error: Error,
+      expected: Option<&str>,
+    ) {
+      let config = Config::default();
+      let mut evaluator = Evaluator::from(Environment::new(config));
+
+      evaluator.evaluate(&parse(setup).unwrap()).unwrap();
+
+      assert_eq!(
+        evaluator.evaluate(&parse(assignment).unwrap()),
+        Err(expected_error)
+      );
+      assert_eq!(
+        evaluator
+          .environment
+          .resolve_symbol("foo")
+          .map(|value| value.display(config))
+          .as_deref(),
+        expected
+      );
+    }
+
+    case(
+      "fn bar() { foo = null; return 0 }",
+      "foo[bar()] = 2",
+      Error::new((0..3).into(), "Undefined variable `foo`"),
+      None,
+    );
+    case(
+      "foo = 0; fn bar() { foo = null; return 0 }",
+      "foo[bar()] = 2",
+      Error::new((4..9).into(), "'foo' is not a list (found number)"),
+      Some("0"),
+    );
+    case(
+      "foo = [0]; fn bar() { foo = null; return 0 }",
+      "foo[0][bar()] = 2",
+      Error::new((7..12).into(), "'foo' is not a list (found number)"),
+      Some("[0]"),
+    );
+    case(
+      "foo = []; fn bar() { foo = null; return 0 }",
+      "foo[0][bar()] = 2",
+      Error::new((0..14).into(), "Index 0 out of bounds for list of length 0"),
+      Some("[]"),
+    );
+    case(
+      "foo = [0]; fn bar() { foo = []; return 0 }",
+      "foo[bar()][1 / 0] = 2",
+      Error::new((0..18).into(), "Index 0 out of bounds for list of length 0"),
+      Some("[]"),
+    );
+    case(
+      "foo = [0]; fn bar() { foo = 0; return 0 }",
+      "foo[bar()][1 / 0] = 2",
+      Error::new((4..9).into(), "'foo' is not a list (found number)"),
+      Some("0"),
+    );
+    case(
+      "foo = [[0]]; fn bar() { foo = []; return 0 }",
+      "foo[0][bar()] = 2",
+      Error::new((0..14).into(), "Index 0 out of bounds for list of length 0"),
+      Some("[]"),
+    );
+    case(
+      "foo = [[0]]; fn bar() { foo[0] = 0; return 0 }",
+      "foo[0][bar()] = 2",
+      Error::new((7..12).into(), "'foo' is not a list (found number)"),
+      Some("[0]"),
+    );
+    case(
+      "foo = [0]; fn bar() { foo[0] = 1; return -1 }",
+      "foo[bar()][1 / 0] = 2",
+      Error::new(
+        (4..9).into(),
+        "List index must be a non-negative finite number",
+      ),
+      Some("[1]"),
+    );
+  }
+
+  #[test]
+  fn indexed_assignment_evaluation_order() {
+    let config = Config::default();
+    let mut evaluator = Evaluator::from(Environment::new(config));
+
+    let Evaluation::Value(value) = evaluator
+      .evaluate(
+        &parse(
+          "foo = [[0]]; bar = []; fn baz(value) {
+            bar = bar + [value]; return 0
+          }; foo[baz(1)][baz(2)] = baz(0); bar",
+        )
+        .unwrap(),
+      )
+      .unwrap()
+    else {
+      panic!("expected value");
+    };
+
+    assert_eq!(value.display(config), "[0, 1, 2]");
+  }
+
+  #[test]
+  fn indexed_assignment_preserves_side_effects() {
+    #[track_caller]
+    fn case(source: &str, expected: &str) {
+      let config = Config::default();
+      let mut evaluator = Evaluator::from(Environment::new(config));
+
+      let Evaluation::Value(value) =
+        evaluator.evaluate(&parse(source).unwrap()).unwrap()
+      else {
+        panic!("expected value");
+      };
+
+      assert_eq!(value.display(config), expected);
+    }
+
+    case(
+      "foo = [0, 0]; fn bar() { foo[1] = 1; return 0 };
+       foo[bar()] = 2; foo",
+      "[2, 1]",
+    );
+    case(
+      "foo = [[0, 0], [0, 0]]; fn bar(index) {
+         foo[0][1] = foo[0][1] + 1; foo[1][index] = 1; return 0
+       }; foo[bar(0)][bar(1)] = 2; foo",
+      "[[2, 2], [1, 1]]",
+    );
+    case(
+      "foo = []; fn bar() { foo = [0, 1]; return 0 };
+       foo[bar()] = 2; foo",
+      "[2, 1]",
+    );
+    case(
+      "foo = [0]; fn bar() { foo[0] = [0, 1]; return 0 };
+       foo[bar()][0] = 2; foo",
+      "[[2, 1]]",
+    );
+    case(
+      "foo = [[0]]; fn bar() { foo = [[0, 1], [1]]; return 0 };
+       foo[0][bar()] = 2; foo",
+      "[[2, 1], [1]]",
+    );
   }
 
   #[test]
