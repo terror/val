@@ -66,7 +66,7 @@ pub(crate) struct Arguments {
 }
 
 impl Arguments {
-  fn eval(&self, filename: &PathBuf) -> Result {
+  fn evaluate_file(&self, filename: &PathBuf) -> Result {
     let content = fs::read_to_string(filename)?;
 
     let input = Input {
@@ -180,7 +180,7 @@ impl Arguments {
 
   pub(crate) fn run(self) -> Result {
     match (&self.filename, &self.expression) {
-      (Some(filename), _) => self.eval(filename),
+      (Some(filename), _) => self.evaluate_file(filename),
       (_, Some(expression)) => self.evaluate_expression(expression),
       _ => {
         #[cfg(not(target_family = "wasm"))]
