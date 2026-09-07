@@ -66,28 +66,6 @@ pub(crate) struct Arguments {
 }
 
 impl Arguments {
-  fn eval(&self, filename: &PathBuf) -> Result {
-    let content = fs::read_to_string(filename)?;
-
-    let input = Input {
-      name: &filename.to_string_lossy(),
-      text: &content,
-    };
-
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
-
-    match input.evaluate(&mut evaluator) {
-      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-      Ok(Evaluation::Value(_)) => Ok(()),
-      Err(errors) => {
-        input.report(&errors, io::stderr())?;
-
-        process::exit(1);
-      }
-    }
-  }
-
   fn evaluate_expression(&self, text: &str) -> Result {
     let input = Input {
       name: "<expression>",
@@ -106,6 +84,28 @@ impl Arguments {
 
         Ok(())
       }
+      Err(errors) => {
+        input.report(&errors, io::stderr())?;
+
+        process::exit(1);
+      }
+    }
+  }
+
+  fn evaluate_file(&self, filename: &PathBuf) -> Result {
+    let content = fs::read_to_string(filename)?;
+
+    let input = Input {
+      name: &filename.to_string_lossy(),
+      text: &content,
+    };
+
+    let mut evaluator =
+      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+
+    match input.evaluate(&mut evaluator) {
+      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
+      Ok(Evaluation::Value(_)) => Ok(()),
       Err(errors) => {
         input.report(&errors, io::stderr())?;
 
@@ -180,7 +180,7 @@ impl Arguments {
 
   pub(crate) fn run(self) -> Result {
     match (&self.filename, &self.expression) {
-      (Some(filename), _) => self.eval(filename),
+      (Some(filename), _) => self.evaluate_file(filename),
       (_, Some(expression)) => self.evaluate_expression(expression),
       _ => {
         #[cfg(not(target_family = "wasm"))]
