@@ -32,6 +32,7 @@ pub use crate::{
   evaluator::Evaluator, function::Function, number::Number, parser::parse,
   rounding_mode::RoundingMode, user_function::UserFunction, value::Value,
 };
+
 pub use gc::{Gc, force_collect};
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
