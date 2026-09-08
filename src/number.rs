@@ -126,11 +126,7 @@ impl Number {
   /// # Errors
   ///
   /// Returns [`Error::DivisionByZero`] if `rhs` is zero.
-  pub fn div(
-    &self,
-    rhs: &Self,
-    config: Config,
-  ) -> std::result::Result<Self, Error> {
+  pub fn div(&self, rhs: &Self, config: Config) -> Result<Self> {
     if rhs.is_zero() {
       Err(Error::DivisionByZero)
     } else {
@@ -255,11 +251,7 @@ impl Number {
   ///
   /// Returns [`Error::ZeroToNegativePower`] if `self` is zero and
   /// `rhs` is negative.
-  pub fn pow(
-    &self,
-    rhs: &Self,
-    config: Config,
-  ) -> std::result::Result<Self, Error> {
+  pub fn pow(&self, rhs: &Self, config: Config) -> Result<Self> {
     if self.is_zero() && rhs.is_negative() {
       return Err(Error::ZeroToNegativePower);
     }
@@ -277,11 +269,7 @@ impl Number {
   /// # Errors
   ///
   /// Returns [`Error::ModuloByZero`] if `rhs` is zero.
-  pub fn rem(
-    &self,
-    rhs: &Self,
-    config: Config,
-  ) -> std::result::Result<Self, Error> {
+  pub fn rem(&self, rhs: &Self, config: Config) -> Result<Self> {
     if rhs.is_zero() {
       return Err(Error::ModuloByZero);
     }
@@ -545,7 +533,7 @@ impl PartialOrd for Number {
 impl TryFrom<&str> for Number {
   type Error = Error;
 
-  fn try_from(s: &str) -> std::result::Result<Self, Self::Error> {
+  fn try_from(s: &str) -> Result<Self> {
     let s = s.trim();
 
     let (negative, s) = s

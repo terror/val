@@ -17,7 +17,7 @@ impl BuiltinFunctionPayload {
       .join(" ")
   }
 
-  pub(crate) fn integer(&self, index: usize) -> Result<Integer, Error> {
+  pub(crate) fn integer(&self, index: usize) -> Result<Integer> {
     self.number(index)?.to_integer().ok_or_else(|| {
       Error::new(
         self.span,
@@ -26,10 +26,7 @@ impl BuiltinFunctionPayload {
     })
   }
 
-  pub(crate) fn logarithm_argument(
-    &self,
-    index: usize,
-  ) -> Result<&Number, Error> {
+  pub(crate) fn logarithm_argument(&self, index: usize) -> Result<&Number> {
     let number = self.number(index)?;
 
     if number.is_zero() || number.is_negative() {
@@ -42,7 +39,7 @@ impl BuiltinFunctionPayload {
     Ok(number)
   }
 
-  pub(crate) fn number(&self, index: usize) -> Result<&Number, Error> {
+  pub(crate) fn number(&self, index: usize) -> Result<&Number> {
     self.arguments[index].number(self.span)
   }
 }

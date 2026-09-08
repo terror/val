@@ -35,10 +35,9 @@ pub use crate::{
   user_function::UserFunction, value::Value,
 };
 
+pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 pub type Span = SimpleSpan<usize>;
 pub type Spanned<T> = (T, Span);
-
-type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
 pub mod ast;
 mod builtin;

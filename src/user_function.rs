@@ -9,10 +9,7 @@ pub struct UserFunction {
 }
 
 impl UserFunction {
-  pub(crate) fn call(
-    self: &Rc<Self>,
-    arguments: Vec<Value>,
-  ) -> Result<Value, Error> {
+  pub(crate) fn call(self: &Rc<Self>, arguments: Vec<Value>) -> Result<Value> {
     let environment = Environment::with_parent(self.environment.clone());
 
     if let Some(name) = &self.name {
@@ -31,11 +28,7 @@ impl UserFunction {
     }
   }
 
-  pub(crate) fn check_arity(
-    &self,
-    len: usize,
-    span: Span,
-  ) -> Result<(), Error> {
+  pub(crate) fn check_arity(&self, len: usize, span: Span) -> Result<()> {
     BuiltinArity::Exact(self.parameters.len()).check(self.name(), len, span)
   }
 

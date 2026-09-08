@@ -16,12 +16,7 @@ impl BuiltinArity {
     }
   }
 
-  pub(crate) fn check(
-    self,
-    name: &str,
-    len: usize,
-    span: Span,
-  ) -> Result<(), Error> {
+  pub(crate) fn check(self, name: &str, len: usize, span: Span) -> Result<()> {
     if self.accepts(len) {
       return Ok(());
     }
