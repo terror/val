@@ -27,10 +27,12 @@ use {
 
 pub use crate::{
   builtin::Builtin, builtin_arity::BuiltinArity,
+  builtin_function::BuiltinFunction,
   builtin_function_payload::BuiltinFunctionPayload, completion::Completion,
   config::Config, environment::Environment, error::Error,
   evaluation::Evaluation, evaluator::Evaluator, function::Function,
-  number::Number, parser::parse, rounding_mode::RoundingMode, value::Value,
+  number::Number, parser::parse, rounding_mode::RoundingMode,
+  user_function::UserFunction, value::Value,
 };
 
 pub type Span = SimpleSpan<usize>;
@@ -41,6 +43,7 @@ type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 pub mod ast;
 mod builtin;
 mod builtin_arity;
+mod builtin_function;
 mod builtin_function_payload;
 mod completion;
 mod config;
@@ -56,4 +59,5 @@ mod number;
 mod parser;
 mod rounding_mode;
 mod symbol;
+mod user_function;
 mod value;
