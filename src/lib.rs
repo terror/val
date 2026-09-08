@@ -6,6 +6,7 @@ use {
   context::Context,
   decimal::Decimal,
   frame::Frame,
+  gc::{Finalize, GcCell, Trace},
   rug::{
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
@@ -13,14 +14,12 @@ use {
     ops::{Pow, PowAssignRound},
   },
   std::{
-    cell::RefCell,
     cmp::Ordering,
     collections::HashMap,
     fmt::{self, Display, Formatter},
     iter::once,
     num::NonZeroUsize,
     ops::Range,
-    rc::Rc,
     str::FromStr,
   },
 };
@@ -33,6 +32,7 @@ pub use crate::{
   evaluator::Evaluator, function::Function, number::Number, parser::parse,
   rounding_mode::RoundingMode, user_function::UserFunction, value::Value,
 };
+pub use gc::{Gc, force_collect};
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 pub type Span = SimpleSpan<usize>;
