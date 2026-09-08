@@ -41,6 +41,13 @@ impl Value {
     }
   }
 
+  pub(crate) fn into_function(self, span: Span) -> Result<Function> {
+    match self {
+      Value::Function(x) => Ok(x),
+      value => Err(Error::new(span, format!("'{value}' is not a function"))),
+    }
+  }
+
   pub(crate) fn into_list(self, span: Span) -> Result<Vec<Value>> {
     match self {
       Value::List(x) => Ok(x),

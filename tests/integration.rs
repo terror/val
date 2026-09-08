@@ -339,6 +339,39 @@ fn assignment() -> Result {
 }
 
 #[test]
+fn bindings_share_namespace() -> Result {
+  Test::new()?
+    .program("foo = 1\nfn foo() { 2 }\nprintln(foo)\nprintln(foo())")
+    .expected_stdout(Exact("<function: foo>\n2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("fn foo() { 1 }\nfoo = fn() { 2 }\nprintln(foo())")
+    .expected_stdout(Exact("2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("abs = fn(foo) { foo }\nprintln(abs(-1))")
+    .expected_stdout(Exact("-1\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = 1
+      fn bar() {
+        fn foo() { 2 }
+        foo()
+      }
+      println(bar())
+      println(foo)
+      "
+    })
+    .expected_stdout(Exact("2\n1\n"))
+    .run()
+}
+
+#[test]
 fn boolean_comparison() -> Result {
   Test::new()?
     .program("println(true == true)")
@@ -484,6 +517,16 @@ fn break_within_if_else() -> Result {
 }
 
 #[test]
+fn builtin_exponential_function() -> Result {
+  Test::new()?
+    .argument("-p")
+    .argument("53")
+    .program("foo = exp\nprintln(e * foo(20))")
+    .expected_stdout(Contains("1318815734.483215"))
+    .run()
+}
+
+#[test]
 fn builtin_function_as_value() -> Result {
   Test::new()?
     .program(indoc! {
@@ -496,16 +539,6 @@ fn builtin_function_as_value() -> Result {
       "
     })
     .expected_stdout(Exact("0\n"))
-    .run()
-}
-
-#[test]
-fn builtin_variables_and_functions_can_coexist() -> Result {
-  Test::new()?
-    .argument("-p")
-    .argument("53")
-    .program("println(e * e(20))")
-    .expected_stdout(Contains("1318815734.483215"))
     .run()
 }
 
@@ -527,28 +560,54 @@ fn call_builtin_function() -> Result {
 }
 
 #[test]
-fn callee_expression_is_checked_before_arguments() -> Result {
+fn callee_is_checked_before_arguments() -> Result {
   Test::new()?
     .program("['foo'][0](println('bar'))")
     .expected_status(1)
     .expected_stdout(Empty)
     .expected_stderr(Contains("'foo' is not a function"))
-    .run()
-}
+    .run()?;
 
-#[test]
-fn callee_identifier_is_checked_before_arguments() -> Result {
   Test::new()?
-    .program(indoc! {
-      "
-      foo = 1
-
-      foo(println('bar'))
-      "
-    })
+    .program("foo = 'foo'\nfoo(println('bar'))")
     .expected_status(1)
     .expected_stdout(Empty)
-    .expected_stderr(Contains("`foo` is not a function"))
+    .expected_stderr(Contains("'foo' is not a function"))
+    .run()?;
+
+  Test::new()?
+    .program("fn foo() {}\nfoo = 'foo'\nfoo(println('bar'))")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("'foo' is not a function"))
+    .run()?;
+
+  Test::new()?
+    .program("abs = 'foo'\nabs(println('bar'))")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("'foo' is not a function"))
+    .run()?;
+
+  Test::new()?
+    .program("fn foo() {}\nfn bar(foo) { foo(println('bar')) }\nbar('foo')")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("'foo' is not a function"))
+    .run()?;
+
+  Test::new()?
+    .program("fn foo(abs) { abs(println('bar')) }\nfoo('foo')")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("'foo' is not a function"))
+    .run()?;
+
+  Test::new()?
+    .program("fn foo(foo) { foo(println('bar')) }\nfoo('foo')")
+    .expected_status(1)
+    .expected_stdout(Empty)
+    .expected_stderr(Contains("'foo' is not a function"))
     .run()
 }
 
@@ -732,6 +791,15 @@ fn configured_digits_maximum() -> Result {
     .argument(&usize::MAX.to_string())
     .program("println(0.5)")
     .expected_stdout(Exact("0.5\n"))
+    .run()
+}
+
+#[test]
+fn constant_e_is_not_a_function() -> Result {
+  Test::new()?
+    .program("e(0)")
+    .expected_status(1)
+    .expected_stderr(Contains("is not a function"))
     .run()
 }
 
@@ -1244,6 +1312,36 @@ fn function_arity_is_checked_before_arguments() -> Result {
 }
 
 #[test]
+fn function_assignment_updates_nearest_binding() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo() { 1 }
+      fn bar() { foo = fn() { 2 } }
+      bar()
+      println(foo())
+      "
+    })
+    .expected_stdout(Exact("2\n"))
+    .run()?;
+
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo() { 1 }
+      fn bar(foo) {
+        foo = fn() { 2 }
+        foo()
+      }
+      println(bar(null))
+      println(foo())
+      "
+    })
+    .expected_stdout(Exact("2\n1\n"))
+    .run()
+}
+
+#[test]
 fn function_call_as_argument() -> Result {
   Test::new()?
     .program(indoc! {
@@ -1555,7 +1653,7 @@ fn functions_with_constants() -> Result {
   Test::new()?
     .argument("-p")
     .argument("53")
-    .program("println(e(pi))")
+    .program("println(exp(pi))")
     .expected_stdout(Contains("23.140692632779"))
     .run()
 }
@@ -2206,6 +2304,19 @@ fn list_literals() -> Result {
   Test::new()?
     .program("println([println('foo'), 'foo', 1 + 2])")
     .expected_stdout(Exact("foo\n[null, 'foo', 3]\n"))
+    .run()
+}
+
+#[test]
+fn local_bindings_shadow_functions() -> Result {
+  Test::new()?
+    .program("fn foo(foo) { foo() }\nprintln(foo(fn() { 2 }))")
+    .expected_stdout(Exact("2\n"))
+    .run()?;
+
+  Test::new()?
+    .program("fn foo() { 1 }\nfor foo in [fn() { 2 }] { println(foo()) }")
+    .expected_stdout(Exact("2\n"))
     .run()
 }
 
@@ -3201,7 +3312,7 @@ fn undefined_callee_is_checked_before_arguments() -> Result {
     .program("foo(println('bar'))")
     .expected_status(1)
     .expected_stdout(Empty)
-    .expected_stderr(Contains("Function `foo` is not defined"))
+    .expected_stderr(Contains("Undefined variable `foo`"))
     .run()
 }
 

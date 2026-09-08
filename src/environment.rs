@@ -8,15 +8,13 @@ pub struct Environment {
 
 impl Environment {
   pub fn add_function(&self, name: &str, function: Function) {
-    let mut frame = self.frame.borrow_mut();
-
-    frame.symbols.entry(name.to_owned()).or_default().function = Some(function);
+    self.add_symbol(name, Value::Function(function));
   }
 
   pub fn add_symbol(&self, name: &str, value: Value) {
     let mut frame = self.frame.borrow_mut();
 
-    frame.symbols.entry(name.to_owned()).or_default().value = Some(value);
+    frame.symbols.insert(name.to_owned(), value);
   }
 
   fn assign_existing_symbol(
@@ -28,11 +26,11 @@ impl Environment {
       let mut frame = self.frame.borrow_mut();
 
       match frame.symbols.get_mut(name) {
-        Some(symbol) if symbol.value.is_some() => {
-          symbol.value = Some(value);
+        Some(symbol) => {
+          *symbol = value;
           return Ok(());
         }
-        _ => frame.parent.clone(),
+        None => frame.parent.clone(),
       }
     };
 
@@ -48,41 +46,6 @@ impl Environment {
     }
   }
 
-  pub(crate) fn function(&self, name: &str, span: Span) -> Result<Function> {
-    match self.resolve_function(name) {
-      Some(function) => Ok(function),
-      None if self.resolve_symbol(name).is_some() => {
-        Err(Error::new(span, format!("`{name}` is not a function")))
-      }
-      None => Err(Error::new(
-        span,
-        format!("Function `{name}` is not defined"),
-      )),
-    }
-  }
-
-  fn local_function(&self, name: &str) -> Option<Function> {
-    let frame = self.frame.borrow();
-
-    let symbol = frame.symbols.get(name)?;
-
-    symbol.function.clone().or_else(|| match &symbol.value {
-      Some(Value::Function(function)) => Some(function.clone()),
-      _ => None,
-    })
-  }
-
-  fn local_symbol(&self, name: &str) -> Option<Value> {
-    let frame = self.frame.borrow();
-
-    let symbol = frame.symbols.get(name)?;
-
-    symbol
-      .value
-      .clone()
-      .or_else(|| symbol.function.clone().map(Value::Function))
-  }
-
   #[must_use]
   pub fn new(config: Config) -> Self {
     let environment = Self {
@@ -93,36 +56,31 @@ impl Environment {
     for builtin in inventory::iter::<&dyn Builtin> {
       for name in once(builtin.name()).chain(builtin.aliases().iter().copied())
       {
-        match builtin.value(config) {
+        let value = match builtin.value(config) {
           Value::Function(Function::Builtin(function)) => {
-            environment.add_function(
+            Value::Function(Function::Builtin(BuiltinFunction {
               name,
-              Function::Builtin(BuiltinFunction { name, ..function }),
-            );
+              ..function
+            }))
           }
-          Value::Function(function) => {
-            environment.add_function(name, function);
-          }
-          value => {
-            environment.add_symbol(name, value);
-          }
-        }
+          value => value,
+        };
+
+        environment.add_symbol(name, value);
       }
     }
 
     environment
   }
 
-  fn resolve_function(&self, name: &str) -> Option<Function> {
-    self
-      .local_function(name)
-      .or_else(|| self.frame.borrow().parent.clone()?.resolve_function(name))
-  }
-
   pub(crate) fn resolve_symbol(&self, name: &str) -> Option<Value> {
-    self
-      .local_symbol(name)
-      .or_else(|| self.frame.borrow().parent.clone()?.resolve_symbol(name))
+    let frame = self.frame.borrow();
+
+    frame
+      .symbols
+      .get(name)
+      .cloned()
+      .or_else(|| frame.parent.as_ref()?.resolve_symbol(name))
   }
 
   pub(crate) fn with_parent(parent: Environment) -> Self {

@@ -1,8 +1,8 @@
 use super::*;
 
 builtin! {
-  E {
-    name: "e",
+  Exp {
+    name: "exp",
     arity: BuiltinArity::Exact(1),
     call(payload) {
       Ok(Value::Number(payload.number(0)?.exp(payload.config)))
