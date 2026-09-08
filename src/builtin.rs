@@ -35,11 +35,11 @@ macro_rules! builtin {
       }
 
       fn value(&self, _: Config) -> Value {
-        Value::Function(Function::Builtin {
+        Value::Function(Function::Builtin(BuiltinFunction {
           arity: $arity,
           function: Self::call,
           name: self.name(),
-        })
+        }))
       }
     }
 

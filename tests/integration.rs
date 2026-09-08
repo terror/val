@@ -1369,6 +1369,24 @@ fn function_observes_outer_scope_changes() -> Result {
 }
 
 #[test]
+fn function_recursive_binding_preserves_identity() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo() { foo }
+
+      bar = foo
+
+      fn foo() {}
+
+      println(bar() == bar)
+      "
+    })
+    .expected_stdout(Exact("true\n"))
+    .run()
+}
+
+#[test]
 fn function_returned_closure_keeps_scope() -> Result {
   Test::new()?
     .program(indoc! {

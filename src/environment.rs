@@ -98,16 +98,10 @@ impl Environment {
       for name in once(builtin.name()).chain(builtin.aliases().iter().copied())
       {
         match builtin.value(config) {
-          Value::Function(Function::Builtin {
-            arity, function, ..
-          }) => {
+          Value::Function(Function::Builtin(function)) => {
             environment.add_function(
               name,
-              Function::Builtin {
-                arity,
-                function,
-                name,
-              },
+              Function::Builtin(BuiltinFunction { name, ..function }),
             );
           }
           Value::Function(function) => {

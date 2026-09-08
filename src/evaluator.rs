@@ -252,15 +252,14 @@ impl Evaluator {
         ),
       )),
       Expression::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
-      Expression::Function(parameters, body) => {
-        Ok(Value::Function(Function::UserDefined {
+      Expression::Function(parameters, body) => Ok(Value::Function(
+        Function::UserDefined(Rc::new(UserFunction {
           body: body.clone(),
           environment: self.environment.clone(),
-          identity: Rc::new(()),
           name: None,
           parameters: parameters.clone(),
-        }))
-      }
+        })),
+      )),
       Expression::FunctionCall(function, arguments) => {
         let function = match &function.0 {
           Expression::Identifier(name) => {
@@ -408,13 +407,12 @@ impl Evaluator {
         })
       }
       Statement::Function(name, params, body) => {
-        let function = Function::UserDefined {
+        let function = Function::UserDefined(Rc::new(UserFunction {
           body: body.clone(),
           environment: self.environment.clone(),
-          identity: Rc::new(()),
           name: Some(name.clone()),
           parameters: params.clone(),
-        };
+        }));
 
         self.environment.add_function(name, function.clone());
 
@@ -571,5 +569,38 @@ mod tests {
     case("0.00001", "1e-05");
     case("-0.0000123", "-1.23e-05");
     case("10000000000000000.5", "1.00000000000000005e+16");
+  }
+
+  #[test]
+  fn user_defined_functions_are_shared() {
+    #[track_caller]
+    fn case(source: &str) {
+      let ast = parse(source).unwrap();
+
+      let mut evaluator = Evaluator::from(Environment::default());
+
+      let Evaluation::Value(value) = evaluator.evaluate(&ast).unwrap() else {
+        panic!("expected value");
+      };
+
+      let cloned = value.clone();
+
+      assert_eq!(value, cloned);
+
+      let (
+        Value::Function(Function::UserDefined(function)),
+        Value::Function(Function::UserDefined(cloned)),
+      ) = (&value, &cloned)
+      else {
+        panic!("expected user-defined functions");
+      };
+
+      assert!(Rc::ptr_eq(function, cloned));
+
+      assert_ne!(evaluator.evaluate(&ast).unwrap(), Evaluation::Value(value));
+    }
+
+    case("fn(foo) { foo }");
+    case("fn foo(bar) { bar }");
   }
 }

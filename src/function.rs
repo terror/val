@@ -2,18 +2,8 @@ use super::*;
 
 #[derive(Clone, Debug)]
 pub enum Function {
-  Builtin {
-    arity: BuiltinArity,
-    function: fn(&BuiltinFunctionPayload) -> Result<Value, Error>,
-    name: &'static str,
-  },
-  UserDefined {
-    body: Vec<Spanned<Statement>>,
-    environment: Environment,
-    identity: Rc<()>,
-    name: Option<String>,
-    parameters: Vec<String>,
-  },
+  Builtin(BuiltinFunction),
+  UserDefined(Rc<UserFunction>),
 }
 
 impl Function {
@@ -24,38 +14,8 @@ impl Function {
     span: Span,
   ) -> Result<Value, Error> {
     match self {
-      Self::Builtin { function, name, .. } => {
-        function(&BuiltinFunctionPayload {
-          arguments,
-          config,
-          name,
-          span,
-        })
-      }
-      Self::UserDefined {
-        body,
-        environment,
-        name,
-        parameters,
-        ..
-      } => {
-        let call_environment = Environment::with_parent(environment.clone());
-
-        if let Some(name) = name {
-          call_environment.add_function(name, self.clone());
-        }
-
-        for (parameter, argument) in parameters.iter().zip(arguments) {
-          call_environment.add_symbol(parameter, argument);
-        }
-
-        match Evaluator::for_function(call_environment)
-          .evaluate_statements(body)?
-        {
-          Completion::Return(value) | Completion::Value(value) => Ok(value),
-          Completion::Break | Completion::Continue => Ok(Value::Null),
-        }
-      }
+      Self::Builtin(function) => function.call(arguments, config, span),
+      Self::UserDefined(function) => function.call(arguments),
     }
   }
 
@@ -65,19 +25,15 @@ impl Function {
     span: Span,
   ) -> Result<(), Error> {
     match self {
-      Self::Builtin { arity, name, .. } => arity.check(name, len, span),
-      Self::UserDefined { parameters, .. } => {
-        BuiltinArity::Exact(parameters.len()).check(self.name(), len, span)
-      }
+      Self::Builtin(function) => function.check_arity(len, span),
+      Self::UserDefined(function) => function.check_arity(len, span),
     }
   }
 
   pub(crate) fn name(&self) -> &str {
     match self {
-      Self::Builtin { name, .. } => name,
-      Self::UserDefined { name, .. } => {
-        name.as_deref().unwrap_or("<anonymous>")
-      }
+      Self::Builtin(function) => function.name,
+      Self::UserDefined(function) => function.name(),
     }
   }
 }
@@ -85,11 +41,8 @@ impl Function {
 impl PartialEq for Function {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
-      (Self::Builtin { name: a, .. }, Self::Builtin { name: b, .. }) => a == b,
-      (
-        Self::UserDefined { identity: a, .. },
-        Self::UserDefined { identity: b, .. },
-      ) => Rc::ptr_eq(a, b),
+      (Self::Builtin(a), Self::Builtin(b)) => a.name == b.name,
+      (Self::UserDefined(a), Self::UserDefined(b)) => Rc::ptr_eq(a, b),
       _ => false,
     }
   }
