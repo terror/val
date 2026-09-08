@@ -1,26 +1,24 @@
 use super::*;
 
 #[derive(Debug, Clone)]
-pub enum Program {
-  Statements(Vec<Spanned<Statement>>),
+pub struct Program {
+  pub statements: Vec<Spanned<Statement>>,
 }
 
 impl Program {
   #[must_use]
-  pub fn kind(&self) -> String {
-    String::from(match self {
-      Program::Statements(_) => "statements",
-    })
+  pub fn kind(&self) -> &'static str {
+    "statements"
   }
 }
 
 impl Display for Program {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    match self {
-      Program::Statements(statements) => {
-        write!(f, "statements({})", Statement::display_list(statements))
-      }
-    }
+    write!(
+      f,
+      "statements({})",
+      Statement::display_list(&self.statements)
+    )
   }
 }
 
@@ -53,8 +51,8 @@ impl Statement {
   }
 
   #[must_use]
-  pub fn kind(&self) -> String {
-    String::from(match self {
+  pub fn kind(&self) -> &'static str {
+    match self {
       Statement::Assignment(_, _) => "assignment",
       Statement::Block(_) => "block",
       Statement::Break => "break",
@@ -66,7 +64,7 @@ impl Statement {
       Statement::Loop(_) => "loop",
       Statement::Return(_) => "return",
       Statement::While(_, _) => "while",
-    })
+    }
   }
 }
 
@@ -147,11 +145,11 @@ pub enum AssignmentTarget {
 
 impl AssignmentTarget {
   #[must_use]
-  pub fn kind(&self) -> String {
-    String::from(match self {
+  pub fn kind(&self) -> &'static str {
+    match self {
       AssignmentTarget::Identifier(_) => "identifier",
       AssignmentTarget::ListAccess(_, _) => "list_access",
-    })
+    }
   }
 }
 
@@ -259,8 +257,8 @@ pub enum Expression {
 
 impl Expression {
   #[must_use]
-  pub fn kind(&self) -> String {
-    String::from(match self {
+  pub fn kind(&self) -> &'static str {
+    match self {
       Expression::BinaryOp(_, _, _) => "binary_op",
       Expression::Boolean(_) => "boolean",
       Expression::Function(_, _) => "function",
@@ -272,7 +270,7 @@ impl Expression {
       Expression::Number(_) => "number",
       Expression::String(_) => "string",
       Expression::UnaryOp(_, _) => "unary_op",
-    })
+    }
   }
 }
 
