@@ -48,11 +48,7 @@ impl Environment {
     }
   }
 
-  pub(crate) fn function(
-    &self,
-    name: &str,
-    span: Span,
-  ) -> Result<Function, Error> {
+  pub(crate) fn function(&self, name: &str, span: Span) -> Result<Function> {
     match self.resolve_function(name) {
       Some(function) => Ok(function),
       None if self.resolve_symbol(name).is_some() => {

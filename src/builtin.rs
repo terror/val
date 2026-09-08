@@ -16,7 +16,7 @@ macro_rules! builtin {
       #[allow(clippy::unnecessary_wraps)]
       fn call(
         $payload: &BuiltinFunctionPayload,
-      ) -> Result<Value, Error> $body
+      ) -> Result<Value> $body
     }
 
     impl Builtin for $builtin {

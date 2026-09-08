@@ -10,7 +10,7 @@ impl Evaluator {
     &mut self,
     target: &Spanned<AssignmentTarget>,
     value: Value,
-  ) -> Result<(), Error> {
+  ) -> Result<()> {
     match &target.0 {
       AssignmentTarget::Identifier(name) => {
         self.environment.assign_symbol(name, value);
@@ -45,7 +45,7 @@ impl Evaluator {
     indices: &[&Spanned<Expression>],
     assigned: Value,
     span: Span,
-  ) -> Result<Value, Error> {
+  ) -> Result<Value> {
     let Some((index, rest)) = indices.split_first() else {
       return Ok(assigned);
     };
@@ -82,8 +82,8 @@ impl Evaluator {
 
   fn enter_loop<T>(
     &mut self,
-    f: impl FnOnce(&mut Self) -> Result<T, Error>,
-  ) -> Result<T, Error> {
+    f: impl FnOnce(&mut Self) -> Result<T>,
+  ) -> Result<T> {
     self.context.enter_loop();
     let result = f(self);
     self.context.exit_loop();
@@ -93,10 +93,7 @@ impl Evaluator {
   /// # Errors
   ///
   /// Returns an evaluation error when a statement or expression is invalid.
-  pub fn evaluate(
-    &mut self,
-    ast: &Spanned<Program>,
-  ) -> Result<Evaluation, Error> {
+  pub fn evaluate(&mut self, ast: &Spanned<Program>) -> Result<Evaluation> {
     let (node, _) = ast;
 
     let result = match node {
@@ -118,7 +115,7 @@ impl Evaluator {
   fn evaluate_expression(
     &mut self,
     ast: &Spanned<Expression>,
-  ) -> Result<Value, Error> {
+  ) -> Result<Value> {
     let (node, span) = ast;
 
     match node {
@@ -334,7 +331,7 @@ impl Evaluator {
   fn evaluate_list_index(
     &mut self,
     index: &Spanned<Expression>,
-  ) -> Result<usize, Error> {
+  ) -> Result<usize> {
     self
       .evaluate_expression(index)?
       .number(index.1)?
@@ -347,7 +344,7 @@ impl Evaluator {
   pub(crate) fn evaluate_statement(
     &mut self,
     statement: &Spanned<Statement>,
-  ) -> Result<Completion, Error> {
+  ) -> Result<Completion> {
     let (node, span) = statement;
 
     match node {
@@ -479,7 +476,7 @@ impl Evaluator {
   pub(crate) fn evaluate_statements(
     &mut self,
     statements: &[Spanned<Statement>],
-  ) -> Result<Completion, Error> {
+  ) -> Result<Completion> {
     let mut result = Value::Null;
 
     for statement in statements {
