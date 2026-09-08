@@ -31,7 +31,7 @@ fn program_parser<'a>()
   padding_parser()
     .ignore_then(statement_list_parser(statement_parser()))
     .then_ignore(padding_parser())
-    .map(Program::Statements)
+    .map(|statements| Program { statements })
     .map_with(|ast, error| (ast, error.span()))
 }
 

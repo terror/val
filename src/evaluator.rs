@@ -96,14 +96,12 @@ impl Evaluator {
   pub fn evaluate(&mut self, ast: &Spanned<Program>) -> Result<Evaluation> {
     let (node, _) = ast;
 
-    let result = match node {
-      Program::Statements(statements) => self
-        .evaluate_statements(statements)
-        .map(|completion| match completion {
-          Completion::Return(value) | Completion::Value(value) => value,
-          Completion::Break | Completion::Continue => Value::Null,
-        }),
-    };
+    let result = self
+      .evaluate_statements(&node.statements)
+      .map(|completion| match completion {
+        Completion::Return(value) | Completion::Value(value) => value,
+        Completion::Break | Completion::Continue => Value::Null,
+      });
 
     match result {
       Ok(value) => Ok(Evaluation::Value(value)),

@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Clone, Serialize)]
 pub struct AstNode {
-  pub kind: String,
+  pub kind: &'static str,
   pub range: Range,
   pub children: Vec<AstNode>,
 }
@@ -25,12 +25,8 @@ impl From<(&Program, &Span)> for AstNode {
 
     let mut children = Vec::new();
 
-    match program {
-      Program::Statements(statements) => {
-        for (statement, span) in statements {
-          children.push(Self::from((statement, span)));
-        }
-      }
+    for (statement, span) in &program.statements {
+      children.push(Self::from((statement, span)));
     }
 
     Self {
@@ -192,10 +188,10 @@ mod tests {
     let converter = RangeConverter::new("é 😀");
 
     let mut node = AstNode {
-      kind: "foo".into(),
+      kind: "foo",
       range: Range { start: 0, end: 7 },
       children: vec![AstNode {
-        kind: "bar".into(),
+        kind: "bar",
         range: Range { start: 3, end: 7 },
         children: Vec::new(),
       }],
