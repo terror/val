@@ -1,6 +1,6 @@
 use super::*;
 
-pub enum Completion {
+pub(crate) enum Completion {
   Break,
   Continue,
   Return(Value),

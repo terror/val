@@ -2,6 +2,7 @@ use {
   ariadne::{Color, IndexType, Label, Report, ReportKind},
   ast::{AssignmentTarget, BinaryOp, Expression, Program, Statement, UnaryOp},
   chumsky::prelude::*,
+  completion::Completion,
   context::Context,
   decimal::Decimal,
   frame::Frame,
@@ -27,11 +28,10 @@ use {
 pub use crate::{
   builtin::Builtin, builtin_arity::BuiltinArity,
   builtin_function::BuiltinFunction,
-  builtin_function_payload::BuiltinFunctionPayload, completion::Completion,
-  config::Config, environment::Environment, error::Error,
-  evaluation::Evaluation, evaluator::Evaluator, function::Function,
-  number::Number, parser::parse, rounding_mode::RoundingMode,
-  user_function::UserFunction, value::Value,
+  builtin_function_payload::BuiltinFunctionPayload, config::Config,
+  environment::Environment, error::Error, evaluation::Evaluation,
+  evaluator::Evaluator, function::Function, number::Number, parser::parse,
+  rounding_mode::RoundingMode, user_function::UserFunction, value::Value,
 };
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
