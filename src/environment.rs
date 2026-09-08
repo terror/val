@@ -94,7 +94,7 @@ impl Environment {
   }
 }
 
-impl fmt::Debug for Environment {
+impl Debug for Environment {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     f.debug_struct("Environment")
       .field("config", &self.config)
@@ -107,6 +107,7 @@ impl Finalize for Environment {}
 unsafe impl Trace for Environment {
   gc::custom_trace!(this, {
     let Self { config: _, frame } = this;
+
     unsafe { mark(frame) };
   });
 }

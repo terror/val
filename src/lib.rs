@@ -16,7 +16,7 @@ use {
   std::{
     cmp::Ordering,
     collections::HashMap,
-    fmt::{self, Display, Formatter},
+    fmt::{self, Debug, Display, Formatter},
     iter::once,
     num::NonZeroUsize,
     ops::Range,
