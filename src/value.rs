@@ -96,3 +96,15 @@ impl Display for Value {
     f.write_str(&self.display(Config::default()))
   }
 }
+
+impl Finalize for Value {}
+
+unsafe impl Trace for Value {
+  gc::custom_trace!(this, {
+    match this {
+      Self::Function(function) => unsafe { mark(function) },
+      Self::List(list) => unsafe { mark(list) },
+      Self::Boolean(_) | Self::Null | Self::Number(_) | Self::String(_) => {}
+    }
+  });
+}

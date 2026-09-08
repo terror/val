@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Default)]
 pub struct Environment {
   pub(crate) config: Config,
-  pub(crate) frame: Rc<RefCell<Frame>>,
+  pub(crate) frame: Gc<GcCell<Frame>>,
 }
 
 impl Environment {
@@ -50,7 +50,7 @@ impl Environment {
   pub fn new(config: Config) -> Self {
     let environment = Self {
       config,
-      frame: Rc::new(RefCell::new(Frame::default())),
+      frame: Gc::new(GcCell::new(Frame::default())),
     };
 
     for builtin in inventory::iter::<&dyn Builtin> {
@@ -86,7 +86,7 @@ impl Environment {
   pub(crate) fn with_parent(parent: Environment) -> Self {
     Self {
       config: parent.config,
-      frame: Rc::new(RefCell::new(Frame {
+      frame: Gc::new(GcCell::new(Frame {
         parent: Some(parent),
         symbols: HashMap::new(),
       })),
@@ -94,10 +94,20 @@ impl Environment {
   }
 }
 
-impl fmt::Debug for Environment {
+impl Debug for Environment {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     f.debug_struct("Environment")
       .field("config", &self.config)
       .finish_non_exhaustive()
   }
+}
+
+impl Finalize for Environment {}
+
+unsafe impl Trace for Environment {
+  gc::custom_trace!(this, {
+    let Self { config: _, frame } = this;
+
+    unsafe { mark(frame) };
+  });
 }

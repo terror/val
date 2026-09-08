@@ -248,7 +248,7 @@ impl Evaluator {
       )),
       Expression::Boolean(boolean) => Ok(Value::Boolean(*boolean)),
       Expression::Function(parameters, body) => Ok(Value::Function(
-        Function::UserDefined(Rc::new(UserFunction {
+        Function::UserDefined(Gc::new(UserFunction {
           body: body.clone(),
           environment: self.environment.clone(),
           name: None,
@@ -393,7 +393,7 @@ impl Evaluator {
         })
       }
       Statement::Function(name, params, body) => {
-        let function = Function::UserDefined(Rc::new(UserFunction {
+        let function = Function::UserDefined(Gc::new(UserFunction {
           body: body.clone(),
           environment: self.environment.clone(),
           name: Some(name.clone()),
@@ -581,7 +581,7 @@ mod tests {
         panic!("expected user-defined functions");
       };
 
-      assert!(Rc::ptr_eq(function, cloned));
+      assert!(Gc::ptr_eq(function, cloned));
 
       assert_ne!(evaluator.evaluate(&ast).unwrap(), Evaluation::Value(value));
     }

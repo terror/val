@@ -9,19 +9,22 @@ pub struct UserFunction {
 }
 
 impl UserFunction {
-  pub(crate) fn call(self: &Rc<Self>, arguments: Vec<Value>) -> Result<Value> {
-    let environment = Environment::with_parent(self.environment.clone());
+  pub(crate) fn call(
+    function: &Gc<Self>,
+    arguments: Vec<Value>,
+  ) -> Result<Value> {
+    let environment = Environment::with_parent(function.environment.clone());
 
-    if let Some(name) = &self.name {
-      environment.add_function(name, Function::UserDefined(self.clone()));
+    if let Some(name) = &function.name {
+      environment.add_function(name, Function::UserDefined(function.clone()));
     }
 
-    for (parameter, argument) in self.parameters.iter().zip(arguments) {
+    for (parameter, argument) in function.parameters.iter().zip(arguments) {
       environment.add_symbol(parameter, argument);
     }
 
     match Evaluator::for_function(environment)
-      .evaluate_statements(&self.body)?
+      .evaluate_statements(&function.body)?
     {
       Completion::Return(value) | Completion::Value(value) => Ok(value),
       Completion::Break | Completion::Continue => Ok(Value::Null),
@@ -35,4 +38,19 @@ impl UserFunction {
   pub(crate) fn name(&self) -> &str {
     self.name.as_deref().unwrap_or("<anonymous>")
   }
+}
+
+impl Finalize for UserFunction {}
+
+unsafe impl Trace for UserFunction {
+  gc::custom_trace!(this, {
+    let Self {
+      body: _,
+      environment,
+      name: _,
+      parameters: _,
+    } = this;
+
+    unsafe { mark(environment) };
+  });
 }

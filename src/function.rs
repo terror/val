@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub enum Function {
   Builtin(BuiltinFunction),
-  UserDefined(Rc<UserFunction>),
+  UserDefined(Gc<UserFunction>),
 }
 
 impl Function {
@@ -15,7 +15,7 @@ impl Function {
   ) -> Result<Value> {
     match self {
       Self::Builtin(function) => function.call(arguments, config, span),
-      Self::UserDefined(function) => function.call(arguments),
+      Self::UserDefined(function) => UserFunction::call(function, arguments),
     }
   }
 
@@ -34,12 +34,23 @@ impl Function {
   }
 }
 
+impl Finalize for Function {}
+
 impl PartialEq for Function {
   fn eq(&self, other: &Self) -> bool {
     match (self, other) {
       (Self::Builtin(a), Self::Builtin(b)) => a.name == b.name,
-      (Self::UserDefined(a), Self::UserDefined(b)) => Rc::ptr_eq(a, b),
+      (Self::UserDefined(a), Self::UserDefined(b)) => Gc::ptr_eq(a, b),
       _ => false,
     }
   }
+}
+
+unsafe impl Trace for Function {
+  gc::custom_trace!(this, {
+    match this {
+      Self::Builtin(_) => {}
+      Self::UserDefined(function) => unsafe { mark(function) },
+    }
+  });
 }
