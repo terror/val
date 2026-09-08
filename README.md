@@ -264,6 +264,13 @@ A function is a value, and can be used in assignments, passed around to other
 functions, returned from functions, and called from any expression that
 evaluates to a function.
 
+Functions, variables, and built-in constants share one namespace. Reads and
+calls use the nearest binding. Assignment replaces an existing binding in the
+nearest scope, or creates one in the current scope if the name is new. Function
+definitions, parameters, and `for` loop variables bind names in the current
+scope. Replacing a function with a non-function value makes calls to that name
+an error.
+
 Check out the [higher order functions example](https://github.com/terror/val/blob/master/examples/hof.val)
 for how this works.
 
@@ -355,7 +362,7 @@ if (index == null) {
 | **Logarithmic**   | `ln(x)`             | Natural logarithm                  | `ln(e)`                  |
 |                   | `log2(x)`           | Base-2 logarithm                   | `log2(8)`                |
 |                   | `log10(x)`          | Base-10 logarithm                  | `log10(100)`             |
-|                   | `e(x)`              | e raised to power x                | `e(2)`                   |
+|                   | `exp(x)`            | e raised to power x                | `exp(2)`                 |
 | **Numeric**       | `sqrt(x)`           | Square root (x≥0)                  | `sqrt(16)`               |
 |                   | `ceil(x)`           | Round up to integer                | `ceil(4.3)`              |
 |                   | `floor(x)`          | Round down to integer              | `floor(4.7)`             |

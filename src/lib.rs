@@ -22,7 +22,6 @@ use {
     rc::Rc,
     str::FromStr,
   },
-  symbol::Symbol,
 };
 
 pub use crate::{
@@ -57,6 +56,5 @@ mod function;
 mod number;
 mod parser;
 mod rounding_mode;
-mod symbol;
 mod user_function;
 mod value;

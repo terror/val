@@ -258,18 +258,9 @@ impl Evaluator {
         })),
       )),
       Expression::FunctionCall(function, arguments) => {
-        let function = match &function.0 {
-          Expression::Identifier(name) => {
-            self.environment.function(name, *span)
-          }
-          _ => match self.evaluate_expression(function)? {
-            Value::Function(function) => Ok(function),
-            value => Err(Error::new(
-              function.1,
-              format!("'{value}' is not a function"),
-            )),
-          },
-        }?;
+        let function = self
+          .evaluate_expression(function)?
+          .into_function(function.1)?;
 
         function.check_arity(arguments.len(), *span)?;
 
