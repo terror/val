@@ -50,6 +50,7 @@ unsafe impl Trace for UserFunction {
       name: _,
       parameters: _,
     } = this;
+
     unsafe { mark(environment) };
   });
 }

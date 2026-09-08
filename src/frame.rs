@@ -11,6 +11,7 @@ impl Finalize for Frame {}
 unsafe impl Trace for Frame {
   gc::custom_trace!(this, {
     let Self { parent, symbols } = this;
+
     unsafe {
       mark(parent);
       mark(symbols);
