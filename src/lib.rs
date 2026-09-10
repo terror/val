@@ -11,7 +11,7 @@ use {
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
     integer::MiniInteger,
-    ops::{Pow, PowAssignRound},
+    ops::{AssignRound, Pow, PowAssignRound},
   },
   std::{
     cmp::Ordering,
