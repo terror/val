@@ -2,20 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 
 export function usePersistedState<T extends object>(
   key: string,
-  initialValue: T,
-  options?: {
-    serialize?: (value: T) => string;
-    deserialize?: (value: string) => T;
-  }
+  initialValue: T
 ): [T, (action: Partial<T> | ((prevState: T) => Partial<T>)) => void] {
   const [state, setFullState] = useState<T>(() => {
     const savedValue = localStorage.getItem(key);
 
     if (savedValue !== null) {
       try {
-        return options?.deserialize
-          ? options.deserialize(savedValue)
-          : JSON.parse(savedValue);
+        return JSON.parse(savedValue);
       } catch (error) {
         console.warn(`Error reading ${key} from localStorage:`, error);
         return initialValue;
@@ -27,14 +21,11 @@ export function usePersistedState<T extends object>(
 
   useEffect(() => {
     try {
-      localStorage.setItem(
-        key,
-        options?.serialize ? options.serialize(state) : JSON.stringify(state)
-      );
+      localStorage.setItem(key, JSON.stringify(state));
     } catch (error) {
       console.warn(`Error saving ${key} to localStorage:`, error);
     }
-  }, [key, state, options]);
+  }, [key, state]);
 
   const setState = useCallback(
     (action: Partial<T> | ((prevState: T) => Partial<T>)) => {
