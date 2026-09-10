@@ -8,8 +8,8 @@ interface UseValAstOptions {
 }
 
 interface UseValAst {
+  collapsedNodes: Set<AstNode>;
   errors: ValError[];
-  expandedNodes: Set<AstNode>;
   root: AstNode | undefined;
   toggleExpand: (node: AstNode) => void;
 }
@@ -27,30 +27,16 @@ export function useValAst({ code, loaded }: UseValAstOptions): UseValAst {
     }
   }, [code, loaded]);
 
-  const [expandedNodes, setExpandedNodes] = useState<Set<AstNode>>(
+  const [collapsedNodes, setCollapsedNodes] = useState<Set<AstNode>>(
     () => new Set()
   );
 
   useEffect(() => {
-    if (!root) {
-      setExpandedNodes(new Set());
-      return;
-    }
-
-    const all = new Set<AstNode>();
-
-    const walk = (node: AstNode) => {
-      all.add(node);
-      node.children.forEach(walk);
-    };
-
-    walk(root);
-
-    setExpandedNodes(all);
+    setCollapsedNodes(new Set());
   }, [root]);
 
   const toggleExpand = useCallback((node: AstNode) => {
-    setExpandedNodes((previous) => {
+    setCollapsedNodes((previous) => {
       const next = new Set(previous);
 
       if (next.has(node)) {
@@ -63,7 +49,7 @@ export function useValAst({ code, loaded }: UseValAstOptions): UseValAst {
     });
   }, []);
 
-  return { root, errors, expandedNodes, toggleExpand };
+  return { root, errors, collapsedNodes, toggleExpand };
 }
 
 function parseErrors(error: unknown): ValError[] {
