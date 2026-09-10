@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { memo, useCallback } from 'react';
 
 interface AstNodeProps {
-  expandedNodes: Set<AstNodeType>;
+  collapsedNodes: Set<AstNodeType>;
   level: number;
   node: AstNodeType;
   onHighlightChange: (range: Range | undefined) => void;
@@ -11,9 +11,9 @@ interface AstNodeProps {
 }
 
 export const AstNode: React.FC<AstNodeProps> = memo(
-  ({ expandedNodes, level, node, onHighlightChange, toggleExpand }) => {
+  ({ collapsedNodes, level, node, onHighlightChange, toggleExpand }) => {
     const hasChildren = node.children && node.children.length > 0;
-    const isExpanded = expandedNodes.has(node);
+    const isExpanded = !collapsedNodes.has(node);
     const isValidRange = node.range.start < node.range.end;
 
     const handleMouseEnter = useCallback(() => {
@@ -67,7 +67,7 @@ export const AstNode: React.FC<AstNodeProps> = memo(
               key={`${child.kind}-${index}`}
               node={child}
               level={level + 1}
-              expandedNodes={expandedNodes}
+              collapsedNodes={collapsedNodes}
               toggleExpand={toggleExpand}
               onHighlightChange={onHighlightChange}
             />

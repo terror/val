@@ -2,14 +2,14 @@ import { AstNode } from '@/components/ast-node';
 import type { AstNode as AstNodeType, Range } from '@/lib/types';
 
 interface AstPaneProps {
-  expandedNodes: Set<AstNodeType>;
+  collapsedNodes: Set<AstNodeType>;
   onHighlightChange: (range: Range | undefined) => void;
   root: AstNodeType | undefined;
   toggleExpand: (node: AstNodeType) => void;
 }
 
 export const AstPane = ({
-  expandedNodes,
+  collapsedNodes,
   onHighlightChange,
   root,
   toggleExpand,
@@ -21,7 +21,7 @@ export const AstPane = ({
           <AstNode
             node={root}
             level={0}
-            expandedNodes={expandedNodes}
+            collapsedNodes={collapsedNodes}
             toggleExpand={toggleExpand}
             onHighlightChange={onHighlightChange}
           />

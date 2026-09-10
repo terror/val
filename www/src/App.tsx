@@ -38,7 +38,7 @@ function App() {
 
   const { error, loaded, loading } = useValWasm();
 
-  const { root, errors, expandedNodes, toggleExpand } = useValAst({
+  const { root, errors, collapsedNodes, toggleExpand } = useValAst({
     code,
     loaded,
   });
@@ -114,7 +114,7 @@ function App() {
           <ResizablePanel id='ast-panel' defaultSize={50} minSize={30}>
             <AstPane
               root={root}
-              expandedNodes={expandedNodes}
+              collapsedNodes={collapsedNodes}
               toggleExpand={toggleExpand}
               onHighlightChange={handleHighlightChange}
             />
