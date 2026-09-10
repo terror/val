@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export function usePersistedDoc(
   key: string,
@@ -7,12 +7,12 @@ export function usePersistedDoc(
   const [value, setValue] = useState<string>(() => {
     const stored = window.localStorage.getItem(key);
 
-    return stored && stored.length > 0 ? stored : fallback;
+    return stored ?? fallback;
   });
 
   useEffect(() => {
     window.localStorage.setItem(key, value);
   }, [key, value]);
 
-  return [value, useCallback((next: string) => setValue(next), [])];
+  return [value, setValue];
 }
