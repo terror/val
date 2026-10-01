@@ -35,7 +35,7 @@ export const AstNode: React.FC<AstNodeProps> = memo(
     return (
       <>
         <div
-          className='flex cursor-pointer items-center py-1 font-mono text-sm whitespace-nowrap transition-colors hover:bg-blue-50'
+          className='hover:bg-muted/50 flex cursor-pointer items-center py-1 font-mono text-sm whitespace-nowrap transition-colors'
           onClick={toggleExpanded}
           onMouseLeave={handleMouseLeave}
           onMouseEnter={handleMouseEnter}
@@ -55,7 +55,7 @@ export const AstNode: React.FC<AstNodeProps> = memo(
 
           <span>{node.kind}</span>
 
-          <span className='ml-2 text-xs text-gray-500'>
+          <span className='text-muted-foreground ml-2 text-xs'>
             [{node.range.start}: {node.range.end}]{!isValidRange && ' (empty)'}
           </span>
         </div>
