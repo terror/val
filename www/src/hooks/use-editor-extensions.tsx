@@ -3,23 +3,26 @@ import { highlightExtension } from '@/lib/highlight';
 import type { Range, ValError } from '@/lib/types';
 import { rust } from '@codemirror/lang-rust';
 import {
+  HighlightStyle,
   bracketMatching,
-  defaultHighlightStyle,
   indentOnInput,
   syntaxHighlighting,
 } from '@codemirror/language';
 import { type Diagnostic, linter } from '@codemirror/lint';
 import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { tags } from '@lezer/highlight';
 import { vim } from '@replit/codemirror-vim';
 import { useCallback, useMemo } from 'react';
 
 interface UseEditorExtensionsOptions {
+  darkMode: boolean;
   errors: ValError[];
   highlight: Range | undefined;
 }
 
 export function useEditorExtensions({
+  darkMode,
   errors,
   highlight,
 }: UseEditorExtensionsOptions): Extension[] {
@@ -46,12 +49,12 @@ export function useEditorExtensions({
     const extensions: Extension[] = [
       EditorState.tabSize.of(settings.tabSize),
       bracketMatching(),
-      createEditorTheme(settings.fontSize),
+      createEditorTheme(settings.fontSize, darkMode),
       highlightExtension(highlight),
       indentOnInput(),
       linter(diagnostics),
       rust(),
-      syntaxHighlighting(defaultHighlightStyle),
+      syntaxHighlighting(highlightStyle),
     ];
 
     if (settings.keybindings === 'vim') {
@@ -64,6 +67,7 @@ export function useEditorExtensions({
 
     return extensions;
   }, [
+    darkMode,
     diagnostics,
     highlight,
     settings.fontSize,
@@ -73,49 +77,86 @@ export function useEditorExtensions({
   ]);
 }
 
-function createEditorTheme(fontSize: number): Extension {
-  return EditorView.theme({
-    '&': {
-      height: '100%',
-      fontSize: `${fontSize}px`,
-      display: 'flex',
-      flexDirection: 'column',
+const highlightStyle = HighlightStyle.define([
+  { tag: tags.keyword, color: 'var(--syntax-keyword)', fontWeight: '600' },
+  { tag: tags.name, color: 'var(--editor-foreground)' },
+  { tag: tags.function(tags.variableName), color: 'var(--syntax-function)' },
+  { tag: tags.typeName, color: 'var(--syntax-type)' },
+  { tag: [tags.number, tags.bool, tags.atom], color: 'var(--syntax-number)' },
+  { tag: [tags.string, tags.character], color: 'var(--syntax-string)' },
+  { tag: tags.comment, color: 'var(--syntax-comment)', fontStyle: 'italic' },
+  { tag: tags.operator, color: 'var(--syntax-type)' },
+  { tag: tags.punctuation, color: 'var(--syntax-punctuation)' },
+  { tag: tags.invalid, color: 'var(--syntax-error)' },
+]);
+
+function createEditorTheme(fontSize: number, darkMode: boolean): Extension {
+  return EditorView.theme(
+    {
+      '&': {
+        height: '100%',
+        fontSize: `${fontSize}px`,
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundColor: 'var(--editor-background)',
+        color: 'var(--editor-foreground)',
+      },
+      '&.cm-focused': {
+        outline: 'none',
+      },
+      '.cm-cursor, .cm-dropCursor': {
+        borderLeftColor: 'var(--editor-cursor)',
+      },
+      '&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content::selection, .cm-content ::selection':
+        {
+          backgroundColor: 'var(--selection-background)',
+        },
+      '.cm-scroller': {
+        overflow: 'auto',
+        flex: '1 1 auto',
+        fontFamily:
+          'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+      },
+      '.cm-line': {
+        padding: '0 10px',
+      },
+      '.cm-content': {
+        padding: '10px 0',
+        caretColor: 'var(--editor-cursor)',
+      },
+      '.cm-gutters': {
+        backgroundColor: 'var(--editor-background)',
+        borderRight: '1px solid var(--editor-gutter-border)',
+        color: 'var(--editor-gutter-foreground)',
+        paddingRight: '8px',
+      },
+      '.cm-activeLineGutter, .cm-activeLine': {
+        backgroundColor: 'var(--editor-active-line)',
+      },
+      '.cm-matchingBracket': {
+        backgroundColor: 'var(--editor-highlight-background)',
+        color: 'var(--editor-foreground)',
+      },
+      '.cm-nonmatchingBracket': {
+        backgroundColor: 'var(--editor-nonmatching-bracket-background)',
+        color: 'var(--syntax-error)',
+      },
+      '.cm-tooltip, .cm-panels': {
+        backgroundColor: 'var(--editor-background)',
+        borderColor: 'var(--editor-gutter-border)',
+        color: 'var(--editor-foreground)',
+      },
+      '.cm-fat-cursor': {
+        backgroundColor: 'var(--editor-fat-cursor)',
+        borderLeft: 'none',
+        width: '0.6em',
+      },
+      '.cm-cursor-secondary': {
+        backgroundColor: 'var(--editor-cursor-secondary)',
+      },
     },
-    '&.cm-editor': {
-      height: '100%',
-    },
-    '.cm-scroller': {
-      overflow: 'auto',
-      flex: '1 1 auto',
-      fontFamily:
-        'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-    },
-    '.cm-line': {
-      padding: '0 10px',
-    },
-    '.cm-content': {
-      padding: '10px 0',
-    },
-    '.cm-gutters': {
-      backgroundColor: 'transparent',
-      borderRight: 'none',
-      paddingRight: '8px',
-    },
-    '.cm-activeLineGutter': {
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    },
-    '.cm-activeLine': {
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    },
-    '.cm-fat-cursor': {
-      backgroundColor: 'rgba(59, 130, 246, 0.5)',
-      borderLeft: 'none',
-      width: '0.6em',
-    },
-    '.cm-cursor-secondary': {
-      backgroundColor: 'rgba(59, 130, 246, 0.3)',
-    },
-  });
+    { dark: darkMode }
+  );
 }
 
 function clamp(value: number, min: number, max: number): number {
