@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.5.0](https://github.com/terror/val/releases/tag/0.5.0) - 2026-10-01
+
+### Added
+
+- Extract `Result` type alias ([#194](https://github.com/terror/val/pull/194) by [terror](https://github.com/terror))
+- Add tracing garbage collector ([#198](https://github.com/terror/val/pull/198) by [terror](https://github.com/terror))
+
+### Fixed
+
+- Reject `--load` with `--expression` ([#184](https://github.com/terror/val/pull/184) by [terror](https://github.com/terror))
+- Fix decimal formatting for large digit counts ([#185](https://github.com/terror/val/pull/185) by [terror](https://github.com/terror))
+- Preserve empty playground documents ([#202](https://github.com/terror/val/pull/202) by [terror](https://github.com/terror))
+
+### Misc
+
+- Apply statement parser wrappers once ([#177](https://github.com/terror/val/pull/177) by [terror](https://github.com/terror))
+- Simplify function context and arity validation ([#178](https://github.com/terror/val/pull/178) by [terror](https://github.com/terror))
+- Consolidate builtin argument handling on payload ([#179](https://github.com/terror/val/pull/179) by [terror](https://github.com/terror))
+- Simplify integration test harness ([#180](https://github.com/terror/val/pull/180) by [terror](https://github.com/terror))
+- Combine divide, modulo, and power evaluator branches ([#181](https://github.com/terror/val/pull/181) by [terror](https://github.com/terror))
+- Remove redundant numeric branches ([#182](https://github.com/terror/val/pull/182) by [terror](https://github.com/terror))
+- Reuse builtin payload and display helpers ([#183](https://github.com/terror/val/pull/183) by [terror](https://github.com/terror))
+- Rename `eval` to `evaluate_file` ([#192](https://github.com/terror/val/pull/192) by [terror](https://github.com/terror))
+- Extract function types and share user-defined functions ([#193](https://github.com/terror/val/pull/193) by [terror](https://github.com/terror))
+- Unify function and value namespaces and rename `e(x)` to `exp(x)` ([#195](https://github.com/terror/val/pull/195) by [terror](https://github.com/terror))
+- Keep `Completion` internal ([#196](https://github.com/terror/val/pull/196) by [terror](https://github.com/terror))
+- Simplify AST representation ([#197](https://github.com/terror/val/pull/197) by [terror](https://github.com/terror))
+- Centralize configured float construction ([#199](https://github.com/terror/val/pull/199) by [terror](https://github.com/terror))
+- Track collapsed playground AST nodes ([#200](https://github.com/terror/val/pull/200) by [terror](https://github.com/terror))
+- Simplify playground WASM initialization state ([#201](https://github.com/terror/val/pull/201) by [terror](https://github.com/terror))
+- Simplify persisted playground settings ([#203](https://github.com/terror/val/pull/203) by [terror](https://github.com/terror))
+- Bump dirs from 6.0.0 to 7.0.0 ([#204](https://github.com/terror/val/pull/204) by [app/dependabot](https://github.com/app/dependabot))
+- Bump clap from 4.6.6 to 4.6.7 ([#205](https://github.com/terror/val/pull/205) by [app/dependabot](https://github.com/app/dependabot))
+
 ## [0.4.2](https://github.com/terror/val/releases/tag/0.4.2) - 2026-09-04
 
 ### Fixed
