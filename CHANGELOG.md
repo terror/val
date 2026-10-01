@@ -7,13 +7,6 @@
 - Extract `Result` type alias ([#194](https://github.com/terror/val/pull/194) by [terror](https://github.com/terror))
 - Add tracing garbage collector ([#198](https://github.com/terror/val/pull/198) by [terror](https://github.com/terror))
 
-### Changed
-
-- Extract function types and share user-defined functions ([#193](https://github.com/terror/val/pull/193) by [terror](https://github.com/terror))
-- Unify function and value namespaces and rename `e(x)` to `exp(x)` ([#195](https://github.com/terror/val/pull/195) by [terror](https://github.com/terror))
-- Keep `Completion` internal ([#196](https://github.com/terror/val/pull/196) by [terror](https://github.com/terror))
-- Simplify AST representation ([#197](https://github.com/terror/val/pull/197) by [terror](https://github.com/terror))
-
 ### Fixed
 
 - Reject `--load` with `--expression` ([#184](https://github.com/terror/val/pull/184) by [terror](https://github.com/terror))
@@ -30,6 +23,10 @@
 - Remove redundant numeric branches ([#182](https://github.com/terror/val/pull/182) by [terror](https://github.com/terror))
 - Reuse builtin payload and display helpers ([#183](https://github.com/terror/val/pull/183) by [terror](https://github.com/terror))
 - Rename `eval` to `evaluate_file` ([#192](https://github.com/terror/val/pull/192) by [terror](https://github.com/terror))
+- Extract function types and share user-defined functions ([#193](https://github.com/terror/val/pull/193) by [terror](https://github.com/terror))
+- Unify function and value namespaces and rename `e(x)` to `exp(x)` ([#195](https://github.com/terror/val/pull/195) by [terror](https://github.com/terror))
+- Keep `Completion` internal ([#196](https://github.com/terror/val/pull/196) by [terror](https://github.com/terror))
+- Simplify AST representation ([#197](https://github.com/terror/val/pull/197) by [terror](https://github.com/terror))
 - Centralize configured float construction ([#199](https://github.com/terror/val/pull/199) by [terror](https://github.com/terror))
 - Track collapsed playground AST nodes ([#200](https://github.com/terror/val/pull/200) by [terror](https://github.com/terror))
 - Simplify playground WASM initialization state ([#201](https://github.com/terror/val/pull/201) by [terror](https://github.com/terror))
