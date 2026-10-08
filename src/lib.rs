@@ -16,7 +16,6 @@ use {
   std::{
     cmp::Ordering,
     collections::HashMap,
-    convert::Infallible,
     fmt::{self, Debug, Display, Formatter},
     hash::{Hash, Hasher},
     iter::once,
@@ -33,8 +32,8 @@ pub use crate::{
   builtin_function_payload::BuiltinFunctionPayload, config::Config,
   environment::Environment, error::Error, evaluation::Evaluation,
   evaluator::Evaluator, function::Function, number::Number, parser::parse,
-  rounding_mode::RoundingMode, source::Source, source_cache::SourceCache,
-  span::Span, user_function::UserFunction, value::Value,
+  rounding_mode::RoundingMode, source::Source, span::Span,
+  user_function::UserFunction, value::Value,
 };
 
 pub use gc::{Gc, force_collect};
@@ -61,7 +60,6 @@ mod number;
 mod parser;
 mod rounding_mode;
 mod source;
-mod source_cache;
 mod span;
 mod user_function;
 mod value;

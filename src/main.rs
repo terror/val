@@ -1,10 +1,10 @@
 use {
   arguments::Arguments,
+  ariadne::FnCache,
   clap::Parser,
   highlight_kind::HighlightKind,
   highlight_span::HighlightSpan,
   highlighter::Highlighter,
-  input::Input,
   prompt::Prompt,
   rustyline::{
     Context, Editor, Helper,
@@ -19,6 +19,7 @@ use {
   std::{
     backtrace::BacktraceStatus,
     borrow::{Cow, Cow::Owned},
+    convert::Infallible,
     fs,
     io::{self, Write},
     num::{NonZeroU32, NonZeroUsize},
@@ -27,7 +28,7 @@ use {
   },
   val::{
     Config, Environment, Error, Evaluation, Evaluator, RoundingMode, Source,
-    SourceCache, Value, parse,
+    Value, parse,
   },
 };
 
@@ -35,7 +36,6 @@ mod arguments;
 mod highlight_kind;
 mod highlight_span;
 mod highlighter;
-mod input;
 mod prompt;
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;

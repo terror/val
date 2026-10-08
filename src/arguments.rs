@@ -67,15 +67,14 @@ pub(crate) struct Arguments {
 
 impl Arguments {
   fn evaluate_expression(&self, text: &str) -> Result {
-    let input = Input {
-      name: "<expression>",
-      text,
-    };
+    let source = Source::new("<expression>", text);
 
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match input.evaluate(&mut evaluator) {
+    match parse(source)
+      .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
+    {
       Ok(Evaluation::Exit { code, .. }) => process::exit(code),
       Ok(Evaluation::Value(value)) => {
         if !matches!(value, Value::Null) {
@@ -85,7 +84,7 @@ impl Arguments {
         Ok(())
       }
       Err(errors) => {
-        Input::report(&errors, io::stderr())?;
+        Self::report(&errors, io::stderr())?;
 
         process::exit(1);
       }
@@ -95,19 +94,18 @@ impl Arguments {
   fn evaluate_file(&self, filename: &PathBuf) -> Result {
     let content = fs::read_to_string(filename)?;
 
-    let input = Input {
-      name: &filename.to_string_lossy(),
-      text: &content,
-    };
+    let source = Source::new(filename.to_string_lossy(), content);
 
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match input.evaluate(&mut evaluator) {
+    match parse(source)
+      .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
+    {
       Ok(Evaluation::Exit { code, .. }) => process::exit(code),
       Ok(Evaluation::Value(_)) => Ok(()),
       Err(errors) => {
-        Input::report(&errors, io::stderr())?;
+        Self::report(&errors, io::stderr())?;
 
         process::exit(1);
       }
@@ -139,16 +137,15 @@ impl Arguments {
       for filename in filenames {
         let content = fs::read_to_string(filename)?;
 
-        let input = Input {
-          name: &filename.to_string_lossy(),
-          text: &content,
-        };
+        let source = Source::new(filename.to_string_lossy(), content);
 
-        match input.evaluate(&mut evaluator) {
+        match parse(source)
+          .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
+        {
           Ok(Evaluation::Exit { code, .. }) => process::exit(code),
           Ok(Evaluation::Value(_)) => {}
           Err(errors) => {
-            Input::report(&errors, io::stderr())?;
+            Self::report(&errors, io::stderr())?;
 
             process::exit(1);
           }
@@ -162,20 +159,34 @@ impl Arguments {
       editor.add_history_entry(&line)?;
       editor.save_history(&history)?;
 
-      let input = Input {
-        name: "<input>",
-        text: &line,
-      };
+      let source = Source::from(line);
 
-      match input.evaluate(&mut evaluator) {
+      match parse(source)
+        .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
+      {
         Ok(Evaluation::Exit { code, .. }) => process::exit(code),
         Ok(Evaluation::Value(value)) if !matches!(value, Value::Null) => {
           println!("{}", value.display(Into::<Config>::into(self)));
         }
         Ok(Evaluation::Value(_)) => {}
-        Err(errors) => Input::report(&errors, io::stderr())?,
+        Err(errors) => Self::report(&errors, io::stderr())?,
       }
     }
+  }
+
+  fn report(errors: &[Error], mut writer: impl Write) -> io::Result<()> {
+    let mut cache =
+      FnCache::new(|source: &Source| Ok::<_, Infallible>(source.clone()));
+
+    for error in errors {
+      if let Some(report) = error.report() {
+        report.write(&mut cache, &mut writer)?;
+      } else {
+        writeln!(writer, "error: {error}")?;
+      }
+    }
+
+    Ok(())
   }
 
   pub(crate) fn run(self) -> Result {
