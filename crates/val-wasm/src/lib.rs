@@ -9,7 +9,7 @@ use {
   serde_wasm_bindgen::to_value,
   std::num::NonZeroUsize,
   val::{
-    Environment, Evaluation, Evaluator, RoundingMode, Span,
+    Environment, Evaluation, Evaluator, RoundingMode, Span, Spanned,
     ast::{AssignmentTarget, Expression, Program, Statement},
   },
   wasm_bindgen::prelude::*,
@@ -28,13 +28,9 @@ fn start() {
 
 #[wasm_bindgen]
 pub fn parse(input: &str) -> Result<JsValue, JsValue> {
-  let converter = RangeConverter::new(input);
-
   match val::parse(input) {
-    Ok((ast, span)) => {
-      let mut ast = AstNode::from((&ast, &span));
-
-      ast.convert_ranges(&converter);
+    Ok(ast) => {
+      let ast = AstNode::from_program(&ast);
 
       Ok(to_value(&ast).unwrap())
     }
