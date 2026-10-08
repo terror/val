@@ -19,40 +19,40 @@ pub enum Error {
 }
 
 impl Error {
-  pub fn new(span: Span, message: impl Into<String>) -> Self {
+  pub fn new(span: impl Into<Span>, message: impl Into<String>) -> Self {
     Self::Message(message.into()).with_span(span)
   }
 
   #[must_use]
-  pub fn report<'a>(&self, id: &'a str) -> Report<'a, (&'a str, Range<usize>)> {
-    let span_range = self.span().into_range();
+  pub fn report(&self) -> Option<Report<'static, Span>> {
+    let span = self.span()?;
 
-    let mut report = Report::build(
-      ReportKind::Custom("error", Color::Red),
-      (id, span_range.clone()),
-    )
-    .with_config(ariadne::Config::new().with_index_type(IndexType::Byte))
-    .with_message(self.to_string());
+    let mut report =
+      Report::build(ReportKind::Custom("error", Color::Red), span.clone())
+        .with_config(ariadne::Config::new().with_index_type(IndexType::Byte))
+        .with_message(self.to_string());
 
     report = report.with_label(
-      Label::new((id, span_range))
+      Label::new(span.clone())
         .with_message(self.to_string())
         .with_color(Color::Red),
     );
 
-    report.finish()
+    Some(report.finish())
   }
 
   #[must_use]
-  pub fn span(&self) -> Span {
+  pub fn span(&self) -> Option<&Span> {
     match self {
-      Self::Exit { span, .. } | Self::Spanned { span, .. } => *span,
-      _ => Span::from(0..0),
+      Self::Exit { span, .. } | Self::Spanned { span, .. } => Some(span),
+      _ => None,
     }
   }
 
   #[must_use]
-  pub fn with_span(self, span: Span) -> Self {
+  pub fn with_span(self, span: impl Into<Span>) -> Self {
+    let span = span.into();
+
     match self {
       Self::Exit { code, .. } => Self::Exit { code, span },
       Self::Spanned { error, .. } => Self::Spanned { error, span },

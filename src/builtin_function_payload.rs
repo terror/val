@@ -1,13 +1,13 @@
 use super::*;
 
-pub struct BuiltinFunctionPayload {
+pub struct BuiltinFunctionPayload<'a> {
   pub arguments: Vec<Value>,
   pub config: Config,
   pub name: &'static str,
-  pub span: Span,
+  pub span: &'a Span,
 }
 
-impl BuiltinFunctionPayload {
+impl BuiltinFunctionPayload<'_> {
   pub(crate) fn format_arguments(&self) -> String {
     self
       .arguments

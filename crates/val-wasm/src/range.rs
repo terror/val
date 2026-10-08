@@ -8,7 +8,7 @@ pub struct Range {
 
 impl From<Span> for Range {
   fn from(span: val::Span) -> Self {
-    let range = span.into_range();
+    let range = span.range();
 
     Range {
       start: u32::try_from(range.start).unwrap_or(u32::MAX),
@@ -19,7 +19,7 @@ impl From<Span> for Range {
 
 impl From<&Span> for Range {
   fn from(span: &val::Span) -> Self {
-    let range = span.into_range();
+    let range = span.range();
 
     Range {
       start: u32::try_from(range.start).unwrap_or(u32::MAX),

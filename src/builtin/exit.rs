@@ -30,7 +30,7 @@ builtin! {
 
       Err(Error::Exit {
         code,
-        span: payload.span,
+        span: payload.span.clone(),
       })
     }
   }

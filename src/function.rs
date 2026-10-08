@@ -11,7 +11,7 @@ impl Function {
     &self,
     arguments: Vec<Value>,
     config: Config,
-    span: Span,
+    span: &Span,
   ) -> Result<Value> {
     match self {
       Self::Builtin(function) => function.call(arguments, config, span),
@@ -19,7 +19,7 @@ impl Function {
     }
   }
 
-  pub(crate) fn check_arity(&self, len: usize, span: Span) -> Result<()> {
+  pub(crate) fn check_arity(&self, len: usize, span: &Span) -> Result<()> {
     match self {
       Self::Builtin(function) => function.check_arity(len, span),
       Self::UserDefined(function) => function.check_arity(len, span),

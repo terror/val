@@ -1,10 +1,11 @@
 use {
   super::*,
-  chumsky::input::MapExtra,
+  chumsky::input::{Input, MapExtra, WithContext},
   chumsky::pratt::{infix, left, postfix, prefix, right},
 };
 
-type ParserError<'a> = extra::Err<Rich<'a, char>>;
+type ParserError<'a> = extra::Err<Rich<'a, char, Span>>;
+type ParserInput<'a> = WithContext<Span, &'a str>;
 
 const RESERVED_WORDS: [&str; 13] = [
   "break", "continue", "else", "false", "fn", "for", "if", "in", "loop",
@@ -14,20 +15,22 @@ const RESERVED_WORDS: [&str; 13] = [
 /// # Errors
 ///
 /// Returns parser errors when input cannot be parsed into a complete program.
-pub fn parse(input: &str) -> Result<Spanned<Program>, Vec<Error>> {
+pub fn parse(input: impl Into<Source>) -> Result<Spanned<Program>, Vec<Error>> {
+  let source = input.into();
+
   program_parser()
-    .parse(input)
+    .parse(source.text().with_context::<Span>(source.clone()))
     .into_result()
     .map_err(|errors| {
       errors
         .into_iter()
-        .map(|error| Error::new(error.span().to_owned(), error.to_string()))
+        .map(|error| Error::new(error.span().clone(), error.to_string()))
         .collect()
     })
 }
 
 fn program_parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Program>, ParserError<'a>> + Clone {
+-> impl Parser<'a, ParserInput<'a>, Spanned<Program>, ParserError<'a>> + Clone {
   padding_parser()
     .ignore_then(statement_list_parser(statement_parser()))
     .then_ignore(padding_parser())
@@ -37,9 +40,9 @@ fn program_parser<'a>()
 
 fn comma_separated_parser<'a, P, T>(
   parser: P,
-) -> impl Parser<'a, &'a str, Vec<T>, ParserError<'a>> + Clone
+) -> impl Parser<'a, ParserInput<'a>, Vec<T>, ParserError<'a>> + Clone
 where
-  P: Parser<'a, &'a str, T, ParserError<'a>> + Clone,
+  P: Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone,
 {
   parser
     .separated_by(padded_parser(just(',')))
@@ -49,10 +52,10 @@ where
 
 fn index_parser<'a, P>(
   expression: P,
-) -> impl Parser<'a, &'a str, (Spanned<Expression>, SimpleSpan), ParserError<'a>>
+) -> impl Parser<'a, ParserInput<'a>, (Spanned<Expression>, Span), ParserError<'a>>
 + Clone
 where
-  P: Parser<'a, &'a str, Spanned<Expression>, ParserError<'a>> + Clone,
+  P: Parser<'a, ParserInput<'a>, Spanned<Expression>, ParserError<'a>> + Clone,
 {
   expression
     .delimited_by(padded_parser(just('[')), padded_parser(just(']')))
@@ -61,7 +64,7 @@ where
 }
 
 fn identifier_parser<'a>()
--> impl Parser<'a, &'a str, String, ParserError<'a>> + Clone {
+-> impl Parser<'a, ParserInput<'a>, String, ParserError<'a>> + Clone {
   padded_parser(text::ident().try_map(|identifier, span| {
     if RESERVED_WORDS.contains(&identifier) {
       Err(Rich::custom(
@@ -76,21 +79,21 @@ fn identifier_parser<'a>()
 
 fn keyword_parser<'a>(
   keyword: &'static str,
-) -> impl Parser<'a, &'a str, (), ParserError<'a>> + Clone {
+) -> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
   padded_parser(text::keyword(keyword)).ignored()
 }
 
 fn padded_parser<'a, P, T>(
   parser: P,
-) -> impl Parser<'a, &'a str, T, ParserError<'a>> + Clone
+) -> impl Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone
 where
-  P: Parser<'a, &'a str, T, ParserError<'a>> + Clone,
+  P: Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone,
 {
   parser.padded_by(padding_parser())
 }
 
-fn padding_parser<'a>() -> impl Parser<'a, &'a str, (), ParserError<'a>> + Clone
-{
+fn padding_parser<'a>()
+-> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
   custom(|input| {
     loop {
       let checkpoint = input.save();
@@ -117,9 +120,9 @@ fn padding_parser<'a>() -> impl Parser<'a, &'a str, (), ParserError<'a>> + Clone
 
 fn statement_list_parser<'a, P>(
   statement: P,
-) -> impl Parser<'a, &'a str, Vec<Spanned<Statement>>, ParserError<'a>> + Clone
+) -> impl Parser<'a, ParserInput<'a>, Vec<Spanned<Statement>>, ParserError<'a>> + Clone
 where
-  P: Parser<'a, &'a str, Spanned<Statement>, ParserError<'a>> + Clone,
+  P: Parser<'a, ParserInput<'a>, Spanned<Statement>, ParserError<'a>> + Clone,
 {
   statement
     .then_ignore(padded_parser(just(';')).or_not())
@@ -128,7 +131,8 @@ where
 }
 
 fn statement_parser<'a>()
--> impl Parser<'a, &'a str, Spanned<Statement>, ParserError<'a>> + Clone {
+-> impl Parser<'a, ParserInput<'a>, Spanned<Statement>, ParserError<'a>> + Clone
+{
   recursive(|statement| {
     let statement_block = statement_list_parser(statement.clone())
       .delimited_by(padded_parser(just('{')), padded_parser(just('}')));
@@ -143,7 +147,7 @@ fn statement_parser<'a>()
     let assignment_target = simple_ident.foldl(
       index_parser(expression.clone()).repeated(),
       |base, (index, span)| {
-        let span = (base.1.start..span.end).into();
+        let span = base.1.source().span(base.1.start..span.end);
 
         let target =
           AssignmentTarget::ListAccess(Box::new(base), Box::new(index));
@@ -232,9 +236,10 @@ fn statement_parser<'a>()
 
 fn expression_parser<'a, P>(
   statement_block: P,
-) -> impl Parser<'a, &'a str, Spanned<Expression>, ParserError<'a>> + Clone
+) -> impl Parser<'a, ParserInput<'a>, Spanned<Expression>, ParserError<'a>> + Clone
 where
-  P: Parser<'a, &'a str, Vec<Spanned<Statement>>, ParserError<'a>> + Clone,
+  P: Parser<'a, ParserInput<'a>, Vec<Spanned<Statement>>, ParserError<'a>>
+    + Clone,
   P: 'a,
 {
   let identifier = identifier_parser();
@@ -321,7 +326,7 @@ where
       |lhs: Spanned<Expression>,
        op: BinaryOp,
        rhs: Spanned<Expression>,
-       error: &mut MapExtra<'a, '_, &'a str, ParserError<'a>>| {
+       error: &mut MapExtra<'a, '_, ParserInput<'a>, ParserError<'a>>| {
         (
           Expression::BinaryOp(op, Box::new(lhs), Box::new(rhs)),
           error.span(),
@@ -331,7 +336,7 @@ where
     let unary =
       |op: UnaryOp,
        rhs: Spanned<Expression>,
-       error: &mut MapExtra<'a, '_, &'a str, ParserError<'a>>| {
+       error: &mut MapExtra<'a, '_, ParserInput<'a>, ParserError<'a>>| {
         (Expression::UnaryOp(op, Box::new(rhs)), error.span())
       };
 
@@ -341,7 +346,7 @@ where
         arguments,
         |function,
          (arguments, _),
-         error: &mut MapExtra<'a, '_, &'a str, ParserError<'a>>| {
+         error: &mut MapExtra<'a, '_, ParserInput<'a>, ParserError<'a>>| {
           let span = error.span();
 
           let expression =
@@ -355,7 +360,7 @@ where
         index_parser(expression.clone()),
         |list,
          (index, _),
-         error: &mut MapExtra<'a, '_, &'a str, ParserError<'a>>| {
+         error: &mut MapExtra<'a, '_, ParserInput<'a>, ParserError<'a>>| {
           let span = error.span();
 
           let expression =
@@ -426,7 +431,7 @@ mod tests {
 
   struct Test<'a> {
     ast: &'a str,
-    errors: Vec<Error>,
+    errors: Vec<(Range<usize>, &'a str)>,
     program: &'a str,
   }
 
@@ -435,7 +440,7 @@ mod tests {
       Self { ast, ..self }
     }
 
-    fn errors(self, errors: Vec<Error>) -> Self {
+    fn errors(self, errors: Vec<(Range<usize>, &'a str)>) -> Self {
       Self { errors, ..self }
     }
 
@@ -452,16 +457,24 @@ mod tests {
     }
 
     fn run(self) {
-      match parse(self.program) {
+      let source = Source::from(self.program);
+
+      match parse(source.clone()) {
         Ok(ast) => {
           assert_eq!(ast.0.to_string(), self.ast, "AST mismatch");
         }
         Err(errors) => {
           assert_eq!(errors.len(), self.errors.len(), "Error count mismatch");
 
-          for (error, expected) in errors.iter().zip(self.errors.iter()) {
-            assert_eq!(error, expected, "Error mismatch");
-          }
+          assert_eq!(
+            errors,
+            self
+              .errors
+              .into_iter()
+              .map(|(span, message)| Error::new(source.span(span), message))
+              .collect::<Vec<_>>(),
+            "Error mismatch",
+          );
         }
       }
     }
@@ -595,8 +608,8 @@ mod tests {
   fn invalid_operator() {
     Test::new()
       .program("2 +* 3")
-      .errors(vec![Error::new(
-        SimpleSpan::from(3..4),
+      .errors(vec![(
+        3..4,
         "found '*' expected '-', '!', int, '\"true\"', '\"false\"', '\"null\"', '(', '\"fn\"', '[', identifier, '\"', or '''",
       )])
       .run();
@@ -654,8 +667,8 @@ mod tests {
   fn missing_closing_parenthesis() {
     Test::new()
       .program("(2 + 3")
-      .errors(vec![Error::new(
-        SimpleSpan::from(6..6),
+      .errors(vec![(
+        6..6,
         "found end of input expected any, '.', 'e', 'E', '(', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
       )])
       .run();
@@ -755,10 +768,12 @@ mod tests {
   fn reserved_words_are_not_identifiers() {
     #[track_caller]
     fn case(program: &str, word: &str, start: usize) {
+      let source = Source::from(program);
+
       assert_eq!(
-        parse(program).unwrap_err(),
+        parse(source.clone()).unwrap_err(),
         [Error::new(
-          SimpleSpan::from(start..start + word.len()),
+          source.span(start..start + word.len()),
           format!("`{word}` is a reserved word"),
         )],
       );
@@ -811,8 +826,8 @@ mod tests {
   fn unclosed_string() {
     Test::new()
       .program("\"unclosed")
-      .errors(vec![Error::new(
-        SimpleSpan::from(9..9),
+      .errors(vec![(
+        9..9,
         "found end of input expected something else, or '\"'",
       )])
       .run();

@@ -22,6 +22,12 @@ impl RangeConverter {
     }
   }
 
+  pub(crate) fn convert_span(span: Option<&Span>) -> Range {
+    span.map_or(Range { start: 0, end: 0 }, |span| {
+      Self::new(span.source().text()).convert(Range::from(span))
+    })
+  }
+
   pub(crate) fn new(input: &str) -> Self {
     let mut offsets = vec![0; input.len() + 1];
     let mut utf16 = 0_u32;
@@ -51,7 +57,9 @@ mod tests {
     #[track_caller]
     fn case(input: &str, span: std::ops::Range<usize>, expected: Range) {
       assert_eq!(
-        RangeConverter::new(input).convert(Range::from(Span::from(span))),
+        RangeConverter::convert_span(Some(
+          &val::Source::from(input).span(span)
+        )),
         expected,
       );
     }

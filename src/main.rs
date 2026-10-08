@@ -1,6 +1,5 @@
 use {
   arguments::Arguments,
-  ariadne::Source,
   clap::Parser,
   highlight_kind::HighlightKind,
   highlight_span::HighlightSpan,
@@ -27,8 +26,8 @@ use {
     process, thread,
   },
   val::{
-    Config, Environment, Error, Evaluation, Evaluator, RoundingMode, Value,
-    parse,
+    Config, Environment, Error, Evaluation, Evaluator, RoundingMode, Source,
+    SourceCache, Value, parse,
   },
 };
 

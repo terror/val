@@ -85,7 +85,7 @@ impl Arguments {
         Ok(())
       }
       Err(errors) => {
-        input.report(&errors, io::stderr())?;
+        Input::report(&errors, io::stderr())?;
 
         process::exit(1);
       }
@@ -107,7 +107,7 @@ impl Arguments {
       Ok(Evaluation::Exit { code, .. }) => process::exit(code),
       Ok(Evaluation::Value(_)) => Ok(()),
       Err(errors) => {
-        input.report(&errors, io::stderr())?;
+        Input::report(&errors, io::stderr())?;
 
         process::exit(1);
       }
@@ -148,7 +148,7 @@ impl Arguments {
           Ok(Evaluation::Exit { code, .. }) => process::exit(code),
           Ok(Evaluation::Value(_)) => {}
           Err(errors) => {
-            input.report(&errors, io::stderr())?;
+            Input::report(&errors, io::stderr())?;
 
             process::exit(1);
           }
@@ -173,7 +173,7 @@ impl Arguments {
           println!("{}", value.display(Into::<Config>::into(self)));
         }
         Ok(Evaluation::Value(_)) => {}
-        Err(errors) => input.report(&errors, io::stderr())?,
+        Err(errors) => Input::report(&errors, io::stderr())?,
       }
     }
   }

@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub struct BuiltinFunction {
   pub arity: BuiltinArity,
-  pub function: fn(&BuiltinFunctionPayload) -> Result<Value>,
+  pub function: fn(&BuiltinFunctionPayload<'_>) -> Result<Value>,
   pub name: &'static str,
 }
 
@@ -12,7 +12,7 @@ impl BuiltinFunction {
     &self,
     arguments: Vec<Value>,
     config: Config,
-    span: Span,
+    span: &Span,
   ) -> Result<Value> {
     (self.function)(&BuiltinFunctionPayload {
       arguments,
@@ -22,7 +22,7 @@ impl BuiltinFunction {
     })
   }
 
-  pub(crate) fn check_arity(&self, len: usize, span: Span) -> Result<()> {
+  pub(crate) fn check_arity(&self, len: usize, span: &Span) -> Result<()> {
     self.arity.check(self.name, len, span)
   }
 }

@@ -10,20 +10,23 @@ impl Input<'_> {
     &self,
     evaluator: &mut Evaluator,
   ) -> Result<Evaluation, Vec<Error>> {
-    let ast = parse(self.text)?;
+    let ast = parse(Source::new(self.name, self.text))?;
 
     evaluator.evaluate(&ast).map_err(|error| vec![error])
   }
 
   pub(crate) fn report(
-    &self,
     errors: &[Error],
     mut writer: impl Write,
   ) -> io::Result<()> {
+    let mut cache = SourceCache::default();
+
     for error in errors {
-      error
-        .report(self.name)
-        .write((self.name, Source::from(self.text)), &mut writer)?;
+      if let Some(report) = error.report() {
+        report.write(&mut cache, &mut writer)?;
+      } else {
+        writeln!(writer, "error: {error}")?;
+      }
     }
 
     Ok(())
@@ -36,19 +39,16 @@ mod tests {
 
   #[test]
   fn report() {
-    let input = Input {
-      name: "foo",
-      text: "bar baz",
-    };
+    let source = Source::new("foo", "bar baz");
 
     let errors = [
-      Error::new((0..3).into(), "qux"),
-      Error::new((4..7).into(), "quux"),
+      Error::new(source.span(0..3), "qux"),
+      Error::new(source.span(4..7), "quux"),
     ];
 
     let mut output = Vec::new();
 
-    input.report(&errors, &mut output).unwrap();
+    Input::report(&errors, &mut output).unwrap();
 
     let output = String::from_utf8(output).unwrap();
 
@@ -60,14 +60,10 @@ mod tests {
 
   #[test]
   fn report_io_error() {
-    let input = Input {
-      name: "foo",
-      text: "bar",
-    };
+    let source = Source::new("foo", "bar");
 
     assert_eq!(
-      input
-        .report(&[Error::new((0..3).into(), "baz")], &mut [][..])
+      Input::report(&[Error::new(source.span(0..3), "baz")], &mut [][..])
         .unwrap_err()
         .kind(),
       io::ErrorKind::WriteZero,
