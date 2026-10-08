@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.6.0](https://github.com/terror/val/releases/tag/0.6.0) - 2026-10-08
+
+### Fixed
+
+- Create release before uploading archives ([#207](https://github.com/terror/val/pull/207) by [terror](https://github.com/terror))
+- Preserve source identity in error diagnostics ([#210](https://github.com/terror/val/pull/210) by [terror](https://github.com/terror))
+- Install built-ins in the default environment ([#211](https://github.com/terror/val/pull/211) by [terror](https://github.com/terror))
+- Preserve index expression side effects in assignments ([#219](https://github.com/terror/val/pull/219) by [terror](https://github.com/terror))
+
+### Misc
+
+- Update playground design ([#208](https://github.com/terror/val/pull/208) by [terror](https://github.com/terror))
+- Bump thiserror from 2.0.20 to 2.0.21 ([#209](https://github.com/terror/val/pull/209) by [app/dependabot](https://github.com/app/dependabot))
+- Let built-ins consume their arguments ([#212](https://github.com/terror/val/pull/212) by [terror](https://github.com/terror))
+- Convert WASM AST ranges during construction ([#213](https://github.com/terror/val/pull/213) by [terror](https://github.com/terror))
+- Remove unused Builtin::kind ([#214](https://github.com/terror/val/pull/214) by [terror](https://github.com/terror))
+- Remove redundant add_function wrapper ([#215](https://github.com/terror/val/pull/215) by [terror](https://github.com/terror))
+- Remove unused React logo ([#216](https://github.com/terror/val/pull/216) by [terror](https://github.com/terror))
+- Invoke gh directly in changelog tool ([#217](https://github.com/terror/val/pull/217) by [terror](https://github.com/terror))
+- Keep editor hover state out of editor configuration ([#218](https://github.com/terror/val/pull/218) by [terror](https://github.com/terror))
+- Consolidate arithmetic operand evaluation ([#220](https://github.com/terror/val/pull/220) by [terror](https://github.com/terror))
+- Remove redundant source scaffolding ([#221](https://github.com/terror/val/pull/221) by [terror](https://github.com/terror))
+- Optimize decimal scaling with bulk integer operations ([#222](https://github.com/terror/val/pull/222) by [terror](https://github.com/terror))
+
 ## [0.5.0](https://github.com/terror/val/releases/tag/0.5.0) - 2026-10-01
 
 ### Added
