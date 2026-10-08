@@ -3,11 +3,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable';
+import { highlightEffect } from '@/lib/extensions/highlight';
 import type { Range } from '@/lib/types';
 import type { EditorState } from '@codemirror/state';
-import type { EditorView, ViewUpdate } from '@codemirror/view';
+import { EditorView, type ViewUpdate } from '@codemirror/view';
 import { Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AstPane } from './components/ast-pane';
 import { EditorPane } from './components/editor-pane';
@@ -50,7 +51,7 @@ function App() {
     loaded,
   });
 
-  const [highlight, setHighlight] = useState<Range | undefined>(undefined);
+  const editorView = useRef<EditorView>();
   const [editorState, setEditorState] = useState<EditorState>();
 
   const stackedLayout = useMediaQuery(STACKED_LAYOUT_QUERY);
@@ -59,14 +60,32 @@ function App() {
   const extensions = useEditorExtensions({
     darkMode: theme.darkMode,
     errors,
-    highlight,
   });
 
   const handleHighlightChange = useCallback((range: Range | undefined) => {
-    setHighlight(range);
+    const view = editorView.current;
+
+    if (!view) {
+      return;
+    }
+
+    if (!range || range.start >= range.end) {
+      view.dispatch({ effects: highlightEffect.of(null) });
+      return;
+    }
+
+    const from = Math.max(0, Math.min(range.start, view.state.doc.length));
+
+    view.dispatch({
+      effects: [
+        highlightEffect.of(range),
+        EditorView.scrollIntoView(from, { y: 'center' }),
+      ],
+    });
   }, []);
 
   const handleCreateEditor = useCallback((view: EditorView) => {
+    editorView.current = view;
     setEditorState(view.state);
   }, []);
 
