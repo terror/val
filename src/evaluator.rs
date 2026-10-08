@@ -398,7 +398,9 @@ impl Evaluator {
           span: span.clone(),
         }));
 
-        self.environment.add_function(name, function.clone());
+        self
+          .environment
+          .add_symbol(name, Value::Function(function.clone()));
 
         Ok(Completion::Value(Value::Function(function)))
       }
