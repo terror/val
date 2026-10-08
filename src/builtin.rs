@@ -26,10 +26,6 @@ macro_rules! builtin {
         }
       )?
 
-      fn kind(&self) -> &'static str {
-        "function"
-      }
-
       fn name(&self) -> &'static str {
         $name
       }
@@ -65,10 +61,6 @@ macro_rules! builtin {
           &[$($alias),*]
         }
       )?
-
-      fn kind(&self) -> &'static str {
-        "constant"
-      }
 
       fn name(&self) -> &'static str {
         $name
@@ -133,8 +125,6 @@ pub trait Builtin: Sync {
   fn aliases(&self) -> &'static [&'static str] {
     &[]
   }
-
-  fn kind(&self) -> &'static str;
 
   fn name(&self) -> &'static str;
 
