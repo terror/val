@@ -8,76 +8,73 @@ pub struct Evaluator {
 impl Evaluator {
   fn assign(
     &mut self,
-    target: &Spanned<AssignmentTarget>,
+    mut target: &Spanned<AssignmentTarget>,
     value: Value,
   ) -> Result<()> {
-    match &target.0 {
-      AssignmentTarget::Identifier(name) => {
-        self.environment.assign_symbol(name, value);
-        Ok(())
+    let span = &target.1;
+    let mut indices = Vec::new();
+
+    let (name, name_span) = loop {
+      match &target.0 {
+        AssignmentTarget::Identifier(name) => break (name, &target.1),
+        AssignmentTarget::ListAccess(base, index) => {
+          indices.push(index.as_ref());
+          target = base;
+        }
       }
-      AssignmentTarget::ListAccess(_, _) => {
-        let (name, name_span) = target.0.root(&target.1);
-
-        let indices = target.0.indices();
-
-        let Some(root) = self.environment.resolve_symbol(name) else {
-          return Err(Error::new(
-            name_span,
-            format!("Undefined variable `{name}`"),
-          ));
-        };
-
-        let root =
-          self.assign_indices(name, root, &indices, value, &target.1)?;
-
-        self.environment.assign_symbol(name, root);
-
-        Ok(())
-      }
-    }
-  }
-
-  fn assign_indices(
-    &mut self,
-    name: &str,
-    value: Value,
-    indices: &[&Spanned<Expression>],
-    assigned: Value,
-    span: &Span,
-  ) -> Result<Value> {
-    let Some((index, rest)) = indices.split_first() else {
-      return Ok(assigned);
     };
 
-    let mut list = match value {
-      Value::List(items) => items,
-      other => {
+    if indices.is_empty() {
+      self.environment.assign_symbol(name, value);
+      return Ok(());
+    }
+
+    let indices = indices
+      .into_iter()
+      .rev()
+      .map(|index| {
+        self
+          .evaluate_list_index(index)
+          .map(|value| (value, &index.1))
+      })
+      .collect::<Result<Vec<_>>>()?;
+
+    let Some(mut root) = self.environment.resolve_symbol(name) else {
+      return Err(Error::new(
+        name_span,
+        format!("Undefined variable `{name}`"),
+      ));
+    };
+
+    let mut target = &mut root;
+
+    for (index, index_span) in indices {
+      let Value::List(list) = target else {
         return Err(Error::new(
-          &index.1,
-          format!("'{}' is not a list (found {})", name, other.type_name()),
+          index_span,
+          format!("'{}' is not a list (found {})", name, target.type_name()),
+        ));
+      };
+
+      if index >= list.len() {
+        return Err(Error::new(
+          span,
+          format!(
+            "Index {} out of bounds for list of length {}",
+            index,
+            list.len()
+          ),
         ));
       }
-    };
 
-    let index = self.evaluate_list_index(index)?;
-
-    if index >= list.len() {
-      return Err(Error::new(
-        span,
-        format!(
-          "Index {} out of bounds for list of length {}",
-          index,
-          list.len()
-        ),
-      ));
+      target = &mut list[index];
     }
 
-    let value = std::mem::replace(&mut list[index], Value::Null);
+    *target = value;
 
-    list[index] = self.assign_indices(name, value, rest, assigned, span)?;
+    self.environment.assign_symbol(name, root);
 
-    Ok(Value::List(list))
+    Ok(())
   }
 
   fn enter_loop<T>(
