@@ -329,6 +329,24 @@ fn arctangent() -> Result {
 }
 
 #[test]
+fn arithmetic_operands_are_evaluated_before_type_checks() -> Result {
+  #[track_caller]
+  fn case(operator: &str) -> Result {
+    Test::new()?
+      .program(&format!("false {operator} exit(42)"))
+      .expected_status(42)
+      .run()
+  }
+
+  case("+")?;
+  case("/")?;
+  case("%")?;
+  case("*")?;
+  case("^")?;
+  case("-")
+}
+
+#[test]
 fn assignment() -> Result {
   Test::new()?
     .program(indoc! {
