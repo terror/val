@@ -9,10 +9,15 @@ const REPO: &str = "terror/val";
 fn author(pr: u64) -> String {
   eprintln!("#{pr}");
 
-  let output = Command::new("sh")
+  let output = Command::new("gh")
     .args([
-      "-c",
-      &format!("gh pr view {pr} --json author | jq -r .author.login"),
+      "pr",
+      "view",
+      &pr.to_string(),
+      "--json",
+      "author",
+      "--jq",
+      ".author.login",
     ])
     .output()
     .unwrap();
