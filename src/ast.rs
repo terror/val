@@ -165,10 +165,10 @@ impl AssignmentTarget {
     }
   }
 
-  pub(crate) fn root(&self, span: Span) -> (&str, Span) {
+  pub(crate) fn root<'a>(&'a self, span: &'a Span) -> (&'a str, &'a Span) {
     match self {
       AssignmentTarget::Identifier(name) => (name, span),
-      AssignmentTarget::ListAccess(base, _) => base.0.root(base.1),
+      AssignmentTarget::ListAccess(base, _) => base.0.root(&base.1),
     }
   }
 }

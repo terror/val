@@ -3,7 +3,7 @@ use {
   executable_path::executable_path,
   indoc::indoc,
   pretty_assertions::assert_eq,
-  std::{fs::File, io::Write, process::Command, str},
+  std::{fs, process::Command, str},
   tempfile::TempDir,
   unindent::Unindent,
 };
@@ -48,7 +48,7 @@ struct Test<'a> {
   expected_status: i32,
   expected_stderr: Match<'a>,
   expected_stdout: Match<'a>,
-  program: &'a str,
+  files: Vec<(&'a str, &'a str)>,
   tempdir: TempDir,
 }
 
@@ -79,35 +79,41 @@ impl<'a> Test<'a> {
     }
   }
 
+  fn file(self, path: &'a str, contents: &'a str) -> Self {
+    Self {
+      files: self.files.into_iter().chain([(path, contents)]).collect(),
+      ..self
+    }
+  }
+
   fn new() -> Result<Self> {
     Ok(Self {
       arguments: Vec::new(),
       expected_status: 0,
       expected_stderr: Match::Empty,
       expected_stdout: Match::Empty,
-      program: "",
+      files: Vec::new(),
       tempdir: TempDir::new()?,
     })
   }
 
   fn program(self, program: &'a str) -> Self {
-    Self { program, ..self }
+    self.file("program.val", program).argument("program.val")
   }
 
   #[track_caller]
   fn run(self) -> Result {
     let mut command = Command::new(executable_path(env!("CARGO_PKG_NAME")));
 
-    let program_path = self.tempdir.path().join("program.val");
-
-    let mut file = File::create(&program_path)?;
-    write!(file, "{}", self.program.unindent())?;
-
-    for argument in self.arguments {
-      command.arg(argument);
+    for (path, contents) in self.files {
+      let path = self.tempdir.path().join(path);
+      fs::create_dir_all(path.parent().unwrap())?;
+      fs::write(path, contents.unindent())?;
     }
 
-    command.arg(&program_path);
+    command
+      .current_dir(self.tempdir.path())
+      .args(self.arguments);
 
     let output = command.output().map_err(|e| {
       format!(
@@ -2304,6 +2310,30 @@ fn list_literals() -> Result {
   Test::new()?
     .program("println([println('foo'), 'foo', 1 + 2])")
     .expected_stdout(Exact("foo\n[null, 'foo', 3]\n"))
+    .run()
+}
+
+#[test]
+fn loaded_function_errors_use_definition_source() -> Result {
+  Test::new()?
+    .file("foo.val", "fn foo() { bar }")
+    .file("bar/baz.val", "foo()")
+    .argument("--load")
+    .argument("foo.val")
+    .argument("--load")
+    .argument("bar/baz.val")
+    .expected_status(1)
+    .expected_stderr(Exact(indoc! {
+      "
+      error: Undefined variable `bar`
+         ╭─[ foo.val:1:12 ]
+         │
+       1 │ fn foo() { bar }
+         │            ──┬─\x20\x20
+         │              ╰─── Undefined variable `bar`
+      ───╯
+      "
+    }))
     .run()
 }
 

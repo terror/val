@@ -11,7 +11,7 @@ pub enum Value {
 }
 
 impl Value {
-  pub(crate) fn boolean(&self, span: Span) -> Result<bool> {
+  pub(crate) fn boolean(&self, span: &Span) -> Result<bool> {
     if let Value::Boolean(x) = self {
       Ok(*x)
     } else {
@@ -41,21 +41,21 @@ impl Value {
     }
   }
 
-  pub(crate) fn into_function(self, span: Span) -> Result<Function> {
+  pub(crate) fn into_function(self, span: &Span) -> Result<Function> {
     match self {
       Value::Function(x) => Ok(x),
       value => Err(Error::new(span, format!("'{value}' is not a function"))),
     }
   }
 
-  pub(crate) fn into_list(self, span: Span) -> Result<Vec<Value>> {
+  pub(crate) fn into_list(self, span: &Span) -> Result<Vec<Value>> {
     match self {
       Value::List(x) => Ok(x),
       value => Err(Error::new(span, format!("'{value}' is not a list"))),
     }
   }
 
-  pub(crate) fn list(&self, span: Span) -> Result<&[Value]> {
+  pub(crate) fn list(&self, span: &Span) -> Result<&[Value]> {
     if let Value::List(x) = self {
       Ok(x)
     } else {
@@ -63,7 +63,7 @@ impl Value {
     }
   }
 
-  pub(crate) fn number(&self, span: Span) -> Result<&Number> {
+  pub(crate) fn number(&self, span: &Span) -> Result<&Number> {
     if let Value::Number(x) = self {
       Ok(x)
     } else {
@@ -71,7 +71,7 @@ impl Value {
     }
   }
 
-  pub(crate) fn string(&self, span: Span) -> Result<&str> {
+  pub(crate) fn string(&self, span: &Span) -> Result<&str> {
     if let Value::String(x) = self {
       Ok(x)
     } else {

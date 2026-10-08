@@ -45,7 +45,7 @@ pub fn parse(input: &str) -> Result<JsValue, JsValue> {
           .map(|error| ValError {
             kind: ErrorKind::Parser,
             message: error.to_string(),
-            range: converter.convert(Range::from(error.span())),
+            range: RangeConverter::convert_span(error.span()),
           })
           .collect::<Vec<ValError>>(),
       )
@@ -56,8 +56,6 @@ pub fn parse(input: &str) -> Result<JsValue, JsValue> {
 
 #[wasm_bindgen]
 pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
-  let converter = RangeConverter::new(input);
-
   match val::parse(input) {
     Ok(ast) => {
       let mut evaluator = Evaluator::from(Environment::new(val::Config {
@@ -71,7 +69,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
           to_value(&[ValError {
             kind: ErrorKind::Exit,
             message: format!("exit requested with code {code}"),
-            range: converter.convert(Range::from(span)),
+            range: RangeConverter::convert_span(Some(&span)),
           }])
           .unwrap(),
         ),
@@ -82,7 +80,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
           to_value(&[ValError {
             kind: ErrorKind::Evaluator,
             message: error.to_string(),
-            range: converter.convert(Range::from(error.span())),
+            range: RangeConverter::convert_span(error.span()),
           }])
           .unwrap(),
         ),
@@ -95,7 +93,7 @@ pub fn evaluate(input: &str) -> Result<JsValue, JsValue> {
           .map(|error| ValError {
             kind: ErrorKind::Parser,
             message: error.to_string(),
-            range: converter.convert(Range::from(error.span())),
+            range: RangeConverter::convert_span(error.span()),
           })
           .collect::<Vec<ValError>>(),
       )

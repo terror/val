@@ -6,6 +6,7 @@ pub struct UserFunction {
   pub environment: Environment,
   pub name: Option<String>,
   pub parameters: Vec<String>,
+  pub span: Span,
 }
 
 impl UserFunction {
@@ -31,7 +32,7 @@ impl UserFunction {
     }
   }
 
-  pub(crate) fn check_arity(&self, len: usize, span: Span) -> Result<()> {
+  pub(crate) fn check_arity(&self, len: usize, span: &Span) -> Result<()> {
     BuiltinArity::Exact(self.parameters.len()).check(self.name(), len, span)
   }
 
@@ -49,6 +50,7 @@ unsafe impl Trace for UserFunction {
       environment,
       name: _,
       parameters: _,
+      span: _,
     } = this;
 
     unsafe { mark(environment) };

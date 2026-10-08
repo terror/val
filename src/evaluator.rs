@@ -17,7 +17,7 @@ impl Evaluator {
         Ok(())
       }
       AssignmentTarget::ListAccess(_, _) => {
-        let (name, name_span) = target.0.root(target.1);
+        let (name, name_span) = target.0.root(&target.1);
 
         let indices = target.0.indices();
 
@@ -29,7 +29,7 @@ impl Evaluator {
         };
 
         let root =
-          self.assign_indices(name, root, &indices, value, target.1)?;
+          self.assign_indices(name, root, &indices, value, &target.1)?;
 
         self.environment.assign_symbol(name, root);
 
@@ -44,7 +44,7 @@ impl Evaluator {
     value: Value,
     indices: &[&Spanned<Expression>],
     assigned: Value,
-    span: Span,
+    span: &Span,
   ) -> Result<Value> {
     let Some((index, rest)) = indices.split_first() else {
       return Ok(assigned);
@@ -54,7 +54,7 @@ impl Evaluator {
       Value::List(items) => items,
       other => {
         return Err(Error::new(
-          index.1,
+          &index.1,
           format!("'{}' is not a list (found {})", name, other.type_name()),
         ));
       }
@@ -146,8 +146,8 @@ impl Evaluator {
           }
           (lhs_value, rhs_value) => Ok(Value::Number(
             lhs_value
-              .number(lhs.1)?
-              .add(rhs_value.number(rhs.1)?, self.environment.config),
+              .number(&lhs.1)?
+              .add(rhs_value.number(&rhs.1)?, self.environment.config),
           )),
         }
       }
@@ -162,7 +162,7 @@ impl Evaluator {
         );
 
         let (lhs_num, rhs_num) =
-          (lhs_val.number(lhs.1)?, rhs_val.number(rhs.1)?);
+          (lhs_val.number(&lhs.1)?, rhs_val.number(&rhs.1)?);
 
         match op {
           BinaryOp::Divide => lhs_num.div(rhs_num, self.environment.config),
@@ -171,7 +171,7 @@ impl Evaluator {
           _ => unreachable!(),
         }
         .map(Value::Number)
-        .map_err(|error| error.with_span(rhs.1))
+        .map_err(|error| error.with_span(&rhs.1))
       }
       Expression::BinaryOp(BinaryOp::Equal, lhs, rhs) => Ok(Value::Boolean(
         self.evaluate_expression(lhs)? == self.evaluate_expression(rhs)?,
@@ -209,7 +209,7 @@ impl Evaluator {
             }))
           }
           _ => Err(Error::new(
-            *span,
+            span,
             format!(
               "Cannot compare {} and {} with '{}'",
               lhs_val.type_name(),
@@ -221,19 +221,19 @@ impl Evaluator {
       }
       Expression::BinaryOp(BinaryOp::LogicalAnd, lhs, rhs) => {
         Ok(Value::Boolean(
-          self.evaluate_expression(lhs)?.boolean(lhs.1)?
-            && self.evaluate_expression(rhs)?.boolean(rhs.1)?,
+          self.evaluate_expression(lhs)?.boolean(&lhs.1)?
+            && self.evaluate_expression(rhs)?.boolean(&rhs.1)?,
         ))
       }
       Expression::BinaryOp(BinaryOp::LogicalOr, lhs, rhs) => {
         Ok(Value::Boolean(
-          self.evaluate_expression(lhs)?.boolean(lhs.1)?
-            || self.evaluate_expression(rhs)?.boolean(rhs.1)?,
+          self.evaluate_expression(lhs)?.boolean(&lhs.1)?
+            || self.evaluate_expression(rhs)?.boolean(&rhs.1)?,
         ))
       }
       Expression::BinaryOp(BinaryOp::Multiply, lhs, rhs) => Ok(Value::Number(
-        self.evaluate_expression(lhs)?.number(lhs.1)?.mul(
-          self.evaluate_expression(rhs)?.number(rhs.1)?,
+        self.evaluate_expression(lhs)?.number(&lhs.1)?.mul(
+          self.evaluate_expression(rhs)?.number(&rhs.1)?,
           self.environment.config,
         ),
       )),
@@ -241,8 +241,8 @@ impl Evaluator {
         self.evaluate_expression(lhs)? != self.evaluate_expression(rhs)?,
       )),
       Expression::BinaryOp(BinaryOp::Subtract, lhs, rhs) => Ok(Value::Number(
-        self.evaluate_expression(lhs)?.number(lhs.1)?.sub(
-          self.evaluate_expression(rhs)?.number(rhs.1)?,
+        self.evaluate_expression(lhs)?.number(&lhs.1)?.sub(
+          self.evaluate_expression(rhs)?.number(&rhs.1)?,
           self.environment.config,
         ),
       )),
@@ -253,14 +253,15 @@ impl Evaluator {
           environment: self.environment.clone(),
           name: None,
           parameters: parameters.clone(),
+          span: span.clone(),
         })),
       )),
       Expression::FunctionCall(function, arguments) => {
         let function = self
           .evaluate_expression(function)?
-          .into_function(function.1)?;
+          .into_function(&function.1)?;
 
-        function.check_arity(arguments.len(), *span)?;
+        function.check_arity(arguments.len(), span)?;
 
         let mut evaluated_arguments = Vec::with_capacity(arguments.len());
 
@@ -268,14 +269,12 @@ impl Evaluator {
           evaluated_arguments.push(self.evaluate_expression(argument)?);
         }
 
-        function.call(evaluated_arguments, self.environment.config, *span)
+        function.call(evaluated_arguments, self.environment.config, span)
       }
       Expression::Identifier(name) => {
         match self.environment.resolve_symbol(name) {
           Some(value) => Ok(value),
-          None => {
-            Err(Error::new(*span, format!("Undefined variable `{name}`")))
-          }
+          None => Err(Error::new(span, format!("Undefined variable `{name}`"))),
         }
       }
       Expression::List(list) => {
@@ -288,13 +287,13 @@ impl Evaluator {
         Ok(Value::List(evaluated_list))
       }
       Expression::ListAccess(list, index) => {
-        let list = self.evaluate_expression(list)?.into_list(list.1)?;
+        let list = self.evaluate_expression(list)?.into_list(&list.1)?;
 
         let index = self.evaluate_list_index(index)?;
 
         if index >= list.len() {
           return Err(Error::new(
-            *span,
+            span,
             format!(
               "Index {} out of bounds for list of length {}",
               index,
@@ -309,10 +308,10 @@ impl Evaluator {
       Expression::Number(number) => Ok(Value::Number(number.clone())),
       Expression::String(string) => Ok(Value::String(string.clone())),
       Expression::UnaryOp(UnaryOp::Negate, rhs) => Ok(Value::Number(
-        self.evaluate_expression(rhs)?.number(rhs.1)?.neg(),
+        self.evaluate_expression(rhs)?.number(&rhs.1)?.neg(),
       )),
       Expression::UnaryOp(UnaryOp::Not, rhs) => Ok(Value::Boolean(
-        !self.evaluate_expression(rhs)?.boolean(rhs.1)?,
+        !self.evaluate_expression(rhs)?.boolean(&rhs.1)?,
       )),
     }
   }
@@ -323,10 +322,10 @@ impl Evaluator {
   ) -> Result<usize> {
     self
       .evaluate_expression(index)?
-      .number(index.1)?
+      .number(&index.1)?
       .to_non_negative_usize()
       .ok_or_else(|| {
-        Error::new(index.1, "List index must be a non-negative finite number")
+        Error::new(&index.1, "List index must be a non-negative finite number")
       })
   }
 
@@ -347,10 +346,7 @@ impl Evaluator {
       Statement::Block(statements) => self.evaluate_statements(statements),
       Statement::Break => {
         if !self.context.inside_loop() {
-          return Err(Error::new(
-            *span,
-            "Cannot use 'break' outside of a loop",
-          ));
+          return Err(Error::new(span, "Cannot use 'break' outside of a loop"));
         }
 
         Ok(Completion::Break)
@@ -358,7 +354,7 @@ impl Evaluator {
       Statement::Continue => {
         if !self.context.inside_loop() {
           return Err(Error::new(
-            *span,
+            span,
             "Cannot use 'continue' outside of a loop",
           ));
         }
@@ -369,7 +365,8 @@ impl Evaluator {
         Ok(Completion::Value(self.evaluate_expression(expression)?))
       }
       Statement::For(name, iterable, body) => {
-        let list = self.evaluate_expression(iterable)?.into_list(iterable.1)?;
+        let list =
+          self.evaluate_expression(iterable)?.into_list(&iterable.1)?;
 
         let mut result = Value::Null;
 
@@ -398,6 +395,7 @@ impl Evaluator {
           environment: self.environment.clone(),
           name: Some(name.clone()),
           parameters: params.clone(),
+          span: span.clone(),
         }));
 
         self.environment.add_function(name, function.clone());
@@ -405,7 +403,7 @@ impl Evaluator {
         Ok(Completion::Value(Value::Function(function)))
       }
       Statement::If(condition, then_branch, else_branch) => {
-        if self.evaluate_expression(condition)?.boolean(condition.1)? {
+        if self.evaluate_expression(condition)?.boolean(&condition.1)? {
           self.evaluate_statements(then_branch)
         } else if let Some(else_statements) = else_branch {
           self.evaluate_statements(else_statements)
@@ -428,7 +426,7 @@ impl Evaluator {
       }),
       Statement::Return(expression) => {
         if !self.context.inside_function() {
-          return Err(Error::new(*span, "Cannot return outside of a function"));
+          return Err(Error::new(span, "Cannot return outside of a function"));
         }
 
         Ok(Completion::Return(match expression {
@@ -442,7 +440,7 @@ impl Evaluator {
         self.enter_loop(|evaluator| {
           while evaluator
             .evaluate_expression(condition)?
-            .boolean(condition.1)?
+            .boolean(&condition.1)?
           {
             match evaluator.evaluate_statements(body)? {
               Completion::Break => {
