@@ -2273,6 +2273,21 @@ fn list_concatenation() -> Result {
 }
 
 #[test]
+fn list_element_assignment_preserves_index_side_effects() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      foo = [0, 0]
+      fn bar() { foo[1] = 1; return 0 }
+      foo[bar()] = 2
+      println(foo)
+      "
+    })
+    .expected_stdout(Exact("[2, 1]\n"))
+    .run()
+}
+
+#[test]
 fn list_element_assignment_then_read() -> Result {
   Test::new()?
     .program(indoc! {

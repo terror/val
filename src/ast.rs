@@ -153,26 +153,6 @@ impl AssignmentTarget {
   }
 }
 
-impl AssignmentTarget {
-  pub(crate) fn indices(&self) -> Vec<&Spanned<Expression>> {
-    match self {
-      AssignmentTarget::Identifier(_) => Vec::new(),
-      AssignmentTarget::ListAccess(base, index) => {
-        let mut indices = base.0.indices();
-        indices.push(index);
-        indices
-      }
-    }
-  }
-
-  pub(crate) fn root<'a>(&'a self, span: &'a Span) -> (&'a str, &'a Span) {
-    match self {
-      AssignmentTarget::Identifier(name) => (name, span),
-      AssignmentTarget::ListAccess(base, _) => base.0.root(&base.1),
-    }
-  }
-}
-
 impl Display for AssignmentTarget {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
