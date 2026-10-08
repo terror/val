@@ -17,7 +17,10 @@ impl UserFunction {
     let environment = Environment::with_parent(function.environment.clone());
 
     if let Some(name) = &function.name {
-      environment.add_function(name, Function::UserDefined(function.clone()));
+      environment.add_symbol(
+        name,
+        Value::Function(Function::UserDefined(function.clone())),
+      );
     }
 
     for (parameter, argument) in function.parameters.iter().zip(arguments) {

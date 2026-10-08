@@ -7,10 +7,6 @@ pub struct Environment {
 }
 
 impl Environment {
-  pub fn add_function(&self, name: &str, function: Function) {
-    self.add_symbol(name, Value::Function(function));
-  }
-
   pub fn add_symbol(&self, name: &str, value: Value) {
     let mut frame = self.frame.borrow_mut();
 
