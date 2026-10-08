@@ -2,6 +2,7 @@ import { useEditorSettings } from '@/contexts/editor-settings-context';
 import type { Extension } from '@codemirror/state';
 import type { EditorView, ViewUpdate } from '@codemirror/view';
 import CodeMirror from '@uiw/react-codemirror';
+import { useMemo } from 'react';
 
 interface EditorProps {
   extensions: Extension[];
@@ -20,18 +21,23 @@ export const Editor = ({
 }: EditorProps) => {
   const { settings } = useEditorSettings();
 
+  const basicSetup = useMemo(
+    () => ({
+      autocompletion: false,
+      closeBrackets: false,
+      foldGutter: false,
+      highlightSelectionMatches: false,
+      lineNumbers: settings.lineNumbers,
+    }),
+    [settings.lineNumbers]
+  );
+
   return (
     <CodeMirror
       theme='none'
       value={value}
       extensions={extensions}
-      basicSetup={{
-        autocompletion: false,
-        closeBrackets: false,
-        foldGutter: false,
-        highlightSelectionMatches: false,
-        lineNumbers: settings.lineNumbers,
-      }}
+      basicSetup={basicSetup}
       height='100%'
       onChange={onChange}
       onCreateEditor={onCreateEditor}
