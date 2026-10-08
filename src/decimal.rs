@@ -63,15 +63,9 @@ impl Decimal {
   pub(crate) fn from_rational(number: &Rational) -> Option<Self> {
     let mut denominator = number.denom().clone();
 
-    let twos = usize::try_from(
-      denominator.remove_factor_mut(&MiniInteger::from(2).borrow()),
-    )
-    .unwrap();
+    let twos = denominator.remove_factor_mut(&MiniInteger::from(2).borrow());
 
-    let fives = usize::try_from(
-      denominator.remove_factor_mut(&MiniInteger::from(5).borrow()),
-    )
-    .unwrap();
+    let fives = denominator.remove_factor_mut(&MiniInteger::from(5).borrow());
 
     if denominator != 1 {
       return None;
@@ -81,12 +75,10 @@ impl Decimal {
 
     let mut scaled = number.numer().clone();
 
-    for _ in 0..places.saturating_sub(twos) {
-      scaled *= 2;
-    }
-
-    for _ in 0..places.saturating_sub(fives) {
-      scaled *= 5;
+    if twos > fives {
+      scaled *= Integer::u_pow_u(5, twos - fives).complete();
+    } else {
+      scaled <<= fives - twos;
     }
 
     let negative = scaled.is_negative();
@@ -96,7 +88,7 @@ impl Decimal {
     let digits = scaled.to_string();
 
     Some(Self {
-      point: i64::try_from(digits.len()).ok()? - i64::try_from(places).ok()?,
+      point: i64::try_from(digits.len()).ok()? - i64::from(places),
       digits,
       negative,
     })
