@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Environment {
   pub(crate) config: Config,
   pub(crate) frame: Gc<GcCell<Frame>>,
@@ -47,11 +47,16 @@ impl Environment {
   }
 
   #[must_use]
-  pub fn new(config: Config) -> Self {
-    let environment = Self {
+  pub fn empty(config: Config) -> Self {
+    Self {
       config,
       frame: Gc::new(GcCell::new(Frame::default())),
-    };
+    }
+  }
+
+  #[must_use]
+  pub fn new(config: Config) -> Self {
+    let environment = Self::empty(config);
 
     for builtin in inventory::iter::<&dyn Builtin> {
       for name in once(builtin.name()).chain(builtin.aliases().iter().copied())
@@ -99,6 +104,12 @@ impl Debug for Environment {
     f.debug_struct("Environment")
       .field("config", &self.config)
       .finish_non_exhaustive()
+  }
+}
+
+impl Default for Environment {
+  fn default() -> Self {
+    Self::new(Config::default())
   }
 }
 
