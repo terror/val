@@ -5,26 +5,18 @@ pub(crate) struct RangeConverter {
 }
 
 impl RangeConverter {
-  pub(crate) fn convert(&self, range: Range) -> Range {
+  pub(crate) fn convert(&self, span: &Span) -> Range {
     let last = self.offsets.last().copied().unwrap_or_default();
 
     Range {
-      start: self
-        .offsets
-        .get(range.start as usize)
-        .copied()
-        .unwrap_or(last),
-      end: self
-        .offsets
-        .get(range.end as usize)
-        .copied()
-        .unwrap_or(last),
+      start: self.offsets.get(span.start).copied().unwrap_or(last),
+      end: self.offsets.get(span.end).copied().unwrap_or(last),
     }
   }
 
   pub(crate) fn convert_span(span: Option<&Span>) -> Range {
     span.map_or(Range { start: 0, end: 0 }, |span| {
-      Self::new(span.source().text()).convert(Range::from(span))
+      Self::new(span.source().text()).convert(span)
     })
   }
 
