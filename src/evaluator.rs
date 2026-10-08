@@ -235,7 +235,6 @@ impl Evaluator {
           environment: self.environment.clone(),
           name: None,
           parameters: parameters.clone(),
-          span: span.clone(),
         })),
       )),
       Expression::FunctionCall(function, arguments) => {
@@ -377,7 +376,6 @@ impl Evaluator {
           environment: self.environment.clone(),
           name: Some(name.clone()),
           parameters: params.clone(),
-          span: span.clone(),
         }));
 
         self

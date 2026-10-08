@@ -6,7 +6,6 @@ pub struct UserFunction {
   pub environment: Environment,
   pub name: Option<String>,
   pub parameters: Vec<String>,
-  pub span: Span,
 }
 
 impl UserFunction {
@@ -53,7 +52,6 @@ unsafe impl Trace for UserFunction {
       environment,
       name: _,
       parameters: _,
-      span: _,
     } = this;
 
     unsafe { mark(environment) };
