@@ -9,14 +9,19 @@ fn bench_decimal_display(criterion: &mut Criterion) {
   let mut group = criterion.benchmark_group("decimal_display");
 
   for &(factor, exponent) in &[(2, 100), (2, 1_000), (5, 100), (5, 1_000)] {
-    let mut denominator = Integer::from(Integer::u_pow_u(factor, exponent));
-    denominator *= 3;
+    for multiplier in [1, 3] {
+      let denominator =
+        Integer::from(Integer::u_pow_u(factor, exponent)) * multiplier;
 
-    let number = Number::Exact(Rational::from((1, denominator)));
+      let number = Number::Exact(Rational::from((1, denominator)));
 
-    group.bench_function(format!("3 * {factor}^{exponent}"), |bencher| {
-      bencher.iter(|| black_box(number.display(Config::default())));
-    });
+      group.bench_function(
+        format!("{multiplier} * {factor}^{exponent}"),
+        |bencher| {
+          bencher.iter(|| black_box(number.display(Config::default())));
+        },
+      );
+    }
   }
 
   group.finish();
