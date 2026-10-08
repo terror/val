@@ -5,9 +5,11 @@ builtin! {
     name: "append",
     arity: BuiltinArity::Exact(2),
     call(payload) {
-      let mut list = payload.arguments[0].list(payload.span)?.to_vec();
+      let mut arguments = payload.arguments.into_iter();
 
-      list.push(payload.arguments[1].clone());
+      let mut list = arguments.next().unwrap().into_list(payload.span)?;
+
+      list.push(arguments.next().unwrap());
 
       Ok(Value::List(list))
     }

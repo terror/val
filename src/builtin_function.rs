@@ -3,7 +3,7 @@ use super::*;
 #[derive(Clone, Debug)]
 pub struct BuiltinFunction {
   pub arity: BuiltinArity,
-  pub function: fn(&BuiltinFunctionPayload<'_>) -> Result<Value>,
+  pub function: fn(BuiltinFunctionPayload<'_>) -> Result<Value>,
   pub name: &'static str,
 }
 
@@ -14,7 +14,7 @@ impl BuiltinFunction {
     config: Config,
     span: &Span,
   ) -> Result<Value> {
-    (self.function)(&BuiltinFunctionPayload {
+    (self.function)(BuiltinFunctionPayload {
       arguments,
       config,
       name: self.name,

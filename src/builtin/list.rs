@@ -5,16 +5,16 @@ builtin! {
     name: "list",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      let value = &payload.arguments[0];
+      let value = payload.arguments.into_iter().next().unwrap();
 
       Ok(match value {
-        Value::List(items) => Value::List(items.clone()),
+        Value::List(items) => Value::List(items),
         Value::String(s) => Value::List(
           s.chars()
             .map(|c| Value::String(c.to_string()))
             .collect(),
         ),
-        _ => Value::List(vec![value.clone()]),
+        _ => Value::List(vec![value]),
       })
     }
   }
