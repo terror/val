@@ -1,0 +1,242 @@
+import { AstPane } from '@/components/ast-pane';
+import { EditorPane } from '@/components/editor-pane';
+import { Header } from '@/components/header';
+import { OutputPane } from '@/components/output-pane';
+import { PlaygroundInfoDialog } from '@/components/playground-info-dialog';
+import { StatusBar } from '@/components/status-bar';
+import { Button } from '@/components/ui/button';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable';
+import { useEditorExtensions } from '@/hooks/use-editor-extensions';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { usePersistedDoc } from '@/hooks/use-persisted-doc';
+import { useTheme } from '@/hooks/use-theme';
+import { useValAst } from '@/hooks/use-val-ast';
+import { useValExecution } from '@/hooks/use-val-execution';
+import { useValWasm } from '@/hooks/use-val-wasm';
+import { examples } from '@/lib/examples';
+import { highlightEffect } from '@/lib/extensions/highlight';
+import type { Range } from '@/lib/types';
+import type { EditorState } from '@codemirror/state';
+import { EditorView, type ViewUpdate } from '@codemirror/view';
+import { Loader2 } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+const STORAGE_KEY_CODE = 'val-editor-code';
+const STORAGE_KEY_EXAMPLE = 'val-editor-example';
+const STORAGE_KEY_PANE = 'val-selected-pane';
+const PANEL_LAYOUT_STORAGE_KEY = 'val-panel-layout';
+const DEFAULT_EXAMPLE = 'factorial';
+const STACKED_LAYOUT_QUERY = '(max-width: 767px)';
+
+function Playground() {
+  const theme = useTheme();
+
+  useEffect(() => {
+    document.title = 'Playground - val';
+  }, []);
+
+  const [code, setCode] = usePersistedDoc(
+    STORAGE_KEY_CODE,
+    examples[DEFAULT_EXAMPLE]
+  );
+
+  const [currentExample, setCurrentExample] = useState(() => {
+    const savedExample = localStorage.getItem(STORAGE_KEY_EXAMPLE);
+
+    return savedExample && savedExample in examples
+      ? savedExample
+      : DEFAULT_EXAMPLE;
+  });
+
+  const [input, setInput] = useState('');
+  const [storedPane, setPane] = usePersistedDoc(STORAGE_KEY_PANE, 'output');
+
+  const { error, loaded, loading } = useValWasm();
+
+  const {
+    root,
+    errors: parseErrors,
+    collapsedNodes,
+    toggleExpand,
+  } = useValAst({
+    code,
+    loaded,
+  });
+
+  const { run, state: execution, stop } = useValExecution();
+
+  const pane = storedPane === 'ast' ? 'ast' : 'output';
+  const running = execution.status === 'running';
+
+  const errors =
+    execution.status === 'complete' && execution.code === code
+      ? execution.result.errors
+      : parseErrors;
+
+  const handleRun = useCallback(() => {
+    if (running) {
+      return;
+    }
+
+    setPane('output');
+
+    run(code, input);
+  }, [code, input, run, running, setPane]);
+
+  const editorView = useRef<EditorView>();
+  const [editorState, setEditorState] = useState<EditorState>();
+
+  const stackedLayout = useMediaQuery(STACKED_LAYOUT_QUERY);
+  const panelDirection = stackedLayout ? 'vertical' : 'horizontal';
+
+  const extensions = useEditorExtensions({
+    darkMode: theme.darkMode,
+    errors,
+    onRun: handleRun,
+  });
+
+  const handleHighlightChange = useCallback((range: Range | undefined) => {
+    const view = editorView.current;
+
+    if (!view) {
+      return;
+    }
+
+    if (!range || range.start >= range.end) {
+      view.dispatch({ effects: highlightEffect.of(null) });
+      return;
+    }
+
+    const from = Math.max(0, Math.min(range.start, view.state.doc.length));
+
+    view.dispatch({
+      effects: [
+        highlightEffect.of(range),
+        EditorView.scrollIntoView(from, { y: 'center' }),
+      ],
+    });
+  }, []);
+
+  const handleCreateEditor = useCallback((view: EditorView) => {
+    editorView.current = view;
+    setEditorState(view.state);
+  }, []);
+
+  const handleEditorUpdate = useCallback((update: ViewUpdate) => {
+    if (update.docChanged || update.selectionSet) {
+      setEditorState(update.state);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
+  }, [currentExample]);
+
+  const handleExampleChange = (value: string) => {
+    if (!(value in examples)) {
+      return;
+    }
+
+    setCurrentExample(value);
+    setCode(examples[value]);
+  };
+
+  if (error) {
+    return <div className='p-4'>error: {error}</div>;
+  }
+
+  if (loading || !loaded) {
+    return (
+      <div className='flex h-dvh items-center justify-center' role='status'>
+        <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
+        <span className='sr-only'>Loading playground</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className='flex h-dvh max-w-full flex-col'>
+      <Header darkMode={theme.darkMode} onToggleTheme={theme.toggleTheme} />
+
+      <main className='min-h-0 flex-1 overflow-hidden p-4'>
+        <div className='flex h-full flex-col overflow-hidden rounded border'>
+          <ResizablePanelGroup
+            key={panelDirection}
+            autoSaveId={`${PANEL_LAYOUT_STORAGE_KEY}:${panelDirection}`}
+            direction={panelDirection}
+            className='min-h-0 flex-1'
+          >
+            <ResizablePanel id='editor-panel' defaultSize={50} minSize={30}>
+              <EditorPane
+                value={code}
+                onChange={setCode}
+                currentExample={currentExample}
+                examples={examples}
+                onExampleChange={handleExampleChange}
+                onRun={handleRun}
+                onStop={stop}
+                onCreateEditor={handleCreateEditor}
+                onUpdate={handleEditorUpdate}
+                extensions={extensions}
+                running={running}
+              />
+            </ResizablePanel>
+
+            <ResizableHandle />
+
+            <ResizablePanel id='results-panel' defaultSize={50} minSize={30}>
+              <div className='flex h-full min-h-0 flex-col overflow-hidden'>
+                <div className='bg-muted/50 flex shrink-0 items-center gap-1 border-b px-2 py-1'>
+                  <Button
+                    variant={pane === 'output' ? 'secondary' : 'ghost'}
+                    size='sm'
+                    className='h-7 cursor-pointer px-2'
+                    aria-pressed={pane === 'output'}
+                    onClick={() => setPane('output')}
+                  >
+                    Output
+                  </Button>
+                  <Button
+                    variant={pane === 'ast' ? 'secondary' : 'ghost'}
+                    size='sm'
+                    className='h-7 cursor-pointer px-2'
+                    aria-pressed={pane === 'ast'}
+                    onClick={() => setPane('ast')}
+                  >
+                    Syntax tree
+                  </Button>
+                  <div className='ml-auto'>
+                    <PlaygroundInfoDialog />
+                  </div>
+                </div>
+                <div className='min-h-0 flex-1'>
+                  {pane === 'output' ? (
+                    <OutputPane
+                      execution={execution}
+                      input={input}
+                      onInputChange={setInput}
+                    />
+                  ) : (
+                    <AstPane
+                      root={root}
+                      collapsedNodes={collapsedNodes}
+                      toggleExpand={toggleExpand}
+                      onHighlightChange={handleHighlightChange}
+                    />
+                  )}
+                </div>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
+          <StatusBar errors={errors} state={editorState} />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default Playground;
