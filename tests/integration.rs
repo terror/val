@@ -1099,6 +1099,16 @@ fn exit() -> Result {
       .run()?;
 
     Test::new()?
+      .program(&format!("{name}(42)"))
+      .expected_status(42)
+      .run()?;
+
+    Test::new()?
+      .program(&format!("fn foo() {{ {name}(1) }}\nfoo()"))
+      .expected_status(1)
+      .run()?;
+
+    Test::new()?
       .program(&format!("{name}(1, 2)"))
       .expected_status(1)
       .expected_stderr(Contains(&format!(
@@ -3041,6 +3051,23 @@ fn scientific_notation() -> Result {
     })
     .expected_stdout(Exact("true\n1\n135\ntrue\n97\n"))
     .run()
+}
+
+#[test]
+fn scientific_notation_round_trip() -> Result {
+  #[track_caller]
+  fn case(source: &str, expected: &str) -> Result {
+    Test::new()?
+      .program(&format!(
+        "println({source})\nprintln({source} == {expected})"
+      ))
+      .expected_stdout(Exact(&format!("{expected}\ntrue\n")))
+      .run()
+  }
+
+  case("0.00001", "1e-05")?;
+  case("-0.0000123", "-1.23e-05")?;
+  case("10000000000000000.5", "1.00000000000000005e+16")
 }
 
 #[test]
