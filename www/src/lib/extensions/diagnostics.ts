@@ -1,6 +1,6 @@
-import type { ValError } from '@/lib/types';
 import { type Diagnostic, linter } from '@codemirror/lint';
 import type { Extension } from '@codemirror/state';
+import type { ValError } from 'val-wasm';
 
 export const createDiagnosticsExtension = (errors: ValError[]): Extension =>
   linter((view): Diagnostic[] =>

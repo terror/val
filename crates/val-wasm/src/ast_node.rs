@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Tsify)]
 pub struct AstNode {
   pub kind: &'static str,
   pub range: Range,

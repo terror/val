@@ -1,5 +1,5 @@
 import { AstNode } from '@/components/ast-node';
-import type { AstNode as AstNodeType, Range } from '@/lib/types';
+import type { AstNode as AstNodeType, Range } from 'val-wasm';
 
 interface AstPaneProps {
   collapsedNodes: Set<AstNodeType>;

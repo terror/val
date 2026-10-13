@@ -1,6 +1,6 @@
-import type { ValError } from '@/lib/types';
 import type { EditorState } from '@codemirror/state';
 import { CircleCheck, CircleX } from 'lucide-react';
+import type { ValError } from 'val-wasm';
 
 interface StatusBarProps {
   errors: ValError[];

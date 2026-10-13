@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
-import init, { evaluate, execute, parse } from 'val-wasm';
+import init, { execute, parse } from 'val-wasm';
 
 const wasm = await init({
   module_or_path: await readFile(
@@ -68,7 +68,6 @@ test.each([
     errors,
     exitCode: 1,
     output: '',
-    value: undefined,
   });
 });
 
@@ -77,30 +76,30 @@ test('stops execution at exit and preserves output', () => {
     errors: [],
     exitCode: 7,
     output: 'foo\n',
-    value: undefined,
   });
 });
 
-test('parses and evaluates through the generated bindings', () => {
+test('parses through the generated bindings', () => {
   expect(parse('"😀"')).toEqual({
-    kind: 'statements',
-    range: { start: 0, end: 4 },
-    children: [
-      {
-        kind: 'expression',
-        range: { start: 0, end: 4 },
-        children: [
-          {
-            kind: 'string',
-            range: { start: 0, end: 4 },
-            children: [],
-          },
-        ],
-      },
-    ],
+    status: 'ok',
+    ast: {
+      kind: 'statements',
+      range: { start: 0, end: 4 },
+      children: [
+        {
+          kind: 'expression',
+          range: { start: 0, end: 4 },
+          children: [
+            {
+              kind: 'string',
+              range: { start: 0, end: 4 },
+              children: [],
+            },
+          ],
+        },
+      ],
+    },
   });
-
-  expect(evaluate('1 + 2')).toBe('3');
 });
 
 test.each([0, 1, 16, 17])('allocates and frees %i aligned bytes', (size) => {

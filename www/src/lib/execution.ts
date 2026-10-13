@@ -1,4 +1,4 @@
-import type { Execution } from '@/lib/types';
+import type { Execution } from 'val-wasm';
 
 export function failedExecution(error: unknown): Execution {
   return {

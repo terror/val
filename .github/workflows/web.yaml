@@ -54,6 +54,9 @@ jobs:
       - name: Build and test WASM
         run: just test-wasm
 
+      - name: Check generated types
+        run: git diff --exit-code -- www/packages/val-wasm/val.d.ts
+
       - name: Build
         working-directory: ./www
         run: bun run build
