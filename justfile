@@ -19,9 +19,9 @@ build:
 
 [group: 'web']
 build-wasm:
-  wasm-pack build crates/val-wasm --target web \
+  wasm-pack build crates/val-wasm --target web --release \
     --out-name val \
-    --out-dir ../../www/packages/val-wasm
+    --out-dir ../../www/packages/val-wasm --locked
 
 [group: 'check']
 check:
@@ -81,6 +81,10 @@ serve-web: build-wasm
 [group: 'test']
 test:
   cargo test
+
+[group: 'test']
+test-wasm: build-wasm
+  cd www && bun test
 
 [group: 'test']
 test-release-workflow:
