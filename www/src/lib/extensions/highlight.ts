@@ -1,6 +1,6 @@
-import type { Range } from '@/lib/types';
 import { StateEffect, StateField, type Text } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
+import type { Range } from 'val-wasm';
 
 const highlightMark = Decoration.mark({ class: 'cm-highlighted-node' });
 

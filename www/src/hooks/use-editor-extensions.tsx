@@ -3,12 +3,12 @@ import { createEditorTheme } from '@/lib/editor-theme';
 import { createDiagnosticsExtension } from '@/lib/extensions/diagnostics';
 import { highlightExtension } from '@/lib/extensions/highlight';
 import { syntaxHighlightExtension } from '@/lib/extensions/syntax-highlight';
-import type { ValError } from '@/lib/types';
 import { bracketMatching, indentOnInput } from '@codemirror/language';
 import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { vim } from '@replit/codemirror-vim';
 import { useMemo } from 'react';
+import type { ValError } from 'val-wasm';
 
 const baseExtensions: Extension[] = [
   bracketMatching(),

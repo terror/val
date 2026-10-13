@@ -1,16 +1,42 @@
 /* tslint:disable */
 /* eslint-disable */
 export function start(): void;
-export function execute(source: string, input: string): any;
-export function parse(input: string): any;
-export function evaluate(input: string): any;
+export function execute(source: string, input: string): Execution;
+export function parse(source: string): ParseResult;
+export type ParseResult = { status: "error"; errors: ValError[] } | { status: "ok"; ast: AstNode };
+
+export interface ValError {
+    kind: ErrorKind;
+    message: string;
+    range: Range;
+}
+
+export type ErrorKind = "Evaluator" | "Parser";
+
+export interface Range {
+    start: number;
+    end: number;
+}
+
+export interface AstNode {
+    kind: string;
+    range: Range;
+    children: AstNode[];
+}
+
+export interface Execution {
+    errors: ValError[];
+    exitCode: number;
+    output: string;
+    value?: string;
+}
+
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
-  readonly evaluate: (a: number, b: number) => [number, number, number];
-  readonly execute: (a: number, b: number, c: number, d: number) => any;
+  readonly execute: (a: number, b: number, c: number, d: number) => [number, number, number];
   readonly parse: (a: number, b: number) => [number, number, number];
   readonly start: () => void;
   readonly abort: () => void;

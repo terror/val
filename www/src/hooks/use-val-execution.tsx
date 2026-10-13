@@ -1,6 +1,7 @@
 import { failedExecution } from '@/lib/execution';
-import type { Execution, ExecutionRequest, ExecutionState } from '@/lib/types';
+import type { ExecutionRequest, ExecutionState } from '@/lib/types';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Execution } from 'val-wasm';
 
 export function useValExecution() {
   const worker = useRef<Worker>();

@@ -1,11 +1,12 @@
 use super::*;
 
-#[derive(Serialize)]
+#[derive(Serialize, Tsify)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct Execution {
+pub struct Execution {
   errors: Vec<ValError>,
   exit_code: i32,
   output: String,
+  #[serde(skip_serializing_if = "Option::is_none")]
   value: Option<String>,
 }
 

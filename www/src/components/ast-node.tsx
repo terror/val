@@ -1,6 +1,6 @@
-import type { AstNode as AstNodeType, Range } from '@/lib/types';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { memo, useCallback } from 'react';
+import type { AstNode as AstNodeType, Range } from 'val-wasm';
 
 interface AstNodeProps {
   collapsedNodes: Set<AstNodeType>;
