@@ -5,16 +5,13 @@ builtin! {
     name: "sec",
     arity: BuiltinArity::Exact(1),
     call(payload) {
-      let cos = payload.number(0)?.cos(payload.config);
+      let argument = payload.number(0)?;
 
-      if cos.is_zero() {
+      if argument.cos(payload.config).is_zero() {
         return Err(Error::new(payload.span, "Cannot compute sec of π/2 + nπ"));
       }
 
-      Number::from(1_i64)
-        .div(&cos, payload.config)
-        .map(Value::Number)
-        .map_err(|error| error.with_span(payload.span))
+      Ok(Value::Number(argument.sec(payload.config)))
     }
   }
 }

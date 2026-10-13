@@ -21,6 +21,13 @@ impl Number {
   }
 
   #[must_use]
+  pub fn acot(&self, config: Config) -> Self {
+    let mut number = Self::float(1, config);
+    number.atan2_round(&self.to_float(config), config.rounding_mode);
+    Self::Approx(number)
+  }
+
+  #[must_use]
   pub fn add(&self, rhs: &Self, config: Config) -> Self {
     match (self, rhs) {
       (Self::Approx(lhs), Self::Approx(rhs)) => {
@@ -81,6 +88,16 @@ impl Number {
   #[must_use]
   pub fn cosh(&self, config: Config) -> Self {
     self.approx_unary(config, Float::cosh_round)
+  }
+
+  #[must_use]
+  pub fn cot(&self, config: Config) -> Self {
+    self.approx_unary(config, Float::cot_round)
+  }
+
+  #[must_use]
+  pub fn csc(&self, config: Config) -> Self {
+    self.approx_unary(config, Float::csc_round)
   }
 
   #[must_use]
@@ -289,6 +306,11 @@ impl Number {
         config,
       ))),
     }
+  }
+
+  #[must_use]
+  pub fn sec(&self, config: Config) -> Self {
+    self.approx_unary(config, Float::sec_round)
   }
 
   #[must_use]
