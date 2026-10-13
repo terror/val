@@ -6,7 +6,7 @@ import { syntaxHighlightExtension } from '@/lib/extensions/syntax-highlight';
 import type { ValError } from '@/lib/types';
 import { bracketMatching, indentOnInput } from '@codemirror/language';
 import { EditorState, type Extension } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import { EditorView, keymap } from '@codemirror/view';
 import { vim } from '@replit/codemirror-vim';
 import { useMemo } from 'react';
 
@@ -20,11 +20,13 @@ const baseExtensions: Extension[] = [
 interface UseEditorExtensionsOptions {
   darkMode: boolean;
   errors: ValError[];
+  onRun: () => void;
 }
 
 export function useEditorExtensions({
   darkMode,
   errors,
+  onRun,
 }: UseEditorExtensionsOptions): Extension[] {
   const { settings } = useEditorSettings();
 
@@ -46,12 +48,28 @@ export function useEditorExtensions({
   return useMemo(
     () => [
       baseExtensions,
+      keymap.of([
+        {
+          key: 'Mod-Enter',
+          run: () => {
+            onRun();
+            return true;
+          },
+        },
+      ]),
       EditorState.tabSize.of(settings.tabSize),
       diagnostics,
       theme,
       keybindings,
       settings.lineWrapping ? EditorView.lineWrapping : [],
     ],
-    [diagnostics, theme, keybindings, settings.lineWrapping, settings.tabSize]
+    [
+      diagnostics,
+      theme,
+      keybindings,
+      onRun,
+      settings.lineWrapping,
+      settings.tabSize,
+    ]
   );
 }
