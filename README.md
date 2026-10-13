@@ -11,6 +11,10 @@
 on top of [**chumsky**](https://github.com/zesterer/chumsky) and
 [**ariadne**](https://github.com/zesterer/ariadne).
 
+[Website](https://val-one-phi.vercel.app/) ·
+[Documentation](https://val-one-phi.vercel.app/documentation) ·
+[Playground](https://val-one-phi.vercel.app/playground)
+
 <img width="1667" alt="val" src="screenshot.png" />
 
 `val` supports exact arithmetic, configurable precision, functions, loops,
