@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -13,17 +14,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AstPane } from './components/ast-pane';
 import { EditorPane } from './components/editor-pane';
 import { Header } from './components/header';
+import { OutputPane } from './components/output-pane';
+import { PlaygroundInfoDialog } from './components/playground-info-dialog';
 import { StatusBar } from './components/status-bar';
 import { useEditorExtensions } from './hooks/use-editor-extensions';
 import { useMediaQuery } from './hooks/use-media-query';
 import { usePersistedDoc } from './hooks/use-persisted-doc';
 import { useTheme } from './hooks/use-theme';
 import { useValAst } from './hooks/use-val-ast';
+import { useValExecution } from './hooks/use-val-execution';
 import { useValWasm } from './hooks/use-val-wasm';
 import { examples } from './lib/examples';
 
 const STORAGE_KEY_CODE = 'val-editor-code';
 const STORAGE_KEY_EXAMPLE = 'val-editor-example';
+const STORAGE_KEY_PANE = 'val-selected-pane';
 const PANEL_LAYOUT_STORAGE_KEY = 'val-panel-layout';
 const DEFAULT_EXAMPLE = 'factorial';
 const STACKED_LAYOUT_QUERY = '(max-width: 767px)';
@@ -44,12 +49,40 @@ function App() {
       : DEFAULT_EXAMPLE;
   });
 
+  const [input, setInput] = useState('');
+  const [storedPane, setPane] = usePersistedDoc(STORAGE_KEY_PANE, 'output');
+
   const { error, loaded, loading } = useValWasm();
 
-  const { root, errors, collapsedNodes, toggleExpand } = useValAst({
+  const {
+    root,
+    errors: parseErrors,
+    collapsedNodes,
+    toggleExpand,
+  } = useValAst({
     code,
     loaded,
   });
+
+  const { run, state: execution, stop } = useValExecution();
+
+  const pane = storedPane === 'ast' ? 'ast' : 'output';
+  const running = execution.status === 'running';
+
+  const errors =
+    execution.status === 'complete' && execution.code === code
+      ? execution.result.errors
+      : parseErrors;
+
+  const handleRun = useCallback(() => {
+    if (running) {
+      return;
+    }
+
+    setPane('output');
+
+    run(code, input);
+  }, [code, input, run, running, setPane]);
 
   const editorView = useRef<EditorView>();
   const [editorState, setEditorState] = useState<EditorState>();
@@ -60,6 +93,7 @@ function App() {
   const extensions = useEditorExtensions({
     darkMode: theme.darkMode,
     errors,
+    onRun: handleRun,
   });
 
   const handleHighlightChange = useCallback((range: Range | undefined) => {
@@ -140,21 +174,59 @@ function App() {
                 currentExample={currentExample}
                 examples={examples}
                 onExampleChange={handleExampleChange}
+                onRun={handleRun}
+                onStop={stop}
                 onCreateEditor={handleCreateEditor}
                 onUpdate={handleEditorUpdate}
                 extensions={extensions}
+                running={running}
               />
             </ResizablePanel>
 
             <ResizableHandle />
 
-            <ResizablePanel id='ast-panel' defaultSize={50} minSize={30}>
-              <AstPane
-                root={root}
-                collapsedNodes={collapsedNodes}
-                toggleExpand={toggleExpand}
-                onHighlightChange={handleHighlightChange}
-              />
+            <ResizablePanel id='results-panel' defaultSize={50} minSize={30}>
+              <div className='flex h-full min-h-0 flex-col overflow-hidden'>
+                <div className='bg-muted/50 flex shrink-0 items-center gap-1 border-b px-2 py-1'>
+                  <Button
+                    variant={pane === 'output' ? 'secondary' : 'ghost'}
+                    size='sm'
+                    className='h-7 cursor-pointer px-2'
+                    aria-pressed={pane === 'output'}
+                    onClick={() => setPane('output')}
+                  >
+                    Output
+                  </Button>
+                  <Button
+                    variant={pane === 'ast' ? 'secondary' : 'ghost'}
+                    size='sm'
+                    className='h-7 cursor-pointer px-2'
+                    aria-pressed={pane === 'ast'}
+                    onClick={() => setPane('ast')}
+                  >
+                    Syntax tree
+                  </Button>
+                  <div className='ml-auto'>
+                    <PlaygroundInfoDialog />
+                  </div>
+                </div>
+                <div className='min-h-0 flex-1'>
+                  {pane === 'output' ? (
+                    <OutputPane
+                      execution={execution}
+                      input={input}
+                      onInputChange={setInput}
+                    />
+                  ) : (
+                    <AstPane
+                      root={root}
+                      collapsedNodes={collapsedNodes}
+                      toggleExpand={toggleExpand}
+                      onHighlightChange={handleHighlightChange}
+                    />
+                  )}
+                </div>
+              </div>
             </ResizablePanel>
           </ResizablePanelGroup>
           <StatusBar errors={errors} state={editorState} />
