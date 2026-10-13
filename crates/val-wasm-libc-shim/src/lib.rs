@@ -1,6 +1,9 @@
 #![cfg_attr(target_arch = "wasm32", allow(clippy::missing_safety_doc))]
 
 #[cfg(target_arch = "wasm32")]
+use std::alloc::Layout;
+
+#[cfg(target_arch = "wasm32")]
 const ALIGN: usize = 16;
 
 #[cfg(target_arch = "wasm32")]
@@ -25,7 +28,7 @@ pub unsafe extern "C" fn free(ptr: *mut u8) {
 
   let size = unsafe { ptr.cast::<usize>().read_unaligned() };
 
-  let Ok(layout) = std::alloc::Layout::from_size_align(size, ALIGN) else {
+  let Ok(layout) = Layout::from_size_align(size, ALIGN) else {
     abort();
   };
 
@@ -41,7 +44,7 @@ pub extern "C" fn malloc(size: usize) -> *mut u8 {
     return std::ptr::null_mut();
   };
 
-  let Ok(layout) = std::alloc::Layout::from_size_align(size, ALIGN) else {
+  let Ok(layout) = Layout::from_size_align(size, ALIGN) else {
     return std::ptr::null_mut();
   };
 
@@ -68,12 +71,15 @@ pub unsafe extern "C" fn realloc(ptr: *mut u8, size: usize) -> *mut u8 {
     return std::ptr::null_mut();
   };
 
+  if Layout::from_size_align(size, ALIGN).is_err() {
+    return std::ptr::null_mut();
+  }
+
   let base = unsafe { ptr.sub(HEADER) };
 
   let old_size = unsafe { base.cast::<usize>().read_unaligned() };
 
-  let Ok(old_layout) = std::alloc::Layout::from_size_align(old_size, ALIGN)
-  else {
+  let Ok(old_layout) = Layout::from_size_align(old_size, ALIGN) else {
     abort();
   };
 
