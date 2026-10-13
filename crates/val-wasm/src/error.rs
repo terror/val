@@ -1,13 +1,12 @@
 use super::*;
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Tsify)]
 pub enum ErrorKind {
   Evaluator,
-  Exit,
   Parser,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Tsify)]
 pub struct ValError {
   pub kind: ErrorKind,
   pub message: String,

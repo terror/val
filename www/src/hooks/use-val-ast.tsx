@@ -1,6 +1,5 @@
-import type { AstNode, ValError } from '@/lib/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { parse } from 'val-wasm';
+import { type AstNode, type ValError, parse } from 'val-wasm';
 
 interface UseValAstOptions {
   code: string;
@@ -21,7 +20,11 @@ export function useValAst({ code, loaded }: UseValAstOptions): UseValAst {
     }
 
     try {
-      return { root: parse(code) as AstNode, errors: [] };
+      const result = parse(code);
+
+      return result.status === 'ok'
+        ? { root: result.ast, errors: [] }
+        : { root: undefined, errors: result.errors };
     } catch (error) {
       return { root: undefined, errors: parseErrors(error) };
     }
@@ -53,10 +56,6 @@ export function useValAst({ code, loaded }: UseValAstOptions): UseValAst {
 }
 
 function parseErrors(error: unknown): ValError[] {
-  if (Array.isArray(error)) {
-    return error as ValError[];
-  }
-
   return [
     {
       kind: 'Parser',

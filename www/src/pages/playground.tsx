@@ -19,11 +19,11 @@ import { useValExecution } from '@/hooks/use-val-execution';
 import { useValWasm } from '@/hooks/use-val-wasm';
 import { examples } from '@/lib/examples';
 import { highlightEffect } from '@/lib/extensions/highlight';
-import type { Range } from '@/lib/types';
 import type { EditorState } from '@codemirror/state';
 import { EditorView, type ViewUpdate } from '@codemirror/view';
 import { Loader2 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Range } from 'val-wasm';
 
 const STORAGE_KEY_CODE = 'val-editor-code';
 const STORAGE_KEY_EXAMPLE = 'val-editor-example';
