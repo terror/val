@@ -9,7 +9,7 @@ interface HeaderProps {
 export const Header = ({ darkMode, onToggleTheme }: HeaderProps) => (
   <header className='flex shrink-0 items-center gap-6 px-4 py-3 sm:px-6'>
     <a
-      href='/val'
+      href='/'
       className='flex shrink-0 items-center gap-2 rounded-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2'
     >
       <Radius className='h-4 w-4' aria-hidden='true' />
@@ -21,7 +21,7 @@ export const Header = ({ darkMode, onToggleTheme }: HeaderProps) => (
         className='flex items-center gap-4 text-sm'
       >
         <a
-          href='/val'
+          href='/'
           aria-current='page'
           className='rounded-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2'
         >
