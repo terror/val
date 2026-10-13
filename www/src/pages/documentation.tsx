@@ -2,6 +2,7 @@ import { DocumentationMarkdown } from '@/components/documentation-markdown';
 import { Header } from '@/components/header';
 import { useTheme } from '@/hooks/use-theme';
 import { documentation } from '@/lib/documentation';
+import { ChevronRight } from 'lucide-react';
 import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 
@@ -10,16 +11,34 @@ const DocumentationNavigation = () => {
 
   return (
     <nav aria-label='Documentation navigation'>
-      <ul className='space-y-1 text-sm'>
-        {documentation.map(({ id, title }) => (
+      <ul className='space-y-6 text-sm'>
+        {documentation.map(({ id, title, headings }) => (
           <li key={id}>
-            <Link
-              to={`#${id}`}
-              aria-current={hash === `#${id}` ? 'location' : undefined}
-              className='text-muted-foreground hover:text-foreground aria-[current=location]:text-foreground block rounded-sm py-2 focus-visible:outline-2 focus-visible:outline-offset-2 aria-[current=location]:font-medium'
-            >
-              {title}
-            </Link>
+            <details open>
+              <summary className='flex cursor-pointer list-none items-center gap-1 rounded-sm py-1 focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden [[open]>&>svg]:rotate-90'>
+                <ChevronRight aria-hidden='true' className='h-4 w-4 shrink-0' />
+                <Link
+                  to={`#${id}`}
+                  aria-current={hash === `#${id}` ? 'location' : undefined}
+                  className='min-w-0 rounded-sm font-semibold break-words hover:underline hover:underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2'
+                >
+                  {title}
+                </Link>
+              </summary>
+              <ul className='mt-2 ml-2 space-y-1 border-l pl-3'>
+                {headings.map(({ id, title }) => (
+                  <li key={id}>
+                    <Link
+                      to={`#${id}`}
+                      aria-current={hash === `#${id}` ? 'location' : undefined}
+                      className='text-muted-foreground hover:text-foreground aria-[current=location]:text-foreground block rounded-sm py-1 break-words focus-visible:outline-2 focus-visible:outline-offset-2 aria-[current=location]:font-medium'
+                    >
+                      {title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
           </li>
         ))}
       </ul>
@@ -47,7 +66,7 @@ const Documentation = () => {
     <div className='min-h-dvh'>
       <Header darkMode={theme.darkMode} onToggleTheme={theme.toggleTheme} />
 
-      <div className='mx-auto max-w-6xl px-6 py-12 lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-12 lg:py-16'>
+      <div className='mx-auto max-w-6xl px-6 py-12 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-12 lg:py-16'>
         <aside className='hidden lg:block'>
           <div className='sticky top-6 max-h-[calc(100dvh-3rem)] overflow-y-auto pr-4'>
             <p className='mb-3 text-sm font-semibold'>Documentation</p>
@@ -67,19 +86,19 @@ const Documentation = () => {
             <summary className='cursor-pointer font-medium'>
               On this page
             </summary>
-            <div className='mt-4'>
+            <div className='mt-4 max-h-96 overflow-y-auto'>
               <DocumentationNavigation />
             </div>
           </details>
 
           <div className='mt-12'>
-            {documentation.map(({ id, content }) => (
+            {documentation.map((section) => (
               <section
-                key={id}
-                aria-labelledby={id}
+                key={section.id}
+                aria-labelledby={section.id}
                 className='mt-12 border-t pt-12 first:mt-0 first:border-t-0 first:pt-0'
               >
-                <DocumentationMarkdown id={id}>{content}</DocumentationMarkdown>
+                <DocumentationMarkdown section={section} />
               </section>
             ))}
           </div>
