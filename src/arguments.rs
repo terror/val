@@ -66,17 +66,26 @@ pub(crate) struct Arguments {
 }
 
 impl Arguments {
+  fn evaluate(
+    evaluator: &mut Evaluator,
+    source: Source,
+  ) -> Result<Value, Vec<Error>> {
+    let ast = parse(source)?;
+
+    match evaluator.evaluate(&ast).map_err(|error| vec![error])? {
+      Evaluation::Exit { code, .. } => process::exit(code),
+      Evaluation::Value(value) => Ok(value),
+    }
+  }
+
   fn evaluate_expression(&self, text: &str) -> Result {
     let source = Source::new("<expression>", text);
 
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match parse(source)
-      .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
-    {
-      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-      Ok(Evaluation::Value(value)) => {
+    match Self::evaluate(&mut evaluator, source) {
+      Ok(value) => {
         if !matches!(value, Value::Null) {
           println!("{}", value.display(Into::<Config>::into(self)));
         }
@@ -99,11 +108,8 @@ impl Arguments {
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match parse(source)
-      .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
-    {
-      Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-      Ok(Evaluation::Value(_)) => Ok(()),
+    match Self::evaluate(&mut evaluator, source) {
+      Ok(_) => Ok(()),
       Err(errors) => {
         Self::report(&errors, io::stderr())?;
 
@@ -139,11 +145,8 @@ impl Arguments {
 
         let source = Source::new(filename.to_string_lossy(), content);
 
-        match parse(source)
-          .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
-        {
-          Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-          Ok(Evaluation::Value(_)) => {}
+        match Self::evaluate(&mut evaluator, source) {
+          Ok(_) => {}
           Err(errors) => {
             Self::report(&errors, io::stderr())?;
 
@@ -161,14 +164,11 @@ impl Arguments {
 
       let source = Source::from(line);
 
-      match parse(source)
-        .and_then(|ast| evaluator.evaluate(&ast).map_err(|error| vec![error]))
-      {
-        Ok(Evaluation::Exit { code, .. }) => process::exit(code),
-        Ok(Evaluation::Value(value)) if !matches!(value, Value::Null) => {
+      match Self::evaluate(&mut evaluator, source) {
+        Ok(value) if !matches!(value, Value::Null) => {
           println!("{}", value.display(Into::<Config>::into(self)));
         }
-        Ok(Evaluation::Value(_)) => {}
+        Ok(_) => {}
         Err(errors) => Self::report(&errors, io::stderr())?,
       }
     }
