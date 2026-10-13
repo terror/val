@@ -10,9 +10,17 @@ homepage = "https://github.com/terror/val"
 categories = ["science", "parser-implementations", "command-line-interface"]
 keywords = ["productivity", "compilers"]
 
+[[bin]]
+name = "val"
+required-features = ["cli"]
+
 [[bench]]
 name = "main"
 harness = false
+
+[[test]]
+name = "integration"
+required-features = ["cli"]
 
 [lints]
 workspace = true
@@ -39,14 +47,16 @@ wildcard_imports = "allow"
 unreachable_pub = "deny"
 
 [features]
+default = ["cli"]
+cli = ["dep:anyhow", "dep:clap", "dep:dirs", "dep:rustyline"]
 force-cross = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/force-cross"]
 use-system-libs = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/use-system-libs"]
 
 [dependencies]
-anyhow = "1.0.102"
+anyhow = { version = "1.0.102", optional = true }
 ariadne = { version = "0.6.0", features = ["auto-color"] }
 chumsky = { version = "0.13.0", features = ["pratt"] }
-clap = { version = "4.5.60", features = ["derive"] }
+clap = { version = "4.5.60", features = ["derive"], optional = true }
 gc = "0.5.1"
 gmp-mpfr-sys = { version = "~1.7", default-features = false, optional = true }
 inventory = "0.3.24"
@@ -54,8 +64,8 @@ rug = { version = "1.30.0", default-features = false, features = ["float", "rati
 thiserror = "2.0.19"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-dirs = "7.0.0"
-rustyline = "18.0.0"
+dirs = { version = "7.0.0", optional = true }
+rustyline = { version = "18.0.0", optional = true }
 
 [dev-dependencies]
 criterion = { version = "0.8.2", features = ["html_reports"] }
