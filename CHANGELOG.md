@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.7.0](https://github.com/terror/val/releases/tag/0.7.0) - 2026-10-14
+
+### Added
+
+- Gate command-line dependencies behind a feature ([#226](https://github.com/terror/val/pull/226) by [terror](https://github.com/terror))
+- Support program execution in the web playground ([#227](https://github.com/terror/val/pull/227) by [terror](https://github.com/terror))
+- Add landing page and documentation ([#229](https://github.com/terror/val/pull/229) by [terror](https://github.com/terror))
+
+### Fixed
+
+- Validate WASM reallocation layouts ([#230](https://github.com/terror/val/pull/230) by [terror](https://github.com/terror))
+- Use numerically stable trigonometric operations ([#233](https://github.com/terror/val/pull/233) by [terror](https://github.com/terror))
+
+### Misc
+
+- Move evaluator tests to integration tests ([#224](https://github.com/terror/val/pull/224) by [terror](https://github.com/terror))
+- Consolidate command-line evaluation paths ([#225](https://github.com/terror/val/pull/225) by [terror](https://github.com/terror))
+- Deploy web playground to Vercel ([#228](https://github.com/terror/val/pull/228) by [terror](https://github.com/terror))
+- Consolidate WASM API and generate TypeScript types ([#231](https://github.com/terror/val/pull/231) by [terror](https://github.com/terror))
+- Build and test WASM from source in CI ([#232](https://github.com/terror/val/pull/232) by [terror](https://github.com/terror))
+
 ## [0.6.0](https://github.com/terror/val/releases/tag/0.6.0) - 2026-10-08
 
 ### Fixed
