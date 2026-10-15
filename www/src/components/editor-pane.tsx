@@ -53,7 +53,7 @@ export const EditorPane = ({
             </SelectTrigger>
             <SelectContent>
               {Object.keys(examples).map((key) => (
-                <SelectItem key={key} value={key}>
+                <SelectItem key={key} value={key} className='cursor-pointer'>
                   {key}
                 </SelectItem>
               ))}
