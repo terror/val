@@ -36,7 +36,7 @@ jobs:
       - name: Setup build tools
         uses: taiki-e/install-action@v2
         with:
-          tool: just@1.58.0,wasm-pack@0.15.0
+          tool: just@1.59.0,wasm-pack@0.15.0
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
@@ -51,12 +51,8 @@ jobs:
         working-directory: ./www
         run: bun run lint
 
-      - name: Build and test WASM
-        run: just test-wasm
+      - name: Build and test web
+        run: just build-web
 
       - name: Check generated types
         run: git diff --exit-code -- www/packages/val-wasm/val.d.ts
-
-      - name: Build
-        working-directory: ./www
-        run: bun run build
