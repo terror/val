@@ -13,7 +13,7 @@ fi
 rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal \
   --target wasm32-unknown-unknown
 
-cargo install --locked --version 1.58.0 just
+cargo install --locked --version 1.59.0 just
 cargo install --locked --version 0.15.0 wasm-pack
 
 EMSDK_DIR=$(mktemp -d)
