@@ -23,6 +23,10 @@ build-wasm:
     --out-name val \
     --out-dir ../../www/packages/val-wasm --locked
 
+[group: 'web']
+build-web: test-wasm
+  cd www && bun run build
+
 [group: 'check']
 check:
  cargo check
