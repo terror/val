@@ -124,10 +124,14 @@ fn statement_list_parser<'a, P>(
 where
   P: Parser<'a, ParserInput<'a>, Spanned<Statement>, ParserError<'a>> + Clone,
 {
-  statement
-    .then_ignore(padded_parser(just(';')).or_not())
-    .repeated()
-    .collect::<Vec<_>>()
+  let separator = padded_parser(just(';')).repeated();
+
+  separator.clone().ignore_then(
+    statement
+      .then_ignore(separator)
+      .repeated()
+      .collect::<Vec<_>>(),
+  )
 }
 
 fn statement_parser<'a>()
@@ -761,6 +765,14 @@ mod tests {
     Test::new()
       .program("((2 ^ 2) ^ 2) ^ 2")
       .ast("statements(expression(binary_op(^, binary_op(^, binary_op(^, number(2), number(2)), number(2)), number(2))))")
+      .run();
+  }
+
+  #[test]
+  fn repeated_semicolons() {
+    Test::new()
+      .program(";; 1;; { ;2;; };;")
+      .ast("statements(expression(number(1)), block(expression(number(2))))")
       .run();
   }
 
