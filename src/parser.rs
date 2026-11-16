@@ -100,6 +100,28 @@ fn keyword_parser<'a>(
   just(Token::Keyword(keyword)).ignored()
 }
 
+fn parameters_parser<'a>()
+-> impl Parser<'a, ParserInput<'a>, Vec<String>, ParserError<'a>> + Clone {
+  comma_separated_parser(
+    identifier_parser().map_with(|name, extra| (name, extra.span())),
+  )
+  .delimited_by(symbol_parser("("), symbol_parser(")"))
+  .validate(|parameters, _, emitter| {
+    let mut names = Vec::new();
+
+    for (name, span) in parameters {
+      if names.contains(&name) {
+        emitter
+          .emit(Rich::custom(span, format!("Duplicate parameter `{name}`")));
+      } else {
+        names.push(name);
+      }
+    }
+
+    names
+  })
+}
+
 fn same_line_parser<'a, P, T>(
   parser: P,
 ) -> impl Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone
@@ -170,10 +192,7 @@ fn statement_parser<'a>()
 
     let function_statement = keyword_parser("fn")
       .ignore_then(identifier_parser())
-      .then(
-        comma_separated_parser(identifier_parser())
-          .delimited_by(symbol_parser("("), symbol_parser(")")),
-      )
+      .then(parameters_parser())
       .then(statement_block.clone())
       .map(|((name, params), body)| Statement::Function(name, params, body));
 
@@ -289,10 +308,7 @@ where
       .map_with(|arguments, error| (arguments, error.span()));
 
     let function = keyword_parser("fn")
-      .ignore_then(
-        comma_separated_parser(identifier_parser())
-          .delimited_by(symbol_parser("("), symbol_parser(")")),
-      )
+      .ignore_then(parameters_parser())
       .then(statement_block.clone())
       .map(|(params, body)| Expression::Function(params, body))
       .map_with(|ast, error| (ast, error.span()));
@@ -522,6 +538,19 @@ mod tests {
     Test::new()
       .program("continue")
       .ast("statements(continue)")
+      .run();
+  }
+
+  #[test]
+  fn duplicate_parameters() {
+    Test::new()
+      .program("fn f(a, a) {}")
+      .errors(vec![(8..9, "Duplicate parameter `a`")])
+      .run();
+
+    Test::new()
+      .program("fn(a, a) {}")
+      .errors(vec![(6..7, "Duplicate parameter `a`")])
       .run();
   }
 
