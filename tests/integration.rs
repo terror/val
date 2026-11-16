@@ -3,7 +3,12 @@ use {
   executable_path::executable_path,
   indoc::indoc,
   pretty_assertions::assert_eq,
-  std::{fs, process::Command, str},
+  std::{
+    fs,
+    io::Write,
+    process::{Command, Stdio},
+    str,
+  },
   tempfile::TempDir,
   unindent::Unindent,
 };
@@ -1766,6 +1771,30 @@ fn higher_order_function() -> Result {
     })
     .expected_stdout(Exact("[2, 4, 6]\n"))
     .run()
+}
+
+#[test]
+fn history_write_failure() -> Result {
+  let tempdir = TempDir::new()?;
+
+  let mut child = Command::new(executable_path(env!("CARGO_PKG_NAME")))
+    .env("HOME", tempdir.path().join("foo"))
+    .stdin(Stdio::piped())
+    .stdout(Stdio::piped())
+    .stderr(Stdio::piped())
+    .spawn()?;
+
+  child.stdin.take().unwrap().write_all(b"1\n2\n")?;
+
+  let output = child.wait_with_output()?;
+
+  assert_eq!(str::from_utf8(&output.stderr)?, "");
+
+  assert_eq!(str::from_utf8(&output.stdout)?, "1\n2\n");
+
+  assert_eq!(output.status.code(), Some(0));
+
+  Ok(())
 }
 
 #[test]

@@ -160,8 +160,8 @@ impl Arguments {
     loop {
       let line = editor.readline("> ")?;
 
-      editor.add_history_entry(&line)?;
-      editor.save_history(&history)?;
+      editor.add_history_entry(&line).ok();
+      editor.save_history(&history).ok();
 
       let source = Source::from(line);
 
