@@ -1,11 +1,13 @@
 use {
   arguments::Arguments,
   ariadne::FnCache,
-  clap::Parser,
+  clap::{Parser, ValueEnum},
   highlight_kind::HighlightKind,
   highlight_span::HighlightSpan,
   highlighter::Highlighter,
   prompt::Prompt,
+  rounding_mode::RoundingMode,
+  rug::float::Round,
   rustyline::{
     Context, Editor, Helper,
     completion::{Completer, FilenameCompleter, Pair},
@@ -27,8 +29,7 @@ use {
     process, thread,
   },
   val::{
-    Config, Environment, Error, Evaluation, Evaluator, RoundingMode, Source,
-    Value, parse,
+    Config, Environment, Error, Evaluation, Evaluator, Source, Value, parse,
   },
 };
 
@@ -37,6 +38,7 @@ mod highlight_kind;
 mod highlight_span;
 mod highlighter;
 mod prompt;
+mod rounding_mode;
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
