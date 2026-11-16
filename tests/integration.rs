@@ -1120,6 +1120,19 @@ fn exit() -> Result {
       .expected_stderr(Contains(&format!(
         "Argument to `{name}` must be a non-negative finite number"
       )))
+      .run()?;
+
+    Test::new()?
+      .program(&format!("{name}(255)"))
+      .expected_status(255)
+      .run()?;
+
+    Test::new()?
+      .program(&format!("{name}(256)"))
+      .expected_status(1)
+      .expected_stderr(Contains(&format!(
+        "Argument to `{name}` must be at most 255"
+      )))
       .run()
   }
 
