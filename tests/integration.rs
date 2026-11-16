@@ -697,6 +697,33 @@ fn ceiling_function() -> Result {
 }
 
 #[test]
+fn closed_stdout() -> Result {
+  let (reader, writer) = std::io::pipe()?;
+
+  drop(reader);
+
+  let output = Command::new(executable_path(env!("CARGO_PKG_NAME")))
+    .args(["-e", "1"])
+    .env_remove("RUST_BACKTRACE")
+    .env_remove("RUST_LIB_BACKTRACE")
+    .stdout(writer)
+    .output()?;
+
+  assert_eq!(
+    str::from_utf8(&output.stderr)?,
+    if cfg!(windows) {
+      "error: The pipe is being closed. (os error 232)\n"
+    } else {
+      "error: Broken pipe (os error 32)\n"
+    }
+  );
+
+  assert_eq!(output.status.code(), Some(1));
+
+  Ok(())
+}
+
+#[test]
 fn combined_operations() -> Result {
   Test::new()?
     .program("println(2 + 3 * 4 - 5 / 2)")
