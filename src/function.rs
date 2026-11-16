@@ -1,5 +1,7 @@
 use super::*;
 
+const RED_ZONE: usize = 256 * 1024;
+
 #[derive(Clone, Debug)]
 pub enum Function {
   Builtin(BuiltinFunction),
@@ -13,6 +15,11 @@ impl Function {
     environment: &Environment,
     span: &Span,
   ) -> Result<Value> {
+    if stacker::remaining_stack().is_some_and(|remaining| remaining < RED_ZONE)
+    {
+      return Err(Error::new(span, "Maximum recursion depth exceeded"));
+    }
+
     match self {
       Self::Builtin(function) => function.call(arguments, environment, span),
       Self::UserDefined(function) => UserFunction::call(function, arguments),

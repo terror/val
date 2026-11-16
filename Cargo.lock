@@ -1135,6 +1135,7 @@ dependencies = [
  "pretty_assertions",
  "rug",
  "rustyline",
+ "stacker",
  "tempfile",
  "thiserror",
  "unindent",

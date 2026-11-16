@@ -3232,6 +3232,31 @@ fn square_root() -> Result {
 }
 
 #[test]
+fn stack_overflow() -> Result {
+  #[track_caller]
+  fn case(stack_size: &str, program: &str) -> Result {
+    Test::new()?
+      .argument("--stack-size")
+      .argument(stack_size)
+      .program(program)
+      .expected_status(1)
+      .expected_stderr(Contains("Maximum recursion depth exceeded"))
+      .run()
+  }
+
+  case("1", "fn f(n) { return f(n + 1) }\nf(0)")?;
+  case("128", "fn f(n) { return f(n + 1) }\nf(0)")?;
+  case(
+    "1",
+    "fn f(n) { return [1 + (1 + (1 + (1 + f(n + 1))))] }\nf(0)",
+  )?;
+  case(
+    "1",
+    "fn f(n) { if (true) { while (true) { return f(n) } } }\nf(0)",
+  )
+}
+
+#[test]
 fn stack_size_overflow() -> Result {
   Test::new()?
     .argument("--stack-size")
