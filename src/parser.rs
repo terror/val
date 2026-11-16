@@ -31,7 +31,9 @@ pub fn parse(input: impl Into<Source>) -> Result<Spanned<Program>, Vec<Error>> {
 
 fn program_parser<'a>()
 -> impl Parser<'a, ParserInput<'a>, Spanned<Program>, ParserError<'a>> + Clone {
-  padding_parser()
+  just('\u{feff}')
+    .or_not()
+    .ignore_then(padding_parser())
     .ignore_then(statement_list_parser(statement_parser()))
     .then_ignore(padding_parser())
     .map(|statements| Program { statements })
@@ -496,6 +498,14 @@ mod tests {
   #[test]
   fn break_statement() {
     Test::new().program("break").ast("statements(break)").run();
+  }
+
+  #[test]
+  fn byte_order_mark() {
+    Test::new()
+      .program("\u{feff}1")
+      .ast("statements(expression(number(1)))")
+      .run();
   }
 
   #[test]
