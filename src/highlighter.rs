@@ -39,9 +39,7 @@ impl<'src> Highlighter<'src> {
   fn collect_highlight_spans(&self) -> Vec<HighlightSpan> {
     let source = Source::from(self.content);
 
-    let Ok(tokens) = lex(&source) else {
-      return Vec::new();
-    };
+    let (tokens, _) = lex(&source);
 
     tokens
       .iter()
@@ -60,6 +58,7 @@ impl<'src> Highlighter<'src> {
               HighlightKind::Identifier
             }
           }
+          Token::Invalid(_) => HighlightKind::Error,
           Token::Keyword("false" | "true") => HighlightKind::Boolean,
           Token::Keyword(_) => HighlightKind::Keyword,
           Token::Number(_) => HighlightKind::Number,
