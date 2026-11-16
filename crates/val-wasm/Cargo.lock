@@ -445,7 +445,7 @@ checksum = "b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254"
 
 [[package]]
 name = "val"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "ariadne",
  "chumsky",
@@ -453,6 +453,7 @@ dependencies = [
  "gmp-mpfr-sys",
  "inventory",
  "rug",
+ "stacker",
  "thiserror",
 ]
 
