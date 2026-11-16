@@ -7,7 +7,6 @@ use {
   decimal::Decimal,
   frame::Frame,
   gc::{Finalize, GcCell, Trace},
-  lexer::{Token, lex},
   rug::{
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
@@ -38,7 +37,10 @@ pub use crate::{
   source::Source, span::Span, user_function::UserFunction, value::Value,
 };
 
-pub use gc::Gc;
+pub use {
+  gc::Gc,
+  lexer::{Token, lex},
+};
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 pub type Spanned<T> = (T, Span);

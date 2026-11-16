@@ -9,7 +9,7 @@ pub(crate) const KEYWORDS: [&str; 13] = [
 ];
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Token<'a> {
+pub enum Token<'a> {
   Comment(&'a str),
   Identifier(&'a str),
   Keyword(&'a str),
@@ -19,7 +19,8 @@ pub(crate) enum Token<'a> {
 }
 
 impl<'a> Token<'a> {
-  pub(crate) fn text(&self) -> &'a str {
+  #[must_use]
+  pub fn text(&self) -> &'a str {
     match self {
       Self::Comment(text)
       | Self::Identifier(text)
@@ -37,9 +38,10 @@ impl Display for Token<'_> {
   }
 }
 
-pub(crate) fn lex(
-  source: &Source,
-) -> Result<Vec<(Token<'_>, Span)>, Vec<Error>> {
+/// # Errors
+///
+/// Returns lexer errors when input cannot be split into tokens.
+pub fn lex(source: &Source) -> Result<Vec<(Token<'_>, Span)>, Vec<Error>> {
   lexer()
     .parse(source.text().with_context::<Span>(source.clone()))
     .into_result()
