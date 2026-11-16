@@ -51,8 +51,8 @@ pub(crate) struct Arguments {
   #[clap(
     short,
     long,
-    value_parser = clap::value_parser!(RoundingMode),
-    default_value = "to-even",
+    value_enum,
+    default_value_t = RoundingMode::ToEven,
     help = "Rounding mode to use for calculations",
   )]
   rounding_mode: RoundingMode,
@@ -332,5 +332,31 @@ mod tests {
 
       assert!(result.is_err());
     }
+  }
+
+  #[test]
+  fn rounding_mode() {
+    #[track_caller]
+    fn case(argument: &str, expected: Round) {
+      let arguments =
+        Arguments::parse_from(["program", "--rounding-mode", argument]);
+
+      assert_eq!(Round::from(arguments.rounding_mode), expected);
+    }
+
+    case("down", Round::Down);
+    case("from-zero", Round::AwayZero);
+    case("to-even", Round::Nearest);
+    case("to-zero", Round::Zero);
+    case("up", Round::Up);
+  }
+
+  #[test]
+  fn rounding_mode_rejects_aliases() {
+    let error =
+      Arguments::try_parse_from(["program", "--rounding-mode", "bankers"])
+        .unwrap_err();
+
+    assert_eq!(error.kind(), clap::error::ErrorKind::InvalidValue);
   }
 }

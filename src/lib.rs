@@ -21,7 +21,6 @@ use {
     iter::once,
     num::NonZeroUsize,
     ops::Range,
-    str::FromStr,
     sync::Arc,
   },
 };
@@ -32,8 +31,7 @@ pub use crate::{
   builtin_function_payload::BuiltinFunctionPayload, config::Config,
   environment::Environment, error::Error, evaluation::Evaluation,
   evaluator::Evaluator, function::Function, number::Number, parser::parse,
-  rounding_mode::RoundingMode, source::Source, span::Span,
-  user_function::UserFunction, value::Value,
+  source::Source, span::Span, user_function::UserFunction, value::Value,
 };
 
 pub use gc::{Gc, force_collect};
@@ -58,7 +56,6 @@ mod frame;
 mod function;
 mod number;
 mod parser;
-mod rounding_mode;
 mod source;
 mod span;
 mod user_function;
