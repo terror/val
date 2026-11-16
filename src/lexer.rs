@@ -9,9 +9,10 @@ pub(crate) const KEYWORDS: [&str; 13] = [
 ];
 
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum Token<'a> {
+pub enum Token<'a> {
   Comment(&'a str),
   Identifier(&'a str),
+  Invalid(&'a str),
   Keyword(&'a str),
   Number(&'a str),
   String(&'a str),
@@ -19,10 +20,12 @@ pub(crate) enum Token<'a> {
 }
 
 impl<'a> Token<'a> {
-  pub(crate) fn text(&self) -> &'a str {
+  #[must_use]
+  pub fn text(&self) -> &'a str {
     match self {
       Self::Comment(text)
       | Self::Identifier(text)
+      | Self::Invalid(text)
       | Self::Keyword(text)
       | Self::Number(text)
       | Self::String(text)
@@ -37,18 +40,19 @@ impl Display for Token<'_> {
   }
 }
 
-pub(crate) fn lex(
-  source: &Source,
-) -> Result<Vec<(Token<'_>, Span)>, Vec<Error>> {
-  lexer()
+#[must_use]
+pub fn lex(source: &Source) -> (Vec<(Token<'_>, Span)>, Vec<Error>) {
+  let (tokens, errors) = lexer()
     .parse(source.text().with_context::<Span>(source.clone()))
-    .into_result()
-    .map_err(|errors| {
-      errors
-        .into_iter()
-        .map(|error| Error::new(error.span().clone(), error.to_string()))
-        .collect()
-    })
+    .into_output_errors();
+
+  (
+    tokens.unwrap_or_default(),
+    errors
+      .into_iter()
+      .map(|error| Error::new(error.span().clone(), error.to_string()))
+      .collect(),
+  )
 }
 
 fn lexer<'a>()
@@ -109,11 +113,14 @@ fn lexer<'a>()
         && !text::Char::is_ident_start(character)
         && !"\"'()[]{},;+-*/%^<>=!".contains(*character)
     })
-    .try_map(|character, span| {
-      Err(Rich::custom(
-        span,
+    .to_slice()
+    .validate(|character: &str, extra, emitter| {
+      emitter.emit(Rich::custom(
+        extra.span(),
         format!("unexpected character `{character}`"),
-      ))
+      ));
+
+      Token::Invalid(character)
     });
 
   let token = choice((
@@ -164,10 +171,7 @@ mod tests {
     fn case(text: &str, range: Range<usize>, message: &str) {
       let source = Source::from(text);
 
-      assert_eq!(
-        lex(&source).unwrap_err(),
-        [Error::new(source.span(range), message)],
-      );
+      assert_eq!(lex(&source).1, [Error::new(source.span(range), message)]);
     }
 
     case("1foo", 0..4, "invalid number `1foo`");
@@ -178,12 +182,34 @@ mod tests {
   }
 
   #[test]
+  fn invalid_characters_are_tokens() {
+    let source = Source::from("foo @ 1");
+
+    let (tokens, _) = lex(&source);
+
+    assert_eq!(
+      tokens
+        .into_iter()
+        .map(|(token, _)| token)
+        .collect::<Vec<_>>(),
+      [
+        Token::Identifier("foo"),
+        Token::Invalid("@"),
+        Token::Number("1"),
+      ],
+    );
+  }
+
+  #[test]
   fn tokens() {
     let source = Source::from(" foo(1.5, 'bar') >= // baz\nwhile");
 
+    let (tokens, errors) = lex(&source);
+
+    assert_eq!(errors, []);
+
     assert_eq!(
-      lex(&source)
-        .unwrap()
+      tokens
         .into_iter()
         .map(|(token, span)| (token, span.range()))
         .collect::<Vec<_>>(),

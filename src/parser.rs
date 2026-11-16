@@ -14,7 +14,13 @@ type ParserInput<'a> =
 pub fn parse(input: impl Into<Source>) -> Result<Spanned<Program>, Vec<Error>> {
   let source = input.into();
 
-  let tokens = lex(&source)?
+  let (tokens, errors) = lex(&source);
+
+  if !errors.is_empty() {
+    return Err(errors);
+  }
+
+  let tokens = tokens
     .into_iter()
     .filter(|(token, _)| !matches!(token, Token::Comment(_)))
     .collect::<Vec<_>>();

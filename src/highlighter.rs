@@ -37,49 +37,38 @@ impl<'src> Highlighter<'src> {
   }
 
   fn collect_highlight_spans(&self) -> Vec<HighlightSpan> {
-    let mut spans = Vec::new();
-    let mut cursor = 0;
+    let source = Source::from(self.content);
 
-    while cursor < self.content.len() {
-      let Some(character) = self.content[cursor..].chars().next() else {
-        break;
-      };
+    let (tokens, _) = lex(&source);
 
-      if character.is_whitespace() {
-        cursor += character.len_utf8();
-      } else if let Some(end) = self.scan_comment(cursor) {
-        spans.push(HighlightSpan::new(cursor, end, HighlightKind::Comment));
+    tokens
+      .iter()
+      .enumerate()
+      .map(|(index, (token, span))| {
+        let kind = match token {
+          Token::Comment(_) => HighlightKind::Comment,
+          Token::Identifier(_) => {
+            let next = tokens[index + 1..]
+              .iter()
+              .find(|(token, _)| !matches!(token, Token::Comment(_)));
 
-        cursor = end;
-      } else if character == '_' || character.is_alphabetic() {
-        let end = self.scan_identifier(cursor);
-        let kind = self.identifier_kind(cursor, end);
+            if matches!(next, Some((Token::Symbol("("), _))) {
+              HighlightKind::Function
+            } else {
+              HighlightKind::Identifier
+            }
+          }
+          Token::Invalid(_) => HighlightKind::Error,
+          Token::Keyword("false" | "true") => HighlightKind::Boolean,
+          Token::Keyword(_) => HighlightKind::Keyword,
+          Token::Number(_) => HighlightKind::Number,
+          Token::String(_) => HighlightKind::String,
+          Token::Symbol(_) => HighlightKind::Operator,
+        };
 
-        spans.push(HighlightSpan::new(cursor, end, kind));
-
-        cursor = end;
-      } else if character.is_ascii_digit() {
-        let end = self.scan_number(cursor);
-
-        spans.push(HighlightSpan::new(cursor, end, HighlightKind::Number));
-
-        cursor = end;
-      } else if character == '\'' || character == '"' {
-        let end = self.scan_string(cursor, character);
-
-        spans.push(HighlightSpan::new(cursor, end, HighlightKind::String));
-
-        cursor = end;
-      } else if let Some(end) = self.scan_operator(cursor) {
-        spans.push(HighlightSpan::new(cursor, end, HighlightKind::Operator));
-
-        cursor = end;
-      } else {
-        cursor += character.len_utf8();
-      }
-    }
-
-    spans
+        HighlightSpan::new(span.start, span.end, kind)
+      })
+      .collect()
   }
 
   pub(crate) fn highlight(&self) -> Cow<'src, str> {
@@ -98,159 +87,8 @@ impl<'src> Highlighter<'src> {
     }
   }
 
-  fn identifier_kind(&self, start: usize, end: usize) -> HighlightKind {
-    let token = &self.content[start..end];
-
-    match token {
-      "false" | "true" => HighlightKind::Boolean,
-      "break" | "continue" | "else" | "fn" | "for" | "if" | "in" | "loop"
-      | "null" | "return" | "while" => HighlightKind::Keyword,
-      _ if self.next_non_padding_char(end) == Some('(') => {
-        HighlightKind::Function
-      }
-      _ => HighlightKind::Identifier,
-    }
-  }
-
   pub(crate) fn new(content: &'src str) -> Self {
     Self { content }
-  }
-
-  fn next_non_padding_char(&self, start: usize) -> Option<char> {
-    let mut cursor = start;
-
-    loop {
-      while let Some(character) = self.content[cursor..].chars().next() {
-        if character.is_whitespace() {
-          cursor += character.len_utf8();
-        } else {
-          break;
-        }
-      }
-
-      if let Some(end) = self.scan_comment(cursor) {
-        cursor = end;
-      } else {
-        break;
-      }
-    }
-
-    self.content[cursor..].chars().next()
-  }
-
-  fn scan_comment(&self, start: usize) -> Option<usize> {
-    if !self.content[start..].starts_with("//") {
-      return None;
-    }
-
-    let mut end = start;
-
-    while let Some(character) = self.content[end..].chars().next() {
-      if character == '\n' {
-        break;
-      }
-
-      end += character.len_utf8();
-    }
-
-    Some(end)
-  }
-
-  fn scan_identifier(&self, start: usize) -> usize {
-    let mut end = start;
-
-    while let Some(character) = self.content[end..].chars().next() {
-      if character == '_' || character.is_alphanumeric() {
-        end += character.len_utf8();
-      } else {
-        break;
-      }
-    }
-
-    end
-  }
-
-  fn scan_number(&self, start: usize) -> usize {
-    let bytes = self.content.as_bytes();
-
-    let mut end = start;
-
-    while end < bytes.len() && bytes[end].is_ascii_digit() {
-      end += 1;
-    }
-
-    if end + 1 < bytes.len() && bytes[end] == b'.' {
-      let mut decimal_end = end + 1;
-
-      while decimal_end < bytes.len() && bytes[decimal_end].is_ascii_digit() {
-        decimal_end += 1;
-      }
-
-      if decimal_end > end + 1 {
-        end = decimal_end;
-      }
-    }
-
-    if matches!(bytes.get(end), Some(b'e' | b'E')) {
-      end += 1;
-
-      if matches!(bytes.get(end), Some(b'+' | b'-')) {
-        end += 1;
-      }
-
-      while end < bytes.len() && bytes[end].is_ascii_digit() {
-        end += 1;
-      }
-    }
-
-    end
-  }
-
-  fn scan_operator(&self, start: usize) -> Option<usize> {
-    for operator in [">=", "<=", "==", "!=", "&&", "||"] {
-      if self.content[start..].starts_with(operator) {
-        return Some(start + operator.len());
-      }
-    }
-
-    let character = self.content[start..].chars().next()?;
-
-    matches!(
-      character,
-      '('
-        | ')'
-        | '['
-        | ']'
-        | '{'
-        | '}'
-        | ','
-        | ';'
-        | '+'
-        | '-'
-        | '*'
-        | '/'
-        | '%'
-        | '^'
-        | '>'
-        | '<'
-        | '='
-        | '!'
-    )
-    .then_some(start + character.len_utf8())
-  }
-
-  fn scan_string(&self, start: usize, quote: char) -> usize {
-    let mut end = start + quote.len_utf8();
-
-    while let Some(character) = self.content[end..].chars().next() {
-      end += character.len_utf8();
-
-      if character == quote {
-        break;
-      }
-    }
-
-    end
   }
 }
 
@@ -313,6 +151,19 @@ mod tests {
         HighlightSpan::new(23, 24, HighlightKind::Number),
         HighlightSpan::new(24, 25, HighlightKind::Operator),
         HighlightSpan::new(26, 27, HighlightKind::Operator),
+      ]
+    );
+  }
+
+  #[test]
+  fn function_call_across_comment() {
+    assert_eq!(
+      Highlighter::new("foo // bar\n()").collect_highlight_spans(),
+      [
+        HighlightSpan::new(0, 3, HighlightKind::Function),
+        HighlightSpan::new(4, 10, HighlightKind::Comment),
+        HighlightSpan::new(11, 12, HighlightKind::Operator),
+        HighlightSpan::new(12, 13, HighlightKind::Operator),
       ]
     );
   }
