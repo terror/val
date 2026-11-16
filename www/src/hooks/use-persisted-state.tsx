@@ -1,5 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 
+export function restorePersistedState<T extends object>(
+  savedValue: string,
+  initialValue: T
+): T {
+  const parsed: unknown = JSON.parse(savedValue);
+
+  if (typeof parsed !== 'object' || parsed === null) {
+    return initialValue;
+  }
+
+  return {
+    ...initialValue,
+    ...Object.fromEntries(
+      Object.entries(parsed).filter(
+        ([name, value]) =>
+          name in initialValue &&
+          typeof value === typeof initialValue[name as keyof T]
+      )
+    ),
+  };
+}
+
 export function usePersistedState<T extends object>(
   key: string,
   initialValue: T
@@ -9,7 +31,7 @@ export function usePersistedState<T extends object>(
 
     if (savedValue !== null) {
       try {
-        return JSON.parse(savedValue);
+        return restorePersistedState(savedValue, initialValue);
       } catch (error) {
         console.warn(`Error reading ${key} from localStorage:`, error);
         return initialValue;
