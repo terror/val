@@ -120,7 +120,9 @@ impl Number {
       }
       Self::Exact(number) if number.is_integer() => number.numer().to_string(),
       Self::Exact(number) => {
-        if let Some(decimal) = Decimal::from_rational(number) {
+        if let Some(decimal) = Decimal::from_rational(number)
+          .or_else(|| Decimal::from_rational_rounded(number, config.digits))
+        {
           decimal.display(config.digits)
         } else {
           Self::Approx(Float::with_val(config.precision(), number))

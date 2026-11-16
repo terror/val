@@ -94,6 +94,61 @@ impl Decimal {
     })
   }
 
+  pub(crate) fn from_rational_rounded(
+    number: &Rational,
+    significant_digits: NonZeroUsize,
+  ) -> Option<Self> {
+    fn scale(
+      numerator: &Integer,
+      denominator: &Integer,
+      exponent: i64,
+    ) -> Option<(Integer, Integer)> {
+      let power =
+        Integer::u_pow_u(10, u32::try_from(exponent.unsigned_abs()).ok()?)
+          .complete();
+
+      Some(if exponent.is_negative() {
+        (numerator.clone(), power * denominator)
+      } else {
+        (power * numerator, denominator.clone())
+      })
+    }
+
+    let length = |integer: &Integer| i64::try_from(integer.to_string().len());
+
+    let numerator = number.numer().clone().abs();
+
+    let denominator = number.denom();
+
+    let significant_digits = i64::try_from(significant_digits.get()).ok()?;
+
+    let magnitude = length(&numerator).ok()? - length(denominator).ok()?;
+
+    let (lhs, rhs) = scale(&numerator, denominator, -magnitude)?;
+
+    let point = if lhs >= rhs { magnitude + 1 } else { magnitude };
+
+    let (lhs, rhs) =
+      scale(&numerator, denominator, significant_digits - point)?;
+
+    let rounded = (lhs * 2_u32 + &rhs) / (rhs * 2_u32);
+
+    let mut digits = rounded.to_string();
+
+    let point = if length(&rounded).ok()? > significant_digits {
+      digits.pop();
+      point + 1
+    } else {
+      point
+    };
+
+    Some(Self {
+      digits,
+      negative: number.is_negative(),
+      point,
+    })
+  }
+
   fn is_zero(&self) -> bool {
     self.digits.bytes().all(|digit| digit == b'0')
   }
@@ -306,6 +361,38 @@ mod tests {
       .map(|decimal| decimal.display(digits(16)));
 
     assert_eq!(actual.as_deref(), None);
+  }
+
+  #[test]
+  fn from_rational_rounded() {
+    #[track_caller]
+    fn case(
+      numerator: i64,
+      denominator: i64,
+      significant_digits: usize,
+      expected: &str,
+    ) {
+      assert_eq!(
+        Decimal::from_rational_rounded(
+          &Rational::from((numerator, denominator)),
+          digits(significant_digits),
+        )
+        .unwrap()
+        .display(digits(significant_digits)),
+        expected,
+      );
+    }
+
+    case(1, 3, 16, "0.3333333333333333");
+    case(2, 3, 16, "0.6666666666666667");
+    case(-1, 3, 16, "-0.3333333333333333");
+    case(200, 3, 3, "66.7");
+    case(1, 30_000, 3, "3.33e-05");
+    case(10_000_000_000_000_000, 3, 3, "3.33e+15");
+    case(2999, 3000, 3, "1");
+    case(1, 7, 1, "0.1");
+    case(6, 7, 1, "0.9");
+    case(69, 7, 1, "1e+01");
   }
 
   #[test]

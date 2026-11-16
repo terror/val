@@ -1082,6 +1082,20 @@ fn exact_rational_arithmetic() -> Result {
   Test::new()?
     .program("println((1 / 3) * 3)")
     .expected_stdout(Exact("1\n"))
+    .run()?;
+
+  Test::new()?
+    .argument("-p")
+    .argument("8")
+    .program("println(1 / 3)")
+    .expected_stdout(Exact("0.3333333333333333\n"))
+    .run()?;
+
+  Test::new()?
+    .argument("-d")
+    .argument("400")
+    .program("println(1 / 3)")
+    .expected_stdout(Exact(&format!("0.{}\n", "3".repeat(400))))
     .run()
 }
 
