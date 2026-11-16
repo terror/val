@@ -84,20 +84,13 @@ impl Arguments {
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match Self::evaluate(&mut evaluator, source) {
-      Ok(value) => {
-        if !matches!(value, Value::Null) {
-          println!("{}", value.display(Into::<Config>::into(self)));
-        }
+    let value = Self::evaluate_or_exit(&mut evaluator, source)?;
 
-        Ok(())
-      }
-      Err(errors) => {
-        Self::report(&errors, io::stderr())?;
-
-        process::exit(1);
-      }
+    if !matches!(value, Value::Null) {
+      println!("{}", value.display(Into::<Config>::into(self)));
     }
+
+    Ok(())
   }
 
   fn evaluate_file(&self, filename: &PathBuf) -> Result {
@@ -108,8 +101,17 @@ impl Arguments {
     let mut evaluator =
       Evaluator::from(Environment::new(Into::<Config>::into(self)));
 
-    match Self::evaluate(&mut evaluator, source) {
-      Ok(_) => Ok(()),
+    Self::evaluate_or_exit(&mut evaluator, source)?;
+
+    Ok(())
+  }
+
+  fn evaluate_or_exit(
+    evaluator: &mut Evaluator,
+    source: Source,
+  ) -> Result<Value> {
+    match Self::evaluate(evaluator, source) {
+      Ok(value) => Ok(value),
       Err(errors) => {
         Self::report(&errors, io::stderr())?;
 
@@ -145,14 +147,7 @@ impl Arguments {
 
         let source = Source::new(filename.to_string_lossy(), content);
 
-        match Self::evaluate(&mut evaluator, source) {
-          Ok(_) => {}
-          Err(errors) => {
-            Self::report(&errors, io::stderr())?;
-
-            process::exit(1);
-          }
-        }
+        Self::evaluate_or_exit(&mut evaluator, source)?;
       }
     }
 
