@@ -1344,6 +1344,23 @@ fn function_arity_is_checked_before_arguments() -> Result {
 }
 
 #[test]
+fn function_assignment_shadows_builtins() -> Result {
+  Test::new()?
+    .program(indoc! {
+      "
+      fn foo() {
+        sum = 0
+        sum
+      }
+      println(foo())
+      println(sum([1, 2]))
+      "
+    })
+    .expected_stdout(Exact("0\n3\n"))
+    .run()
+}
+
+#[test]
 fn function_assignment_updates_nearest_binding() -> Result {
   Test::new()?
     .program(indoc! {
