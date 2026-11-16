@@ -118,6 +118,28 @@ fn padding_parser<'a>()
   })
 }
 
+fn parameters_parser<'a>()
+-> impl Parser<'a, ParserInput<'a>, Vec<String>, ParserError<'a>> + Clone {
+  comma_separated_parser(
+    identifier_parser().map_with(|name, extra| (name, extra.span())),
+  )
+  .delimited_by(padded_parser(just('(')), padded_parser(just(')')))
+  .validate(|parameters, _, emitter| {
+    let mut names = Vec::new();
+
+    for (name, span) in parameters {
+      if names.contains(&name) {
+        emitter
+          .emit(Rich::custom(span, format!("Duplicate parameter `{name}`")));
+      } else {
+        names.push(name);
+      }
+    }
+
+    names
+  })
+}
+
 fn statement_list_parser<'a, P>(
   statement: P,
 ) -> impl Parser<'a, ParserInput<'a>, Vec<Spanned<Statement>>, ParserError<'a>> + Clone
@@ -163,10 +185,7 @@ fn statement_parser<'a>()
 
     let function_statement = keyword_parser("fn")
       .ignore_then(identifier_parser())
-      .then(
-        comma_separated_parser(identifier_parser())
-          .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
-      )
+      .then(parameters_parser())
       .then(statement_block.clone())
       .map(|((name, params), body)| Statement::Function(name, params, body));
 
@@ -295,10 +314,7 @@ where
       .map_with(|arguments, error| (arguments, error.span()));
 
     let function = keyword_parser("fn")
-      .ignore_then(
-        comma_separated_parser(identifier_parser())
-          .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
-      )
+      .ignore_then(parameters_parser())
       .then(statement_block.clone())
       .map(|(params, body)| Expression::Function(params, body))
       .map_with(|ast, error| (ast, error.span()));
@@ -516,6 +532,19 @@ mod tests {
     Test::new()
       .program("continue")
       .ast("statements(continue)")
+      .run();
+  }
+
+  #[test]
+  fn duplicate_parameters() {
+    Test::new()
+      .program("fn f(a, a) {}")
+      .errors(vec![(8..9, "Duplicate parameter `a`")])
+      .run();
+
+    Test::new()
+      .program("fn(a, a) {}")
+      .errors(vec![(6..7, "Duplicate parameter `a`")])
       .run();
   }
 
