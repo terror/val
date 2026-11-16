@@ -48,8 +48,8 @@ test.each([
     [
       {
         kind: 'Parser',
-        message: "found end of input expected something else, or '\"'",
-        range: { start: 4, end: 4 },
+        message: 'unterminated string',
+        range: { start: 0, end: 4 },
       },
     ],
   ],

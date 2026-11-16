@@ -1,16 +1,12 @@
 use {
   super::*,
-  chumsky::input::{Input, MapExtra, WithContext},
+  chumsky::input::{Input, MapExtra, MappedInput},
   chumsky::pratt::{infix, left, postfix, prefix, right},
 };
 
-type ParserError<'a> = extra::Err<Rich<'a, char, Span>>;
-type ParserInput<'a> = WithContext<Span, &'a str>;
-
-const RESERVED_WORDS: [&str; 13] = [
-  "break", "continue", "else", "false", "fn", "for", "if", "in", "loop",
-  "null", "return", "true", "while",
-];
+type ParserError<'a> = extra::Err<Rich<'a, Token<'a>, Span>>;
+type ParserInput<'a> =
+  MappedInput<'a, Token<'a>, Span, &'a [(Token<'a>, Span)]>;
 
 /// # Errors
 ///
@@ -18,9 +14,17 @@ const RESERVED_WORDS: [&str; 13] = [
 pub fn parse(input: impl Into<Source>) -> Result<Spanned<Program>, Vec<Error>> {
   let source = input.into();
 
+  let tokens = lex(&source)?
+    .into_iter()
+    .filter(|(token, _)| !matches!(token, Token::Comment(_)))
+    .collect::<Vec<_>>();
+
+  let end = source.text().len();
+
   program_parser()
-    .parse(source.text().with_context::<Span>(source.clone()))
+    .parse(tokens.split_token_span(source.span(end..end)))
     .into_result()
+    .map(|program| (program, source.span(0..end)))
     .map_err(|errors| {
       errors
         .into_iter()
@@ -29,15 +33,17 @@ pub fn parse(input: impl Into<Source>) -> Result<Spanned<Program>, Vec<Error>> {
     })
 }
 
+fn operator_parser<'a>(
+  symbol: &'static str,
+  operator: BinaryOp,
+) -> impl Parser<'a, ParserInput<'a>, BinaryOp, ParserError<'a>> + Clone {
+  symbol_parser(symbol).to(operator).labelled("operator")
+}
+
 fn program_parser<'a>()
--> impl Parser<'a, ParserInput<'a>, Spanned<Program>, ParserError<'a>> + Clone {
-  just('\u{feff}')
-    .or_not()
-    .ignore_then(padding_parser())
-    .ignore_then(statement_list_parser(statement_parser()))
-    .then_ignore(padding_parser())
+-> impl Parser<'a, ParserInput<'a>, Program, ParserError<'a>> + Clone {
+  statement_list_parser(statement_parser())
     .map(|statements| Program { statements })
-    .map_with(|ast, error| (ast, error.span()))
 }
 
 fn comma_separated_parser<'a, P, T>(
@@ -47,7 +53,7 @@ where
   P: Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone,
 {
   parser
-    .separated_by(padded_parser(just(',')))
+    .separated_by(symbol_parser(","))
     .allow_trailing()
     .collect::<Vec<_>>()
 }
@@ -60,64 +66,30 @@ where
   P: Parser<'a, ParserInput<'a>, Spanned<Expression>, ParserError<'a>> + Clone,
 {
   expression
-    .delimited_by(padded_parser(just('[')), padded_parser(just(']')))
-    .padded_by(padding_parser())
+    .delimited_by(symbol_parser("["), symbol_parser("]"))
     .map_with(|expression, error| (expression, error.span()))
 }
 
 fn identifier_parser<'a>()
 -> impl Parser<'a, ParserInput<'a>, String, ParserError<'a>> + Clone {
-  padded_parser(text::ident().try_map(|identifier, span| {
-    if RESERVED_WORDS.contains(&identifier) {
-      Err(Rich::custom(
-        span,
-        format!("`{identifier}` is a reserved word"),
-      ))
-    } else {
-      Ok(identifier.to_owned())
-    }
-  }))
+  select! { Token::Identifier(identifier) => identifier.to_owned() }
+    .labelled("identifier")
+    .or(
+      select! { Token::Keyword(keyword) => keyword }
+        .labelled("identifier")
+        .try_map(|keyword, span| {
+          Err(Rich::custom(
+            span,
+            format!("`{keyword}` is a reserved word"),
+          ))
+        }),
+    )
 }
 
 fn keyword_parser<'a>(
   keyword: &'static str,
 ) -> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
-  padded_parser(text::keyword(keyword)).ignored()
-}
-
-fn padded_parser<'a, P, T>(
-  parser: P,
-) -> impl Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone
-where
-  P: Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone,
-{
-  parser.padded_by(padding_parser())
-}
-
-fn padding_parser<'a>()
--> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
-  custom(|input| {
-    loop {
-      let checkpoint = input.save();
-
-      match input.next() {
-        Some(character) if character.is_whitespace() => {}
-        Some('/') if input.peek() == Some('/') => {
-          input.next();
-
-          while input.peek().is_some_and(|character| character != '\n') {
-            input.next();
-          }
-        }
-        _ => {
-          input.rewind(checkpoint);
-          break;
-        }
-      }
-    }
-
-    Ok(())
-  })
+  just(Token::Keyword(keyword)).ignored()
 }
 
 fn statement_list_parser<'a, P>(
@@ -126,7 +98,7 @@ fn statement_list_parser<'a, P>(
 where
   P: Parser<'a, ParserInput<'a>, Spanned<Statement>, ParserError<'a>> + Clone,
 {
-  let separator = padded_parser(just(';')).repeated();
+  let separator = symbol_parser(";").repeated();
 
   separator.clone().ignore_then(
     statement
@@ -141,7 +113,7 @@ fn statement_parser<'a>()
 {
   recursive(|statement| {
     let statement_block = statement_list_parser(statement.clone())
-      .delimited_by(padded_parser(just('{')), padded_parser(just('}')));
+      .delimited_by(symbol_parser("{"), symbol_parser("}"));
 
     let expression = expression_parser(statement_block.clone());
 
@@ -163,7 +135,7 @@ fn statement_parser<'a>()
     );
 
     let assignment_statement = assignment_target
-      .then_ignore(padded_parser(just('=')))
+      .then_ignore(symbol_parser("="))
       .then(expression.clone())
       .map(|(lhs, rhs)| Statement::Assignment(lhs, rhs));
 
@@ -171,7 +143,7 @@ fn statement_parser<'a>()
       .ignore_then(identifier_parser())
       .then(
         comma_separated_parser(identifier_parser())
-          .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
+          .delimited_by(symbol_parser("("), symbol_parser(")")),
       )
       .then(statement_block.clone())
       .map(|((name, params), body)| Statement::Function(name, params, body));
@@ -180,7 +152,7 @@ fn statement_parser<'a>()
 
     let condition_parser = expression
       .clone()
-      .delimited_by(padded_parser(just('(')), padded_parser(just(')')));
+      .delimited_by(symbol_parser("("), symbol_parser(")"));
 
     let if_statement = keyword_parser("if")
       .ignore_then(condition_parser.clone())
@@ -235,9 +207,14 @@ fn statement_parser<'a>()
       expression_statement,
     ))
     .map_with(|ast, error| (ast, error.span()))
-    .padded_by(padding_parser())
     .boxed()
   })
+}
+
+fn symbol_parser<'a>(
+  symbol: &'static str,
+) -> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
+  just(Token::Symbol(symbol)).ignored()
 }
 
 fn expression_parser<'a, P>(
@@ -251,17 +228,9 @@ where
   let identifier = identifier_parser();
 
   recursive(|expression| {
-    let number = text::int(10)
-      .then(just('.').then(text::digits(10)).or_not())
-      .then(
-        one_of("eE")
-          .then(one_of("+-").or_not())
-          .then(text::digits(10))
-          .or_not(),
-      )
-      .to_slice()
-      .then_ignore(any().filter(text::Char::is_ident_continue).not())
-      .try_map(|number: &str, span| {
+    let number = select! { Token::Number(number) => number }
+      .labelled("number")
+      .try_map(|number, span| {
         Number::try_from(number)
           .map_err(|error| Rich::custom(span, error.to_string()))
       })
@@ -279,31 +248,21 @@ where
       .map(|()| Expression::Null)
       .map_with(|ast, error| (ast, error.span()));
 
-    let double_quoted_string = just('"')
-      .ignore_then(none_of('"').repeated().to_slice())
-      .then_ignore(just('"'))
-      .map(str::to_owned)
-      .map(Expression::String)
-      .map_with(|ast, error| (ast, error.span()));
-
-    let single_quoted_string = just('\'')
-      .ignore_then(none_of('\'').repeated().to_slice())
-      .then_ignore(just('\''))
-      .map(str::to_owned)
-      .map(Expression::String)
-      .map_with(|ast, error| (ast, error.span()));
-
-    let string = double_quoted_string.or(single_quoted_string);
+    let string = select! {
+      Token::String(string) => string[1..string.len() - 1].to_owned(),
+    }
+    .labelled("string")
+    .map(Expression::String)
+    .map_with(|ast, error| (ast, error.span()));
 
     let arguments = comma_separated_parser(expression.clone())
-      .delimited_by(padded_parser(just('(')), padded_parser(just(')')))
-      .padded_by(padding_parser())
+      .delimited_by(symbol_parser("("), symbol_parser(")"))
       .map_with(|arguments, error| (arguments, error.span()));
 
     let function = keyword_parser("fn")
       .ignore_then(
         comma_separated_parser(identifier_parser())
-          .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
+          .delimited_by(symbol_parser("("), symbol_parser(")")),
       )
       .then(statement_block.clone())
       .map(|(params, body)| Expression::Function(params, body))
@@ -314,19 +273,23 @@ where
       .map_with(|ast, error| (ast, error.span()));
 
     let list = comma_separated_parser(expression.clone())
-      .delimited_by(padded_parser(just('[')), padded_parser(just(']')))
+      .delimited_by(symbol_parser("["), symbol_parser("]"))
       .map(Expression::List)
       .map_with(|ast, error| (ast, error.span()));
 
     let atom = number
       .or(boolean)
       .or(null)
-      .or(expression.clone().delimited_by(just('('), just(')')))
+      .or(
+        expression
+          .clone()
+          .delimited_by(symbol_parser("("), symbol_parser(")")),
+      )
       .or(function)
       .or(list)
       .or(identifier)
       .or(string)
-      .padded_by(padding_parser());
+      .labelled("expression");
 
     let binary =
       |lhs: Spanned<Expression>,
@@ -375,56 +338,56 @@ where
           (expression, span)
         },
       ),
-      prefix(7, padded_parser(just('-')).to(UnaryOp::Negate), unary),
-      prefix(7, padded_parser(just('!')).to(UnaryOp::Not), unary),
+      prefix(7, symbol_parser("-").to(UnaryOp::Negate), unary),
+      prefix(7, symbol_parser("!").to(UnaryOp::Not), unary),
       infix(
         right(6),
-        padded_parser(just('^')).to(BinaryOp::Power),
+        operator_parser("^", BinaryOp::Power),
         binary,
       ),
       infix(
         left(5),
         choice((
-          padded_parser(just('%')).to(BinaryOp::Modulo),
-          padded_parser(just('*')).to(BinaryOp::Multiply),
-          padded_parser(just('/')).to(BinaryOp::Divide),
+          operator_parser("%", BinaryOp::Modulo),
+          operator_parser("*", BinaryOp::Multiply),
+          operator_parser("/", BinaryOp::Divide),
         )),
         binary,
       ),
       infix(
         left(4),
         choice((
-          padded_parser(just('+')).to(BinaryOp::Add),
-          padded_parser(just('-')).to(BinaryOp::Subtract),
+          operator_parser("+", BinaryOp::Add),
+          operator_parser("-", BinaryOp::Subtract),
         )),
         binary,
       ),
       infix(
         left(3),
         choice((
-          padded_parser(just(">=")).to(BinaryOp::GreaterThanEqual),
-          padded_parser(just("<=")).to(BinaryOp::LessThanEqual),
-          padded_parser(just(">")).to(BinaryOp::GreaterThan),
-          padded_parser(just("<")).to(BinaryOp::LessThan),
+          operator_parser(">=", BinaryOp::GreaterThanEqual),
+          operator_parser("<=", BinaryOp::LessThanEqual),
+          operator_parser(">", BinaryOp::GreaterThan),
+          operator_parser("<", BinaryOp::LessThan),
         )),
         binary,
       ),
       infix(
         left(2),
         choice((
-          padded_parser(just("==")).to(BinaryOp::Equal),
-          padded_parser(just("!=")).to(BinaryOp::NotEqual),
+          operator_parser("==", BinaryOp::Equal),
+          operator_parser("!=", BinaryOp::NotEqual),
         )),
         binary,
       ),
       infix(
         left(1),
-        padded_parser(just("&&")).to(BinaryOp::LogicalAnd),
+        operator_parser("&&", BinaryOp::LogicalAnd),
         binary,
       ),
       infix(
         left(0),
-        padded_parser(just("||")).to(BinaryOp::LogicalOr),
+        operator_parser("||", BinaryOp::LogicalOr),
         binary,
       ),
     ))
@@ -433,7 +396,7 @@ where
 
 #[cfg(test)]
 mod tests {
-  use {super::*, pretty_assertions::assert_eq};
+  use {super::*, crate::lexer::KEYWORDS, pretty_assertions::assert_eq};
 
   struct Test<'a> {
     ast: &'a str,
@@ -622,10 +585,7 @@ mod tests {
   fn invalid_operator() {
     Test::new()
       .program("2 +* 3")
-      .errors(vec![(
-        3..4,
-        "found '*' expected '-', '!', int, '\"true\"', '\"false\"', '\"null\"', '(', '\"fn\"', '[', identifier, '\"', or '''",
-      )])
+      .errors(vec![(3..4, "found '*' expected '-', '!', or expression")])
       .run();
   }
 
@@ -683,7 +643,7 @@ mod tests {
       .program("(2 + 3")
       .errors(vec![(
         6..6,
-        "found end of input expected any, '.', 'e', 'E', '(', '[', '^', '%', '*', '/', '+', '-', '>', '<', '=', '!', '&', '|', or ')'",
+        "found end of input expected '(', '[', operator, or ')'",
       )])
       .run();
   }
@@ -801,7 +761,7 @@ mod tests {
       );
     }
 
-    for word in RESERVED_WORDS {
+    for word in KEYWORDS {
       case(&format!("fn foo({word}) {{}}"), word, 7);
     }
 
@@ -845,13 +805,19 @@ mod tests {
   }
 
   #[test]
+  fn statement_spans_exclude_trailing_whitespace() {
+    let (program, span) = parse("foo  // bar\n").unwrap();
+
+    assert_eq!(span.range(), 0..12);
+
+    assert_eq!(program.statements[0].1.range(), 0..3);
+  }
+
+  #[test]
   fn unclosed_string() {
     Test::new()
       .program("\"unclosed")
-      .errors(vec![(
-        9..9,
-        "found end of input expected something else, or '\"'",
-      )])
+      .errors(vec![(0..9, "unterminated string")])
       .run();
   }
 
