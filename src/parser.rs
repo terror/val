@@ -57,9 +57,7 @@ fn index_parser<'a, P>(
 where
   P: Parser<'a, ParserInput<'a>, Spanned<Expression>, ParserError<'a>> + Clone,
 {
-  spanned_parser(
-    expression.delimited_by(padded_parser(just('[')), padded_parser(just(']'))),
-  )
+  postfix_parser(expression.delimited_by(just('['), padded_parser(just(']'))))
 }
 
 fn identifier_parser<'a>()
@@ -88,7 +86,9 @@ fn operator_parser<'a, P, T>(
 where
   P: Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone,
 {
-  parser.padded_by(padding_parser())
+  inline_padding_parser()
+    .ignore_then(parser)
+    .then_ignore(padding_parser())
 }
 
 fn padded_parser<'a, P, T>(
@@ -100,14 +100,36 @@ where
   padding_parser().ignore_then(parser)
 }
 
+fn inline_padding_parser<'a>()
+-> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
+  whitespace_parser(false)
+}
+
 fn padding_parser<'a>()
 -> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
-  custom(|input| {
+  whitespace_parser(true)
+}
+
+fn postfix_parser<'a, P, T>(
+  parser: P,
+) -> impl Parser<'a, ParserInput<'a>, Spanned<T>, ParserError<'a>> + Clone
+where
+  P: Parser<'a, ParserInput<'a>, T, ParserError<'a>> + Clone,
+{
+  inline_padding_parser()
+    .ignore_then(parser.map_with(|ast, extra| (ast, extra.span())))
+}
+
+fn whitespace_parser<'a>(
+  newlines: bool,
+) -> impl Parser<'a, ParserInput<'a>, (), ParserError<'a>> + Clone {
+  custom(move |input| {
     loop {
       let checkpoint = input.save();
 
       match input.next() {
-        Some(character) if character.is_whitespace() => {}
+        Some(character)
+          if character.is_whitespace() && (newlines || character != '\n') => {}
         Some('/') if input.peek() == Some('/') => {
           input.next();
 
@@ -221,7 +243,12 @@ fn statement_parser<'a>()
       .map(Statement::Loop);
 
     let return_statement = keyword_parser("return")
-      .ignore_then(expression.clone().or_not())
+      .ignore_then(
+        inline_padding_parser()
+          .ignore_then(none_of('\n').rewind())
+          .ignore_then(expression.clone())
+          .or_not(),
+      )
       .map(Statement::Return);
 
     let break_statement = keyword_parser("break").map(|()| Statement::Break);
@@ -303,9 +330,9 @@ where
 
     let string = double_quoted_string.or(single_quoted_string);
 
-    let arguments = spanned_parser(
+    let arguments = postfix_parser(
       comma_separated_parser(expression.clone())
-        .delimited_by(padded_parser(just('(')), padded_parser(just(')'))),
+        .delimited_by(just('('), padded_parser(just(')'))),
     );
 
     let function = keyword_parser("fn")
@@ -704,6 +731,39 @@ mod tests {
   }
 
   #[test]
+  fn newlines_end_statements() {
+    #[track_caller]
+    fn case(program: &str, ast: &str) {
+      Test::new().program(program).ast(ast).run();
+    }
+
+    case(
+      "a = 5\n-1",
+      "statements(assignment(identifier(a), number(5)), expression(unary_op(-, number(1))))",
+    );
+    case(
+      "a = 5 // foo\n(1)",
+      "statements(assignment(identifier(a), number(5)), expression(number(1)))",
+    );
+    case(
+      "a\n[1]",
+      "statements(expression(identifier(a)), expression(list(number(1))))",
+    );
+    case(
+      "return // foo\nfoo(1)",
+      "statements(return(), expression(function_call(identifier(foo), number(1))))",
+    );
+    case(
+      "return\nx = 1",
+      "statements(return(), assignment(identifier(x), number(1)))",
+    );
+    case(
+      "1 +\n2",
+      "statements(expression(binary_op(+, number(1), number(2))))",
+    );
+  }
+
+  #[test]
   fn nested_if_statements() {
     Test::new()
     .program("if (x > 5) { if (y > 2) { z = 1; } else { z = 2; } } else { z = 3; }")
@@ -918,7 +978,7 @@ mod tests {
       .run();
 
     Test::new()
-      .program("\n5\n*\n2\n")
+      .program("\n5 *\n2\n")
       .ast("statements(expression(binary_op(*, number(5), number(2))))")
       .run();
 
