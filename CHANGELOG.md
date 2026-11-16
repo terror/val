@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.8.0](https://github.com/terror/val/releases/tag/0.8.0) - 2026-11-16
+
+### Added
+
+- Highlight REPL input with lexer ([#254](https://github.com/terror/val/pull/254) by [terror](https://github.com/terror))
+- Allow repeated semicolons ([#257](https://github.com/terror/val/pull/257) by [terror](https://github.com/terror))
+- Highlight playground editor with Val lexer ([#262](https://github.com/terror/val/pull/262) by [terror](https://github.com/terror))
+
+### Fixed
+
+- Remove trigonometric domain checks ([#243](https://github.com/terror/val/pull/243) by [terror](https://github.com/terror))
+- Keep empty fields in `split` ([#251](https://github.com/terror/val/pull/251) by [terror](https://github.com/terror))
+- Limit `exit` codes to 255 ([#252](https://github.com/terror/val/pull/252) by [terror](https://github.com/terror))
+- Don't panic when stdout is closed ([#253](https://github.com/terror/val/pull/253) by [terror](https://github.com/terror))
+- Include path in file read errors ([#256](https://github.com/terror/val/pull/256) by [terror](https://github.com/terror))
+- Skip leading byte-order mark ([#258](https://github.com/terror/val/pull/258) by [terror](https://github.com/terror))
+- Reject duplicate parameters ([#259](https://github.com/terror/val/pull/259) by [terror](https://github.com/terror))
+- Name the indexed value in element assignment errors ([#260](https://github.com/terror/val/pull/260) by [terror](https://github.com/terror))
+- Don't overwrite builtins when assigning in functions ([#261](https://github.com/terror/val/pull/261) by [terror](https://github.com/terror))
+- Take real roots of negative numbers with odd-denominator exponents ([#264](https://github.com/terror/val/pull/264) by [terror](https://github.com/terror))
+- Report stack overflow instead of crashing ([#265](https://github.com/terror/val/pull/265) by [terror](https://github.com/terror))
+- Give playground run key binding highest precedence ([#267](https://github.com/terror/val/pull/267) by [terror](https://github.com/terror))
+- Guard `localStorage` access ([#269](https://github.com/terror/val/pull/269) by [terror](https://github.com/terror))
+
+### Misc
+
+- Use pointer cursor for playground example entries ([#235](https://github.com/terror/val/pull/235) by [terror](https://github.com/terror))
+- Rebuild and test WASM during Vercel deployment ([#236](https://github.com/terror/val/pull/236) by [terror](https://github.com/terror))
+- Bump indoc from 2.0.7 to 2.0.8 ([#237](https://github.com/terror/val/pull/237) by [app/dependabot](https://github.com/app/dependabot))
+- Bump inventory from 0.3.24 to 0.3.25 ([#238](https://github.com/terror/val/pull/238) by [app/dependabot](https://github.com/app/dependabot))
+- Bump rustyline from 18.0.1 to 19.0.0 ([#239](https://github.com/terror/val/pull/239) by [app/dependabot](https://github.com/app/dependabot))
+- Exclude web app from published crate ([#241](https://github.com/terror/val/pull/241) by [terror](https://github.com/terror))
+- Remove WASM gates from CLI ([#242](https://github.com/terror/val/pull/242) by [terror](https://github.com/terror))
+- Move `RoundingMode` into binary as `clap::ValueEnum` ([#244](https://github.com/terror/val/pull/244) by [terror](https://github.com/terror))
+- Remove unused `force_collect` re-export ([#245](https://github.com/terror/val/pull/245) by [terror](https://github.com/terror))
+- Add `Arguments::config` ([#246](https://github.com/terror/val/pull/246) by [terror](https://github.com/terror))
+- Deduplicate report-and-exit in `Arguments` ([#247](https://github.com/terror/val/pull/247) by [terror](https://github.com/terror))
+- Make `load` a plain `Vec` ([#248](https://github.com/terror/val/pull/248) by [terror](https://github.com/terror))
+- Move builtin I/O into `Environment` ([#249](https://github.com/terror/val/pull/249) by [terror](https://github.com/terror))
+- Tokenize source before parsing ([#250](https://github.com/terror/val/pull/250) by [terror](https://github.com/terror))
+- Patch `rug` and `gmp-mpfr-sys` only for WASM builds ([#266](https://github.com/terror/val/pull/266) by [terror](https://github.com/terror))
+- Use uniform shields.io badges in README ([#275](https://github.com/terror/val/pull/275) by [terror](https://github.com/terror))
+
 ## [0.7.0](https://github.com/terror/val/releases/tag/0.7.0) - 2026-10-14
 
 ### Added

@@ -1,12 +1,11 @@
 [package]
 name = "val"
-version = "0.7.0"
+version = "0.8.0"
 edition = "2024"
 authors = ["Liam <liam@scalzulli.com>"]
 description = "An arbitrary precision calculator language"
 license = "CC0-1.0"
 repository = "https://github.com/terror/val"
-homepage = "https://github.com/terror/val"
 categories = ["science", "parser-implementations", "command-line-interface"]
 keywords = ["productivity", "compilers"]
 include = ["/CHANGELOG.md", "/LICENSE", "/README.md", "/benches", "/src", "/tests"]
