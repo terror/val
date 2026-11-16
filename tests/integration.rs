@@ -3280,9 +3280,10 @@ fn string_split() -> Result {
       println(split('hello world', ' '))
       println(split('abc', ''))
       println(split('no-delimiter-here', 'x'))
+      println(split('a,,b,', ','))
       "
     })
-    .expected_stdout(Exact("['a', 'b', 'c']\n['hello', 'world']\n['a', 'b', 'c']\n['no-delimiter-here']\n"))
+    .expected_stdout(Exact("['a', 'b', 'c']\n['hello', 'world']\n['a', 'b', 'c']\n['no-delimiter-here']\n['a', '', 'b', '']\n"))
     .run()
 }
 
