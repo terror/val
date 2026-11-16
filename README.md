@@ -1,11 +1,10 @@
 ## val
 
-[![release](https://img.shields.io/github/release/terror/val.svg?label=release&style=flat&labelColor=282c34&logo=github)](https://github.com/terror/val/releases/latest)
-[![crates.io](https://shields.io/crates/v/val.svg)](https://crates.io/crates/val)
-[![CI](https://github.com/terror/val/actions/workflows/ci.yaml/badge.svg)](https://github.com/terror/val/actions/workflows/ci.yaml)
-[![codecov](https://codecov.io/gh/terror/val/graph/badge.svg)](https://codecov.io/gh/terror/val)
-[![docs.rs](https://img.shields.io/docsrs/val)](https://docs.rs/val)
-[![dependency status](https://deps.rs/repo/github/terror/val/status.svg)](https://deps.rs/repo/github/terror/val)
+[![release](https://img.shields.io/github/release/terror/val.svg?label=release&style=flat&labelColor=1d1d1d&color=424242&logo=github)](https://github.com/terror/val/releases/latest)
+[![crates.io](https://img.shields.io/crates/v/val.svg?style=flat&labelColor=1d1d1d&color=424242&logo=rust)](https://crates.io/crates/val)
+[![build](https://img.shields.io/github/actions/workflow/status/terror/val/ci.yaml?branch=master&style=flat&labelColor=1d1d1d&color=424242&logo=GitHub%20Actions&logoColor=white&label=build)](https://github.com/terror/val/actions/workflows/ci.yaml)
+[![codecov](https://img.shields.io/codecov/c/gh/terror/val?style=flat&labelColor=1d1d1d&color=424242&logo=Codecov&logoColor=white)](https://codecov.io/gh/terror/val)
+[![downloads](https://img.shields.io/github/downloads/terror/val/total.svg?style=flat&labelColor=1d1d1d&color=424242)](https://github.com/terror/val/releases)
 
 **val** (e**val**) is a simple arbitrary precision calculator language built
 on top of [**chumsky**](https://github.com/zesterer/chumsky) and
