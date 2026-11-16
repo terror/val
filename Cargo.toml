@@ -31,12 +31,8 @@ lto = true
 codegen-units = 1
 
 [workspace]
-members = [".", "crates/*"]
+members = [".", "crates/val-changelog", "crates/val-wasm-libc-shim"]
 resolver = "2"
-
-[patch.crates-io]
-gmp-mpfr-sys = { path = "vendor/gmp-mpfr-sys" }
-rug = { path = "vendor/rug" }
 
 [workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
