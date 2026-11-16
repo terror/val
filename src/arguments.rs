@@ -96,7 +96,7 @@ impl Arguments {
     let value = Self::evaluate_or_exit(&mut evaluator, source)?;
 
     if !matches!(value, Value::Null) {
-      println!("{}", value.display(config));
+      writeln!(io::stdout(), "{}", value.display(config))?;
     }
 
     Ok(())
@@ -167,7 +167,7 @@ impl Arguments {
 
       match Self::evaluate(&mut evaluator, source) {
         Ok(value) if !matches!(value, Value::Null) => {
-          println!("{}", value.display(config));
+          writeln!(io::stdout(), "{}", value.display(config))?;
         }
         Ok(_) => {}
         Err(errors) => Self::report(&errors, io::stderr())?,

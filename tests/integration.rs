@@ -695,6 +695,27 @@ fn ceiling_function() -> Result {
 }
 
 #[test]
+fn closed_stdout() -> Result {
+  let (reader, writer) = std::io::pipe()?;
+
+  drop(reader);
+
+  let output = Command::new(executable_path(env!("CARGO_PKG_NAME")))
+    .args(["-e", "1"])
+    .stdout(writer)
+    .output()?;
+
+  assert_eq!(
+    str::from_utf8(&output.stderr)?,
+    "error: Broken pipe (os error 32)\n"
+  );
+
+  assert_eq!(output.status.code(), Some(1));
+
+  Ok(())
+}
+
+#[test]
 fn combined_operations() -> Result {
   Test::new()?
     .program("println(2 + 3 * 4 - 5 / 2)")
