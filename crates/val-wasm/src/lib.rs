@@ -3,6 +3,7 @@ use {
     ast_node::AstNode,
     error::{ErrorKind, ValError},
     execution::Execution,
+    highlight::Highlights,
     output::Output,
     parse_result::ParseResult,
     range::Range,
@@ -17,7 +18,8 @@ use {
   },
   tsify::{Ts, Tsify},
   val::{
-    Config, Environment, Evaluation, Evaluator, Span, Spanned, Value,
+    Config, Environment, Evaluation, Evaluator, Source, Span, Spanned, Token,
+    Value,
     ast::{AssignmentTarget, Expression, Program, Statement},
   },
   wasm_bindgen::prelude::*,
@@ -26,6 +28,7 @@ use {
 mod ast_node;
 mod error;
 mod execution;
+mod highlight;
 mod output;
 mod parse_result;
 mod range;
@@ -40,6 +43,11 @@ fn start() {
 #[wasm_bindgen]
 pub fn execute(source: &str, input: &str) -> Result<Ts<Execution>, JsError> {
   Ok(Execution::run(source, input).into_ts()?)
+}
+
+#[wasm_bindgen]
+pub fn highlight(source: &str) -> Result<Ts<Highlights>, JsError> {
+  Ok(Highlights::new(source).into_ts()?)
 }
 
 #[wasm_bindgen]

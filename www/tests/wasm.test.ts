@@ -1,6 +1,10 @@
+import { getIndentation } from '@codemirror/language';
+import { EditorState } from '@codemirror/state';
 import { expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
-import init, { execute, parse } from 'val-wasm';
+import init, { execute, highlight, parse } from 'val-wasm';
+
+import { indentationExtension } from '../src/lib/extensions/indentation';
 
 const wasm = await init({
   module_or_path: await readFile(
@@ -100,6 +104,28 @@ test('parses through the generated bindings', () => {
       ],
     },
   });
+});
+
+test('highlights tokens with UTF-16 ranges', () => {
+  expect(highlight("'😀' foo(1)")).toEqual([
+    { kind: 'String', range: { start: 0, end: 4 } },
+    { kind: 'Function', range: { start: 5, end: 8 } },
+    { kind: 'Punctuation', range: { start: 8, end: 9 } },
+    { kind: 'Number', range: { start: 9, end: 10 } },
+    { kind: 'Punctuation', range: { start: 10, end: 11 } },
+  ]);
+});
+
+test.each([
+  ['{\n', 2],
+  ['{\n}', 0],
+  ['[(\n', 4],
+  ["'{'\n", 0],
+  ['// {\n', 0],
+])('indents after %j by %i', (doc, indentation) => {
+  const state = EditorState.create({ doc, extensions: indentationExtension });
+
+  expect(getIndentation(state, doc.indexOf('\n') + 1)).toBe(indentation);
 });
 
 test.each([0, 1, 16, 17])('allocates and frees %i aligned bytes', (size) => {

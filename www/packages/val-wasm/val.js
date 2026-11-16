@@ -121,6 +121,20 @@ export function execute(source, input) {
 
 /**
  * @param {string} source
+ * @returns {Highlights}
+ */
+export function highlight(source) {
+    const ptr0 = passStringToWasm0(source, wasm.__wbindgen_malloc_command_export, wasm.__wbindgen_realloc_command_export);
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.highlight(ptr0, len0);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {string} source
  * @returns {ParseResult}
  */
 export function parse(source) {
