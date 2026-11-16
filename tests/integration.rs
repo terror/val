@@ -3006,6 +3006,11 @@ fn power() -> Result {
     .program("println(0 ^ -1)")
     .expected_status(1)
     .expected_stderr(Contains("zero cannot be raised to a negative power"))
+    .run()?;
+
+  Test::new()?
+    .program("println((-8) ^ (1 / 3), (-8) ^ (2 / 3), (-8) ^ (1 / 2))")
+    .expected_stdout(Exact("-2 4 nan\n"))
     .run()
 }
 

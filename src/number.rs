@@ -252,6 +252,19 @@ impl Number {
       return Ok(Self::Exact(lhs.clone().pow(rhs)));
     }
 
+    if let Self::Exact(exponent) = rhs
+      && self.is_negative()
+      && exponent.denom().is_odd()
+    {
+      let magnitude = self.abs().approx_pow(rhs, config);
+
+      return Ok(if exponent.numer().is_odd() {
+        magnitude.neg()
+      } else {
+        magnitude
+      });
+    }
+
     Ok(self.approx_pow(rhs, config))
   }
 
