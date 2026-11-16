@@ -23,19 +23,20 @@ impl Environment {
     let parent = {
       let mut frame = self.frame.borrow_mut();
 
+      let Some(parent) = frame.parent.clone() else {
+        return Err(value);
+      };
+
       match frame.symbols.get_mut(name) {
         Some(symbol) => {
           *symbol = value;
           return Ok(());
         }
-        None => frame.parent.clone(),
+        None => parent,
       }
     };
 
-    match parent {
-      Some(parent) => parent.assign_existing_symbol(name, value),
-      None => Err(value),
-    }
+    parent.assign_existing_symbol(name, value)
   }
 
   pub(crate) fn assign_symbol(&self, name: &str, value: Value) {
@@ -46,17 +47,12 @@ impl Environment {
 
   #[must_use]
   pub fn empty(config: Config) -> Self {
-    Self {
-      config,
-      frame: Gc::new(GcCell::new(Frame::default())),
-      input: Rc::new(RefCell::new(BufReader::new(io::stdin()))),
-      output: Rc::new(RefCell::new(io::stdout())),
-    }
+    Self::with_parent(Self::root(config))
   }
 
   #[must_use]
   pub fn new(config: Config) -> Self {
-    let environment = Self::empty(config);
+    let builtins = Self::root(config);
 
     for builtin in inventory::iter::<&dyn Builtin> {
       for name in once(builtin.name()).chain(builtin.aliases().iter().copied())
@@ -71,11 +67,11 @@ impl Environment {
           value => value,
         };
 
-        environment.add_symbol(name, value);
+        builtins.add_symbol(name, value);
       }
     }
 
-    environment
+    Self::with_parent(builtins)
   }
 
   pub(crate) fn resolve_symbol(&self, name: &str) -> Option<Value> {
@@ -86,6 +82,15 @@ impl Environment {
       .get(name)
       .cloned()
       .or_else(|| frame.parent.as_ref()?.resolve_symbol(name))
+  }
+
+  fn root(config: Config) -> Self {
+    Self {
+      config,
+      frame: Gc::new(GcCell::new(Frame::default())),
+      input: Rc::new(RefCell::new(BufReader::new(io::stdin()))),
+      output: Rc::new(RefCell::new(io::stdout())),
+    }
   }
 
   #[must_use]
