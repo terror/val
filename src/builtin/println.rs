@@ -5,9 +5,11 @@ builtin! {
     name: "println",
     arity: BuiltinArity::Any,
     call(payload) {
-      use std::io::Write;
-
-      writeln!(std::io::stdout(), "{}", payload.format_arguments())
+      payload
+        .environment
+        .output
+        .borrow_mut()
+        .write_all(format!("{}\n", payload.format_arguments()).as_bytes())
         .map_err(|error| Error::new(payload.span, error.to_string()))?;
 
       Ok(Value::Null)

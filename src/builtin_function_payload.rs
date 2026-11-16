@@ -3,6 +3,7 @@ use super::*;
 pub struct BuiltinFunctionPayload<'a> {
   pub arguments: Vec<Value>,
   pub config: Config,
+  pub environment: &'a Environment,
   pub name: &'static str,
   pub span: &'a Span,
 }

@@ -11,12 +11,13 @@ impl BuiltinFunction {
   pub(crate) fn call(
     &self,
     arguments: Vec<Value>,
-    config: Config,
+    environment: &Environment,
     span: &Span,
   ) -> Result<Value> {
     (self.function)(BuiltinFunctionPayload {
       arguments,
-      config,
+      config: environment.config,
+      environment,
       name: self.name,
       span,
     })

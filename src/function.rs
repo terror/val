@@ -10,11 +10,11 @@ impl Function {
   pub(crate) fn call(
     &self,
     arguments: Vec<Value>,
-    config: Config,
+    environment: &Environment,
     span: &Span,
   ) -> Result<Value> {
     match self {
-      Self::Builtin(function) => function.call(arguments, config, span),
+      Self::Builtin(function) => function.call(arguments, environment, span),
       Self::UserDefined(function) => UserFunction::call(function, arguments),
     }
   }

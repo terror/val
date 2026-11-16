@@ -39,7 +39,7 @@ pub(crate) struct Arguments {
     conflicts_with_all = ["expression", "filename"],
     help = "Load files before entering the REPL"
   )]
-  load: Option<Vec<PathBuf>>,
+  load: Vec<PathBuf>,
   #[clap(
     short,
     long,
@@ -149,14 +149,12 @@ impl Arguments {
 
     let mut evaluator = Evaluator::from(Environment::new(config));
 
-    if let Some(filenames) = &self.load {
-      for filename in filenames {
-        let content = fs::read_to_string(filename)?;
+    for filename in &self.load {
+      let content = fs::read_to_string(filename)?;
 
-        let source = Source::new(filename.to_string_lossy(), content);
+      let source = Source::new(filename.to_string_lossy(), content);
 
-        Self::evaluate_or_exit(&mut evaluator, source)?;
-      }
+      Self::evaluate_or_exit(&mut evaluator, source)?;
     }
 
     loop {
