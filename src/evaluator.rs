@@ -250,7 +250,7 @@ impl Evaluator {
           evaluated_arguments.push(self.evaluate_expression(argument)?);
         }
 
-        function.call(evaluated_arguments, self.environment.config, span)
+        function.call(evaluated_arguments, &self.environment, span)
       }
       Expression::Identifier(name) => {
         match self.environment.resolve_symbol(name) {

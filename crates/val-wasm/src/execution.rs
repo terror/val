@@ -14,7 +14,10 @@ impl Execution {
   pub(crate) fn run(source: &str, input: &str) -> Self {
     let config = Config::default();
 
-    let environment = Runtime::environment(config, input);
+    let output = Output::default();
+
+    let environment = Environment::new(config)
+      .with_io(Cursor::new(input.to_owned()), output.clone());
 
     let (value, exit_code, errors) = match val::parse(source) {
       Ok(ast) => match Evaluator::from(environment).evaluate(&ast) {
@@ -51,7 +54,7 @@ impl Execution {
     Self {
       errors,
       exit_code,
-      output: Runtime::take_output(),
+      output: output.take(),
       value,
     }
   }

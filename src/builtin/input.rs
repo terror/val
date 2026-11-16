@@ -5,18 +5,18 @@ builtin! {
     name: "input",
     arity: BuiltinArity::Range(0, 1),
     call(payload) {
-      use std::io::{self, BufRead, Write};
-
       if payload.arguments.len() == 1 {
-        print!("{}", payload.arguments[0].string(payload.span)?);
-        io::stdout().flush().unwrap();
-      }
+        let mut output = payload.environment.output.borrow_mut();
 
-      let stdin = io::stdin();
+        output
+          .write_all(payload.arguments[0].string(payload.span)?.as_bytes())
+          .and_then(|()| output.flush())
+          .map_err(|error| Error::new(payload.span, error.to_string()))?;
+      }
 
       let mut input = String::new();
 
-      match stdin.lock().read_line(&mut input) {
+      match payload.environment.input.borrow_mut().read_line(&mut input) {
         Ok(_) => {
           if input.ends_with('\n') {
             input.pop();

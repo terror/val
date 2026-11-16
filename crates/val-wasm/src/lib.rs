@@ -3,20 +3,21 @@ use {
     ast_node::AstNode,
     error::{ErrorKind, ValError},
     execution::Execution,
+    output::Output,
     parse_result::ParseResult,
     range::Range,
     range_converter::RangeConverter,
-    runtime::Runtime,
   },
   serde::Serialize,
   std::{
     cell::RefCell,
-    io::{BufRead, Cursor},
+    io::{self, Cursor, Write},
+    rc::Rc,
+    str,
   },
   tsify::{Ts, Tsify},
   val::{
-    BuiltinArity, BuiltinFunction, BuiltinFunctionPayload, Config, Environment,
-    Evaluation, Evaluator, Function, Span, Spanned, Value,
+    Config, Environment, Evaluation, Evaluator, Span, Spanned, Value,
     ast::{AssignmentTarget, Expression, Program, Statement},
   },
   wasm_bindgen::prelude::*,
@@ -25,10 +26,10 @@ use {
 mod ast_node;
 mod error;
 mod execution;
+mod output;
 mod parse_result;
 mod range;
 mod range_converter;
-mod runtime;
 
 #[wasm_bindgen(start)]
 fn start() {
