@@ -113,6 +113,8 @@ impl<'a> Test<'a> {
 
     command
       .current_dir(self.tempdir.path())
+      .env_remove("RUST_BACKTRACE")
+      .env_remove("RUST_LIB_BACKTRACE")
       .args(self.arguments);
 
     let output = command.output().map_err(|e| {
@@ -2523,6 +2525,31 @@ fn loop_with_continue() -> Result {
       "
     })
     .expected_stdout(Exact("25\n11\n"))
+    .run()
+}
+
+#[test]
+fn missing_file() -> Result {
+  let expected = format!(
+    "error: Failed to read `foo.val`\n\nbecause:\n- {} (os error 2)\n",
+    if cfg!(windows) {
+      "The system cannot find the file specified."
+    } else {
+      "No such file or directory"
+    }
+  );
+
+  Test::new()?
+    .argument("foo.val")
+    .expected_status(1)
+    .expected_stderr(Exact(&expected))
+    .run()?;
+
+  Test::new()?
+    .argument("--load")
+    .argument("foo.val")
+    .expected_status(1)
+    .expected_stderr(Exact(&expected))
     .run()
 }
 

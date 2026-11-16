@@ -1,4 +1,4 @@
-use super::*;
+use {super::*, anyhow::Context};
 
 #[derive(Debug, Parser)]
 #[clap(
@@ -103,7 +103,8 @@ impl Arguments {
   }
 
   fn evaluate_file(&self, filename: &PathBuf) -> Result {
-    let content = fs::read_to_string(filename)?;
+    let content = fs::read_to_string(filename)
+      .with_context(|| format!("Failed to read `{}`", filename.display()))?;
 
     let source = Source::new(filename.to_string_lossy(), content);
 
@@ -150,7 +151,8 @@ impl Arguments {
     let mut evaluator = Evaluator::from(Environment::new(config));
 
     for filename in &self.load {
-      let content = fs::read_to_string(filename)?;
+      let content = fs::read_to_string(filename)
+        .with_context(|| format!("Failed to read `{}`", filename.display()))?;
 
       let source = Source::new(filename.to_string_lossy(), content);
 
