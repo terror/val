@@ -744,7 +744,7 @@ fn comments() -> Result {
   Test::new()?
     .program("# foo")
     .expected_status(1)
-    .expected_stderr(Contains("found '#'"))
+    .expected_stderr(Contains("unexpected character `#`"))
     .run()
 }
 
@@ -1022,7 +1022,13 @@ fn element_assignment_on_non_list_errors() -> Result {
       "
     })
     .expected_status(1)
-    .expected_stderr(Contains("'value' is not a list"))
+    .expected_stderr(Contains("'value' is not a list (found number)"))
+    .run()?;
+
+  Test::new()?
+    .program("a = [[1]]; a[0][0][0] = 2")
+    .expected_status(1)
+    .expected_stderr(Contains("'a[0][0]' is not a list (found number)"))
     .run()
 }
 
@@ -1119,6 +1125,19 @@ fn exit() -> Result {
       .expected_status(1)
       .expected_stderr(Contains(&format!(
         "Argument to `{name}` must be a non-negative finite number"
+      )))
+      .run()?;
+
+    Test::new()?
+      .program(&format!("{name}(255)"))
+      .expected_status(255)
+      .run()?;
+
+    Test::new()?
+      .program(&format!("{name}(256)"))
+      .expected_status(1)
+      .expected_stderr(Contains(&format!(
+        "Argument to `{name}` must be at most 255"
       )))
       .run()
   }
@@ -2370,8 +2389,8 @@ fn loaded_function_errors_use_definition_source() -> Result {
          ╭─[ foo.val:1:12 ]
          │
        1 │ fn foo() { bar }
-         │            ──┬─\x20\x20
-         │              ╰─── Undefined variable `bar`
+         │            ─┬─\x20\x20
+         │             ╰─── Undefined variable `bar`
       ───╯
       "
     }))
@@ -3280,9 +3299,10 @@ fn string_split() -> Result {
       println(split('hello world', ' '))
       println(split('abc', ''))
       println(split('no-delimiter-here', 'x'))
+      println(split('a,,b,', ','))
       "
     })
-    .expected_stdout(Exact("['a', 'b', 'c']\n['hello', 'world']\n['a', 'b', 'c']\n['no-delimiter-here']\n"))
+    .expected_stdout(Exact("['a', 'b', 'c']\n['hello', 'world']\n['a', 'b', 'c']\n['no-delimiter-here']\n['a', '', 'b', '']\n"))
     .run()
 }
 

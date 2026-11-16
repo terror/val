@@ -37,7 +37,10 @@ pub use crate::{
   source::Source, span::Span, user_function::UserFunction, value::Value,
 };
 
-pub use gc::Gc;
+pub use {
+  gc::Gc,
+  lexer::{Token, lex},
+};
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 pub type Spanned<T> = (T, Span);
@@ -57,6 +60,7 @@ mod evaluation;
 mod evaluator;
 mod frame;
 mod function;
+mod lexer;
 mod number;
 mod parser;
 mod source;

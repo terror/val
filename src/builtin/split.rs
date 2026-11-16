@@ -9,13 +9,17 @@ builtin! {
 
       let delimiter = payload.arguments[1].string(payload.span)?;
 
-      Ok(Value::List(
+      Ok(Value::List(if delimiter.is_empty() {
+        string
+          .chars()
+          .map(|character| Value::String(character.to_string()))
+          .collect()
+      } else {
         string
           .split(delimiter)
-          .filter(|part| !part.is_empty())
           .map(|part| Value::String(part.to_string()))
-          .collect(),
-      ))
+          .collect()
+      }))
     }
   }
 }

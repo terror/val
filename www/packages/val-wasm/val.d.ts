@@ -2,6 +2,7 @@
 /* eslint-disable */
 export function start(): void;
 export function execute(source: string, input: string): Execution;
+export function highlight(source: string): Highlights;
 export function parse(source: string): ParseResult;
 export type ParseResult = { status: "error"; errors: ValError[] } | { status: "ok"; ast: AstNode };
 
@@ -31,12 +32,22 @@ export interface Execution {
     value?: string;
 }
 
+export interface Highlight {
+    kind: HighlightKind;
+    range: Range;
+}
+
+export type Highlights = Highlight[];
+
+export type HighlightKind = "Boolean" | "Comment" | "Function" | "Identifier" | "Invalid" | "Keyword" | "Number" | "Operator" | "Punctuation" | "String";
+
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly execute: (a: number, b: number, c: number, d: number) => [number, number, number];
+  readonly highlight: (a: number, b: number) => [number, number, number];
   readonly parse: (a: number, b: number) => [number, number, number];
   readonly start: () => void;
   readonly abort: () => void;

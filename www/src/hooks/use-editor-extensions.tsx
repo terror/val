@@ -2,9 +2,10 @@ import { useEditorSettings } from '@/contexts/editor-settings-context';
 import { createEditorTheme } from '@/lib/editor-theme';
 import { createDiagnosticsExtension } from '@/lib/extensions/diagnostics';
 import { highlightExtension } from '@/lib/extensions/highlight';
+import { indentationExtension } from '@/lib/extensions/indentation';
 import { syntaxHighlightExtension } from '@/lib/extensions/syntax-highlight';
 import { bracketMatching, indentOnInput } from '@codemirror/language';
-import { EditorState, type Extension } from '@codemirror/state';
+import { EditorState, type Extension, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { vim } from '@replit/codemirror-vim';
 import { useMemo } from 'react';
@@ -13,6 +14,7 @@ import type { ValError } from 'val-wasm';
 const baseExtensions: Extension[] = [
   bracketMatching(),
   highlightExtension,
+  indentationExtension,
   indentOnInput(),
   syntaxHighlightExtension,
 ];
@@ -48,15 +50,17 @@ export function useEditorExtensions({
   return useMemo(
     () => [
       baseExtensions,
-      keymap.of([
-        {
-          key: 'Mod-Enter',
-          run: () => {
-            onRun();
-            return true;
+      Prec.highest(
+        keymap.of([
+          {
+            key: 'Mod-Enter',
+            run: () => {
+              onRun();
+              return true;
+            },
           },
-        },
-      ]),
+        ])
+      ),
       EditorState.tabSize.of(settings.tabSize),
       diagnostics,
       theme,

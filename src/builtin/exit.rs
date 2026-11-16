@@ -18,14 +18,14 @@ builtin! {
           ));
         };
 
-        let Ok(code) = i32::try_from(code) else {
+        let Ok(code) = u8::try_from(code) else {
           return Err(Error::new(
             payload.span,
-            format!("Argument to `{name}` must fit in a 32-bit signed integer"),
+            format!("Argument to `{name}` must be at most 255"),
           ));
         };
 
-        code
+        i32::from(code)
       };
 
       Err(Error::Exit {
