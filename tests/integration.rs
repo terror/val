@@ -2370,8 +2370,8 @@ fn loaded_function_errors_use_definition_source() -> Result {
          ╭─[ foo.val:1:12 ]
          │
        1 │ fn foo() { bar }
-         │            ──┬─\x20\x20
-         │              ╰─── Undefined variable `bar`
+         │            ─┬─\x20\x20
+         │             ╰─── Undefined variable `bar`
       ───╯
       "
     }))
