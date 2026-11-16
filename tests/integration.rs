@@ -702,12 +702,18 @@ fn closed_stdout() -> Result {
 
   let output = Command::new(executable_path(env!("CARGO_PKG_NAME")))
     .args(["-e", "1"])
+    .env_remove("RUST_BACKTRACE")
+    .env_remove("RUST_LIB_BACKTRACE")
     .stdout(writer)
     .output()?;
 
   assert_eq!(
     str::from_utf8(&output.stderr)?,
-    "error: Broken pipe (os error 32)\n"
+    if cfg!(windows) {
+      "error: The pipe is being closed. (os error 232)\n"
+    } else {
+      "error: Broken pipe (os error 32)\n"
+    }
   );
 
   assert_eq!(output.status.code(), Some(1));
