@@ -4,8 +4,7 @@
 [![crates.io](https://img.shields.io/crates/v/val.svg?style=flat&labelColor=1d1d1d&color=424242&logo=rust)](https://crates.io/crates/val)
 [![build](https://img.shields.io/github/actions/workflow/status/terror/val/ci.yaml?branch=master&style=flat&labelColor=1d1d1d&color=424242&logo=GitHub%20Actions&logoColor=white&label=build)](https://github.com/terror/val/actions/workflows/ci.yaml)
 [![codecov](https://img.shields.io/codecov/c/gh/terror/val?style=flat&labelColor=1d1d1d&color=424242&logo=Codecov&logoColor=white)](https://codecov.io/gh/terror/val)
-[![docs.rs](https://img.shields.io/docsrs/val?style=flat&labelColor=1d1d1d&color=424242&logo=docs.rs&logoColor=white&label=docs.rs)](https://docs.rs/val)
-[![dependency status](https://img.shields.io/endpoint?url=https%3A%2F%2Fdeps.rs%2Frepo%2Fgithub%2Fterror%2Fval%2Fshield.json&style=flat&labelColor=1d1d1d&color=424242&logo=rust&logoColor=white)](https://deps.rs/repo/github/terror/val)
+[![downloads](https://img.shields.io/github/downloads/terror/val/total.svg?style=flat&labelColor=1d1d1d&color=424242)](https://github.com/terror/val/releases)
 
 **val** (e**val**) is a simple arbitrary precision calculator language built
 on top of [**chumsky**](https://github.com/zesterer/chumsky) and
