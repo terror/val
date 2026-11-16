@@ -27,6 +27,7 @@ jobs:
         with:
           toolchain: 1.99.0
           target: wasm32-unknown-unknown
+          components: clippy, rustfmt
 
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
@@ -37,6 +38,15 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: just@1.59.0,wasm-pack@0.15.0
+
+      - name: Clippy WASM crate
+        run: cargo clippy --manifest-path crates/val-wasm/Cargo.toml --all-targets --locked
+
+      - name: Format WASM crate
+        run: cargo fmt --manifest-path crates/val-wasm/Cargo.toml -- --check
+
+      - name: Test WASM crate
+        run: cargo test --manifest-path crates/val-wasm/Cargo.toml --locked
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
