@@ -9,6 +9,7 @@ repository = "https://github.com/terror/val"
 homepage = "https://github.com/terror/val"
 categories = ["science", "parser-implementations", "command-line-interface"]
 keywords = ["productivity", "compilers"]
+include = ["/CHANGELOG.md", "/LICENSE", "/README.md", "/benches", "/src", "/tests"]
 
 [[bin]]
 name = "val"
@@ -62,7 +63,7 @@ gc = "0.5.1"
 gmp-mpfr-sys = { version = "~1.7", default-features = false, optional = true }
 inventory = "0.3.24"
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
-rustyline = { version = "18.0.0", optional = true }
+rustyline = { version = "19.0.0", optional = true }
 thiserror = "2.0.19"
 
 [dev-dependencies]
