@@ -113,6 +113,8 @@ impl<'a> Test<'a> {
 
     command
       .current_dir(self.tempdir.path())
+      .env_remove("RUST_BACKTRACE")
+      .env_remove("RUST_LIB_BACKTRACE")
       .args(self.arguments);
 
     let output = command.output().map_err(|e| {
