@@ -34,7 +34,7 @@ pub use crate::{
   source::Source, span::Span, user_function::UserFunction, value::Value,
 };
 
-pub use gc::{Gc, force_collect};
+pub use gc::Gc;
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 pub type Spanned<T> = (T, Span);
