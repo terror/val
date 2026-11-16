@@ -2511,21 +2511,26 @@ fn loop_with_continue() -> Result {
 
 #[test]
 fn missing_file() -> Result {
+  let expected = format!(
+    "error: Failed to read `foo.val`\n\nbecause:\n- {} (os error 2)\n",
+    if cfg!(windows) {
+      "The system cannot find the file specified."
+    } else {
+      "No such file or directory"
+    }
+  );
+
   Test::new()?
     .argument("foo.val")
     .expected_status(1)
-    .expected_stderr(Exact(
-      "error: Failed to read `foo.val`\n\nbecause:\n- No such file or directory (os error 2)\n",
-    ))
+    .expected_stderr(Exact(&expected))
     .run()?;
 
   Test::new()?
     .argument("--load")
     .argument("foo.val")
     .expected_status(1)
-    .expected_stderr(Exact(
-      "error: Failed to read `foo.val`\n\nbecause:\n- No such file or directory (os error 2)\n",
-    ))
+    .expected_stderr(Exact(&expected))
     .run()
 }
 
