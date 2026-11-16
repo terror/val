@@ -134,12 +134,15 @@ fn lexer<'a>()
   ))
   .map_with(|token, extra| (token, extra.span()));
 
-  text::whitespace().ignore_then(
-    token
-      .then_ignore(text::whitespace())
-      .repeated()
-      .collect::<Vec<_>>(),
-  )
+  just('\u{feff}')
+    .or_not()
+    .ignore_then(text::whitespace())
+    .ignore_then(
+      token
+        .then_ignore(text::whitespace())
+        .repeated()
+        .collect::<Vec<_>>(),
+    )
 }
 
 fn string_parser<'a>(

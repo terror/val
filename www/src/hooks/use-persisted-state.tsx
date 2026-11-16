@@ -1,3 +1,4 @@
+import { readStorage, writeStorage } from '@/lib/storage';
 import { useCallback, useEffect, useState } from 'react';
 
 export function usePersistedState<T extends object>(
@@ -5,7 +6,7 @@ export function usePersistedState<T extends object>(
   initialValue: T
 ): [T, (action: Partial<T> | ((prevState: T) => Partial<T>)) => void] {
   const [state, setFullState] = useState<T>(() => {
-    const savedValue = localStorage.getItem(key);
+    const savedValue = readStorage(key);
 
     if (savedValue !== null) {
       try {
@@ -20,11 +21,7 @@ export function usePersistedState<T extends object>(
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem(key, JSON.stringify(state));
-    } catch (error) {
-      console.warn(`Error saving ${key} to localStorage:`, error);
-    }
+    writeStorage(key, JSON.stringify(state));
   }, [key, state]);
 
   const setState = useCallback(

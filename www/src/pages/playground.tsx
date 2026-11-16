@@ -19,6 +19,7 @@ import { useValExecution } from '@/hooks/use-val-execution';
 import { useValWasm } from '@/hooks/use-val-wasm';
 import { examples } from '@/lib/examples';
 import { highlightEffect } from '@/lib/extensions/highlight';
+import { readStorage, writeStorage } from '@/lib/storage';
 import type { EditorState } from '@codemirror/state';
 import { EditorView, type ViewUpdate } from '@codemirror/view';
 import { Loader2 } from 'lucide-react';
@@ -45,7 +46,7 @@ function Playground() {
   );
 
   const [currentExample, setCurrentExample] = useState(() => {
-    const savedExample = localStorage.getItem(STORAGE_KEY_EXAMPLE);
+    const savedExample = readStorage(STORAGE_KEY_EXAMPLE);
 
     return savedExample && savedExample in examples
       ? savedExample
@@ -133,7 +134,7 @@ function Playground() {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_EXAMPLE, currentExample);
+    writeStorage(STORAGE_KEY_EXAMPLE, currentExample);
   }, [currentExample]);
 
   const handleExampleChange = (value: string) => {

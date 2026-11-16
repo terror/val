@@ -1,3 +1,4 @@
+import { readStorage, writeStorage } from '@/lib/storage';
 import { useEffect, useState } from 'react';
 
 export function usePersistedDoc(
@@ -5,13 +6,13 @@ export function usePersistedDoc(
   fallback: string
 ): [string, (value: string) => void] {
   const [value, setValue] = useState<string>(() => {
-    const stored = window.localStorage.getItem(key);
+    const stored = readStorage(key);
 
     return stored ?? fallback;
   });
 
   useEffect(() => {
-    window.localStorage.setItem(key, value);
+    writeStorage(key, value);
   }, [key, value]);
 
   return [value, setValue];
