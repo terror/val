@@ -118,7 +118,6 @@ impl Arguments {
     }
   }
 
-  #[cfg(not(target_family = "wasm"))]
   fn read(&self) -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
@@ -193,16 +192,7 @@ impl Arguments {
     match (&self.filename, &self.expression) {
       (Some(filename), _) => self.evaluate_file(filename),
       (_, Some(expression)) => self.evaluate_expression(expression),
-      _ => {
-        #[cfg(not(target_family = "wasm"))]
-        {
-          self.read()
-        }
-        #[cfg(target_family = "wasm")]
-        {
-          Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
-        }
-      }
+      _ => self.read(),
     }
   }
 }
