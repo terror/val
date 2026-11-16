@@ -18,7 +18,7 @@ impl Evaluator {
       match &target.0 {
         AssignmentTarget::Identifier(name) => break (name, &target.1),
         AssignmentTarget::ListAccess(base, index) => {
-          indices.push(index.as_ref());
+          indices.push((index.as_ref(), &base.1));
           target = base;
         }
       }
@@ -32,10 +32,10 @@ impl Evaluator {
     let indices = indices
       .into_iter()
       .rev()
-      .map(|index| {
+      .map(|(index, base_span)| {
         self
           .evaluate_list_index(index)
-          .map(|value| (value, &index.1))
+          .map(|value| (value, &index.1, base_span))
       })
       .collect::<Result<Vec<_>>>()?;
 
@@ -48,11 +48,15 @@ impl Evaluator {
 
     let mut target = &mut root;
 
-    for (index, index_span) in indices {
+    for (index, index_span, base_span) in indices {
       let Value::List(list) = target else {
         return Err(Error::new(
           index_span,
-          format!("'{}' is not a list (found {})", name, target.type_name()),
+          format!(
+            "'{}' is not a list (found {})",
+            &base_span.source().text()[base_span.range()],
+            target.type_name()
+          ),
         ));
       };
 

@@ -29,7 +29,8 @@ use {
     process, thread,
   },
   val::{
-    Config, Environment, Error, Evaluation, Evaluator, Source, Value, parse,
+    Config, Environment, Error, Evaluation, Evaluator, Source, Token, Value,
+    lex, parse,
   },
 };
 

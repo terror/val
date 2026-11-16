@@ -1,4 +1,4 @@
-import { StateEffect, StateField, type Text } from '@codemirror/state';
+import { StateEffect, StateField } from '@codemirror/state';
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view';
 import type { Range } from 'val-wasm';
 
@@ -25,11 +25,7 @@ export const highlightExtension = StateField.define<DecorationSet>({
 
       const from = clamp(range.start, 0, transaction.newDoc.length);
 
-      const to = trimTrailingWhitespace(
-        from,
-        clamp(range.end, from, transaction.newDoc.length),
-        transaction.newDoc
-      );
+      const to = clamp(range.end, from, transaction.newDoc.length);
 
       decorations =
         to > from
@@ -41,18 +37,6 @@ export const highlightExtension = StateField.define<DecorationSet>({
   },
   provide: (field) => EditorView.decorations.from(field),
 });
-
-function trimTrailingWhitespace(from: number, to: number, doc: Text): number {
-  for (let pos = to - 1; pos >= from; pos--) {
-    const char = doc.sliceString(pos, pos + 1);
-
-    if (!/\s/.test(char)) {
-      return pos + 1;
-    }
-  }
-
-  return from;
-}
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(value, max));
