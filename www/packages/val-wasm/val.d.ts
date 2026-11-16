@@ -5,11 +5,6 @@ export function execute(source: string, input: string): Execution;
 export function parse(source: string): ParseResult;
 export type ParseResult = { status: "error"; errors: ValError[] } | { status: "ok"; ast: AstNode };
 
-export interface Range {
-    start: number;
-    end: number;
-}
-
 export interface ValError {
     kind: ErrorKind;
     message: string;
@@ -17,6 +12,11 @@ export interface ValError {
 }
 
 export type ErrorKind = "Evaluator" | "Parser";
+
+export interface Range {
+    start: number;
+    end: number;
+}
 
 export interface AstNode {
     kind: string;
