@@ -943,8 +943,7 @@ fn cosecant() -> Result {
 
   Test::new()?
     .program("println(csc(0))")
-    .expected_status(1)
-    .expected_stderr(Contains("Cannot compute csc of multiple of π"))
+    .expected_stdout(Exact("inf\n"))
     .run()
 }
 
@@ -962,8 +961,7 @@ fn cotangent() -> Result {
 
   Test::new()?
     .program("println(cot(0))")
-    .expected_status(1)
-    .expected_stderr(Contains("Cannot compute cot of multiple of π"))
+    .expected_stdout(Exact("inf\n"))
     .run()
 }
 
