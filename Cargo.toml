@@ -9,6 +9,7 @@ repository = "https://github.com/terror/val"
 homepage = "https://github.com/terror/val"
 categories = ["science", "parser-implementations", "command-line-interface"]
 keywords = ["productivity", "compilers"]
+include = ["/CHANGELOG.md", "/LICENSE", "/README.md", "/benches", "/src", "/tests"]
 
 [[bin]]
 name = "val"
