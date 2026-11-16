@@ -2508,6 +2508,26 @@ fn loop_with_continue() -> Result {
 }
 
 #[test]
+fn missing_file() -> Result {
+  Test::new()?
+    .argument("foo.val")
+    .expected_status(1)
+    .expected_stderr(Exact(
+      "error: Failed to read `foo.val`\n\nbecause:\n- No such file or directory (os error 2)\n",
+    ))
+    .run()?;
+
+  Test::new()?
+    .argument("--load")
+    .argument("foo.val")
+    .expected_status(1)
+    .expected_stderr(Exact(
+      "error: Failed to read `foo.val`\n\nbecause:\n- No such file or directory (os error 2)\n",
+    ))
+    .run()
+}
+
+#[test]
 fn mixed_type_comparisons() -> Result {
   Test::new()?
     .program("println(\"true\" == true)")
