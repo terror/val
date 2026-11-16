@@ -2,6 +2,7 @@ import { useEditorSettings } from '@/contexts/editor-settings-context';
 import { createEditorTheme } from '@/lib/editor-theme';
 import { createDiagnosticsExtension } from '@/lib/extensions/diagnostics';
 import { highlightExtension } from '@/lib/extensions/highlight';
+import { indentationExtension } from '@/lib/extensions/indentation';
 import { syntaxHighlightExtension } from '@/lib/extensions/syntax-highlight';
 import { bracketMatching, indentOnInput } from '@codemirror/language';
 import { EditorState, type Extension, Prec } from '@codemirror/state';
@@ -13,6 +14,7 @@ import type { ValError } from 'val-wasm';
 const baseExtensions: Extension[] = [
   bracketMatching(),
   highlightExtension,
+  indentationExtension,
   indentOnInput(),
   syntaxHighlightExtension,
 ];
