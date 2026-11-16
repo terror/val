@@ -1022,7 +1022,13 @@ fn element_assignment_on_non_list_errors() -> Result {
       "
     })
     .expected_status(1)
-    .expected_stderr(Contains("'value' is not a list"))
+    .expected_stderr(Contains("'value' is not a list (found number)"))
+    .run()?;
+
+  Test::new()?
+    .program("a = [[1]]; a[0][0][0] = 2")
+    .expected_status(1)
+    .expected_stderr(Contains("'a[0][0]' is not a list (found number)"))
     .run()
 }
 
