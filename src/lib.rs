@@ -7,6 +7,7 @@ use {
   decimal::Decimal,
   frame::Frame,
   gc::{Finalize, GcCell, Trace},
+  lexer::{Token, lex},
   rug::{
     Complete, Float, Integer, Rational,
     float::{Constant, Round},
@@ -54,6 +55,7 @@ mod evaluation;
 mod evaluator;
 mod frame;
 mod function;
+mod lexer;
 mod number;
 mod parser;
 mod source;
