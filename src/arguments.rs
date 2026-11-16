@@ -51,8 +51,8 @@ pub(crate) struct Arguments {
   #[clap(
     short,
     long,
-    value_parser = clap::value_parser!(RoundingMode),
-    default_value = "to-even",
+    value_enum,
+    default_value_t = RoundingMode::ToEven,
     help = "Rounding mode to use for calculations",
   )]
   rounding_mode: RoundingMode,
@@ -66,6 +66,14 @@ pub(crate) struct Arguments {
 }
 
 impl Arguments {
+  fn config(&self) -> Config {
+    Config {
+      digits: self.digits,
+      precision: self.precision.get(),
+      rounding_mode: self.rounding_mode.into(),
+    }
+  }
+
   fn evaluate(
     evaluator: &mut Evaluator,
     source: Source,
@@ -81,23 +89,17 @@ impl Arguments {
   fn evaluate_expression(&self, text: &str) -> Result {
     let source = Source::new("<expression>", text);
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let config = self.config();
 
-    match Self::evaluate(&mut evaluator, source) {
-      Ok(value) => {
-        if !matches!(value, Value::Null) {
-          println!("{}", value.display(Into::<Config>::into(self)));
-        }
+    let mut evaluator = Evaluator::from(Environment::new(config));
 
-        Ok(())
-      }
-      Err(errors) => {
-        Self::report(&errors, io::stderr())?;
+    let value = Self::evaluate_or_exit(&mut evaluator, source)?;
 
-        process::exit(1);
-      }
+    if !matches!(value, Value::Null) {
+      println!("{}", value.display(config));
     }
+
+    Ok(())
   }
 
   fn evaluate_file(&self, filename: &PathBuf) -> Result {
@@ -105,11 +107,19 @@ impl Arguments {
 
     let source = Source::new(filename.to_string_lossy(), content);
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let mut evaluator = Evaluator::from(Environment::new(self.config()));
 
-    match Self::evaluate(&mut evaluator, source) {
-      Ok(_) => Ok(()),
+    Self::evaluate_or_exit(&mut evaluator, source)?;
+
+    Ok(())
+  }
+
+  fn evaluate_or_exit(
+    evaluator: &mut Evaluator,
+    source: Source,
+  ) -> Result<Value> {
+    match Self::evaluate(evaluator, source) {
+      Ok(value) => Ok(value),
       Err(errors) => {
         Self::report(&errors, io::stderr())?;
 
@@ -118,7 +128,6 @@ impl Arguments {
     }
   }
 
-  #[cfg(not(target_family = "wasm"))]
   fn read(&self) -> Result {
     let history = dirs::home_dir().unwrap_or_default().join(".val_history");
 
@@ -136,8 +145,9 @@ impl Arguments {
     editor.set_helper(Some(Prompt::new()));
     editor.load_history(&history).ok();
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let config = self.config();
+
+    let mut evaluator = Evaluator::from(Environment::new(config));
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
@@ -145,14 +155,7 @@ impl Arguments {
 
         let source = Source::new(filename.to_string_lossy(), content);
 
-        match Self::evaluate(&mut evaluator, source) {
-          Ok(_) => {}
-          Err(errors) => {
-            Self::report(&errors, io::stderr())?;
-
-            process::exit(1);
-          }
-        }
+        Self::evaluate_or_exit(&mut evaluator, source)?;
       }
     }
 
@@ -166,7 +169,7 @@ impl Arguments {
 
       match Self::evaluate(&mut evaluator, source) {
         Ok(value) if !matches!(value, Value::Null) => {
-          println!("{}", value.display(Into::<Config>::into(self)));
+          println!("{}", value.display(config));
         }
         Ok(_) => {}
         Err(errors) => Self::report(&errors, io::stderr())?,
@@ -193,26 +196,7 @@ impl Arguments {
     match (&self.filename, &self.expression) {
       (Some(filename), _) => self.evaluate_file(filename),
       (_, Some(expression)) => self.evaluate_expression(expression),
-      _ => {
-        #[cfg(not(target_family = "wasm"))]
-        {
-          self.read()
-        }
-        #[cfg(target_family = "wasm")]
-        {
-          Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
-        }
-      }
-    }
-  }
-}
-
-impl From<&Arguments> for Config {
-  fn from(arguments: &Arguments) -> Self {
-    Config {
-      digits: arguments.digits,
-      precision: arguments.precision.get(),
-      rounding_mode: arguments.rounding_mode.into(),
+      _ => self.read(),
     }
   }
 }
@@ -332,5 +316,31 @@ mod tests {
 
       assert!(result.is_err());
     }
+  }
+
+  #[test]
+  fn rounding_mode() {
+    #[track_caller]
+    fn case(argument: &str, expected: Round) {
+      let arguments =
+        Arguments::parse_from(["program", "--rounding-mode", argument]);
+
+      assert_eq!(Round::from(arguments.rounding_mode), expected);
+    }
+
+    case("down", Round::Down);
+    case("from-zero", Round::AwayZero);
+    case("to-even", Round::Nearest);
+    case("to-zero", Round::Zero);
+    case("up", Round::Up);
+  }
+
+  #[test]
+  fn rounding_mode_rejects_aliases() {
+    let error =
+      Arguments::try_parse_from(["program", "--rounding-mode", "bankers"])
+        .unwrap_err();
+
+    assert_eq!(error.kind(), clap::error::ErrorKind::InvalidValue);
   }
 }
