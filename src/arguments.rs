@@ -66,6 +66,14 @@ pub(crate) struct Arguments {
 }
 
 impl Arguments {
+  fn config(&self) -> Config {
+    Config {
+      digits: self.digits,
+      precision: self.precision.get(),
+      rounding_mode: self.rounding_mode.into(),
+    }
+  }
+
   fn evaluate(
     evaluator: &mut Evaluator,
     source: Source,
@@ -81,13 +89,14 @@ impl Arguments {
   fn evaluate_expression(&self, text: &str) -> Result {
     let source = Source::new("<expression>", text);
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let config = self.config();
+
+    let mut evaluator = Evaluator::from(Environment::new(config));
 
     match Self::evaluate(&mut evaluator, source) {
       Ok(value) => {
         if !matches!(value, Value::Null) {
-          println!("{}", value.display(Into::<Config>::into(self)));
+          println!("{}", value.display(config));
         }
 
         Ok(())
@@ -105,8 +114,7 @@ impl Arguments {
 
     let source = Source::new(filename.to_string_lossy(), content);
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let mut evaluator = Evaluator::from(Environment::new(self.config()));
 
     match Self::evaluate(&mut evaluator, source) {
       Ok(_) => Ok(()),
@@ -136,8 +144,9 @@ impl Arguments {
     editor.set_helper(Some(Prompt::new()));
     editor.load_history(&history).ok();
 
-    let mut evaluator =
-      Evaluator::from(Environment::new(Into::<Config>::into(self)));
+    let config = self.config();
+
+    let mut evaluator = Evaluator::from(Environment::new(config));
 
     if let Some(filenames) = &self.load {
       for filename in filenames {
@@ -166,7 +175,7 @@ impl Arguments {
 
       match Self::evaluate(&mut evaluator, source) {
         Ok(value) if !matches!(value, Value::Null) => {
-          println!("{}", value.display(Into::<Config>::into(self)));
+          println!("{}", value.display(config));
         }
         Ok(_) => {}
         Err(errors) => Self::report(&errors, io::stderr())?,
@@ -203,16 +212,6 @@ impl Arguments {
           Err(anyhow::anyhow!("Interactive mode not supported in WASM"))
         }
       }
-    }
-  }
-}
-
-impl From<&Arguments> for Config {
-  fn from(arguments: &Arguments) -> Self {
-    Config {
-      digits: arguments.digits,
-      precision: arguments.precision.get(),
-      rounding_mode: arguments.rounding_mode.into(),
     }
   }
 }
