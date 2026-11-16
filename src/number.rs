@@ -1,5 +1,7 @@
 use super::*;
 
+const MAX_LITERAL_EXPONENT: u64 = 1_000_000;
+
 #[derive(Clone, Debug)]
 pub enum Number {
   Approx(Float),
@@ -493,26 +495,26 @@ impl TryFrom<&str> for Number {
       (s, 0)
     };
 
+    if exponent.unsigned_abs() > MAX_LITERAL_EXPONENT {
+      return Err(Error::InvalidDecimal);
+    }
+
     let (integer, fraction) = s.split_once('.').unwrap_or((s, ""));
 
     if integer.is_empty() && fraction.is_empty() {
       return Err(Error::InvalidDecimal);
     }
 
-    let mut numerator = Integer::from(0);
+    let digits = format!("{integer}{fraction}");
 
-    for b in integer.bytes().chain(fraction.bytes()) {
-      if !b.is_ascii_digit() {
-        return Err(Error::InvalidDecimal);
-      }
-
-      numerator *= 10;
-      numerator += b - b'0';
+    if !digits.bytes().all(|b| b.is_ascii_digit()) {
+      return Err(Error::InvalidDecimal);
     }
 
-    if negative {
-      numerator = -numerator;
-    }
+    let numerator = Integer::from_str_radix(&digits, 10)
+      .map_err(|_| Error::InvalidDecimal)?;
+
+    let numerator = if negative { -numerator } else { numerator };
 
     let exponent = exponent
       .checked_sub(
@@ -667,10 +669,22 @@ mod tests {
     case("1e1.5");
     case("1e2e3");
     case("1e 2");
+    case("1e1000001");
+    case("1e-1000001");
     case("1e4294967296");
     case("1e-4294967296");
     case("1e9223372036854775808");
     case("1.0e-9223372036854775808");
+  }
+
+  #[test]
+  fn largest_literal_exponent() {
+    assert_eq!(
+      Number::try_from("1e1000000"),
+      Ok(Number::Exact(Rational::from(
+        Integer::from(10).pow(1_000_000)
+      )))
+    );
   }
 
   #[test]
