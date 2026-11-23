@@ -51,7 +51,7 @@ use-system-libs = ["dep:gmp-mpfr-sys", "gmp-mpfr-sys/use-system-libs"]
 [dependencies]
 anyhow = { version = "1.0.102", optional = true }
 ariadne = { version = "0.6.0", features = ["auto-color"] }
-chumsky = { version = "0.13.0", features = ["pratt"] }
+chumsky = { version = "0.14.1", features = ["pratt"] }
 clap = { version = "4.5.60", features = ["derive"], optional = true }
 dirs = { version = "7.0.0", optional = true }
 gc = "0.5.1"
